@@ -72,7 +72,7 @@ struct Session {
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_io_github_yysassist_maaprobe_MaaNative_version(JNIEnv* env, jobject) {
+Java_io_github_yysassist_vision_maa_MaaNative_version(JNIEnv* env, jobject) {
     const char* version = MaaVersion();
     if (!version) {
         env->ThrowNew(env->FindClass("java/lang/IllegalStateException"), "Maa returned no version");
@@ -82,7 +82,7 @@ Java_io_github_yysassist_maaprobe_MaaNative_version(JNIEnv* env, jobject) {
 }
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_io_github_yysassist_maaprobe_MaaNative_create(JNIEnv* env, jobject, jstring directory) {
+Java_io_github_yysassist_vision_maa_MaaNative_create(JNIEnv* env, jobject, jstring directory) {
     const char* path = env->GetStringUTFChars(directory, nullptr);
     if (!path) return 0;
     try {
@@ -97,7 +97,7 @@ Java_io_github_yysassist_maaprobe_MaaNative_create(JNIEnv* env, jobject, jstring
 }
 
 extern "C" JNIEXPORT jbyteArray JNICALL
-Java_io_github_yysassist_maaprobe_MaaNative_recognizeRaw(JNIEnv* env, jobject, jlong handle, jbyteArray encoded) {
+Java_io_github_yysassist_vision_maa_MaaNative_recognizeRaw(JNIEnv* env, jobject, jlong handle, jbyteArray encoded) {
     try {
         require(handle != 0, "Maa session closed");
         auto count = env->GetArrayLength(encoded);
@@ -116,12 +116,12 @@ Java_io_github_yysassist_maaprobe_MaaNative_recognizeRaw(JNIEnv* env, jobject, j
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_io_github_yysassist_maaprobe_MaaNative_destroy(JNIEnv*, jobject, jlong handle) {
+Java_io_github_yysassist_vision_maa_MaaNative_destroy(JNIEnv*, jobject, jlong handle) {
     delete reinterpret_cast<Session*>(handle);
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_io_github_yysassist_maaprobe_MaaNative_blockForProbe(JNIEnv* env, jobject, jobject entered) {
+Java_io_github_yysassist_vision_maa_MaaNative_blockForProbe(JNIEnv* env, jobject, jobject entered) {
     // An explicit test-only hang. No signal handler, fabricated recognition result or game action.
     auto type = env->GetObjectClass(entered);
     auto run = env->GetMethodID(type, "run", "()V");

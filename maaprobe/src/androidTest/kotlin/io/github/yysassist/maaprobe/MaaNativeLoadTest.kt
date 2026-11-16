@@ -1,5 +1,7 @@
 package io.github.yysassist.maaprobe
 
+import io.github.yysassist.vision.maa.MaaProbeAccess as MaaNative
+
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build

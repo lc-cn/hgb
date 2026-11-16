@@ -1,0 +1,27 @@
+{
+  "modelFixtureAssetsAbsentDuringFinalBuild": true,
+  "defaultTestAssets": [
+    "assets/io.github.yysassist.storage.AssistDatabase/1.json",
+    "assets/io.github.yysassist.storage.AssistDatabase/2.json",
+    "assets/io.github.yysassist.storage.AssistDatabase/3.json",
+    "assets/io.github.yysassist.storage.AssistDatabase/4.json"
+  ],
+  "artifacts": [
+    {
+      "artifact": "app-debug.apk",
+      "bytes": 178784909,
+      "sha256": "1f551406b5076367fc06587c5d9f8b42cf284d97b8b7ef2d389300a6490566ff"
+    },
+    {
+      "artifact": "app-debug-androidTest.apk",
+      "bytes": 3835020,
+      "sha256": "1d7bb29dd944a44cebd41966fb3ca7a4742bb7069c715e3e6cdd9b7bc7c7856f"
+    },
+    {
+      "artifact": "app-ocr-tests.apk",
+      "bytes": 30804345,
+      "sha256": "ff9f94b2f20d414b2a4667938052aacf4df934cbdbc90bd02718de42ae8c976e"
+    }
+  ],
+  "coreTask": "UP-TO-DATE (67 existing passing test reports)"
+}

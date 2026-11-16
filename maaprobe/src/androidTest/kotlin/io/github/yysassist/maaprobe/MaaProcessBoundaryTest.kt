@@ -1,8 +1,11 @@
 package io.github.yysassist.maaprobe
 
+import io.github.yysassist.vision.maa.*
+
 import android.graphics.*
 import android.content.ComponentName
 import android.os.Process
+import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -50,7 +53,7 @@ class MaaProcessBoundaryTest {
     }
     private fun models(corrupt: Boolean = false): Map<String, MaaModelFile> {
         val directory = File(folder, "models-${UUID.randomUUID()}").apply { check(mkdirs()) }
-        return MaaProcessProtocol.modelNames.associateWith { name ->
+        return MaaProbeAccess.modelNames.associateWith { name ->
             val file = File(directory, name)
             if (corrupt) {
                 if (name == "keys.txt") file.writeText("a\nb\n") else file.writeBytes(byteArrayOf(1, 2, 3))
@@ -84,7 +87,7 @@ class MaaProcessBoundaryTest {
     }
     private fun call(models: Map<String, MaaModelFile>, frame: File, block: Boolean = false,
         quiet: AtomicInteger = AtomicInteger(), quietAt: AtomicLong = AtomicLong()): MaaProcessCall =
-        MaaProcessCall(context, models, frame, block) { quietAt.set(SystemClock.elapsedRealtimeNanos()); quiet.incrementAndGet() }
+        MaaProcessCall(context, models, ParcelFileDescriptor.open(frame, ParcelFileDescriptor.MODE_READ_ONLY), block) { quietAt.set(SystemClock.elapsedRealtimeNanos()); quiet.incrementAndGet() }
             .also { calls += it }
     private fun record(name: String, call: MaaProcessCall, result: MaaProcessOutcome, quiet: AtomicInteger, quietAt: AtomicLong) {
         val child = call.acceptedPid.get(30, TimeUnit.SECONDS)

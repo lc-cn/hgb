@@ -24,6 +24,7 @@
 | [离线识别实测](offline-vision-probe.md) | 独立无网络权限 APK、同图指标、实际 native 兼容故障与未定生产选型 |
 | [tiny／small 同轮对照](vision-model-comparison.md) | 同输入字节的模型对照、庭院／菜单／商品价格的文字与位置观测、正式 APK 独立性 |
 | [Maa纯识别实测](maa-recognition-probe.md) | 固定C API／native闭包、同图与16KB对齐、损坏模型真实崩溃及PoC入口缓解；未选定生产后端 |
+| [版本文字观察](versioned-text-observation.md) | App 版本租约与共享 OCR 子进程接入、模型不进主 APK、取消与故障证据及未完成边界 |
 | [Android 平台桥](device-bridge.md) | 截图／输入所有权、撤权与取消回归及平台 PoC 边界 |
 | [原生悬浮控制](floating-controls.md) | 三层窗口、常用与同一执行器、显示偏好、截图／输入排除及真实设备测试边界 |
 | [首版任务分发](task-distribution.md) | 当前已实现的 Release 读取／附件校验／本地版本页，及未完成的资源与运行联动边界 |

@@ -6,4 +6,4 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 rootProject.name = "YysAssist"
-include(":core", ":app", ":visionprobe", ":maaprobe")
+include(":core", ":app", ":vision", ":visionprobe", ":maaprobe")

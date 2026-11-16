@@ -1,11 +1,11 @@
 # Maa recognition-only Android probe
 
-This separate ARM64 experiment validates MaaFramework 5.16.1 through its C API. Production `app` has no dependency on it. No launcher, accessibility service, controller, action, toolkit or agent is registered. Both target/test APKs remove INTERNET permission; installed permission checks run before native loading and comparison.
+This separate ARM64 experiment validates MaaFramework 5.16.1 through its C API. Production `app` does not depend on this experiment; both now reuse the `vision` library for JNI and subprocess transport. See the [App observation integration](../docs/development/versioned-text-observation.md). No launcher, accessibility service, controller, action, toolkit or agent is registered. Both target/test APKs remove INTERNET permission; installed permission checks run before native loading and comparison.
 
-The seven selected upstream libraries, twelve C headers, converted PP-OCRv6 small files and license are fixed in `inputs.lock.json`. Preparation validates the complete official release digest and individual selected bytes. This dependency closure needs MaaFramework, MaaUtils, OpenCV world, ONNX Runtime, FastDeploy, NCNN and libc++; NCNN is transitively required by the binary even though recognition explicitly selects ONNX CPU. Controller, toolkit, agent and plugin libraries are excluded. JNI uses the installed NDK 27.1.12297006/CMake 3.22.1, a static STL and C API ownership; foreign objects are destroyed by their owning C functions.
+The seven selected upstream libraries, twelve C headers, converted PP-OCRv6 small files and license are fixed in [`vision/inputs.lock.json`](../vision/inputs.lock.json). Preparation validates the complete official release digest and individual selected bytes. This dependency closure needs MaaFramework, MaaUtils, OpenCV world, ONNX Runtime, FastDeploy, NCNN and libc++; NCNN is transitively required by the binary even though recognition explicitly selects ONNX CPU. Controller, toolkit, agent and plugin libraries are excluded. JNI uses the installed NDK 27.1.12297006/CMake 3.22.1, a static STL and C API ownership; foreign objects are destroyed by their owning C functions.
 
 ```sh
-python3 tools/qa/prepare_maa_probe.py
+python3 tools/qa/prepare_maa_inputs.py
 ./gradlew :maaprobe:assembleDebug :maaprobe:assembleDebugAndroidTest :maaprobe:lintDebug
 ```
 
@@ -29,7 +29,7 @@ Default tests skip the explicitly gated fault experiments and use synthetic inpu
 
 The explicit corrupt-model experiment crashed the probe process: an upstream background worker terminated with an uncaught `Ort::Exception` while loading invalid ONNX. JNI caller-thread catches cannot intercept that exception. The original crash logs and binary identities are preserved in the [evidence](../docs/development/build-evidence/maa-probe/README.md); it is not a passing reliability test.
 
-`MaaOcr` verifies copied model bytes against APK-compiled digests generated from the lock before creating a foreign worker. A changed-model test verifies rejection and a subsequent valid read in the same process. This is a temporary probe entry mitigation, not an upstream fix or a solution to all native crashes, concurrent file replacement or hangs. The production version library now supplies resource leases, but this probe has not integrated them. Production model identity/lifetime belong to that owner, whose validated leases should replace the fixed-APK pin gate. Production models are still intended to come from task-version resources, not be hardcoded into the shell.
+`MaaOcr` verifies copied model bytes against APK-compiled digests generated from the lock before creating a foreign worker. A changed-model test verifies rejection and a subsequent valid read in the same process. This is a temporary probe entry mitigation, not an upstream fix or a solution to all native crashes, concurrent file replacement or hangs. This fixed-APK gate now exists only in the direct-ABI test fixture. The App observer instead consumes the version library’s verified resource descriptors and keeps its lease until the shared subprocess proves quiet. Production models belong to task versions and are absent from the main APK.
 
 To reproduce the **known process-terminating** upstream fault separately, the local test package contains `MaaFailureContractTest` gated by `-e allowCorruptMaaModels true`. It deliberately bypasses `MaaOcr` and must not be mixed into the normal batch. The adapter never reports an unfinished or crashed native request as an empty successful recognition.
 

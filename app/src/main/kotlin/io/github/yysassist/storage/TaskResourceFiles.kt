@@ -26,12 +26,17 @@ class TaskResourceLease internal constructor(
     val version: String,
     val bundleDigest: String,
     private val files: Map<String, File>,
+    private val descriptors: Map<String, TaskResource>,
     private val release: () -> Unit,
 ) : Closeable {
     private var closed = false
     @Synchronized fun file(id: String): File {
         check(!closed) { "资源租约已释放" }
         return files[id] ?: throw IllegalArgumentException("任务版本未声明此资源：$id")
+    }
+    @Synchronized fun descriptor(id: String): TaskResource {
+        check(!closed) { "资源租约已释放" }
+        return descriptors[id] ?: throw IllegalArgumentException("任务版本未声明此资源：$id")
     }
     @Synchronized override fun close() {
         if (!closed) { closed = true; release() }
@@ -143,7 +148,7 @@ class TaskResourceFiles(private val root: File) {
             digests.forEach { leasedDigests[it] = Math.addExact(leasedDigests[it] ?: 0, 1) }
             changes.value += 1
         }
-        return TaskResourceLease(version, digest, resources.associate { it.id to blob(it.sha256) }) {
+        return TaskResourceLease(version, digest, resources.associate { it.id to blob(it.sha256) }, resources.associateBy { it.id }) {
             synchronized(this) {
                 decrement(leases, version)
                 digests.forEach { decrement(leasedDigests, it) }

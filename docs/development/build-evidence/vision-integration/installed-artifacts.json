@@ -1,0 +1,27 @@
+{
+  "environment": {
+    "android": "16",
+    "api": "36",
+    "abi": "arm64-v8a",
+    "hardware": "ranchu",
+    "pageBytes": 4096
+  },
+  "installed": [
+    {
+      "package": "io.github.yysassist",
+      "sha256": "1f551406b5076367fc06587c5d9f8b42cf284d97b8b7ef2d389300a6490566ff"
+    },
+    {
+      "package": "io.github.yysassist.test",
+      "sha256": "ff9f94b2f20d414b2a4667938052aacf4df934cbdbc90bd02718de42ae8c976e"
+    },
+    {
+      "package": "io.github.yysassist.maaprobe",
+      "sha256": "eceb77682086634dd35cadae5caa4993d470140ea4cd77390a5f0d6e8595c0bc"
+    },
+    {
+      "package": "io.github.yysassist.maaprobe.test",
+      "sha256": "db81956ed26dd0625a79e7dde24338b0691119f85ce0394008a07996d7fd7c19"
+    }
+  ]
+}

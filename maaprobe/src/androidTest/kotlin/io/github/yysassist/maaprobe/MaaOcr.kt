@@ -1,15 +1,6 @@
 package io.github.yysassist.maaprobe
 
-/** Isolated recognition experiment. No controller, action submission or platform bridge is exposed. */
-internal object MaaNative {
-    init { System.loadLibrary("yys_maa_probe") }
-    external fun version(): String
-    external fun create(directory: String): Long
-    external fun recognizeRaw(handle: Long, image: ByteArray): ByteArray
-    external fun destroy(handle: Long)
-    /** Debug probe only: a foreign worker that cannot return; termination must remain independent. */
-    external fun blockForProbe(entered: Runnable)
-}
+import io.github.yysassist.vision.maa.MaaProbeAccess as MaaNative
 
 /** Serial synchronous calls: close cannot release native memory while recognition is using it. */
 internal class MaaOcr(directory: String) : java.io.Closeable {

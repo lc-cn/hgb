@@ -1,0 +1,212 @@
+{
+  "artifact": "app-debug.apk",
+  "bytes": 178784909,
+  "sha256": "1f551406b5076367fc06587c5d9f8b42cf284d97b8b7ef2d389300a6490566ff",
+  "assets": [
+    "assets/PublicSuffixDatabase.list",
+    "assets/maa-license/LICENSE.md"
+  ],
+  "modelOrImageAssets": [],
+  "libraries": [
+    {
+      "library": "lib/arm64-v8a/libMaaFramework.so",
+      "bytes": 54787168,
+      "sha256": "def162a33b53371dea3b47400ae493eed9e0acc604221b0d61b75e56e011cb77",
+      "loadAlignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 34734080,
+      "stored": true
+    },
+    {
+      "library": "lib/arm64-v8a/libMaaUtils.so",
+      "bytes": 13600296,
+      "sha256": "049dc9d818a1edcd30508a56a659cd2ca63d3638b4f13f24b0db1d58c73c5475",
+      "loadAlignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 89522176,
+      "stored": true
+    },
+    {
+      "library": "lib/arm64-v8a/libandroidx.graphics.path.so",
+      "bytes": 10096,
+      "sha256": "41e9a793c43a0f4fddb19e33f346bace464f30f888ba7b9eaf96294ea115bfb6",
+      "loadAlignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 103137280,
+      "stored": true
+    },
+    {
+      "library": "lib/arm64-v8a/libc++_shared.so",
+      "bytes": 9290184,
+      "sha256": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352",
+      "loadAlignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 103153664,
+      "stored": true
+    },
+    {
+      "library": "lib/arm64-v8a/libdatastore_shared_counter.so",
+      "bytes": 10376,
+      "sha256": "11bd2537cc881528f7a249a74e42b87ff779ef99617b7cb93146ae9c1866a2d6",
+      "loadAlignments": [
+        16384,
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 112459776,
+      "stored": true
+    },
+    {
+      "library": "lib/arm64-v8a/libfastdeploy_ppocr.so",
+      "bytes": 6094657,
+      "sha256": "e8adfe1a25d5c70404b5a09a23d472c52b8f41f2f1cc87f3ebe6cc0d81e9a629",
+      "loadAlignments": [
+        16384,
+        16384,
+        16384,
+        65536
+      ],
+      "apkDataOffset": 112476160,
+      "stored": true
+    },
+    {
+      "library": "lib/arm64-v8a/libncnn.so",
+      "bytes": 5237033,
+      "sha256": "47280e5da866b5ad8d420f240826e4bf09d8a5425d4f4c0d3b14f1b13b75d8a1",
+      "loadAlignments": [
+        16384,
+        16384,
+        16384,
+        65536
+      ],
+      "apkDataOffset": 118571008,
+      "stored": true
+    },
+    {
+      "library": "lib/arm64-v8a/libonnxruntime.so",
+      "bytes": 21726776,
+      "sha256": "a62ef27cc11fc7bcdd1266ee40b75225b3492197f27576ea638ed2827e8ea1f8",
+      "loadAlignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 123813888,
+      "stored": true
+    },
+    {
+      "library": "lib/arm64-v8a/libopencv_world4.so",
+      "bytes": 30377505,
+      "sha256": "9e8c23c4717aaf86aef656d016d1e6e21cbad3fc56570142cadcddf430787653",
+      "loadAlignments": [
+        16384,
+        16384,
+        16384,
+        65536
+      ],
+      "apkDataOffset": 145555456,
+      "stored": true
+    },
+    {
+      "library": "lib/arm64-v8a/libyys_maa.so",
+      "bytes": 1915568,
+      "sha256": "6485cad817c2df67b97cb30dcb27f4aa1bbc01c26c4d2687c880bbe7c23e3f64",
+      "loadAlignments": [
+        16384,
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 175947776,
+      "stored": true
+    },
+    {
+      "library": "lib/armeabi-v7a/libandroidx.graphics.path.so",
+      "bytes": 7252,
+      "sha256": "41399eba6fc2a60f6f14642375c1824f3cf25eb8fec7397d753730a3ceda3e2b",
+      "loadAlignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 177864704,
+      "stored": true
+    },
+    {
+      "library": "lib/armeabi-v7a/libdatastore_shared_counter.so",
+      "bytes": 5864,
+      "sha256": "59a012cc84a626d52786eb91d12c94fc0be3088dc3bf3ca3ef2b1f4c63e7ef46",
+      "loadAlignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 177881088,
+      "stored": true
+    },
+    {
+      "library": "lib/x86/libandroidx.graphics.path.so",
+      "bytes": 9284,
+      "sha256": "eb0570b41fd3bff25d8204a967c03bd7550719e768b791f680cc40cbe35f29af",
+      "loadAlignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 177897472,
+      "stored": true
+    },
+    {
+      "library": "lib/x86/libdatastore_shared_counter.so",
+      "bytes": 6424,
+      "sha256": "0c89f3452dc26e63d5cb0ca583857ff05a8c00584f89c3fe3ced94461f14e87e",
+      "loadAlignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 177913856,
+      "stored": true
+    },
+    {
+      "library": "lib/x86_64/libandroidx.graphics.path.so",
+      "bytes": 10760,
+      "sha256": "4e56c996f13670e70082658de7880c4020eabf4f25e43387f88ed78a713fc9f0",
+      "loadAlignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 177930240,
+      "stored": true
+    },
+    {
+      "library": "lib/x86_64/libdatastore_shared_counter.so",
+      "bytes": 7424,
+      "sha256": "e52c438933dd5b7347199cedd14d4c2fb552d300e190282405d5f022dc4d73d9",
+      "loadAlignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 177946624,
+      "stored": true
+    }
+  ],
+  "allLoadSegments16KiBAligned": true,
+  "allStoredLibraryOffsets16KiBAligned": true,
+  "note": "Source pins verified before packaging. App may strip upstream symbols; packaged digests are artifact identities, not source digest equality. Runtime validation uses a 4KiB kernel only."
+}

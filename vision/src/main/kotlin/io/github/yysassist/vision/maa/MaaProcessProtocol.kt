@@ -1,4 +1,4 @@
-package io.github.yysassist.maaprobe
+package io.github.yysassist.vision.maa
 
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
@@ -25,9 +25,9 @@ internal object MaaProcessProtocol {
     }
 }
 
-internal data class MaaModelFile(val file: File, val bytes: Long, val sha256: String)
-internal enum class NoObservation { CANCELLED, PROCESS_DIED, REJECTED, BUSY, LOCAL_ERROR, PROTOCOL_ERROR }
-internal sealed interface MaaProcessOutcome {
+data class MaaModelFile(val file: File, val bytes: Long, val sha256: String)
+enum class NoObservation { CANCELLED, PROCESS_DIED, REJECTED, BUSY, LOCAL_ERROR, PROTOCOL_ERROR }
+sealed interface MaaProcessOutcome {
     /** Native observation transport completed; hit=false is still not a business absence decision. */
     data class Observed(val raw: String, val childPid: Int) : MaaProcessOutcome
     data class Missing(val reason: NoObservation, val rejectedAt: String? = null, val errorType: String? = null) : MaaProcessOutcome

@@ -1,5 +1,6 @@
-"""Prepare pinned recognition-only Maa probe inputs in ignored storage. No production dependency."""
+"""Prepare pinned Maa code inputs, optionally with debug probe models, in ignored storage."""
 from pathlib import Path
+import argparse
 import hashlib
 import json
 import urllib.request
@@ -24,10 +25,10 @@ def fetch_or_cached(path, url, spec):
     return data
 
 
-def prepare():
-    lock = json.loads((ROOT / "maaprobe/inputs.lock.json").read_text())
+def prepare(native_only=False):
+    lock = json.loads((ROOT / "vision/inputs.lock.json").read_text())
     folder = ROOT / ".local/maa-probe"
-    prepared = folder / "prepared"
+    prepared = ROOT / ".local/maa/prepared"
     spec = lock["distribution"]
     archive_path = folder / spec["name"]
     fetch_or_cached(archive_path, spec["url"], spec)
@@ -42,15 +43,20 @@ def prepare():
     with zipfile.ZipFile(archive_path) as archive:
         for source, entry in lock["distributionFiles"].items():
             write(entry["destination"], checked(archive.read(source), entry, source))
-    for entry in lock["models"]["files"]:
-        data = fetch_or_cached(folder / "models" / entry["path"], entry["url"], entry)
-        write("assets/maa-model/" + entry["path"], data)
     spec = lock["license"]
-    write("assets/maa-license/LICENSE.md", fetch_or_cached(folder / "source/LICENSE.md", spec["url"], spec))
-    write("assets/model-manifest.json", (json.dumps(lock["models"], indent=2) + "\n").encode())
+    license_data = fetch_or_cached(folder / "source/LICENSE.md", spec["url"], spec)
+    write("native-assets/maa-license/LICENSE.md", license_data)
+    if not native_only:
+        for entry in lock["models"]["files"]:
+            data = fetch_or_cached(folder / "models" / entry["path"], entry["url"], entry)
+            write("assets/maa-model/" + entry["path"], data)
+        write("assets/maa-license/LICENSE.md", license_data)
+        write("assets/model-manifest.json", (json.dumps(lock["models"], indent=2) + "\n").encode())
     (prepared / "inputs-manifest.json").write_text(json.dumps({"version": lock["version"], "files": records}, indent=2) + "\n")
-    print("Prepared pinned Maa probe inputs; controller, agent, toolkit and plugin libraries excluded.")
+    print("Prepared pinned Maa native inputs" + (" without models." if native_only else " and debug probe models."))
 
 
 if __name__ == "__main__":
-    prepare()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--native-only", action="store_true", help="Prepare APK code/notices without downloading models")
+    prepare(parser.parse_args().native_only)

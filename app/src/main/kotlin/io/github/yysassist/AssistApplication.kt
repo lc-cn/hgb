@@ -15,6 +15,8 @@ import java.io.File
 import io.github.yysassist.storage.TaskConfigurationRepository
 import io.github.yysassist.storage.TaskAdmissionRepository
 import io.github.yysassist.storage.ExecutionStateStore
+import io.github.yysassist.vision.VersionedTextObserver
+import io.github.yysassist.vision.MaaTextBackend
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import java.net.Proxy
@@ -43,13 +45,19 @@ class AssistApplication : Application() {
         private set
     lateinit var taskEditor: TaskConfigurationEditor
         private set
+    internal lateinit var textObserver: VersionedTextObserver
+        private set
     override fun onCreate() {
         super.onCreate()
+        // Android creates this Application in :maa_ocr too. Only the main process owns
+        // persistence recovery, task admission and update networking.
+        if (getProcessName() != packageName) return
         appearance = AppearancePreferences(this, scope)
         floating = FloatingPreferences(this, scope)
         val database = AssistDatabase.open(this)
         val workers = BuiltInStepWorkFactory()
         val library = TaskVersionLibrary(database, BundleCodec(workers.contracts), TaskResourceFiles(File(noBackupFilesDir, "task-resources")))
+        textObserver = VersionedTextObserver(library, MaaTextBackend(this))
         executor = ExecutionRuntime(ExecutionStateStore(database, library), library,
             TaskAdmissionRepository(database, library), workers, scope)
         configurations = TaskConfigurationRepository(database, library)

@@ -1,5 +1,6 @@
-package io.github.yysassist.maaprobe
+package io.github.yysassist.vision.maa
 
+import io.github.yysassist.vision.BuildConfig
 import android.app.Application
 import android.app.Service
 import android.content.Intent
@@ -58,7 +59,7 @@ class MaaObservationService : Service() {
     private fun observe(id: String, data: Bundle, destination: Messenger) {
         val directory = MaaProcessProtocol.folder(cacheDir, id)
         var stage = "model-copy"
-        val result: ParcelFileDescriptor
+        val raw: ByteArray
         try {
             check(directory.mkdirs()) { "Work directory already exists" }
             MaaProcessProtocol.modelNames.forEach { name ->
@@ -95,10 +96,7 @@ class MaaObservationService : Service() {
             stage = "native-register"
             val handle = MaaNative.create(directory.absolutePath)
             stage = "native-recognize"
-            val raw = try { MaaNative.recognizeRaw(handle, image) } finally { MaaNative.destroy(handle) }
-            stage = "result-write"
-            val resultFile = File(directory, "result.json").apply { writeBytes(raw); check(setReadOnly()) }
-            result = ParcelFileDescriptor.open(resultFile, ParcelFileDescriptor.MODE_READ_ONLY)
+            raw = try { MaaNative.recognizeRaw(handle, image) } finally { MaaNative.destroy(handle) }
         } catch (error: Exception) {
             // Keep error meaning without transmitting file paths, model contents or stack dumps.
             try { reply(destination, MaaProcessProtocol.REJECTED, id, Bundle().apply {
@@ -110,14 +108,18 @@ class MaaObservationService : Service() {
             // Keep ownership and process alive until STOP/death. A second caller cannot reuse it
             // between response delivery and the first caller proving process termination.
         }
+        val result = ParcelFileDescriptor.createPipe()
         try {
-            result.use { descriptor ->
+            result[0].use { descriptor ->
                 reply(destination, MaaProcessProtocol.RESULT, id, Bundle().apply { putParcelable("result", descriptor) })
             }
+            ParcelFileDescriptor.AutoCloseOutputStream(result[1]).use { it.write(raw) }
         } catch (_: Exception) {
             // Delivery/close failure is not evidence the result was never delivered. Do not issue a
             // contradictory REJECTED terminal response; host retains any already received result FD.
             terminateSelf()
+        } finally {
+            result.forEach { it.close() }
         }
     }
 }

@@ -1,5 +1,7 @@
 package io.github.yysassist.maaprobe
 
+import io.github.yysassist.vision.maa.MaaProbeAccess as MaaNative
+
 import android.graphics.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry

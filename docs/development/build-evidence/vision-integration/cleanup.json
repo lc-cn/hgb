@@ -1,0 +1,20 @@
+{
+  "isolatedEmulatorOnly": true,
+  "packages": [
+    {
+      "package": "io.github.yysassist.test",
+      "uninstalled": true
+    },
+    {
+      "package": "io.github.yysassist.maaprobe.test",
+      "uninstalled": true
+    },
+    {
+      "package": "io.github.yysassist.maaprobe",
+      "uninstalled": true
+    }
+  ],
+  "mainAssistantPreserved": true,
+  "phoneOperated": false,
+  "gameOperated": false
+}

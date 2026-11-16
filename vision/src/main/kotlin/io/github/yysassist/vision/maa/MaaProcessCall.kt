@@ -1,4 +1,4 @@
-package io.github.yysassist.maaprobe
+package io.github.yysassist.vision.maa
 
 import android.content.ComponentName
 import android.content.Context
@@ -7,7 +7,6 @@ import android.content.ServiceConnection
 import android.os.*
 import android.os.Process
 import org.json.JSONObject
-import java.io.File
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
@@ -17,12 +16,12 @@ import java.nio.charset.CodingErrorAction
 /**
  * One isolated observation, no retry or timeout policy. Explicit stop is independent of the native
  * worker. Completion means no foreign use remains (Binder death, or a request never accepted).
- * This is a PoC, not the production executor/lease adapter. Callers use requestStop, not Future.cancel.
+ * Caller transfers ownership of imageRead. Use requestStop, not Future.cancel, to end foreign use.
  */
-internal class MaaProcessCall(
+class MaaProcessCall(
     context: Context,
     private val models: Map<String, MaaModelFile>,
-    private val image: File,
+    private val imageRead: ParcelFileDescriptor,
     private val nativeBlock: Boolean = false,
     private val onQuiet: () -> Unit,
 ) {
@@ -37,6 +36,7 @@ internal class MaaProcessCall(
     val completion = CompletableFuture<MaaProcessOutcome>()
     val acceptedPid = CompletableFuture<Int>()
     val nativeEntered = CompletableFuture<Unit>()
+    val cleanupErrors = CompletableFuture<List<String>>()
     var binderDeathObservedAt: Long? = null
         private set
     var quietEvidence: String? = null
@@ -112,12 +112,11 @@ internal class MaaProcessCall(
                 data.putParcelable(name, descriptor)
                 data.putLong("$name.bytes", model.bytes); data.putString("$name.sha256", model.sha256)
             }
-            val frame = ParcelFileDescriptor.open(image, ParcelFileDescriptor.MODE_READ_ONLY)
-            descriptors += frame; data.putParcelable("image", frame)
+            data.putParcelable("image", imageRead)
             // From this point a failed IPC delivery is uncertain, not proof the child never used FDs.
             submitted = true
             service!!.send(Message.obtain(null, MaaProcessProtocol.OBSERVE).apply { this.data = data; replyTo = endpoint })
-        } finally { descriptors.forEach { it.close() } }
+        } finally { descriptors.forEach { it.close() }; imageRead.close() }
     }
 
     private fun receive(message: Message) {
@@ -207,15 +206,18 @@ internal class MaaProcessCall(
         if (finished) return
         finished = true
         var failure: Exception? = null
+        try { imageRead.close() } catch (error: Exception) { failure = error }
         try {
             binder?.let { try { it.unlinkToDeath(death, 0) } catch (_: NoSuchElementException) { } }
             if (bound) { app.unbindService(connection); bound = false }
-        } catch (error: Exception) { failure = error }
+        } catch (error: Exception) { if (failure == null) failure = error else failure.addSuppressed(error) }
         try { onQuiet() } catch (error: Exception) { if (failure == null) failure = error else failure.addSuppressed(error) }
         try {
             if (!MaaProcessProtocol.folder(app.cacheDir, id).deleteRecursively()) error("Child work directory cleanup failed")
         } catch (error: Exception) { if (failure == null) failure = error else failure.addSuppressed(error) }
-        if (failure == null) completion.complete(checkNotNull(proposed)) else completion.completeExceptionally(failure)
+        // Cleanup reporting cannot erase an already established observation/termination outcome.
+        cleanupErrors.complete(failure?.let { listOf(it.javaClass.simpleName) + it.suppressed.map { item -> item.javaClass.simpleName } } ?: emptyList())
+        completion.complete(checkNotNull(proposed))
         if (!acceptedPid.isDone) acceptedPid.completeExceptionally(IllegalStateException("Observation not accepted"))
         if (!nativeEntered.isDone) nativeEntered.completeExceptionally(IllegalStateException("Native block not entered"))
     }

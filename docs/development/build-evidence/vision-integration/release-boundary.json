@@ -1,0 +1,32 @@
+{
+  "debug": {
+    "artifact": "app-debug.apk",
+    "sha256": "1f551406b5076367fc06587c5d9f8b42cf284d97b8b7ef2d389300a6490566ff",
+    "bytes": 178784909,
+    "debugOnlyClasses": {
+      "ApplicationStartupProbeService": true,
+      "maa/MaaProbeAccess": true,
+      "startupProbeInManifest": true
+    },
+    "assets": [
+      "assets/PublicSuffixDatabase.list",
+      "assets/maa-license/LICENSE.md"
+    ]
+  },
+  "releaseUnsigned": {
+    "artifact": "app-release-unsigned.apk",
+    "sha256": "99b78a2a608540afe4d755e5c38a37821ba6a913bb383c792db992194d0ae678",
+    "bytes": 170376999,
+    "debugOnlyClasses": {
+      "ApplicationStartupProbeService": false,
+      "maa/MaaProbeAccess": false,
+      "startupProbeInManifest": false
+    },
+    "assets": [
+      "assets/dexopt/baseline.prof",
+      "assets/dexopt/baseline.profm",
+      "assets/PublicSuffixDatabase.list",
+      "assets/maa-license/LICENSE.md"
+    ]
+  }
+}

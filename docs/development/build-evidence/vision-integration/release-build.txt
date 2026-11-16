@@ -1,0 +1,123 @@
+Calculating task graph as no cached configuration is available for tasks: :app:assembleRelease
+> Task :app:generateReleaseAssets UP-TO-DATE
+> Task :app:preBuild UP-TO-DATE
+> Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vision:generateReleaseAssets UP-TO-DATE
+> Task :core:processResources NO-SOURCE
+> Task :app:preReleaseBuild UP-TO-DATE
+> Task :vision:prepareLintJarForPublish UP-TO-DATE
+> Task :app:extractProguardFiles UP-TO-DATE
+> Task :app:createReleaseCompatibleScreenManifests
+> Task :app:generateReleaseResources
+> Task :app:desugarReleaseFileDependencies
+> Task :app:extractDeepLinksRelease
+> Task :app:mapReleaseSourceSetPaths
+> Task :app:mergeReleaseJniLibFolders
+> Task :core:compileKotlin UP-TO-DATE
+> Task :core:compileJava NO-SOURCE
+> Task :app:mergeReleaseStartupProfile
+> Task :core:classes UP-TO-DATE
+> Task :app:writeReleaseSigningConfigVersions
+> Task :app:writeReleaseAppMetadata
+> Task :core:jar UP-TO-DATE
+> Task :app:packageReleaseResources
+> Task :app:javaPreCompileRelease
+> Task :app:extractReleaseVersionControlInfo
+> Task :app:checkReleaseDuplicateClasses
+> Task :app:collectReleaseDependencies
+> Task :vision:verifyMaaNativeInputs
+> Task :vision:preBuild
+> Task :vision:preReleaseBuild
+> Task :app:sdkReleaseDependencyData
+> Task :vision:generateReleaseBuildConfig
+> Task :vision:generateReleaseResources
+> Task :vision:packageReleaseResources
+> Task :vision:processReleaseNavigationResources
+> Task :vision:mergeReleaseJniLibFolders
+> Task :vision:parseReleaseLocalResources
+> Task :app:processReleaseNavigationResources
+> Task :app:parseReleaseLocalResources
+> Task :vision:writeReleaseAarMetadata
+> Task :app:generateReleaseRFile
+> Task :app:checkReleaseAarMetadata
+> Task :vision:configureCMakeRelWithDebInfo[arm64-v8a]
+> Task :vision:generateReleaseRFile
+> Task :vision:buildCMakeRelWithDebInfo[arm64-v8a]
+> Task :vision:mergeReleaseNativeLibs
+> Task :vision:extractDeepLinksRelease
+> Task :vision:processReleaseManifest
+> Task :app:processReleaseMainManifest
+> Task :app:processReleaseManifest
+> Task :vision:mapReleaseSourceSetPaths
+> Task :vision:javaPreCompileRelease
+> Task :vision:prepareReleaseArtProfile
+> Task :vision:compileReleaseLibraryResources
+> Task :app:compileReleaseNavigationResources
+> Task :vision:extractProguardFiles UP-TO-DATE
+> Task :app:mergeReleaseArtProfile
+> Task :vision:checkReleaseAarMetadata
+> Task :vision:extractDeepLinksForAarRelease
+> Task :vision:extractReleaseAnnotations
+> Task :vision:writeReleaseLintModelMetadata
+> Task :vision:copyReleaseJniLibsProjectOnly
+> Task :app:processReleaseManifestForPackage
+> Task :app:mergeReleaseNativeLibs
+> Task :vision:mergeReleaseAssets
+> Task :app:mergeReleaseAssets
+> Task :app:compressReleaseAssets
+> Task :vision:compileReleaseKotlin
+> Task :vision:compileReleaseJavaWithJavac
+> Task :app:mergeReleaseResources
+> Task :vision:bundleLibCompileToJarRelease
+
+> Task :vision:stripReleaseDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libMaaFramework.so, libMaaUtils.so, libandroidx.graphics.path.so, libc++_shared.so, libdatastore_shared_counter.so, libfastdeploy_ppocr.so, libncnn.so, libonnxruntime.so, libopencv_world4.so, libyys_maa.so. Run with --info option to learn more.
+
+> Task :vision:bundleLibRuntimeToJarRelease
+> Task :vision:processReleaseJavaRes
+> Task :vision:createFullJarRelease
+> Task :vision:generateReleaseLintModel
+> Task :vision:copyReleaseJniLibsProjectAndLocalJars
+> Task :vision:mergeReleaseGeneratedProguardFiles
+> Task :vision:mergeReleaseConsumerProguardFiles
+> Task :vision:mergeReleaseJavaResource
+> Task :vision:syncReleaseLibJars
+> Task :vision:bundleReleaseLocalLintAar
+> Task :vision:generateReleaseLintVitalModel
+
+> Task :app:stripReleaseDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libMaaFramework.so, libMaaUtils.so, libandroidx.graphics.path.so, libc++_shared.so, libdatastore_shared_counter.so, libfastdeploy_ppocr.so, libncnn.so, libonnxruntime.so, libopencv_world4.so, libyys_maa.so. Run with --info option to learn more.
+
+> Task :vision:bundleLibRuntimeToDirRelease
+> Task :app:kspReleaseKotlin
+> Task :app:processReleaseResources
+> Task :app:extractReleaseNativeSymbolTables
+> Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
+> Task :app:optimizeReleaseResources
+> Task :vision:lintVitalAnalyzeRelease
+
+> Task :app:compileReleaseKotlin
+w: file://$WORKSPACE/app/src/main/kotlin/io/github/yysassist/device/AndroidDeviceBridge.kt:199:73 Cast is redundant.
+w: file://$WORKSPACE/app/src/main/kotlin/io/github/yysassist/ui/ExecutionControls.kt:69:130 'when' is exhaustive so 'else' is redundant here.
+
+> Task :app:compileReleaseJavaWithJavac NO-SOURCE
+> Task :app:processReleaseJavaRes
+> Task :app:generateReleaseLintVitalReportModel
+> Task :app:mergeReleaseJavaResource
+> Task :app:dexBuilderRelease
+> Task :app:mergeReleaseGlobalSynthetics
+> Task :app:lintVitalAnalyzeRelease
+> Task :app:lintVitalReportRelease
+> Task :app:lintVitalRelease
+> Task :app:mergeExtDexRelease
+> Task :app:mergeDexRelease
+> Task :app:compileReleaseArtProfile
+> Task :app:packageRelease
+> Task :app:assembleRelease
+> Task :app:createReleaseApkListingFileRedirect
+
+[Incubating] Problems report is available at: file://$WORKSPACE/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 50s
+93 actionable tasks: 88 executed, 5 up-to-date
+Configuration cache entry stored.

@@ -1,0 +1,211 @@
+Calculating task graph as no cached configuration is available for tasks: :app:assembleDebug :app:lintDebug :vision:lintDebug :maaprobe:assembleDebug :maaprobe:assembleDebugAndroidTest :maaprobe:lintDebug
+> Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :vision:generateDebugAssets UP-TO-DATE
+> Task :maaprobe:generateDebugAndroidTestAssets UP-TO-DATE
+> Task :maaprobe:generateDebugAssets UP-TO-DATE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :core:processResources NO-SOURCE
+> Task :app:extractProguardFiles UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :vision:prepareLintJarForPublish UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:generateDebugGlobalSynthetics UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:preDebugAndroidTestBuild SKIPPED
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :core:compileKotlin UP-TO-DATE
+> Task :core:compileJava NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :vision:verifyMaaNativeInputs
+> Task :vision:preBuild
+> Task :vision:preDebugBuild
+> Task :vision:preDebugAndroidTestBuild
+> Task :vision:javaPreCompileDebug UP-TO-DATE
+> Task :vision:generateDebugBuildConfig UP-TO-DATE
+> Task :vision:generateDebugResources UP-TO-DATE
+> Task :vision:mapDebugSourceSetPaths UP-TO-DATE
+> Task :vision:extractDeepLinksDebug UP-TO-DATE
+> Task :vision:processDebugNavigationResources UP-TO-DATE
+> Task :vision:writeDebugAarMetadata UP-TO-DATE
+> Task :vision:processDebugManifest UP-TO-DATE
+> Task :vision:mergeDebugAssets UP-TO-DATE
+> Task :vision:mergeDebugJniLibFolders UP-TO-DATE
+> Task :vision:checkDebugAarMetadata UP-TO-DATE
+> Task :vision:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :vision:writeDebugLintModelMetadata UP-TO-DATE
+> Task :vision:packageDebugResources UP-TO-DATE
+> Task :vision:extractProguardFiles UP-TO-DATE
+> Task :vision:prepareDebugArtProfile UP-TO-DATE
+> Task :vision:preDebugUnitTestBuild
+> Task :vision:parseDebugLocalResources UP-TO-DATE
+> Task :vision:compileDebugLibraryResources UP-TO-DATE
+> Task :vision:generateDebugRFile UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:compileDebugNavigationResources UP-TO-DATE
+> Task :app:generateDebugRFile UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :vision:compileDebugKotlin UP-TO-DATE
+> Task :vision:processDebugJavaRes UP-TO-DATE
+> Task :vision:mergeDebugJavaResource UP-TO-DATE
+> Task :vision:compileDebugJavaWithJavac UP-TO-DATE
+> Task :vision:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :vision:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :vision:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :vision:createFullJarDebug UP-TO-DATE
+> Task :vision:extractDebugAnnotations UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :vision:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :vision:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :vision:generateDebugLintModel UP-TO-DATE
+> Task :vision:generateDebugLintReportModel UP-TO-DATE
+> Task :vision:syncDebugLibJars UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :vision:configureCMakeDebug[arm64-v8a]
+> Task :vision:lintAnalyzeDebug UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :vision:buildCMakeDebug[arm64-v8a]
+> Task :vision:mergeDebugNativeLibs UP-TO-DATE
+> Task :vision:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :vision:stripDebugDebugSymbols UP-TO-DATE
+> Task :vision:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :vision:bundleDebugLocalLintAar UP-TO-DATE
+> Task :vision:generateDebugUnitTestLintModel UP-TO-DATE
+> Task :vision:generateDebugAndroidTestLintModel UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :vision:lintAnalyzeDebugAndroidTest UP-TO-DATE
+> Task :vision:lintAnalyzeDebugUnitTest UP-TO-DATE
+> Task :vision:lintReportDebug UP-TO-DATE
+> Task :vision:lintDebug
+> Task :maaprobe:verifyMaaInputs
+> Task :maaprobe:preBuild
+> Task :maaprobe:preDebugBuild
+> Task :maaprobe:preDebugAndroidTestBuild SKIPPED
+> Task :maaprobe:javaPreCompileDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :maaprobe:generateDebugGlobalSynthetics UP-TO-DATE
+> Task :maaprobe:generateDebugBuildConfig UP-TO-DATE
+> Task :maaprobe:javaPreCompileDebug UP-TO-DATE
+> Task :maaprobe:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :maaprobe:checkDebugDuplicateClasses UP-TO-DATE
+> Task :maaprobe:desugarDebugFileDependencies UP-TO-DATE
+> Task :maaprobe:mapDebugSourceSetPaths UP-TO-DATE
+> Task :maaprobe:generateDebugResources UP-TO-DATE
+> Task :maaprobe:processDebugNavigationResources UP-TO-DATE
+> Task :maaprobe:extractDeepLinksDebug UP-TO-DATE
+> Task :maaprobe:checkDebugAarMetadata UP-TO-DATE
+> Task :maaprobe:mergeDebugAssets UP-TO-DATE
+> Task :maaprobe:processDebugMainManifest UP-TO-DATE
+> Task :maaprobe:mergeDebugAndroidTestAssets UP-TO-DATE
+> Task :maaprobe:compressDebugAssets UP-TO-DATE
+> Task :maaprobe:compileDebugNavigationResources UP-TO-DATE
+> Task :maaprobe:packageDebugResources UP-TO-DATE
+> Task :maaprobe:mergeLibDexDebug UP-TO-DATE
+> Task :maaprobe:validateSigningDebug UP-TO-DATE
+> Task :maaprobe:processDebugManifest UP-TO-DATE
+> Task :maaprobe:writeDebugAppMetadata UP-TO-DATE
+> Task :maaprobe:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :maaprobe:mergeDebugJniLibFolders UP-TO-DATE
+> Task :maaprobe:generateDebugAndroidTestResources UP-TO-DATE
+> Task :maaprobe:processDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :maaprobe:processDebugManifestForPackage UP-TO-DATE
+> Task :maaprobe:parseDebugLocalResources UP-TO-DATE
+> Task :maaprobe:compressDebugAndroidTestAssets UP-TO-DATE
+> Task :maaprobe:generateDebugAndroidTestGlobalSynthetics UP-TO-DATE
+> Task :maaprobe:mergeDebugResources UP-TO-DATE
+> Task :maaprobe:mergeExtDexDebug UP-TO-DATE
+> Task :maaprobe:packageDebugAndroidTestResources UP-TO-DATE
+> Task :maaprobe:generateDebugRFile UP-TO-DATE
+> Task :maaprobe:desugarDebugAndroidTestFileDependencies UP-TO-DATE
+> Task :maaprobe:mapDebugAndroidTestSourceSetPaths UP-TO-DATE
+> Task :maaprobe:parseDebugAndroidTestLocalResources UP-TO-DATE
+> Task :maaprobe:compileDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :maaprobe:processDebugResources UP-TO-DATE
+> Task :maaprobe:mergeDebugAndroidTestJniLibFolders UP-TO-DATE
+> Task :maaprobe:mergeDebugNativeLibs UP-TO-DATE
+> Task :maaprobe:generateDebugAndroidTestRFile UP-TO-DATE
+> Task :maaprobe:validateSigningDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:checkDebugAndroidTestAarMetadata UP-TO-DATE
+> Task :maaprobe:writeDebugAndroidTestSigningConfigVersions UP-TO-DATE
+> Task :maaprobe:preDebugUnitTestBuild
+> Task :maaprobe:compileDebugKotlin NO-SOURCE
+> Task :maaprobe:stripDebugDebugSymbols UP-TO-DATE
+> Task :maaprobe:processDebugAndroidTestManifest UP-TO-DATE
+> Task :maaprobe:generateDebugAndroidTestBuildConfig UP-TO-DATE
+> Task :maaprobe:processDebugJavaRes NO-SOURCE
+> Task :maaprobe:compileDebugJavaWithJavac UP-TO-DATE
+> Task :maaprobe:mergeDebugAndroidTestResources UP-TO-DATE
+> Task :maaprobe:dexBuilderDebug UP-TO-DATE
+> Task :maaprobe:mergeDebugJavaResource UP-TO-DATE
+> Task :maaprobe:bundleDebugClassesToCompileJar UP-TO-DATE
+> Task :maaprobe:mergeProjectDexDebug UP-TO-DATE
+> Task :maaprobe:extractProguardFiles
+> Task :maaprobe:checkDebugAndroidTestDuplicateClasses UP-TO-DATE
+> Task :maaprobe:mergeDebugAndroidTestNativeLibs NO-SOURCE
+> Task :maaprobe:packageDebug UP-TO-DATE
+> Task :maaprobe:mergeLibDexDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:assembleDebug UP-TO-DATE
+> Task :maaprobe:stripDebugAndroidTestDebugSymbols NO-SOURCE
+> Task :maaprobe:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :maaprobe:processDebugAndroidTestResources UP-TO-DATE
+> Task :maaprobe:generateDebugLintReportModel
+> Task :maaprobe:generateDebugUnitTestLintModel
+> Task :maaprobe:mergeExtDexDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:generateDebugAndroidTestLintModel
+> Task :maaprobe:lintAnalyzeDebugUnitTest
+> Task :maaprobe:lintAnalyzeDebug
+> Task :maaprobe:lintAnalyzeDebugAndroidTest
+> Task :maaprobe:lintReportDebug
+> Task :maaprobe:lintDebug
+> Task :maaprobe:compileDebugAndroidTestKotlin
+> Task :maaprobe:processDebugAndroidTestJavaRes UP-TO-DATE
+> Task :maaprobe:mergeDebugAndroidTestJavaResource UP-TO-DATE
+> Task :maaprobe:compileDebugAndroidTestJavaWithJavac UP-TO-DATE
+> Task :maaprobe:dexBuilderDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:mergeProjectDexDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:packageDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:assembleDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:createDebugAndroidTestApkListingFileRedirect UP-TO-DATE
+> Task :app:kspDebugKotlin
+> Task :app:compileDebugKotlin
+> Task :app:compileDebugJavaWithJavac NO-SOURCE
+> Task :app:processDebugJavaRes UP-TO-DATE
+> Task :app:mergeDebugJavaResource UP-TO-DATE
+> Task :app:generateDebugLintReportModel
+> Task :app:dexBuilderDebug
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:generateDebugUnitTestLintModel
+> Task :app:generateDebugAndroidTestLintModel
+> Task :app:mergeProjectDexDebug
+> Task :app:packageDebug
+> Task :app:lintAnalyzeDebugUnitTest
+> Task :app:assembleDebug
+> Task :app:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :app:lintAnalyzeDebugAndroidTest
+> Task :app:lintAnalyzeDebug
+> Task :app:lintReportDebug
+> Task :app:lintDebug
+
+BUILD SUCCESSFUL in 13s
+176 actionable tasks: 29 executed, 147 up-to-date
+Configuration cache entry stored.
