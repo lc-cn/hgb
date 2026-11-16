@@ -1,0 +1,169 @@
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/engine/OCREngine.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-184
+tools/qa/prepare_vision_models.py
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-48
+docs/development/offline-vision-probe.md
+  s_b0f0af2da7f631::t_c2983556285113 1-23,25-39,41-45
+  s_b0f0af2da7f631::t_7380aedbad11fd 24,40
+visionprobe/src/main/AndroidManifest.xml
+  s_b0f0af2da7f631::t_56c36e07bea89c 5-7
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-4,8
+settings.gradle.kts
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 9
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/model/OCRResult.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-22
+docs/development/build-evidence/vision-probe/app-regression.txt
+  s_b0f0af2da7f631::t_f3fea3ee9a2cfd 1-928
+docs/development/build-evidence/vision-probe/default-results.json
+  s_b0f0af2da7f631::t_4423022dade2eb 2-3,46,52,170,288,406,524,642,760,768,776,781-782,788,794,908,1022,1136,1250,1364,1478,1486,1494,1499-1500
+  s_b0f0af2da7f631::t_f3fea3ee9a2cfd 1,4-45,47-51,53-169,171-287,289-405,407-523,525-641,643-759,761-767,769-775,777-780,783-787,789-793,795-907,909-1021,1023-1135,1137-1249,1251-1363,1365-1477,1479-1485,1487-1493,1495-1498,1501-1504
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/model/OCRBox.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-25
+gradle/libs.versions.toml
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 16-17,19-20,44,46
+  s_b0f0af2da7f631::t_d3fd14481295d1 18,45,47
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/engine/DetectionEngine.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-96
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/model/OCRRunResult.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-37
+.gitattributes
+  s_b0f0af2da7f631::t_20ef17831b6e31 6-9
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/model/ModelConfig.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-123
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/util/YamlUtils.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-22
+docs/development/build-evidence/vision-probe/app-without-models.txt
+  s_b0f0af2da7f631::t_f3fea3ee9a2cfd 1-56
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/util/MathUtils.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-31
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/engine/ORTSessionManager.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-161
+third_party/paddle-ocr-sdk/upstream.json
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-197
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/PaddleOCR.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-118
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/postprocess/CTCDecoder.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-66
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/postprocess/DBPostProcessor.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-189
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/engine/RecognitionEngine.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-61
+visionprobe/src/androidTest/AndroidManifest.xml
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-5
+docs/development/build-evidence/vision-probe/build.txt
+  s_b0f0af2da7f631::t_f3fea3ee9a2cfd 1-2,4-7,9-11,14-16,18-21,23-26,28-29,36-40,42-43,46,49-50,54-55,57,61,67-69,71,80-88,96
+  s_b0f0af2da7f631::t_4423022dade2eb 3,8,12-13,17,22,27,30-35,41,44-45,47-48,51-53,56,58-60,62-66,70,72-79,89-95,97-99
+docs/development/build-evidence/vision-probe/verification.json
+  s_b0f0af2da7f631::t_f3fea3ee9a2cfd 1-9,11-19,21-22,27-54,56-57,60-61,68
+  s_b0f0af2da7f631::t_4423022dade2eb 10,20,23-26,55,58-59,62-67
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/preprocess/DetPreprocessor.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-103
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/preprocess/RecPreprocessor.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-105
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/PaddleOCRConfig.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-31
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/postprocess/QuadGeometry.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-43
+third_party/paddle-ocr-sdk/LICENSE
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-201
+visionprobe/build.gradle.kts
+  s_b0f0af2da7f631::t_3ac79ea70c1392 1-2,16,36
+  s_b0f0af2da7f631::t_7abe5aad5c76d6 15,17
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 3-14,18-27,33,38-49
+  s_b0f0af2da7f631::t_a2745a85afa66d 28-32
+  s_b0f0af2da7f631::t_14df81f2534a86 34-35
+  s_b0f0af2da7f631::t_bc46158db4dda5 37
+docs/development/build-evidence/vision-probe/model-tamper-rejected.txt
+  s_b0f0af2da7f631::t_f3fea3ee9a2cfd 1-20
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/model/OCRError.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-24
+visionprobe/src/androidTest/kotlin/io/github/yysassist/visionprobe/OfflineVisionProbeTest.kt
+  s_b0f0af2da7f631::t_56c36e07bea89c 130
+  s_b0f0af2da7f631::t_f49a51c0b1d2a7 68-69,134-139,148
+  s_b0f0af2da7f631::t_7abe5aad5c76d6 32,46,66,71-86,92-93,149-166,176
+  s_b0f0af2da7f631::t_ffc335dc768351 23,70,88,95-127,167-175
+  s_b0f0af2da7f631::t_ea3cdb1b96f937 1-22,24-31,33-45,47-65,67,87,89-91,94,128-129,131-133,140-147,177-180
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/util/OpenCVUtils.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-34
+docs/development/build-evidence/vision-probe/results.json
+  s_b0f0af2da7f631::t_83d947310fe6d4 1,4-45,47-51,53-169,171-287,289-405,407-523,525-641,643-759,761-767,769-775,777-783,785-812,814-841,843-867,870-874,876-880,882-994,996-1108,1110-1222,1224-1336,1338-1450,1452-1564,1566-1572,1574-1580,1582-1588,1590-1617,1619-1646,1648-1672,1675-1678
+  s_b0f0af2da7f631::t_4ce2fbcbe1be0c 2-3,46,52,170,288,406,524,642,760,768,776,784,813,842,868-869,875,881,995,1109,1223,1337,1451,1565,1573,1581,1589,1618,1647,1673-1674
+docs/development/build-evidence/vision-probe/private-metrics-test.txt
+  s_b0f0af2da7f631::t_f3fea3ee9a2cfd 1-17,19-23
+  s_b0f0af2da7f631::t_4423022dade2eb 18
+third_party/paddle-ocr-sdk/README.md
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-5
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_c2983556285113 84-90
+docs/development/build-evidence/vision-probe/model-restored.txt
+  s_b0f0af2da7f631::t_f3fea3ee9a2cfd 1-8
+docs/development/README.md
+  s_b0f0af2da7f631::t_c2983556285113 24
+docs/development/build-evidence/vision-probe/README.md
+  s_b0f0af2da7f631::t_4423022dade2eb 1-12
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/util/BitmapUtils.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-72
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/engine/OCREngineResult.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-39
+gradle/verification-metadata.xml
+  s_b0f0af2da7f631::t_f716ca73750e23 8-12,21-28,45-54,60-67,83-90,116-118,136-156,158-160,173-188,205-217,548-555,588-600,609-629,638-653,759-774,788-821,838-842,848-855,892-912,926-933,942-954,1009-1021,1048-1055,1074-1081,1116-1123,1187-1194,1280-1284,1366-1368,1374-1376,1399-1419,1428-1435,1958-2029,2335-2366,2475-2514,2672-2687,4058-4065,4082-4089,4412,4415-4416,4420,4423-4424
+  s_b0f0af2da7f631::t_7f2124e161e8ee 4409-4411,4413-4414,4417-4419,4421-4422
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/postprocess/BoxSorter.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-47
+docs/development/build-evidence/vision-probe/default-test.txt
+  s_b0f0af2da7f631::t_f3fea3ee9a2cfd 1-17,19-23
+  s_b0f0af2da7f631::t_4423022dade2eb 18
+visionprobe/src/main/res/xml/backup_rules.xml
+  s_b0f0af2da7f631::t_56c36e07bea89c 1-12
+docs/research/offline-vision-integration-contracts.md
+  s_b0f0af2da7f631::t_e2e357e6d61bfb 91-92
+docs/development/build-evidence/vision-probe/lint.txt
+  s_b0f0af2da7f631::t_4423022dade2eb 92
+  s_b0f0af2da7f631::t_f3fea3ee9a2cfd 1-91
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/EngineConfig.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-19
+visionprobe/README.md
+  s_b0f0af2da7f631::t_a0f093ec1cffbd 1-33
+visionprobe/src/main/res/xml/data_extraction_rules.xml
+  s_b0f0af2da7f631::t_56c36e07bea89c 1-25
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/util/ImageUtils.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-52
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/postprocess/QuadTextCrop.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-86
+third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/postprocess/PolygonUnclip.kt
+  s_b0f0af2da7f631::t_f6a90ad18d4cf9 1-138
+docs/development/build-evidence/vision-probe/opencv-4.14-artifacts.json
+  s_b0f0af2da7f631::t_afd948eb46114d 1-6
+docs/development/build-evidence/vision-probe/opencv-4.14-crash-excerpt.txt
+  s_b0f0af2da7f631::t_40a674b8e7ffa1 1-42
+docs/development/build-evidence/vision-probe/opencv-4.14-tests.txt
+  s_b0f0af2da7f631::t_6d7c439d6a1a77 1-10
+docs/development/build-evidence/vision-probe/quickbird-before-artifacts.json
+  s_b0f0af2da7f631::t_e8465c3ec6333c 1-6
+docs/development/build-evidence/vision-probe/quickbird-before-build.txt
+  s_b0f0af2da7f631::t_f3f4e61d8381b2 1-161
+docs/development/build-evidence/vision-probe/quickbird-before-lint.txt
+  s_b0f0af2da7f631::t_431ce0f319f4ac 1-123
+docs/development/build-evidence/vision-probe/quickbird-before-results.json
+  s_b0f0af2da7f631::t_25839a9da9408b 1-852
+docs/development/build-evidence/vision-probe/quickbird-before-tests.txt
+  s_b0f0af2da7f631::t_3631b302f87114 1-68
+visionprobe/gradle.lockfile
+  s_b0f0af2da7f631::t_d804d7d476828e 1-273
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9d702c4ae0a3bbfc38079f573e14d886c6970e83",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
