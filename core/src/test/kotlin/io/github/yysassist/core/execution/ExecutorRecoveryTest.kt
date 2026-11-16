@@ -45,4 +45,16 @@ class ExecutorRecoveryTest {
         assertEquals(ExecutorPhase.PAUSED, executor.state.value.phase)
         assertEquals(executor.state.value, TaskExecutor.fromEncodedState(executor.encodeState()).state.value)
     }
+    @Test fun staleRowControlsCannotPauseStopOrRestartAnotherRun() {
+        val executor = running(); val oldId = executor.state.value.current!!.runId
+        executor.enqueue("next", ExecutionRequest(SubmissionRef(SubmissionKind.TASK, "next"), context, "v1",
+            listOf(TaskSnapshot("next", "Next", 1, listOf("a", "b")))))
+        repeat(2) { executor.stepFinished(executor.state.value.activeTicket!!, StepOutcome.Completed("done")) }
+        val before = executor.state.value
+        listOf(ExecutorCommand.PauseCurrent(oldId), ExecutorCommand.StopCurrent(oldId),
+            ExecutorCommand.ResumeCurrent(oldId, ResumeMode.RESTART_CURRENT_TASK)).forEach { command ->
+            assertTrue(apply(executor, command).effects.isEmpty())
+            assertEquals(before, executor.state.value)
+        }
+    }
 }

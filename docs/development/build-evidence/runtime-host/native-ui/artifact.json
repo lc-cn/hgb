@@ -1,0 +1,7 @@
+{
+  "artifacts": {
+    "app/build/outputs/apk/debug/app-debug.apk": "d5a03d7da77f22281ecc929ce8a873b04aba7c7c10b6624611c859ef32ec7177",
+    "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": "03b8b287ccd18bc5e4195fb976a000ce590e7cc4f002a9918e1ff354d9345a67"
+  },
+  "scope": "Full MainActivity with true empty main DB. Appearance/navigation only. Runtime controls use separately labelled native fixture screenshots."
+}

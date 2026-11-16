@@ -43,7 +43,7 @@ class ExecutionRuntime(
         data class AddTask(val address: TaskAddress, val commandId: String, val reply: CompletableDeferred<RuntimeCommandResult>) : Message
         data class Admission(val candidate: TaskAdmissionDraft?, val context: ExecutionContext?, val commandId: String,
             val reply: CompletableDeferred<RuntimeCommandResult>, val failure: String?) : Message
-        data class Bound(val ticket: AttemptTicket, val bundle: TaskBundle?, val verified: Boolean,
+        data class Bound(val ticket: AttemptTicket, val binding: Job, val bundle: TaskBundle?, val verified: Boolean,
             val failure: String?, val storageUnavailable: Boolean = false) : Message
         data class Finished(val ticket: AttemptTicket, val outcome: StepOutcome) : Message
         data class Drained(val ticket: AttemptTicket, val observation: InputStopObservation) : Message
@@ -196,7 +196,11 @@ class ExecutionRuntime(
     }
 
     private suspend fun completeCommand(command: ExecutorCommand, reply: CompletableDeferred<RuntimeCommandResult>) {
-        try { reply.complete(RuntimeCommandResult.Applied(change(command).reply)) }
+        try {
+            val changed = change(command)
+            val rejected = (changed.reply as? ExecutorReply.Enqueued)?.result as? EnqueueResult.Rejected
+            if (rejected == null) reply.complete(RuntimeCommandResult.Applied(changed.reply)) else reject(reply, rejected.reason)
+        }
         catch (rejected: ExecutionStateRejected) { reject(reply, rejected.message ?: "提交未通过") }
     }
     private fun reject(reply: CompletableDeferred<RuntimeCommandResult>, message: String) {
@@ -248,19 +252,21 @@ class ExecutionRuntime(
     private fun prepareBinding(start: PendingStart) {
         start.binding?.cancel()
         start.binding = scope.launch(Dispatchers.IO) {
+            val binding = currentCoroutineContext()[Job]!!
             val message = try {
                 val bundle = library.readVersion(start.attempt.run.request.packageVersion)
                 val target = bundle.targets.single { it.id == start.attempt.run.request.context.targetId }
-                Message.Bound(start.attempt.ticket, bundle, contextReadiness.verified(target, start.attempt.run.request.context), null)
+                Message.Bound(start.attempt.ticket, binding, bundle, contextReadiness.verified(target, start.attempt.run.request.context), null)
             }
             catch (cancelled: CancellationException) { throw cancelled }
-            catch (invalid: InvalidLocalTaskVersion) { Message.Bound(start.attempt.ticket, null, false, invalid.message) }
-            catch (_: Exception) { Message.Bound(start.attempt.ticket, null, false, "运行条件读取失败，原记录保留", storageUnavailable = true) }
+            catch (invalid: InvalidLocalTaskVersion) { Message.Bound(start.attempt.ticket, binding, null, false, invalid.message) }
+            catch (_: Exception) { Message.Bound(start.attempt.ticket, binding, null, false, "运行条件读取失败，原记录保留", storageUnavailable = true) }
             commands.send(message)
         }
     }
     private suspend fun bind(message: Message.Bound) {
         val pending = pendingStarts[message.ticket] ?: return
+        if (pending.binding !== message.binding) return
         if (state.value.activeTicket != message.ticket || engine?.permitsInput(message.ticket) != true) return
         if (message.storageUnavailable) { fault(message.failure ?: "运行条件读取失败"); return }
         val bundle = message.bundle

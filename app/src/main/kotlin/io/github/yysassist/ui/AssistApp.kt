@@ -46,6 +46,7 @@ private enum class Page(val title: String, val icon: ImageVector) {
 fun AssistApp(application: AssistApplication) {
     val appearance by application.appearance.state.collectAsState()
     val executor by application.executor.state.collectAsState()
+    val runtimeStatus by application.executor.status.collectAsState()
     val versions by application.taskUpdates.catalog.collectAsState()
     val pull by application.taskUpdates.pull.collectAsState()
     val versionOperation by application.taskUpdates.operation.collectAsState()
@@ -63,6 +64,7 @@ fun AssistApp(application: AssistApplication) {
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(application.taskUpdates) { application.taskUpdates.messages.collect { snackbar.showSnackbar(it) } }
     LaunchedEffect(application.taskEditor) { application.taskEditor.messages.collect { snackbar.showSnackbar(it) } }
+    LaunchedEffect(application.executor) { application.executor.messages.collect { snackbar.showSnackbar(it) } }
     val page = Page.valueOf(selected)
     BackHandler(detail != null || page != Page.HOME) {
         if (detail != null) detail = null else selected = Page.HOME.name
@@ -109,13 +111,27 @@ fun AssistApp(application: AssistApplication) {
                                     { address?.let { application.taskEditor.save(it) } })
                                 "运行与数据" -> EmptyContent("暂无运行数据", "执行结果会保留在历史记录中。")
                                 else -> when (page) {
-                                    Page.HOME -> Workbench(executor, wide)
-                                    Page.TASKS -> TaskCenter(versions, application.taskUpdates::reloadCatalog, { detail = "任务更新" }) {
+                                    Page.HOME -> ExecutionWorkbench(executor, runtimeStatus, wide,
+                                        { application.executor.submit(ExecutorCommand.Pause) },
+                                        { id, mode -> application.executor.submit(id?.let { ExecutorCommand.ResumeCurrent(it, mode) } ?: ExecutorCommand.Resume(mode)) },
+                                        { application.executor.submit(ExecutorCommand.Remove(it)) },
+                                        { executor.current?.let { application.executor.submit(ExecutorCommand.StopCurrent(it.runId)) } })
+                                    Page.TASKS -> TaskCenter(versions, executor, runtimeStatus,
+                                        { application.executor.enqueueTask(it) },
+                                        { application.executor.submit(ExecutorCommand.PauseCurrent(it)) },
+                                        { application.executor.submit(ExecutorCommand.StopCurrent(it)) },
+                                        { id, mode -> application.executor.submit(ExecutorCommand.ResumeCurrent(id, mode)) },
+                                        application.taskUpdates::reloadCatalog, { detail = "任务更新" }) {
                                         editTarget = it.targetId; editTask = it.taskId; detail = "任务配置"
                                     }
                                     Page.PLANS -> EmptyContent("暂无计划", "取得任务并保存配置后，可组合执行计划。")
-                                    Page.HISTORY -> History(executor, wide, historyTab) { historyTab = it }
-                                    Page.SETTINGS -> SettingsPage(appearance, versions) { detail = it }
+                                    Page.HISTORY -> if (runtimeStatus == RuntimeStatus.Loading) Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
+                                        else if (runtimeStatus is RuntimeStatus.Failure) EmptyContent("运行记录暂不可用", (runtimeStatus as RuntimeStatus.Failure).message)
+                                        else History(executor, wide, historyTab) { historyTab = it }
+                                    Page.SETTINGS -> SettingsPage(appearance, versions) {
+                                        if (it == "运行与数据") { selected = Page.HISTORY.name; historyTab = 1; detail = null }
+                                        else detail = it
+                                    }
                                 }
                             }
                             SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
@@ -179,58 +195,9 @@ private fun MainNavigation(selected: Page, rail: Boolean, select: (Page) -> Unit
 }
 
 @Composable
-private fun Workbench(state: ExecutorSnapshot, wide: Boolean) {
-    Column(Modifier.fillMaxSize()) {
-        Row(Modifier.weight(1f).fillMaxWidth()) {
-            Column(Modifier.weight(if (wide) .65f else 1f)) {
-                SectionTitle("待执行", state.waiting.size.toString())
-                if (state.waiting.isEmpty()) EmptyContent("队列为空", "从任务或计划右侧加入队列。")
-                else LazyColumn { items(state.waiting, key = { it.runId }) { run ->
-                    ListItem(headlineContent = { Text(run.request.ref.id) },
-                        supportingContent = { Text("优先级 ${run.priority}") })
-                } }
-            }
-            if (wide) {
-                VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Column(Modifier.weight(.35f)) {
-                    SectionTitle("下次计划")
-                    Text("暂无计划", Modifier.padding(UiSpace.page), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    SectionTitle("最近结果")
-                    Text("暂无运行结果", Modifier.padding(UiSpace.page), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
-        Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer).padding(UiSpace.page),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
-            val phaseText = when (state.phase) {
-                ExecutorPhase.IDLE -> "待机"
-                ExecutorPhase.RUNNING -> "执行中"
-                ExecutorPhase.PAUSING -> "暂停中"
-                ExecutorPhase.PAUSED -> "已暂停"
-                ExecutorPhase.REMOVING -> "移除中"
-                ExecutorPhase.SWITCHING -> "交接中"
-                ExecutorPhase.BLOCKED_UNKNOWN -> "结果待核对"
-            }
-            val color = when (state.phase) {
-                ExecutorPhase.IDLE -> MaterialTheme.colorScheme.onSurfaceVariant
-                ExecutorPhase.RUNNING, ExecutorPhase.SWITCHING -> LocalAssistPalette.current.blue
-                else -> LocalAssistPalette.current.warning
-            }
-            Icon(if (state.manualHold) AssistIcons.Pause else AssistIcons.Circle, null, tint = color.copy(alpha = .82f))
-            Text(phaseText, fontWeight = FontWeight.Medium)
-            Spacer(Modifier.weight(1f))
-            Text(when (val principal = state.context?.principal) {
-                null -> "未识别账号"
-                Principal.Anonymous -> "无需账号"
-                is Principal.Account -> principal.id
-            },
-                color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-        }
-    }
-}
-
-@Composable
-private fun TaskCenter(versions: VersionCatalogState, reload: () -> Unit, updates: () -> Unit, edit: (TaskAddress) -> Unit) {
+internal fun TaskCenter(versions: VersionCatalogState, executor: ExecutorSnapshot, status: RuntimeStatus,
+    enqueue: (TaskAddress) -> Unit, pause: (Long) -> Unit, stop: (Long) -> Unit, resume: (Long, ResumeMode) -> Unit,
+    reload: () -> Unit, updates: () -> Unit, edit: (TaskAddress) -> Unit) {
     when (versions) {
         VersionCatalogState.Loading -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
         is VersionCatalogState.Failure -> Column(Modifier.padding(UiSpace.page)) {
@@ -249,9 +216,24 @@ private fun TaskCenter(versions: VersionCatalogState, reload: () -> Unit, update
             is ActiveTaskContent.Available -> LazyColumn {
                 items(content.bundle.tasks, key = { kotlinx.serialization.json.JsonArray(listOf(kotlinx.serialization.json.JsonPrimitive(it.targetId), kotlinx.serialization.json.JsonPrimitive(it.id))).toString() }) { task ->
                     val target = content.bundle.targets.single { it.id == task.targetId }
-                    ListItem(modifier = Modifier.clickable { edit(TaskAddress(task.targetId, task.id)) }, headlineContent = { Text(task.name) }, supportingContent = {
-                        Text("${target.name} · ${target.categories.single { it.id == task.category }.name}")
-                    })
+                    val ref = SubmissionRef(SubmissionKind.TASK, task.id)
+                    val current = executor.current?.let { it.request.context.targetId == task.targetId && it.request.ref == ref } == true
+                    val currentId = executor.current?.runId.takeIf { current }
+                    val queued = executor.waiting.any { it.request.context.targetId == task.targetId && it.request.ref == ref }
+                    ListItem(modifier = Modifier.clickable { edit(TaskAddress(task.targetId, task.id)) }, headlineContent = { Text(task.name, maxLines = 1, overflow = TextOverflow.Ellipsis) }, supportingContent = {
+                        Text("${target.name} · ${target.categories.single { it.id == task.category }.name}", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }, trailingContent = { Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+                        if (queued || current) Text(if (queued) "队列中" else phaseLabel(executor.phase), style = MaterialTheme.typography.labelSmall,
+                            color = if (queued) MaterialTheme.colorScheme.onSurfaceVariant else LocalAssistPalette.current.blue)
+                        key(currentId) {
+                            RunActionButton(task.name, current, queued,
+                                status != RuntimeStatus.Loading && status !is RuntimeStatus.Failure &&
+                                    (!current || executor.phase in setOf(ExecutorPhase.RUNNING, ExecutorPhase.PAUSED)),
+                                { enqueue(TaskAddress(task.targetId, task.id)) }, { currentId?.let(pause) }, { currentId?.let(stop) },
+                                paused = current && executor.phase == ExecutorPhase.PAUSED,
+                                resume = { mode -> currentId?.let { resume(it, mode) } })
+                        }
+                    } })
                 }
             }
         }

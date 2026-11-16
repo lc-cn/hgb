@@ -95,6 +95,9 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
             }
             ExecutorCommand.Pause -> draft.pause()
             ExecutorCommand.Stop -> draft.stop()
+            is ExecutorCommand.PauseCurrent -> if (draft.current?.runId == command.runId) draft.pause() else emptyList()
+            is ExecutorCommand.StopCurrent -> if (draft.current?.runId == command.runId) draft.stop() else emptyList()
+            is ExecutorCommand.ResumeCurrent -> if (draft.current?.runId == command.runId) draft.resume(command.mode) else emptyList()
             is ExecutorCommand.Remove -> draft.remove(command.runId)
             is ExecutorCommand.Resume -> draft.resume(command.mode)
             is ExecutorCommand.StepFinished -> draft.stepFinished(command.ticket, command.outcome)

@@ -1,0 +1,9 @@
+{
+  "oldPid": 10526,
+  "newPid": 10580,
+  "oldGeneration": 2,
+  "newGeneration": 3,
+  "completedStepPreserved": true,
+  "queuePreserved": true,
+  "scope": "Actual Android process stop; production runtime class and built-in no-input runner on dedicated fixture DB. No game or main application DB."
+}

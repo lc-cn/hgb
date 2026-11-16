@@ -1,13 +1,15 @@
 package io.github.yysassist
 
 import android.app.Application
-import io.github.yysassist.core.execution.TaskExecutor
+import io.github.yysassist.core.execution.BuiltInStepWorkFactory
 import io.github.yysassist.core.content.BundleCodec
 import io.github.yysassist.core.content.GitHubTaskSource
 import io.github.yysassist.core.content.TaskRepository
 import io.github.yysassist.storage.AssistDatabase
 import io.github.yysassist.storage.TaskVersionLibrary
 import io.github.yysassist.storage.TaskConfigurationRepository
+import io.github.yysassist.storage.TaskAdmissionRepository
+import io.github.yysassist.storage.ExecutionStateStore
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import java.net.Proxy
@@ -19,7 +21,8 @@ import kotlinx.coroutines.SupervisorJob
 /** Application-owned services survive Activity recreation; screens never construct an executor. */
 class AssistApplication : Application() {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    val executor = TaskExecutor()
+    lateinit var executor: ExecutionRuntime
+        private set
     lateinit var appearance: AppearancePreferences
         private set
     lateinit var taskUpdates: TaskUpdates
@@ -32,8 +35,10 @@ class AssistApplication : Application() {
         super.onCreate()
         appearance = AppearancePreferences(this, scope)
         val database = AssistDatabase.open(this)
-        // Runtime capabilities are registered only as their actual workers become available.
-        val library = TaskVersionLibrary(database, BundleCodec(emptyList()))
+        val workers = BuiltInStepWorkFactory()
+        val library = TaskVersionLibrary(database, BundleCodec(workers.contracts))
+        executor = ExecutionRuntime(ExecutionStateStore(database, library), library,
+            TaskAdmissionRepository(database, library), workers, scope)
         configurations = TaskConfigurationRepository(database, library)
         taskEditor = TaskConfigurationEditor(configurations, scope)
         val client = OkHttpClient.Builder().proxy(Proxy.NO_PROXY).followSslRedirects(false)

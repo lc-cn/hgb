@@ -7,6 +7,9 @@ sealed interface ExecutorCommand {
     data class Enqueue(val commandId: String, val request: ExecutionRequest) : ExecutorCommand
     data object Pause : ExecutorCommand
     data object Stop : ExecutorCommand
+    data class PauseCurrent(val runId: Long) : ExecutorCommand
+    data class StopCurrent(val runId: Long) : ExecutorCommand
+    data class ResumeCurrent(val runId: Long, val mode: ResumeMode) : ExecutorCommand
     data class Remove(val runId: Long) : ExecutorCommand
     data class Resume(val mode: ResumeMode) : ExecutorCommand
     data class StepFinished(val ticket: AttemptTicket, val outcome: StepOutcome) : ExecutorCommand

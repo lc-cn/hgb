@@ -168,6 +168,22 @@ class ExecutionRuntimeTest {
         assertEquals(ExecutorPhase.PAUSED, runtime.state.value.phase)
         assertFalse(runtime.permitsInput(runtime.state.value.activeTicket ?: AttemptTicket(-1, -1)))
     }
+    @Test fun anOlderReadinessCheckCannotOverrideANewerCheckForTheSameAttempt() = runBlocking {
+        val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>(); val checks = AtomicInteger(); val started = AtomicInteger()
+        try {
+            val runtime = runtime(counting(started, { awaitCancellation() }), readiness = ExecutionContextReadiness { _, _ ->
+                if (checks.incrementAndGet() == 1) withContext(NonCancellable) { entered.complete(Unit); release.await(); true } else false
+            })
+            runtime.submit(ExecutorCommand.VerifyContext(identity)).await()
+            val task = bundle().tasks.first()
+            runtime.submit(ExecutorCommand.Enqueue("fixture", ExecutionRequest(SubmissionRef(SubmissionKind.TASK, task.id), identity, "v1",
+                listOf(TaskSnapshot(task.id, task.name, task.priority, listOf("wait")))))).await()
+            entered.await(); runtime.readinessChanged()
+            withTimeout(5_000) { runtime.status.first { it is RuntimeStatus.RecoveryBlocked } }
+            release.complete(Unit); delay(50)
+            assertEquals("An old successful check must not revive a superseded attempt binding", 0, started.get())
+        } finally { release.complete(Unit) }
+    }
     @Test fun confirmedFailureContinuesButUnknownResultBlocksSubsequentWork() = runBlocking {
         val gate = CompletableDeferred<Unit>(); val count = AtomicInteger()
         val runtime = runtime(counting(count, { attempt ->
