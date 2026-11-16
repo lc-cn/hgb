@@ -28,6 +28,7 @@
 | [原生悬浮控制](floating-controls.md) | 三层窗口、常用与同一执行器、显示偏好、截图／输入排除及真实设备测试边界 |
 | [首版任务分发](task-distribution.md) | 当前已实现的 Release 读取／附件校验／本地版本页，及未完成的资源与运行联动边界 |
 | [版本资源](versioned-resources.md) | 同一 Release 资源清单、流式暂存／完整提交、共享删除与 native 使用期租约；尚未接入识别工作器 |
+| [识别进程边界](maa-process-boundary.md) | 独立探针内的 Binder／描述符交接、真实子进程崩溃与阻塞停止；未接生产租约或执行器 |
 
 旧资料保留，不批量删除或搬家：
 

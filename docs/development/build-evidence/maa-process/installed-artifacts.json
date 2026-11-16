@@ -1,0 +1,17 @@
+{
+  "io.github.yysassist.maaprobe": {
+    "sha256": "0b6047bb94197aec82a0969c17393d1dd56d9052b0da14961de0b45e427c6b4e",
+    "matchesBuiltArtifact": true,
+    "bytes": 174576531
+  },
+  "io.github.yysassist.maaprobe.test": {
+    "sha256": "482de51381c89325109601fc52cbf6e8fe244d4d2c9bd8ba5d8155f0c948bbda",
+    "matchesBuiltArtifact": true,
+    "bytes": 2327452
+  },
+  "environment": {
+    "sdk": "36",
+    "abi": "arm64-v8a",
+    "pageSize": 4096
+  }
+}

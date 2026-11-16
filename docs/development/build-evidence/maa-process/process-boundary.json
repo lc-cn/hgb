@@ -1,0 +1,65 @@
+[
+  {
+    "case": "rejected-no-observation",
+    "hostPid": 27316,
+    "childPid": 27336,
+    "outcome": "REJECTED",
+    "binderDeathObservedAt": 30727793677943,
+    "quietAt": 30727794277985,
+    "quietCallbacks": 1
+  },
+  {
+    "case": "rejected-no-observation",
+    "hostPid": 27316,
+    "childPid": 27350,
+    "outcome": "REJECTED",
+    "binderDeathObservedAt": 30728005386693,
+    "quietAt": 30728006151818,
+    "quietCallbacks": 1
+  },
+  {
+    "case": "native-worker-block",
+    "hostPid": 27316,
+    "childPid": 27368,
+    "outcome": "CANCELLED",
+    "binderDeathObservedAt": 30728324702694,
+    "quietAt": 30728324921360,
+    "quietCallbacks": 1
+  },
+  {
+    "case": "positive",
+    "hostPid": 27316,
+    "childPid": 27383,
+    "outcome": "observed",
+    "binderDeathObservedAt": 30728973038944,
+    "quietAt": 30728974469902,
+    "quietCallbacks": 1
+  },
+  {
+    "case": "healthy-blank",
+    "hostPid": 27316,
+    "childPid": 27408,
+    "outcome": "observed",
+    "binderDeathObservedAt": 30729361103486,
+    "quietAt": 30729361662652,
+    "quietCallbacks": 1
+  },
+  {
+    "case": "large-descriptor-frame",
+    "hostPid": 27316,
+    "childPid": 27431,
+    "outcome": "observed",
+    "binderDeathObservedAt": 30729870639986,
+    "quietAt": 30729871347903,
+    "quietCallbacks": 1
+  },
+  {
+    "case": "actual-ort-abort",
+    "hostPid": 27316,
+    "childPid": 27455,
+    "outcome": "PROCESS_DIED",
+    "binderDeathObservedAt": 30730245792528,
+    "quietAt": 30730246376278,
+    "quietCallbacks": 1
+  }
+]

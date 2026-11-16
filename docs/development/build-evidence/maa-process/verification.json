@@ -1,0 +1,75 @@
+{
+  "executedAt": "2026-11-16T12:36:33.374983+00:00",
+  "baseCommit": "54518aa5f1e7e37142bc519c6725b094f7f0cc2d",
+  "environment": {
+    "sdk": "36",
+    "abi": "arm64-v8a",
+    "pageSize": 4096
+  },
+  "explicitProcessCases": {
+    "total": 7,
+    "passed": 7,
+    "skipped": 0,
+    "failures": 0
+  },
+  "defaultAllCases": {
+    "total": 13,
+    "passed": 10,
+    "skipped": 3,
+    "failures": 0
+  },
+  "defaultSkipReasons": [
+    "Two opt-in child-native fault tests",
+    "Existing opt-in host-terminating corrupt-model test"
+  ],
+  "caseOverlap": "Five normal process cases are included in both batches; do not add batch totals as unique coverage.",
+  "actualFault": {
+    "childSigabrt": true,
+    "hostSurvived": true,
+    "laterExplicitCallSucceededInNewPid": true,
+    "nativeBlockStoppedAfterJniMarker": true,
+    "upstreamExceptionFixed": false
+  },
+  "production": "Prepared Maa inputs moved away during app/core/Lint build; app APK identical to resource-version milestone. Core test task was up-to-date, no new formal app instrumentation or game proof.",
+  "artifacts": {
+    "maaprobe/build/outputs/apk/debug/maaprobe-debug.apk": {
+      "sha256": "0b6047bb94197aec82a0969c17393d1dd56d9052b0da14961de0b45e427c6b4e",
+      "bytes": 174576531
+    },
+    "maaprobe/build/outputs/apk/androidTest/debug/maaprobe-debug-androidTest.apk": {
+      "sha256": "482de51381c89325109601fc52cbf6e8fe244d4d2c9bd8ba5d8155f0c948bbda",
+      "bytes": 2327452
+    }
+  },
+  "sources": {
+    "gradle/libs.versions.toml": "b9717ca265e0e3d8deb32d8d459b47031911c0c9c94f4ef737584b98b4c6bd0e",
+    "gradle/verification-metadata.xml": "45d0aec894ccf12a5021519c8c6997f10e62c2bedb1bc568f9e47dfab472ad23",
+    "maaprobe/build.gradle.kts": "72e6b7efd8bed18d36e63d4c478b15a5495b108a60b7f9f6641c36cea27db2dc",
+    "maaprobe/inputs.lock.json": "af95d2c0c2316e5e7bdc3c6bbf316e467b9953f6180cae5d6b6329acbbbe952a",
+    "maaprobe/src/androidTest/AndroidManifest.xml": "ba01685a2c495c59feb0e76d1c8ace39defdbf7209b68d188e691fb3c376ff25",
+    "maaprobe/src/androidTest/kotlin/io/github/yysassist/maaprobe/MaaComparisonTest.kt": "00988d050b067e586e689a8641f68b10947b732589e162ea7f14305f0ff8fc8f",
+    "maaprobe/src/androidTest/kotlin/io/github/yysassist/maaprobe/MaaFailureContractTest.kt": "43ddda7a6623e0d70bda4c36d14be3ba5579615a72b0ffa62c9502dc0970a6ca",
+    "maaprobe/src/androidTest/kotlin/io/github/yysassist/maaprobe/MaaNativeLoadTest.kt": "2056aa003d53b0ddfaf866b25991b88de962b24034ed10494d3ea59d07d65e9b",
+    "maaprobe/src/androidTest/kotlin/io/github/yysassist/maaprobe/MaaOcrTest.kt": "5899ce7c9c9fe4a7c5d1d84a03c11936de37f95ed92c42dd4206f3b8eb0a72a1",
+    "maaprobe/src/androidTest/kotlin/io/github/yysassist/maaprobe/MaaProcessBoundaryTest.kt": "ec942bcb729665cdd9714391a83a46f493848014fa3a8f11c4ab83d46c22d2e3",
+    "maaprobe/src/main/AndroidManifest.xml": "4ac9d110dfa6a157020219cceff83101d1ffc2b5387ce9ff97b79b669bcf7574",
+    "maaprobe/src/main/cpp/CMakeLists.txt": "9d796d8606d80c6e505c986fbfd7e3e0a3fc58047fdfc3a7ab2b5de0c24d574e",
+    "maaprobe/src/main/cpp/MaaProbe.cpp": "3073c4802d4e1e12d98726e5ae3bc4b2a17fbf76d45ee421cdf084d223166e9b",
+    "maaprobe/src/main/kotlin/io/github/yysassist/maaprobe/MaaNative.kt": "f035f79dba1fc141c190626ee7759b328d665f9ff5edcee48e002ec73bec75dd",
+    "maaprobe/src/main/kotlin/io/github/yysassist/maaprobe/MaaObservationService.kt": "9b284db34fc8cb574c52495cd8bf82a7c2cd2ebb7df94f24d3968e111d874960",
+    "maaprobe/src/main/kotlin/io/github/yysassist/maaprobe/MaaProcessCall.kt": "48a11ea595e7b8e332a51742ab713c1534b89a1875d14accc73ce80022163bd8",
+    "maaprobe/src/main/kotlin/io/github/yysassist/maaprobe/MaaProcessProtocol.kt": "25ee5df4e54d129e7829951c6b5249445a8dbf86593c032923da7219b1050089",
+    "settings.gradle.kts": "0ad364607f29fe49e7b5e895e5354b0c2db03e40f84c305cfbdb8fd97392331e"
+  },
+  "normalization": "Workspace prefix changed to <workspace>, log trailing whitespace trimmed; crash APK installation paths replaced by <probe-apk>. Only matching child crash reason/stack retained.",
+  "limits": [
+    "Probe only; same UID is not a security sandbox.",
+    "No production TaskResourceLease/executor/screenshot adapter integrated.",
+    "Single observation per child is an experiment, not a proven performance/caching strategy.",
+    "Control Looper/Binder hangs and actual host-force-stop untested; no automatic timeout or retry policy.",
+    "Runtime only 4KiB ARM64 API36 emulator; no 16KiB kernel/Windows/phone native validation.",
+    "No private screenshots or models/native binaries committed; default test assets empty.",
+    "Phone reconnected, SDK35 and fresh title screen read only; no input, native install or claim on phone."
+  ],
+  "selfReviewDeliveryBoundary": "Result generation and descriptor delivery/close are separate; delivery failure cannot emit a second contradictory REJECTED response. Close-failure injection not performed; identical seven platform cases rerun."
+}

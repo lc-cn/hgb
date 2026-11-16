@@ -1,0 +1,6 @@
+{
+  "maaPreparedInputsAbsentDuringBuild": true,
+  "appSha256": "e1d712fbeccad34991e7225f05c2c31cc52e53bcfa86e2cb368389d128ce9dcd",
+  "matchesResourceVersionMilestone": true,
+  "newProductionOcrDependency": false
+}

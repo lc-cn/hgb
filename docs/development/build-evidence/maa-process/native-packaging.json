@@ -1,0 +1,107 @@
+{
+  "libraries": [
+    {
+      "library": "lib/arm64-v8a/libMaaFramework.so",
+      "sha256": "def162a33b53371dea3b47400ae493eed9e0acc604221b0d61b75e56e011cb77",
+      "bytes": 54787168,
+      "loadAlignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 2752512,
+      "upstreamPinned": true
+    },
+    {
+      "library": "lib/arm64-v8a/libMaaUtils.so",
+      "sha256": "049dc9d818a1edcd30508a56a659cd2ca63d3638b4f13f24b0db1d58c73c5475",
+      "bytes": 13600296,
+      "loadAlignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 57540608,
+      "upstreamPinned": true
+    },
+    {
+      "library": "lib/arm64-v8a/libc++_shared.so",
+      "sha256": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352",
+      "bytes": 9290184,
+      "loadAlignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 71155712,
+      "upstreamPinned": true
+    },
+    {
+      "library": "lib/arm64-v8a/libfastdeploy_ppocr.so",
+      "sha256": "e8adfe1a25d5c70404b5a09a23d472c52b8f41f2f1cc87f3ebe6cc0d81e9a629",
+      "bytes": 6094657,
+      "loadAlignments": [
+        16384,
+        16384,
+        16384,
+        65536
+      ],
+      "apkDataOffset": 80461824,
+      "upstreamPinned": true
+    },
+    {
+      "library": "lib/arm64-v8a/libncnn.so",
+      "sha256": "47280e5da866b5ad8d420f240826e4bf09d8a5425d4f4c0d3b14f1b13b75d8a1",
+      "bytes": 5237033,
+      "loadAlignments": [
+        16384,
+        16384,
+        16384,
+        65536
+      ],
+      "apkDataOffset": 86556672,
+      "upstreamPinned": true
+    },
+    {
+      "library": "lib/arm64-v8a/libonnxruntime.so",
+      "sha256": "a62ef27cc11fc7bcdd1266ee40b75225b3492197f27576ea638ed2827e8ea1f8",
+      "bytes": 21726776,
+      "loadAlignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 91799552,
+      "upstreamPinned": true
+    },
+    {
+      "library": "lib/arm64-v8a/libopencv_world4.so",
+      "sha256": "9e8c23c4717aaf86aef656d016d1e6e21cbad3fc56570142cadcddf430787653",
+      "bytes": 30377505,
+      "loadAlignments": [
+        16384,
+        16384,
+        16384,
+        65536
+      ],
+      "apkDataOffset": 113541120,
+      "upstreamPinned": true
+    },
+    {
+      "library": "lib/arm64-v8a/libyys_maa_probe.so",
+      "sha256": "e0e67d664b54c292171e58654a7209a728e32c2cd311bc17db6bc3281629402a",
+      "bytes": 1915544,
+      "loadAlignments": [
+        16384,
+        16384,
+        16384,
+        16384
+      ],
+      "apkDataOffset": 172654592,
+      "upstreamPinned": false
+    }
+  ],
+  "defaultTestAssets": [],
+  "containsPrivateSamples": false,
+  "runtime16KbKernelTested": false
+}

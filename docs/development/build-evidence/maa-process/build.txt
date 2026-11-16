@@ -1,0 +1,98 @@
+Reusing configuration cache.
+> Task :maaprobe:generateDebugAndroidTestAssets UP-TO-DATE
+> Task :maaprobe:generateDebugAssets UP-TO-DATE
+> Task :maaprobe:verifyMaaInputs
+> Task :maaprobe:preBuild
+> Task :maaprobe:preDebugUnitTestBuild
+> Task :maaprobe:preDebugBuild
+> Task :maaprobe:preDebugAndroidTestBuild SKIPPED
+> Task :maaprobe:extractProguardFiles UP-TO-DATE
+> Task :maaprobe:generateDebugResources UP-TO-DATE
+> Task :maaprobe:generateDebugGlobalSynthetics UP-TO-DATE
+> Task :maaprobe:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :maaprobe:desugarDebugFileDependencies UP-TO-DATE
+> Task :maaprobe:javaPreCompileDebug UP-TO-DATE
+> Task :maaprobe:processDebugNavigationResources UP-TO-DATE
+> Task :maaprobe:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :maaprobe:checkDebugAarMetadata UP-TO-DATE
+> Task :maaprobe:packageDebugResources UP-TO-DATE
+> Task :maaprobe:extractDeepLinksDebug UP-TO-DATE
+> Task :maaprobe:generateDebugBuildConfig UP-TO-DATE
+> Task :maaprobe:checkDebugDuplicateClasses UP-TO-DATE
+> Task :maaprobe:mergeDebugResources UP-TO-DATE
+> Task :maaprobe:mapDebugSourceSetPaths UP-TO-DATE
+> Task :maaprobe:mergeDebugAssets UP-TO-DATE
+> Task :maaprobe:validateSigningDebug UP-TO-DATE
+> Task :maaprobe:compressDebugAssets UP-TO-DATE
+> Task :maaprobe:mergeExtDexDebug UP-TO-DATE
+> Task :maaprobe:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :maaprobe:mergeLibDexDebug UP-TO-DATE
+> Task :maaprobe:mergeDebugJniLibFolders UP-TO-DATE
+> Task :maaprobe:writeDebugAppMetadata UP-TO-DATE
+> Task :maaprobe:compileDebugNavigationResources UP-TO-DATE
+> Task :maaprobe:generateDebugAndroidTestResources UP-TO-DATE
+> Task :maaprobe:processDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :maaprobe:parseDebugLocalResources UP-TO-DATE
+> Task :maaprobe:javaPreCompileDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:generateDebugAndroidTestGlobalSynthetics UP-TO-DATE
+> Task :maaprobe:processDebugMainManifest UP-TO-DATE
+> Task :maaprobe:packageDebugAndroidTestResources UP-TO-DATE
+> Task :maaprobe:mapDebugAndroidTestSourceSetPaths UP-TO-DATE
+> Task :maaprobe:processDebugManifest UP-TO-DATE
+> Task :maaprobe:parseDebugAndroidTestLocalResources UP-TO-DATE
+> Task :maaprobe:mergeDebugAndroidTestAssets UP-TO-DATE
+> Task :maaprobe:compileDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :maaprobe:desugarDebugAndroidTestFileDependencies UP-TO-DATE
+> Task :maaprobe:checkDebugAndroidTestAarMetadata UP-TO-DATE
+> Task :maaprobe:checkDebugAndroidTestDuplicateClasses UP-TO-DATE
+> Task :maaprobe:compressDebugAndroidTestAssets UP-TO-DATE
+> Task :maaprobe:processDebugManifestForPackage UP-TO-DATE
+> Task :maaprobe:mergeDebugAndroidTestJniLibFolders UP-TO-DATE
+> Task :maaprobe:generateDebugAndroidTestRFile UP-TO-DATE
+> Task :maaprobe:generateDebugRFile UP-TO-DATE
+> Task :maaprobe:validateSigningDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:processDebugAndroidTestManifest UP-TO-DATE
+> Task :maaprobe:mergeDebugAndroidTestResources UP-TO-DATE
+> Task :maaprobe:mergeLibDexDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:writeDebugAndroidTestSigningConfigVersions UP-TO-DATE
+> Task :maaprobe:generateDebugAndroidTestBuildConfig UP-TO-DATE
+> Task :maaprobe:mergeExtDexDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:configureCMakeDebug[arm64-v8a]
+> Task :maaprobe:processDebugResources UP-TO-DATE
+> Task :maaprobe:processDebugAndroidTestResources UP-TO-DATE
+> Task :maaprobe:buildCMakeDebug[arm64-v8a]
+> Task :maaprobe:mergeDebugNativeLibs UP-TO-DATE
+> Task :maaprobe:stripDebugDebugSymbols UP-TO-DATE
+> Task :maaprobe:mergeDebugAndroidTestNativeLibs NO-SOURCE
+> Task :maaprobe:stripDebugAndroidTestDebugSymbols NO-SOURCE
+> Task :maaprobe:compileDebugKotlin
+> Task :maaprobe:processDebugJavaRes UP-TO-DATE
+> Task :maaprobe:mergeDebugJavaResource UP-TO-DATE
+> Task :maaprobe:compileDebugJavaWithJavac UP-TO-DATE
+> Task :maaprobe:generateDebugLintReportModel
+> Task :maaprobe:bundleDebugClassesToCompileJar
+> Task :maaprobe:generateDebugUnitTestLintModel
+> Task :maaprobe:generateDebugAndroidTestLintModel
+> Task :maaprobe:compileDebugAndroidTestKotlin UP-TO-DATE
+> Task :maaprobe:processDebugAndroidTestJavaRes UP-TO-DATE
+> Task :maaprobe:mergeDebugAndroidTestJavaResource UP-TO-DATE
+> Task :maaprobe:compileDebugAndroidTestJavaWithJavac UP-TO-DATE
+> Task :maaprobe:dexBuilderDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:mergeProjectDexDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:packageDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:assembleDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:createDebugAndroidTestApkListingFileRedirect UP-TO-DATE
+> Task :maaprobe:dexBuilderDebug
+> Task :maaprobe:mergeProjectDexDebug
+> Task :maaprobe:lintAnalyzeDebugUnitTest
+> Task :maaprobe:packageDebug
+> Task :maaprobe:assembleDebug
+> Task :maaprobe:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :maaprobe:lintAnalyzeDebugAndroidTest
+> Task :maaprobe:lintAnalyzeDebug
+> Task :maaprobe:lintReportDebug UP-TO-DATE
+> Task :maaprobe:lintDebug
+
+BUILD SUCCESSFUL in 3s
+82 actionable tasks: 15 executed, 67 up-to-date
+Configuration cache entry reused.

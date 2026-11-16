@@ -1,0 +1,212 @@
+Success
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaComparisonTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+io.github.yysassist.maaprobe.MaaComparisonTest:
+INSTRUMENTATION_STATUS: test=convertedSmallModelUsesTheSameOfflineSampleProtocol
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaComparisonTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=convertedSmallModelUsesTheSameOfflineSampleProtocol
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaFailureContractTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+io.github.yysassist.maaprobe.MaaFailureContractTest:
+INSTRUMENTATION_STATUS: test=corruptModelOutcomeIsObservedWithoutTreatingNoHitAsHealthy
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaFailureContractTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stack=org.junit.AssumptionViolatedException: got: <false>, expected: is <true>
+	at org.junit.Assume.assumeThat(Assume.java:106)
+	at org.junit.Assume.assumeTrue(Assume.java:50)
+	at io.github.yysassist.maaprobe.MaaFailureContractTest.corruptModelOutcomeIsObservedWithoutTreatingNoHitAsHealthy(MaaFailureContractTest.kt:18)
+
+INSTRUMENTATION_STATUS: stream=
+io.github.yysassist.maaprobe.MaaFailureContractTest:
+INSTRUMENTATION_STATUS: test=corruptModelOutcomeIsObservedWithoutTreatingNoHitAsHealthy
+INSTRUMENTATION_STATUS_CODE: -4
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaNativeLoadTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+io.github.yysassist.maaprobe.MaaNativeLoadTest:
+INSTRUMENTATION_STATUS: test=fixedNativeDistributionLoadsWithoutNetworkOrController
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaNativeLoadTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=fixedNativeDistributionLoadsWithoutNetworkOrController
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaOcrTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+io.github.yysassist.maaprobe.MaaOcrTest:
+INSTRUMENTATION_STATUS: test=recognitionHasNoControllerAndBlankIsSeparateFromTransportFailure
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaOcrTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=recognitionHasNoControllerAndBlankIsSeparateFromTransportFailure
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaOcrTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=changedCopiedModelIsRejectedBeforeMaaInitializesItsWorker
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaOcrTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=changedCopiedModelIsRejectedBeforeMaaInitializesItsWorker
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaOcrTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=invalidImageAndRepeatedCloseCannotInvalidateAnotherSession
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaOcrTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=invalidImageAndRepeatedCloseCannotInvalidateAnotherSession
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaProcessBoundaryTest
+INSTRUMENTATION_STATUS: current=7
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+io.github.yysassist.maaprobe.MaaProcessBoundaryTest:
+INSTRUMENTATION_STATUS: test=mismatchedModelAndInvalidImageReturnNoObservationInsteadOfAnEmptyHit
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaProcessBoundaryTest
+INSTRUMENTATION_STATUS: current=7
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=mismatchedModelAndInvalidImageReturnNoObservationInsteadOfAnEmptyHit
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaProcessBoundaryTest
+INSTRUMENTATION_STATUS: current=8
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=immediateStopNeverReleasesMoreThanOnceOrLeavesARequestRunning
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaProcessBoundaryTest
+INSTRUMENTATION_STATUS: current=8
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=immediateStopNeverReleasesMoreThanOnceOrLeavesARequestRunning
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaProcessBoundaryTest
+INSTRUMENTATION_STATUS: current=9
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=blockedNativeWorkerCanBeStoppedWithoutCompletingOrKillingAnotherRejectedCaller
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaProcessBoundaryTest
+INSTRUMENTATION_STATUS: current=9
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stack=org.junit.AssumptionViolatedException: Explicit child-native fault experiment only
+	at org.junit.Assume.assumeTrue(Assume.java:68)
+	at io.github.yysassist.maaprobe.MaaProcessBoundaryTest.requireFaults(MaaProcessBoundaryTest.kt:100)
+	at io.github.yysassist.maaprobe.MaaProcessBoundaryTest.blockedNativeWorkerCanBeStoppedWithoutCompletingOrKillingAnotherRejectedCaller(MaaProcessBoundaryTest.kt:174)
+
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=blockedNativeWorkerCanBeStoppedWithoutCompletingOrKillingAnotherRejectedCaller
+INSTRUMENTATION_STATUS_CODE: -4
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaProcessBoundaryTest
+INSTRUMENTATION_STATUS: current=10
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=normalAndBlankAreObservedInAnotherProcessAndCloseAfterDeath
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaProcessBoundaryTest
+INSTRUMENTATION_STATUS: current=10
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=normalAndBlankAreObservedInAnotherProcessAndCloseAfterDeath
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaProcessBoundaryTest
+INSTRUMENTATION_STATUS: current=11
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=installedServiceIsPrivateAndUsesTheDeclaredSeparateProcess
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaProcessBoundaryTest
+INSTRUMENTATION_STATUS: current=11
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=installedServiceIsPrivateAndUsesTheDeclaredSeparateProcess
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaProcessBoundaryTest
+INSTRUMENTATION_STATUS: current=12
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=encodedFrameLargerThanOneMiBUsesDescriptorsAndStillProducesHealthyBlank
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaProcessBoundaryTest
+INSTRUMENTATION_STATUS: current=12
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=encodedFrameLargerThanOneMiBUsesDescriptorsAndStillProducesHealthyBlank
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaProcessBoundaryTest
+INSTRUMENTATION_STATUS: current=13
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=validDigestButCorruptOnnxCrashesOnlyTheChildAndNextExplicitCallCanSucceed
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.maaprobe.MaaProcessBoundaryTest
+INSTRUMENTATION_STATUS: current=13
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=13
+INSTRUMENTATION_STATUS: stack=org.junit.AssumptionViolatedException: Explicit child-native fault experiment only
+	at org.junit.Assume.assumeTrue(Assume.java:68)
+	at io.github.yysassist.maaprobe.MaaProcessBoundaryTest.requireFaults(MaaProcessBoundaryTest.kt:100)
+	at io.github.yysassist.maaprobe.MaaProcessBoundaryTest.validDigestButCorruptOnnxCrashesOnlyTheChildAndNextExplicitCallCanSucceed(MaaProcessBoundaryTest.kt:162)
+
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=validDigestButCorruptOnnxCrashesOnlyTheChildAndNextExplicitCallCanSucceed
+INSTRUMENTATION_STATUS_CODE: -4
+INSTRUMENTATION_RESULT: stream=
+
+Time: 3.946
+
+OK (13 tests)
+
+
+INSTRUMENTATION_CODE: -1

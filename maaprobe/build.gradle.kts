@@ -26,7 +26,8 @@ android {
     }
     sourceSets.getByName("main").assets.directories.add(preparedMaa.resolve("assets").path)
     sourceSets.getByName("main").jniLibs.directories.add(preparedMaa.resolve("jniLibs").path)
-    sourceSets.getByName("androidTest").assets.directories.add(rootProject.file(".local/vision-poc/private-test-assets").path)
+    if (providers.gradleProperty("includePrivateVisionSamples").orNull == "true")
+        sourceSets.getByName("androidTest").assets.directories.add(rootProject.file(".local/vision-poc/private-test-assets").path)
     externalNativeBuild { cmake { path = file("src/main/cpp/CMakeLists.txt"); version = "3.22.1" } }
     // Preserve upstream bytes for this experiment's artifact identity checks.
     packaging { jniLibs.keepDebugSymbols.add("**/*.so") }

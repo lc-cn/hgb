@@ -4,6 +4,8 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <condition_variable>
+#include <mutex>
 
 namespace {
 void require(bool value, const char* message) {
@@ -116,4 +118,18 @@ Java_io_github_yysassist_maaprobe_MaaNative_recognizeRaw(JNIEnv* env, jobject, j
 extern "C" JNIEXPORT void JNICALL
 Java_io_github_yysassist_maaprobe_MaaNative_destroy(JNIEnv*, jobject, jlong handle) {
     delete reinterpret_cast<Session*>(handle);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_io_github_yysassist_maaprobe_MaaNative_blockForProbe(JNIEnv* env, jobject, jobject entered) {
+    // An explicit test-only hang. No signal handler, fabricated recognition result or game action.
+    auto type = env->GetObjectClass(entered);
+    auto run = env->GetMethodID(type, "run", "()V");
+    if (!run) return;
+    env->CallVoidMethod(entered, run);
+    if (env->ExceptionCheck()) return;
+    std::mutex mutex;
+    std::condition_variable condition;
+    std::unique_lock<std::mutex> lock(mutex);
+    condition.wait(lock, [] { return false; });
 }

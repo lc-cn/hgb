@@ -1,0 +1,6 @@
+{
+  "clearProbeData": "Success",
+  "uninstallTestPackage": "Success",
+  "remainingRecognitionChild": false,
+  "scope": "Only maaprobe package data/test APK on isolated emulator; phone/game/formal assistant untouched."
+}

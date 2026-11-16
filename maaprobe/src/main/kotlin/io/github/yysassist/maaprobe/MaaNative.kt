@@ -7,6 +7,8 @@ internal object MaaNative {
     external fun create(directory: String): Long
     external fun recognizeRaw(handle: Long, image: ByteArray): ByteArray
     external fun destroy(handle: Long)
+    /** Debug probe only: a foreign worker that cannot return; termination must remain independent. */
+    external fun blockForProbe(entered: Runnable)
 }
 
 /** Serial synchronous calls: close cannot release native memory while recognition is using it. */

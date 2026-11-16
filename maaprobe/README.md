@@ -21,7 +21,7 @@ adb -s "$MAA_PROBE_SERIAL" shell am instrument -w -r io.github.yysassist.maaprob
 adb -s "$MAA_PROBE_SERIAL" exec-out run-as io.github.yysassist.maaprobe cat files/maa-probe/comparison.json
 ```
 
-Default tests skip the explicitly gated unsafe experiment and use synthetic inputs only. A prior probe's local private sample protocol can be selected with `-e includePrivateVisionSamples true`; source is `.local/vision-poc/private-test-assets/private-samples/`. This is the same PNG/region/label input protocol as `visionprobe`. `-e privateVisionDetails true` writes raw private diagnostic output locally; it is removed at the start of the next comparison. Private images, diagnostics and test APKs containing them are not committed or published. Shared comparison output omits native recognition text for private cases.
+Default tests skip the explicitly gated fault experiments and use synthetic inputs only; the default test APK has no private assets. For the prior private sample protocol, build tests with `-PincludePrivateVisionSamples=true`, then run with `-e includePrivateVisionSamples true`; source is `.local/vision-poc/private-test-assets/private-samples/`. This is the same PNG/region/label input protocol as `visionprobe`. `-e privateVisionDetails true` writes raw private diagnostic output locally; it is removed at the start of the next comparison. Private images, diagnostics and test APKs containing them are not committed or published. Shared comparison output omits native recognition text for private cases.
 
 `all` candidates are measured using the same exact-text/IoU/one-to-one-overlap criterion as the earlier probes. `all`, `filtered` and `hit` have different meanings; none establishes a business result. Resource registration is lazy and its time includes the probe's model digest gate; actual native model initialization occurs on first inference. Timing is not directly comparable to eager SDK creation.
 
@@ -29,8 +29,23 @@ Default tests skip the explicitly gated unsafe experiment and use synthetic inpu
 
 The explicit corrupt-model experiment crashed the probe process: an upstream background worker terminated with an uncaught `Ort::Exception` while loading invalid ONNX. JNI caller-thread catches cannot intercept that exception. The original crash logs and binary identities are preserved in the [evidence](../docs/development/build-evidence/maa-probe/README.md); it is not a passing reliability test.
 
-`MaaOcr` verifies copied model bytes against APK-compiled digests generated from the lock before creating a foreign worker. A changed-model test verifies rejection and a subsequent valid read in the same process. This is a temporary probe entry mitigation, not an upstream fix or a solution to all native crashes, concurrent file replacement or hangs. Production model identity and lifetime belong to the future versioned resource owner; its validated resource leases should replace this fixed-APK pin gate. Production models are still intended to come from task-version resources, not be hardcoded into the shell.
+`MaaOcr` verifies copied model bytes against APK-compiled digests generated from the lock before creating a foreign worker. A changed-model test verifies rejection and a subsequent valid read in the same process. This is a temporary probe entry mitigation, not an upstream fix or a solution to all native crashes, concurrent file replacement or hangs. The production version library now supplies resource leases, but this probe has not integrated them. Production model identity/lifetime belong to that owner, whose validated leases should replace the fixed-APK pin gate. Production models are still intended to come from task-version resources, not be hardcoded into the shell.
 
 To reproduce the **known process-terminating** upstream fault separately, the local test package contains `MaaFailureContractTest` gated by `-e allowCorruptMaaModels true`. It deliberately bypasses `MaaOcr` and must not be mixed into the normal batch. The adapter never reports an unfinished or crashed native request as an empty successful recognition.
 
 Recognition calls are synchronous and serialized with close; coroutine cancellation is not implemented as native cancellation. No production StepWorker, input authority, timeout/retry policy or fallback is registered. ELF/APK alignment checks passed at 16KB, while actual execution was only on the 4KB AVD. Phone, Windows emulator, 16KB-kernel, stress and real-claim validation remain open. See [results and limits](../docs/development/maa-recognition-probe.md).
+
+## Separate-process fault boundary
+
+The private `MaaObservationService` is a same-UID process experiment, not a security sandbox. Model/image/result descriptors cross Binder; no controller is bound. A single accepted call owns the child until process termination, and the host waits for Binder death and any result reader before releasing its use callback. A successful empty read remains different from no observation. There is no automatic retry or timeout policy. See [contract and results](../docs/development/maa-process-boundary.md).
+
+On the same isolated QA emulator, run the seven process cases including explicit child-native faults:
+
+```sh
+adb -s "$MAA_PROBE_SERIAL" shell am instrument -w -r \
+  -e class io.github.yysassist.maaprobe.MaaProcessBoundaryTest \
+  -e allowChildNativeFaults true \
+  io.github.yysassist.maaprobe.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+The invalid ONNX case intentionally has a correct declared digest, reproduces the real upstream SIGABRT only in the child, and verifies an explicit subsequent valid call. The debug block case enters a non-returning C++ wait, then verifies an independent stop. These are not mixed with the old `allowCorruptMaaModels` host-terminating experiment. They do not prove production executor survival or game-result recovery.
