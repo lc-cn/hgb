@@ -128,6 +128,55 @@ class ExecutionRuntimeTest {
         assertEquals(1, started.get())
         assertEquals(1, runtime.state.value.facts.count { it.type == "enqueued" })
     }
+    @Test fun aRejectedPreemptionRetainsOnlyTheCommittedRunsInputPermit() = runBlocking {
+        val entered = CompletableDeferred<Unit>()
+        val runtime = runtime(counting(AtomicInteger(), { entered.complete(Unit); awaitCancellation() }))
+        add(runtime, "one"); withTimeout(5_000) { entered.await() }
+        val ticket = runtime.state.value.activeTicket!!
+        assertTrue(runtime.permitsInput(ticket))
+        val saved = store.load()
+        val task = bundle().tasks.last()
+        // Core sees a higher priority; the real store rejects its mismatch with the locked content.
+        val result = runtime.submit(ExecutorCommand.Enqueue("invalid-priority", ExecutionRequest(
+            SubmissionRef(SubmissionKind.TASK, task.id), identity, "v1",
+            listOf(TaskSnapshot(task.id, task.name, 10, listOf("wait")))))).await()
+        assertTrue(result is RuntimeCommandResult.Rejected)
+        assertEquals(ticket, runtime.state.value.activeTicket)
+        assertTrue(runtime.permitsInput(ticket))
+        assertEquals(saved, store.load())
+    }
+    @Test fun aFailedControlCommitClosesInputAndPreservesThePreviousDurableState() = runBlocking {
+        val port = object : ExecutionPersistence {
+            override suspend fun load() = store.load()
+            override suspend fun persist(expectedRevision: Long, prepared: PreparedExecutorTransition): Long {
+                if (prepared.snapshot.manualHold) error("fixture: disk unavailable")
+                return store.persist(expectedRevision, prepared)
+            }
+        }
+        val entered = CompletableDeferred<Unit>()
+        val runtime = runtime(counting(AtomicInteger(), { entered.complete(Unit); awaitCancellation() }), port)
+        add(runtime, "one"); withTimeout(5_000) { entered.await() }
+        val ticket = runtime.state.value.activeTicket!!
+        val before = store.load()
+        assertTrue(runtime.submit(ExecutorCommand.Pause).await() is RuntimeCommandResult.Unconfirmed)
+        assertTrue(runtime.status.value is RuntimeStatus.Failure)
+        assertFalse(runtime.permitsInput(ticket))
+        assertEquals(before, store.load())
+    }
+    @Test fun aCorruptPinnedVersionIsAStorageFaultAndCannotReopenInput() = runBlocking {
+        val entered = CompletableDeferred<Unit>()
+        val runtime = runtime(counting(AtomicInteger(), { entered.complete(Unit); awaitCancellation() }))
+        add(runtime, "one"); withTimeout(5_000) { entered.await() }
+        val ticket = runtime.state.value.activeTicket!!
+        val before = store.load()
+        database.openHelper.writableDatabase.execSQL("UPDATE task_versions SET digest = 'broken' WHERE version = 'v1'")
+        assertTrue("Corrupt execution dependencies are not ordinary rejected user commands",
+            runtime.submit(ExecutorCommand.Pause).await() is RuntimeCommandResult.Unconfirmed)
+        assertTrue(runtime.status.value is RuntimeStatus.Failure)
+        assertFalse(runtime.permitsInput(ticket))
+        assertEquals(before, store.load())
+        assertEquals("broken", database.taskVersions().version("v1")!!.digest)
+    }
     @Test fun safeProcessReentryRestartsTheUnfinishedStepAndKeepsManualPause() = runBlocking {
         val first = runtime(); add(first, "one"); wait(first) { it.phase == ExecutorPhase.RUNNING }
         val ticket = first.state.value.activeTicket!!

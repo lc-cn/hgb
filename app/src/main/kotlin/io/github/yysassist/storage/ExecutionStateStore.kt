@@ -45,7 +45,8 @@ class ExecutionStateStore(private val database: AssistDatabase, private val libr
             val owner = "$prefix$runId"
             val pinned = if (runId != prepared.admittedRunId) {
                 val retained = library.retainRecorded(run.request.packageVersion, owner, reason)
-                if (retained is VersionChange.Rejected) throw ExecutionStateRejected(retained.message)
+                // An admitted run losing its immutable identity is storage corruption, not new-input rejection.
+                if (retained is VersionChange.Rejected) throw CorruptExecutionState(retained.message)
                 null
             } else when (val result = library.retain(run.request.packageVersion, owner, reason)) {
                 is PinVersionResult.Pinned -> result.content

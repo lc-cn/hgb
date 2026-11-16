@@ -63,6 +63,8 @@ class ExecutionRuntime(
     private val pendingStarts = mutableMapOf<AttemptTicket, PendingStart>()
     private val running = mutableMapOf<AttemptTicket, Running>()
     private var restoredInput: AttemptTicket? = null
+    /** Input lease projection only; queue decisions remain exclusively in TaskExecutor. */
+    @Volatile private var inputPermit: AttemptTicket? = null
 
     init {
         scope.launch {
@@ -84,7 +86,7 @@ class ExecutionRuntime(
     fun enqueueTask(address: TaskAddress, commandId: String = UUID.randomUUID().toString()): RuntimeReceipt =
         receipt { Message.AddTask(address, commandId, it) }
     fun readinessChanged() { commands.trySend(Message.Readiness) }
-    fun permitsInput(ticket: AttemptTicket): Boolean = status.value == RuntimeStatus.Ready && engine?.permitsInput(ticket) == true
+    fun permitsInput(ticket: AttemptTicket): Boolean = scope.isActive && status.value == RuntimeStatus.Ready && inputPermit == ticket
 
     private fun receipt(message: (CompletableDeferred<RuntimeCommandResult>) -> Message): RuntimeReceipt {
         val result = CompletableDeferred<RuntimeCommandResult>()
@@ -209,10 +211,16 @@ class ExecutionRuntime(
     private suspend fun change(command: ExecutorCommand, dispatch: Boolean = true): PreparedExecutorTransition {
         val owner = checkNotNull(engine)
         val prepared = owner.prepare(command)
+        // Revocation must not wait for disk. This cannot grant a ticket from uncommitted state.
+        inputPermit?.let { if (!prepared.permitsInput(it)) inputPermit = null }
         val encoded = prepared.encodeState()
         if (encoded != prepared.baseEncodedState) {
             val next = try { withContext(Dispatchers.IO) { persistence.persist(revision, prepared) } }
-            catch (rejected: ExecutionStateRejected) { throw rejected }
+            catch (rejected: ExecutionStateRejected) {
+                // A rejected transaction rolled back, so only the still-committed lease can reopen.
+                publishInputPermit(owner)
+                throw rejected
+            }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (error: Exception) {
                 // Read-only reconciliation of a possibly committed write. Never replay the write or effects blindly.
@@ -224,9 +232,13 @@ class ExecutionRuntime(
             revision = next
         }
         owner.commit(prepared)
+        publishInputPermit(owner)
         mutableState.value = owner.state.value
         if (dispatch) dispatch(prepared)
         return prepared
+    }
+    private fun publishInputPermit(owner: TaskExecutor) {
+        inputPermit = owner.state.value.activeTicket?.takeIf(owner::permitsInput)
     }
     private fun dispatch(prepared: PreparedExecutorTransition) {
         prepared.effects.forEach { effect -> when (effect) {
@@ -306,6 +318,7 @@ class ExecutionRuntime(
         }
     }
     private fun fault(message: String) {
+        inputPermit = null
         mutableStatus.value = RuntimeStatus.Failure(message)
         pendingStarts.values.forEach { it.binding?.cancel() }
         running.forEach { (ticket, record) -> drain(ticket, record) }

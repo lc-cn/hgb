@@ -39,5 +39,7 @@ class PreparedExecutorTransition internal constructor(
     val effects: List<ExecutorEffect>,
 ) {
     val snapshot: ExecutorSnapshot get() = draft.state.value
+    /** Admission may close before persistence; new input may only open after commit. */
+    fun permitsInput(ticket: AttemptTicket): Boolean = draft.permitsInput(ticket)
     fun encodeState(): String = draft.encodeState()
 }

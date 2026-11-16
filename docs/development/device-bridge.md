@@ -36,3 +36,11 @@
 - [Android AccessibilityService](https://developer.android.com/reference/android/accessibilityservice/AccessibilityService)：截图能力、手势权限、`dispatchGesture` 的 true／false 及其会取消正在进行的手势。
 - [GestureResultCallback](https://developer.android.com/reference/android/accessibilityservice/AccessibilityService.GestureResultCallback)：完成与取消分别回调，没有业务完成保证。
 - [kotlinx.coroutines 1.10.2 CancellableContinuation 源码](https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/kotlinx-coroutines-core/common/src/CancellableContinuation.kt)：锁定版本的及时取消与资源交接合同；实际编译及设备回归也使用工程锁定的 1.10.2。
+
+## 运行宿主的输入许可集成回归
+
+2026-11-16，隔离模拟器上将生产 ExecutionRuntime、真实 SQLite 和平台桥接到自有触摸夹具。复现了暂停状态等待数据库提交时旧许可仍开放的问题：工作器此时请求的新手势实际返回 Completed。修复不改平台桥的投递语义，而由宿主使用执行器已计算的下一状态，先收回旧票据的输入许可，再等待状态提交；新许可只在提交后发布。准备状态不作为 UI 进度展示，也不启动新工作器。
+
+明确拒绝并回滚的事务只恢复仍已提交的原许可；提交结果无法确认、存储故障或宿主范围取消均不开放输入。原平台手势仍需独立终态回调，不能以提前关闭许可冒充已经静默。相同真实平台断言修复前失败、修复后通过，另有拒绝抢占／提交失败的真实 SQLite 测试。证据见 `build-evidence/device-runtime/`。
+
+该阶段只是把输入许可边界贯通到生产宿主，实际触摸仍由测试工作器发往自有界面；生产动作注册表没有新增坐标点击，未运行游戏步骤，也尚无业务动作日志与结果核对闭环。
