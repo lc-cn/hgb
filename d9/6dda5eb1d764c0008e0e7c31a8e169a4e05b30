@@ -1,0 +1,520 @@
+docs/design/README.md
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 3
+  s_b0f0af2da7f631::t_5d99f65b6a7928 1-2,4-79
+docs/design/model-presets.md
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 3-4
+  s_b0f0af2da7f631::t_aa2a307ca7d555 1-2,5-100
+docs/development/build-evidence/task-configuration/final-test-build.txt
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 2
+  s_b0f0af2da7f631::t_2821272f53c7c0 1,3-83
+docs/development/build-evidence/version-library/build.txt
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 2
+  s_b0f0af2da7f631::t_487df38ec05c9f 1,3-91
+docs/design/interaction-update.md
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 3
+  s_b0f0af2da7f631::t_51a6c592b590b6 1-2,4-67
+docs/PRD.md
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 3-4
+  s_b0f0af2da7f631::t_9866c4d0052cfa 1-2,5-457
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_9bee2f8c5aea7d 51-70
+  s_b0f0af2da7f631::t_00eb8a3008c74e 1-50
+docs/design/task-container-architecture.md
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 3-4
+  s_b0f0af2da7f631::t_c12e2fc87caff6 1-2,5-238
+docs/development/build-evidence/device-bridge/build.txt
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 2
+  s_b0f0af2da7f631::t_aa276b07247ac8 1,3-108
+docs/development/build-evidence/task-updates/lint-build.txt
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 2
+  s_b0f0af2da7f631::t_c5ea8c6f99c470 1,3-46
+docs/development/build-evidence/core-late-before.txt
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 2
+  s_b0f0af2da7f631::t_632f61eb68365a 1,3-36
+docs/PRD-phase-1.md
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 3-4
+  s_b0f0af2da7f631::t_0069a8d9ee7bed 1-2,5-285
+docs/development/build-evidence/runtime-host-foundation/verification.json
+  s_b0f0af2da7f631::t_ac411c53d3e9f3 1-73
+.gitignore
+  s_b0f0af2da7f631::t_a0e1a4c73087e8 13-15
+  s_b0f0af2da7f631::t_1768276d182329 10-12
+  s_b0f0af2da7f631::t_037f94e971f0e8 1-9
+docs/development/build-evidence/task-configuration/build.txt
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 2
+  s_b0f0af2da7f631::t_56d2bf8a84d070 1,3-108
+docs/development/build-evidence/task-updates/build.txt
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 2
+  s_b0f0af2da7f631::t_8576dc1b5020ca 1,3-108
+docs/development/README.md
+  s_b0f0af2da7f631::t_9bee2f8c5aea7d 109
+  s_b0f0af2da7f631::t_f73b86867b7313 1-108,110-125
+docs/development/build-evidence/execution-store/build.txt
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 2
+  s_b0f0af2da7f631::t_131d6c8459dd89 1,3-108
+docs/design/ui-design.md
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 3-5
+  s_b0f0af2da7f631::t_f4e19e8339377d 1-2,6-255
+docs/design/execution-scheduler.md
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 3-4
+  s_b0f0af2da7f631::t_39b025b5095f4f 1-2,5-268
+docs/design/native-interaction-research.md
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 3
+  s_b0f0af2da7f631::t_a851962be759c1 1-2,4-108
+docs/development/task-distribution.md
+  s_b0f0af2da7f631::t_9bee2f8c5aea7d 9
+  s_b0f0af2da7f631::t_898eac44c1a767 1-8,10-31
+docs/design/reissue-architecture-review.md
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 3
+  s_b0f0af2da7f631::t_cc74c6ebb6d24b 1-2,4-72
+docs/development/build-evidence/runtime-host-foundation/instrumentation.txt
+  s_b0f0af2da7f631::t_ac411c53d3e9f3 1-121
+.gitattributes
+  s_b0f0af2da7f631::t_2ee4b6e36fbb03 1-5
+docs/design/reissue-validation.md
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 5
+  s_b0f0af2da7f631::t_21782325d82993 1-4,6-64
+docs/prototype/README.md
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 3
+  s_b0f0af2da7f631::t_0999bc16341524 1-2,4-91
+docs/development/build-evidence/runtime-host-foundation/build.txt
+  s_b0f0af2da7f631::t_ac411c53d3e9f3 1,3-108
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 2
+docs/design/reissue-requirements.md
+  s_b0f0af2da7f631::t_8ba0340c2b0bfe 3-4
+  s_b0f0af2da7f631::t_d85495efe63663 1-2,5-279
+CONTEXT.md
+  s_b0f0af2da7f631::t_72d8e67110ba5c 1-87
+README.md
+  s_b0f0af2da7f631::t_23d59e80a639f3 1-22
+app/build.gradle.kts
+  s_f21319594bee88::t_ae3e459c2a94a3 1-44
+app/gradle.lockfile
+  s_f21319594bee88::t_283755440d659c 1-390
+app/schemas/io.github.yysassist.storage.AssistDatabase/1.json
+  s_b0f0af2da7f631::t_2a16666d5722ec 1-143
+app/schemas/io.github.yysassist.storage.AssistDatabase/2.json
+  s_f21319594bee88::t_d56c32c3de4608 1-198
+app/schemas/io.github.yysassist.storage.AssistDatabase/3.json
+  s_b0f0af2da7f631::t_53c867db3a47d9 1-234
+app/schemas/io.github.yysassist.storage.AssistDatabase/4.json
+  s_b0f0af2da7f631::t_6b15c03f5973ab 1-241
+app/src/androidTest/kotlin/io/github/yysassist/TaskUpdatesIntegrationTest.kt
+  s_f21319594bee88::t_7a66368d6e319d 1-103
+app/src/androidTest/kotlin/io/github/yysassist/device/AndroidDeviceBridgeTest.kt
+  s_b0f0af2da7f631::t_4d98b7cfac2425 1-244
+app/src/androidTest/kotlin/io/github/yysassist/ui/TaskConfigurationPageTest.kt
+  s_b0f0af2da7f631::t_de83fd0edc4de4 1-145
+app/src/androidTest/kotlin/io/github/yysassist/ui/TaskVersionsPageTest.kt
+  s_f21319594bee88::t_49f6421cfc6968 1-110
+app/src/main/AndroidManifest.xml
+  s_f21319594bee88::t_eaed20b817c078 1-27
+app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_f21319594bee88::t_7b88f757838702 1-45
+app/src/main/kotlin/io/github/yysassist/TaskConfigurationEditor.kt
+  s_b0f0af2da7f631::t_79b8dad64af607 1-82
+app/src/main/kotlin/io/github/yysassist/TaskUpdates.kt
+  s_f21319594bee88::t_11f735896ea593 1-84
+app/src/main/kotlin/io/github/yysassist/device/AndroidDeviceBridge.kt
+  s_f21319594bee88::t_fef695122b54bc 1-228
+app/src/main/kotlin/io/github/yysassist/device/GameAccessibilityService.kt
+  s_f21319594bee88::t_a64f82550fe37a 1-59
+app/src/main/kotlin/io/github/yysassist/storage/TaskConfigurationRepository.kt
+  s_b0f0af2da7f631::t_01b9c4090acbd7 1-53
+app/src/main/kotlin/io/github/yysassist/ui/AssistTheme.kt
+  s_f21319594bee88::t_9dac4746f49a43 1-79
+app/src/main/res/values/styles.xml
+  s_73eb2432348eb5::t_83d7ea39749588 1-7
+app/src/main/res/xml/backup_rules.xml
+  s_f21319594bee88::t_6f1960021d999f 1-12
+app/src/main/res/xml/data_extraction_rules.xml
+  s_f21319594bee88::t_b0569eb9d178be 1-25
+build.gradle.kts
+  s_f21319594bee88::t_533b21cf321e3e 1-11
+core/build.gradle.kts
+  s_f21319594bee88::t_ff465a89b82724 1-15
+core/gradle.lockfile
+  s_f21319594bee88::t_c1199cb7cf32e5 1-52
+core/src/main/kotlin/io/github/yysassist/core/content/ConfigurationDraft.kt
+  s_f21319594bee88::t_c16f676fc7a2a7 1-51
+core/src/main/kotlin/io/github/yysassist/core/content/GitHubTaskSource.kt
+  s_f21319594bee88::t_513b32f87bc52f 1-114
+core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt
+  s_f21319594bee88::t_e9b53628b29662 1-160
+core/src/main/kotlin/io/github/yysassist/core/execution/ExecutionModels.kt
+  s_b0f0af2da7f631::t_6505fe77c14d02 1-118
+core/src/main/kotlin/io/github/yysassist/core/model/ExecutionContext.kt
+  s_b0f0af2da7f631::t_99e2f231b46eac 1-19
+core/src/test/kotlin/io/github/yysassist/core/content/ConfigurationValidatorTest.kt
+  s_b0f0af2da7f631::t_b426fd5ec3bfda 1-48
+core/src/test/resources/executor-state-v1.json
+  s_b0f0af2da7f631::t_141aecacc0d04f 1
+docs/design/architecture-decisions.md
+  s_b0f0af2da7f631::t_f6cabee6104a4f 1-41
+docs/design/architecture-validation-plan.md
+  s_b0f0af2da7f631::t_bf1754996b9b6f 1-67
+docs/design/developer-task-authoring.md
+  s_b0f0af2da7f631::t_4990889bd56e04 1-92
+docs/design/execution-convergence.md
+  s_b0f0af2da7f631::t_80fa6d5c1232a9 1-54
+docs/design/execution-simulator-contract.md
+  s_b0f0af2da7f631::t_f5648cdb3942e1 1-113
+docs/design/floating-convergence.md
+  s_b0f0af2da7f631::t_c75301d878d638 1-38
+docs/design/game-lifecycle-account-boundaries.md
+  s_b0f0af2da7f631::t_ce2e7ee611c0d0 1-99
+docs/design/native-ui-preview.html
+  s_b0f0af2da7f631::t_25d209ad7bffb3 1-153
+docs/design/settings-convergence.md
+  s_f21319594bee88::t_63c1f0339ff834 1-68
+docs/design/system-architecture.md
+  s_b0f0af2da7f631::t_662d0183000cbd 1-181
+docs/design/technical-plan.md
+  s_b0f0af2da7f631::t_1f6ee058f32905 1-108
+docs/design/ui-preview.html
+  s_b0f0af2da7f631::t_e3350001bce75a 1-193
+docs/design/ui-v3/acceptance-report.md
+  s_b0f0af2da7f631::t_3a28969a971a45 1-89
+docs/design/ui-v3/app.html
+  s_b0f0af2da7f631::t_23cc600cf98485 1-513
+docs/design/ui-v3/base.css
+  s_b0f0af2da7f631::t_2069c050f7c518 1-11
+docs/design/ui-v3/design-brief.md
+  s_b0f0af2da7f631::t_aeeaad361a2e06 1-23
+docs/design/ui-v3/developer-design-notes.md
+  s_b0f0af2da7f631::t_b8d4775aca32d2 1-82
+docs/design/ui-v3/developer.css
+  s_b0f0af2da7f631::t_9991f41d5bd787 1-5
+docs/design/ui-v3/developer.html
+  s_b0f0af2da7f631::t_b09983328d90a7 1-2
+docs/design/ui-v3/developer.js
+  s_b0f0af2da7f631::t_8ed92e2f17dab4 1-293
+docs/design/ui-v3/evidence/browser-checks/README.md
+  s_b0f0af2da7f631::t_d52e62fc6aec87 1-12
+docs/design/ui-v3/evidence/browser-checks/yys-ui-v3-cdp.mjs
+  s_b0f0af2da7f631::t_98fff36b0711a2 1-13
+docs/design/ui-v3/evidence/browser-checks/yys-v3-capture-developer.mjs
+  s_b0f0af2da7f631::t_dce362b084c2c7 1-10
+docs/design/ui-v3/evidence/browser-checks/yys-v3-capture-main.mjs
+  s_b0f0af2da7f631::t_4b56049b9d43ec 1-5
+docs/design/ui-v3/evidence/browser-checks/yys-v3-channel-browser.mjs
+  s_b0f0af2da7f631::t_b3c8993f901b40 1-9
+docs/design/ui-v3/evidence/browser-checks/yys-v3-compatible-cdp.mjs
+  s_b0f0af2da7f631::t_9dcde292bea21d 1
+docs/design/ui-v3/evidence/browser-checks/yys-v3-dev-check.mjs
+  s_b0f0af2da7f631::t_6ea7d95543e9da 1-20
+docs/design/ui-v3/evidence/browser-checks/yys-v3-events-history-browser.mjs
+  s_b0f0af2da7f631::t_fe18b2743e0580 1-9
+docs/design/ui-v3/evidence/browser-checks/yys-v3-extra-check.mjs
+  s_b0f0af2da7f631::t_8a8363d70c6c19 1-9
+docs/design/ui-v3/evidence/browser-checks/yys-v3-final-review.mjs
+  s_b0f0af2da7f631::t_ca3bed3360e393 1-6
+docs/design/ui-v3/evidence/browser-checks/yys-v3-game-browser.mjs
+  s_b0f0af2da7f631::t_8b9201a1a0520d 1-4
+docs/design/ui-v3/evidence/browser-checks/yys-v3-main-check.mjs
+  s_b0f0af2da7f631::t_df976e8f3e6b11 1-26
+docs/design/ui-v3/evidence/browser-checks/yys-v3-network-browser.mjs
+  s_b0f0af2da7f631::t_8cb5ef7cad4164 1-4
+docs/design/ui-v3/evidence/browser-checks/yys-v3-provider-browser.mjs
+  s_b0f0af2da7f631::t_c215de10d1f802 1-10
+docs/design/ui-v3/evidence/browser-checks/yys-v3-ux-browser.mjs
+  s_b0f0af2da7f631::t_b2b095e9baeaa8 1-3
+docs/design/ui-v3/evidence/browser-checks/yys-v3-workbench-browser.mjs
+  s_b0f0af2da7f631::t_cc8530d7f2529e 1-3
+docs/design/ui-v3/evidence/channel-results.json
+  s_b0f0af2da7f631::t_47f6a532746c5f 1-288
+docs/design/ui-v3/evidence/dev-check.json
+  s_b0f0af2da7f631::t_d5221012bb7158 1-777
+docs/design/ui-v3/evidence/developer-screens.json
+  s_b0f0af2da7f631::t_85f4beba5145f1 1-596
+docs/design/ui-v3/evidence/events-history-results.json
+  s_b0f0af2da7f631::t_281b8080ddd6e1 1-224
+docs/design/ui-v3/evidence/extra-check.json
+  s_b0f0af2da7f631::t_547dc89353b192 1-180
+docs/design/ui-v3/evidence/final-review.json
+  s_b0f0af2da7f631::t_a6a37677f8f04d 1-61
+docs/design/ui-v3/evidence/game-browser-results.json
+  s_b0f0af2da7f631::t_81e76cbe84557a 1-164
+docs/design/ui-v3/evidence/legacy-preservation.json
+  s_b0f0af2da7f631::t_de556bb369548a 1-37
+docs/design/ui-v3/evidence/main-check.json
+  s_b0f0af2da7f631::t_e043120d130222 1-1881
+docs/design/ui-v3/evidence/main-screens.json
+  s_b0f0af2da7f631::t_773da1fbedf081 1-1471
+docs/design/ui-v3/evidence/network-results.json
+  s_b0f0af2da7f631::t_fe5dda835fc7c5 1-192
+docs/design/ui-v3/evidence/provider-results.json
+  s_b0f0af2da7f631::t_68afb3a9d1a011 1-192
+docs/design/ui-v3/evidence/ux-results.json
+  s_b0f0af2da7f631::t_e1d04c54ad666f 1-76
+docs/design/ui-v3/evidence/verification.json
+  s_b0f0af2da7f631::t_a29b16faa6b1a6 1-1381
+docs/design/ui-v3/evidence/workbench-results.json
+  s_b0f0af2da7f631::t_3e853f7140b6e5 1-160
+docs/design/ui-v3/gallery-data.js
+  s_b0f0af2da7f631::t_902b3e1693d7f0 1
+docs/design/ui-v3/index.html
+  s_b0f0af2da7f631::t_71b6f523f89741 1-2
+docs/design/ui-v3/main-design-notes.md
+  s_b0f0af2da7f631::t_24b068727ee993 1-129
+docs/design/ui-v3/tokens.css
+  s_b0f0af2da7f631::t_3439decaf5a339 1
+docs/design/ui-v4-exploration/after-observations.json
+  s_b0f0af2da7f631::t_b51f066d7c8427 1-328
+docs/design/ui-v4-exploration/app.css
+  s_b0f0af2da7f631::t_12f8e3a51b863e 1-14
+docs/design/ui-v4-exploration/app.html
+  s_b0f0af2da7f631::t_9f3fd542a667f1 1
+docs/design/ui-v4-exploration/app.js
+  s_b0f0af2da7f631::t_23cca61a5d2a3a 1-64
+docs/design/ui-v4-exploration/before-observations.json
+  s_b0f0af2da7f631::t_bf43f54de47fbd 1-337
+docs/design/ui-v4-exploration/delivery-manifest.json
+  s_b0f0af2da7f631::t_a959662a0d1eae 1-41
+docs/design/ui-v4-exploration/design-decisions.md
+  s_b0f0af2da7f631::t_f1a0f179697d29 1-79
+docs/design/ui-v4-exploration/edge-observations.json
+  s_b0f0af2da7f631::t_48fc052e660e07 1-52
+docs/design/ui-v4-exploration/fixture-data.js
+  s_b0f0af2da7f631::t_7612559ce4819b 1-2111
+docs/design/ui-v4-exploration/index.html
+  s_b0f0af2da7f631::t_23a968ef54a10b 1
+docs/design/ui-v4-exploration/layout-observations.md
+  s_b0f0af2da7f631::t_f1c27d91e03b74 1-17
+docs/design/ui-v4-exploration/review-notes.md
+  s_b0f0af2da7f631::t_378902512a8d6c 1-55
+docs/design/ui-v4-exploration/ux-directions.md
+  s_b0f0af2da7f631::t_26eaa9c358e536 1-122
+docs/design/ui-v4-exploration/walkthrough-observations.json
+  s_b0f0af2da7f631::t_55d3d0a1908721 1-129
+docs/design/ui-v5/app.css
+  s_b0f0af2da7f631::t_53f37b51de2f7b 1-119
+docs/design/ui-v5/app.html
+  s_b0f0af2da7f631::t_d9fb5ff130e6d5 1
+docs/design/ui-v5/app.js
+  s_b0f0af2da7f631::t_67fb2aa7bb3c6c 1-65
+docs/design/ui-v5/appearance.js
+  s_b0f0af2da7f631::t_d5b10aae9520aa 1-30
+docs/design/ui-v5/developer.css
+  s_b0f0af2da7f631::t_006de6ed6010b9 1-21
+docs/design/ui-v5/developer.html
+  s_b0f0af2da7f631::t_3d12ae56f88d94 1-2
+docs/design/ui-v5/developer.js
+  s_b0f0af2da7f631::t_6ccf6fbb5ea3cb 1-295
+docs/design/ui-v5/evidence/composite-contrast.json
+  s_b0f0af2da7f631::t_6d80da26c09348 1-2249
+docs/design/ui-v5/evidence/composite-samples.json
+  s_b0f0af2da7f631::t_1279c68c00a11b 1-1692
+docs/design/ui-v5/evidence/delivery-manifest.json
+  s_b0f0af2da7f631::t_2e414cf978a8ad 1-612
+docs/design/ui-v5/evidence/gallery.json
+  s_b0f0af2da7f631::t_6908457d987209 1-7
+docs/design/ui-v5/evidence/icon-colors.json
+  s_b0f0af2da7f631::t_a446af7120e13d 1-307
+docs/design/ui-v5/evidence/prior-version-check.json
+  s_b0f0af2da7f631::t_bacb5499808337 1-10
+docs/design/ui-v5/evidence/screens.json
+  s_b0f0af2da7f631::t_ba7a0e5864bac0 1-398
+docs/design/ui-v5/evidence/skill-audit.json
+  s_b0f0af2da7f631::t_0439a42c9522ed 1-18
+docs/design/ui-v5/evidence/skill-baseline.json
+  s_b0f0af2da7f631::t_13765722dd61dd 1-18
+docs/design/ui-v5/evidence/theme-journeys.json
+  s_b0f0af2da7f631::t_37ccac610430a5 1-61
+docs/design/ui-v5/fixture-data.js
+  s_b0f0af2da7f631::t_6e11509165e6dd 1-2111
+docs/design/ui-v5/full-base.css
+  s_b0f0af2da7f631::t_d91ae8c0b17280 1-103
+docs/design/ui-v5/full-controls.css
+  s_b0f0af2da7f631::t_ea7fe2edbeba98 1-41
+docs/design/ui-v5/full.html
+  s_b0f0af2da7f631::t_01662ceba04e88 1-420
+docs/design/ui-v5/index.html
+  s_b0f0af2da7f631::t_71cdc46f51836e 1
+docs/design/ui-v5/main-theme-notes.md
+  s_b0f0af2da7f631::t_a27116653c5bd1 1-58
+docs/design/ui-v5/material.css
+  s_b0f0af2da7f631::t_6c9b3b1c349869 1-109
+docs/design/ui-v5/review-criteria.md
+  s_b0f0af2da7f631::t_a660a5a3798e01 1-32
+docs/design/ui-v5/review-report.md
+  s_b0f0af2da7f631::t_3918927804a09d 1-38
+docs/design/ui-v5/secondary-theme-notes.md
+  s_b0f0af2da7f631::t_4f4f7ae28b7c18 1-55
+docs/design/ui-v5/theme-tokens.css
+  s_b0f0af2da7f631::t_c829a8b0fc6ac9 1-90
+docs/design/verification-execution.json
+  s_b0f0af2da7f631::t_ef82cb7fc1fdcb 1-1686
+docs/design/verification-settings.json
+  s_b0f0af2da7f631::t_c46a8e5199de0d 1-3196
+docs/design/version-management-validation.md
+  s_b0f0af2da7f631::t_c4d65cbe1837be 1-47
+docs/development/build-evidence/device-bridge/README.md
+  s_b0f0af2da7f631::t_421c55969c511d 1-9
+docs/development/build-evidence/device-bridge/acquisition-before-artifacts.json
+  s_b0f0af2da7f631::t_871562f2c3ee77 1-6
+docs/development/build-evidence/device-bridge/acquisition-regression-before.txt
+  s_b0f0af2da7f631::t_1279ef76227dc9 1-71
+docs/development/build-evidence/device-bridge/instrumentation.txt
+  s_b0f0af2da7f631::t_e8f7e0ab98eed4 1-518
+docs/development/build-evidence/device-bridge/native-ui/artifact.json
+  s_b0f0af2da7f631::t_99f58015b08187 1-4
+docs/development/build-evidence/device-bridge/native-ui/native-smoke.json
+  s_b0f0af2da7f631::t_e6df9276ce48bf 1-16
+docs/development/build-evidence/device-bridge/trace.txt
+  s_b0f0af2da7f631::t_dd09b389e086ff 1-75
+docs/development/build-evidence/device-bridge/verification.json
+  s_b0f0af2da7f631::t_278bbdd42c5ff7 1-103
+docs/development/build-evidence/execution-store/README.md
+  s_b0f0af2da7f631::t_131f2b755490b4 1-7
+docs/development/build-evidence/execution-store/checkpoint-scaling-after.json
+  s_b0f0af2da7f631::t_1b488e153b608a 1-12
+docs/development/build-evidence/execution-store/checkpoint-scaling.json
+  s_b0f0af2da7f631::t_3a92cd4220eb54 1-12
+docs/development/build-evidence/execution-store/instrumentation.txt
+  s_b0f0af2da7f631::t_9b6a365dec2c9b 1-673
+docs/development/build-evidence/execution-store/late-unknown-before-artifacts.json
+  s_b0f0af2da7f631::t_098c128ce98240 1-7
+docs/development/build-evidence/execution-store/late-unknown-before.txt
+  s_b0f0af2da7f631::t_199f9f6847df7f 1-110
+docs/development/build-evidence/execution-store/scaling-before-artifacts.json
+  s_b0f0af2da7f631::t_7f9357fbf86a99 1-5
+docs/development/build-evidence/execution-store/verification.json
+  s_b0f0af2da7f631::t_6e172c54691925 1-121
+docs/development/build-evidence/executor-late-before.xml
+  s_b0f0af2da7f631::t_059cd8887dfef0 1-115
+docs/development/build-evidence/executor-late-regression.json
+  s_b0f0af2da7f631::t_9665b5455f4745 1-15
+docs/development/build-evidence/native-smoke.json
+  s_b0f0af2da7f631::t_4286ea4d61dcb4 1-16
+docs/development/build-evidence/phone-connection.json
+  s_b0f0af2da7f631::t_3d2f9dafb51756 1-27
+docs/development/build-evidence/screenshot-probe.json
+  s_b0f0af2da7f631::t_4412b3f843b419 1-9
+docs/development/build-evidence/system-bar-before.json
+  s_b0f0af2da7f631::t_fac4a47cb61b71 1-7
+docs/development/build-evidence/target-scope/executor-after.xml
+  s_b0f0af2da7f631::t_2eaf3d3faa2207 1-29
+docs/development/build-evidence/target-scope/native-smoke.json
+  s_b0f0af2da7f631::t_6460faf2b297fd 1-16
+docs/development/build-evidence/target-scope/verification.json
+  s_b0f0af2da7f631::t_5f16518d537234 1-60
+docs/development/build-evidence/task-configuration/README.md
+  s_b0f0af2da7f631::t_5c4c02d7d639b6 1-9
+docs/development/build-evidence/task-configuration/instrumentation.txt
+  s_b0f0af2da7f631::t_5a98142aa19e78 1-405
+docs/development/build-evidence/task-configuration/verification.json
+  s_b0f0af2da7f631::t_83a36c6a39ae67 1-98
+docs/development/build-evidence/task-updates/full-app/task-update-native.json
+  s_b0f0af2da7f631::t_b27a80681c20ac 1-23
+docs/development/build-evidence/task-updates/instrumentation.txt
+  s_b0f0af2da7f631::t_2d839d0730feb3 1-207
+docs/development/build-evidence/task-updates/mobile-audit.md
+  s_b0f0af2da7f631::t_776dfecd552a73 1-18
+docs/development/build-evidence/task-updates/title-before.txt
+  s_b0f0af2da7f631::t_56e8f9dc7164bc 1-38
+docs/development/build-evidence/task-updates/title-regression.json
+  s_b0f0af2da7f631::t_2b199b08431603 1-16
+docs/development/build-evidence/task-updates/ui-visual-instrumentation.txt
+  s_b0f0af2da7f631::t_75cb7e1ac64d57 1-79
+docs/development/build-evidence/task-updates/verification.json
+  s_b0f0af2da7f631::t_2ee7ea5080a3bc 1-80
+docs/development/build-evidence/version-library/instrumentation-before-test-name-correction.txt
+  s_b0f0af2da7f631::t_50a5e38ed142e4 1-93
+docs/development/build-evidence/version-library/instrumentation.txt
+  s_b0f0af2da7f631::t_1636ca4d2120c5 1-107
+docs/development/build-evidence/version-library/verification.json
+  s_b0f0af2da7f631::t_9a0d3483de61d9 1-17
+docs/development/device-bridge.md
+  s_b0f0af2da7f631::t_916620bc5fce2b 1-38
+docs/development/environment-audit.json
+  s_b0f0af2da7f631::t_df7bec8b0f3671 1-103
+docs/development/execution-persistence.md
+  s_b0f0af2da7f631::t_ea8436f3705618 1-43
+docs/development/game-validation.md
+  s_b0f0af2da7f631::t_3de3ac5d6fbf10 1-45
+docs/development/target-extensibility.md
+  s_b0f0af2da7f631::t_9a7dd54bcef9e2 1-35
+docs/development/verification.json
+  s_b0f0af2da7f631::t_57e98daf9553f4 1-32
+docs/prototype/app-v2.html
+  s_b0f0af2da7f631::t_5a7fabec0c12ce 1-480
+docs/prototype/event-rules-simulator.js
+  s_f21319594bee88::t_9795c49985c7e4 1-187
+docs/prototype/execution-simulator.js
+  s_b0f0af2da7f631::t_57e6e8644635ee 1-711
+docs/prototype/index.html
+  s_b0f0af2da7f631::t_88d490f04f7973 1-121
+docs/prototype/tests/event-rules-simulator.test.cjs
+  s_b0f0af2da7f631::t_fde37a53170bc2 1-175
+docs/prototype/tests/execution-simulator.test.cjs
+  s_d94ebc835edb4d::t_001ceb3ee0ecef 1-388
+docs/prototype/tests/game-session-simulator.test.cjs
+  s_b0f0af2da7f631::t_6aaf466f1f8f36 1-102
+docs/prototype/verification-converged.json
+  s_b0f0af2da7f631::t_4bdbd1ac14d8c5 1-1367
+docs/prototype/verification-simple.json
+  s_b0f0af2da7f631::t_c3d3a0256da35b 1-1499
+docs/prototype/verification-v2.json
+  s_b0f0af2da7f631::t_7cf52c9a1413c8 1-2159
+docs/prototype/verification-versions.json
+  s_b0f0af2da7f631::t_6ac116ce0d7444 1-1425
+docs/research/android-platform-feasibility.md
+  s_b0f0af2da7f631::t_a6aef571223326 1-119
+docs/research/assttyys-floating-layers.md
+  s_b0f0af2da7f631::t_b6ed82f61dd41b 1-114
+gradle.properties
+  s_73eb2432348eb5::t_7f2189615cdb67 1-4
+gradle/verification-metadata.xml
+  s_f21319594bee88::t_32ce36317d6ef3 1-3991
+settings-gradle.lockfile
+  s_f21319594bee88::t_446f4a972327b7 1-4
+settings.gradle.kts
+  s_73eb2432348eb5::t_804a2622cf4a32 1-9
+tools/qa/executor_checkpoint_benchmark.py
+  s_b0f0af2da7f631::t_fe8dbf7febce89 1-62
+tools/qa/native_smoke.py
+  s_b0f0af2da7f631::t_7731187a9d7252 1-60
+app/src/androidTest/kotlin/io/github/yysassist/ExecutionRuntimeTest.kt
+  s_b0f0af2da7f631::t_2c0a3845aa7278 1-183
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d96dda5eb1d764c0008e0e7c31a8e169a4e05b30",
+  "prompts": {},
+  "sessions": {
+    "s_73eb2432348eb5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab3194df-5b78-49aa-ab2a-15c1010bbda7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    },
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    },
+    "s_d94ebc835edb4d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0dc77832-0413-4830-b8b8-6017e97eb36f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    },
+    "s_f21319594bee88": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03291-207e-7d10-a69e-0838833440c1",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
