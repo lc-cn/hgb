@@ -18,6 +18,7 @@ import io.github.yysassist.*
 import io.github.yysassist.core.content.*
 import io.github.yysassist.core.execution.*
 import io.github.yysassist.storage.*
+import io.github.yysassist.floating.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.*
@@ -121,5 +122,22 @@ class ExecutionControlsTest {
             down(center); moveTo(Offset(-width * 2f, height * 2f)); advanceEventTime(1_000); up()
         }
         compose.runOnIdle { assertEquals(0, pauses); assertEquals(0, stops) }
+    }
+    @Test fun favoriteIconDoesNotOpenConfigurationOrSubmitARun() {
+        var favorite: TaskAddress? = null; var edited: TaskAddress? = null
+        val catalog = runBlocking { library.snapshot() }
+        compose.setContent { val state by runtime.state.collectAsState(); AssistTheme(ThemeMode.LIGHT) { Surface {
+            TaskCenter(VersionCatalogState.Ready(catalog), state, RuntimeStatus.Ready,
+                { runtime.enqueueTask(it) }, {}, {}, { _, _ -> }, {}, {}, { edited = it },
+                FloatingPreferencesState.Ready(FloatingSettings(true, emptySet(), null, null)), { favorite = it })
+        } } }
+        compose.onNodeWithContentDescription("设为常用：等待一").performClick()
+        compose.runOnIdle {
+            assertEquals(TaskAddress("fixture", "one"), favorite)
+            assertNull(edited); assertNull(runtime.state.value.current)
+            assertTrue(runtime.state.value.facts.none { it.type == "enqueued" })
+        }
+        compose.onNodeWithText("等待一").performClick()
+        compose.runOnIdle { assertEquals(TaskAddress("fixture", "one"), edited) }
     }
 }

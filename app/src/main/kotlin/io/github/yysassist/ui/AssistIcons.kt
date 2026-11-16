@@ -18,6 +18,7 @@ object AssistIcons {
     val Back = glyph("Back", "M14 5L7 12L14 19", true)
     val Chevron = glyph("Chevron", "M9 5L16 12L9 19", true)
     val Pause = glyph("Pause", "M8 5V19 M16 5V19")
+    val Star = glyph("Star", "M12 2L15 8.5L22 9.5L17 14.5L18.5 22L12 18.5L5.5 22L7 14.5L2 9.5L9 8.5Z")
     val Play = glyph("Play", "M7 4L20 12L7 20Z")
     val Close = glyph("Close", "M6 6L18 18 M18 6L6 18")
     val Circle = glyph("Circle", "M20 12A8 8 0 1 1 4 12A8 8 0 1 1 20 12Z")

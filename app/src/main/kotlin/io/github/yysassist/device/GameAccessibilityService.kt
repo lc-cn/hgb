@@ -2,6 +2,9 @@ package io.github.yysassist.device
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
+import android.content.res.Configuration
+import io.github.yysassist.AssistApplication
+import io.github.yysassist.floating.FloatingOverlayWindow
 import android.view.accessibility.AccessibilityEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
@@ -26,16 +29,29 @@ class GameAccessibilityService : AccessibilityService() {
     }
     internal val bridge = AndroidDeviceBridge(this)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    override fun onServiceConnected() { bridge.connected(); mutableConnection.value = this }
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit
+    internal var floating: FloatingOverlayWindow? = null
+        private set
+    override fun onServiceConnected() {
+        bridge.connected()
+        floating?.close()
+        floating = FloatingOverlayWindow(this, application as AssistApplication)
+        bridge.obstruction = floating
+        mutableConnection.value = this
+    }
+    override fun onConfigurationChanged(newConfig: Configuration) { super.onConfigurationChanged(newConfig); floating?.configurationChanged(newConfig) }
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) (application as AssistApplication).executor.readinessChanged()
+    }
     override fun onInterrupt() = Unit
     override fun onUnbind(intent: Intent?): Boolean {
         bridge.disconnected()
+        floating?.close(); floating = null; bridge.obstruction = null
         if (mutableConnection.value === this) mutableConnection.value = null
         return super.onUnbind(intent)
     }
     override fun onDestroy() {
         bridge.disconnected()
+        floating?.close(); floating = null; bridge.obstruction = null
         if (mutableConnection.value === this) mutableConnection.value = null
         scope.cancel()
         super.onDestroy()

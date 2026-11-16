@@ -17,6 +17,8 @@ interface StepWorkFactory {
     val contracts: List<CapabilityContract>
     fun create(attempt: StepAttempt, bundle: TaskBundle): StepWork
     fun restartHasNoDeviceInput(attempt: StepAttempt, bundle: TaskBundle): Boolean
+    /** True only for APK-owned programs whose start has no screen-observation prerequisite. */
+    fun canStartWithoutObservation(request: ExecutionRequest, bundle: TaskBundle): Boolean = false
 }
 
 /** First real APK action. No Android bridge, network or account state is reachable from this runner. */
@@ -35,6 +37,19 @@ class BuiltInStepWorkFactory : StepWorkFactory {
             require(contract.validateInputs(action.inputs) == null)
         }
     }
+    override fun canStartWithoutObservation(request: ExecutionRequest, bundle: TaskBundle): Boolean = runCatching {
+        require(bundle.version == request.packageVersion)
+        request.tasks.forEach { task ->
+            val definition = bundle.tasks.single { it.id == task.id && it.targetId == request.context.targetId }
+            require(definition.steps.map { it.id } == task.stepIds)
+            definition.steps.flatMap { it.actions }.forEach { action ->
+                val contract = contracts.single { it.id == action.capability && it.version == action.contractVersion }
+                require(contract.validateInputs(action.inputs) == null)
+            }
+        }
+        require(request.tasks.isNotEmpty())
+        true
+    }.getOrDefault(false)
     override fun create(attempt: StepAttempt, bundle: TaskBundle): StepWork {
         val durations = actions(attempt, bundle).map { duration(it.inputs)!! }
         return object : StepWork {

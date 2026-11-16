@@ -1,0 +1,9 @@
+view=Rect(292, 404 - 1059, 997)
+service=DisplayMetrics{density=2.625, width=1080, height=2400, scaledDensity=2.625, xdpi=420.0, ydpi=420.0}
+window=Rect(292, 404 - 1059, 997)
+null/null: Rect(313, 425 - 439, 551)
+null/null: Rect(912, 425 - 1038, 551)
+null/暂停：等待二: Rect(912, 562 - 1038, 688)
+null/null: Rect(313, 714 - 912, 840)
+null/加入队列：等待一: Rect(912, 713 - 1038, 839)
+null/null: Rect(912, 850 - 1038, 976)

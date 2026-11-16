@@ -1,0 +1,37 @@
+
+io.github.yysassist.floating.FloatingOverlayIntegrationTest:
+Error in draggingDoesNotOpenAndRotationUsesAnIndependentClampedAnchor(io.github.yysassist.floating.FloatingOverlayIntegrationTest):
+java.lang.AssertionError: complete common window, expected width 1128.75; bounds=Rect(1560, 190 - 2400, 909); screen=2400x1080; nodes=[null/null, null/null, null/null, null/null, null/返回快捷控制, null/null, 常用/null, null/null, null/收起悬浮面板, null/null, 暂无执行任务/null, 待机/null, null/暂停：队列, null/null, null/null, 等待一/null, null/null, null/加入队列：等待一, null/null, 等待二/null, null/null, null/加入队列：等待二, null/null, null/返回助手, null/null]
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest.waitFor(FloatingOverlayIntegrationTest.kt:120)
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest.access$waitFor(FloatingOverlayIntegrationTest.kt:33)
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest$waitFor$1.invokeSuspend(Unknown Source:15)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest.draggingDoesNotOpenAndRotationUsesAnIndependentClampedAnchor(FloatingOverlayIntegrationTest.kt:231)
+
+
+Time: 10.93
+There was 1 failure:
+1) draggingDoesNotOpenAndRotationUsesAnIndependentClampedAnchor(io.github.yysassist.floating.FloatingOverlayIntegrationTest)
+java.lang.AssertionError: complete common window, expected width 1128.75; bounds=Rect(1560, 190 - 2400, 909); screen=2400x1080; nodes=[null/null, null/null, null/null, null/null, null/返回快捷控制, null/null, 常用/null, null/null, null/收起悬浮面板, null/null, 暂无执行任务/null, 待机/null, null/暂停：队列, null/null, null/null, 等待一/null, null/null, null/加入队列：等待一, null/null, 等待二/null, null/null, null/加入队列：等待二, null/null, null/返回助手, null/null]
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest.waitFor(FloatingOverlayIntegrationTest.kt:120)
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest.access$waitFor(FloatingOverlayIntegrationTest.kt:33)
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest$waitFor$1.invokeSuspend(Unknown Source:15)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest.draggingDoesNotOpenAndRotationUsesAnIndependentClampedAnchor(FloatingOverlayIntegrationTest.kt:231)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1

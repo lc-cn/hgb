@@ -22,7 +22,8 @@ import java.util.Date
 
 @Composable
 internal fun RunActionButton(name: String, current: Boolean, queued: Boolean, enabled: Boolean,
-    enqueue: () -> Unit, pause: () -> Unit, stop: () -> Unit, paused: Boolean = false, resume: (ResumeMode) -> Unit = {}) {
+    enqueue: () -> Unit, pause: () -> Unit, stop: () -> Unit, paused: Boolean = false, resume: (ResumeMode) -> Unit = {},
+    onRequestResume: (() -> Unit)? = null, currentStateLabel: String? = null) {
     var chooseResume by remember { mutableStateOf(false) }
     LaunchedEffect(paused, enabled) { if (!paused || !enabled) chooseResume = false }
     val label = if (current) (if (paused) "继续：$name" else "暂停：$name") else "加入队列：$name"
@@ -30,11 +31,11 @@ internal fun RunActionButton(name: String, current: Boolean, queued: Boolean, en
         .background(glassBrush(false)).combinedClickable(enabled = enabled && !queued,
             role = Role.Button, onClickLabel = label, onLongClickLabel = if (current) "停止当前任务" else null,
             onLongClick = if (current) stop else null, onClick = {
-                if (current && paused) chooseResume = true else if (current) pause() else enqueue()
+                if (current && paused) { if (onRequestResume != null) onRequestResume() else chooseResume = true } else if (current) pause() else enqueue()
             })
         .semantics {
             contentDescription = label
-            stateDescription = when { queued -> "队列中"; paused -> "已暂停"; current -> "执行中"; else -> "未加入队列" }
+            stateDescription = when { queued -> "队列中"; current && currentStateLabel != null -> currentStateLabel; paused -> "已暂停"; current -> "执行中"; else -> "未加入队列" }
         }, contentAlignment = Alignment.Center) {
         Icon(if (current && !paused) AssistIcons.Pause else AssistIcons.Play, null, Modifier.size(UiSpace.icon),
             tint = (if (current && !paused) LocalAssistPalette.current.orange else LocalAssistPalette.current.teal)

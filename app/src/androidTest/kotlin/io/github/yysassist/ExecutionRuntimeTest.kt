@@ -52,6 +52,34 @@ class ExecutionRuntimeTest {
     private suspend fun wait(runtime: ExecutionRuntime, test: (ExecutorSnapshot) -> Boolean) =
         withTimeout(5_000) { runtime.state.first(test) }
     private suspend fun add(runtime: ExecutionRuntime, id: String) = runtime.enqueueTask(TaskAddress("fixture", id)).await()
+    @Test fun candidateAssessmentIsReadOnlyAndDoesNotConflateReadErrorsWithAnUnavailableTask() = runBlocking {
+        val runtime = runtime()
+        val address = TaskAddress("fixture", "one")
+        val before = store.load()
+        assertEquals(TaskStartAvailability.READY, runtime.assessStart(address))
+        assertEquals(TaskStartAvailability.BLOCKED, runtime.assessStart(address.copy(taskId = "absent")))
+        assertEquals(before, store.load())
+        assertEquals(0, library.snapshot().versions.single().referenceCount)
+        // A malformed saved value must stay unknown, not become a proven unsupported candidate.
+        database.taskConfigurations().save(TaskConfigurationEntity("fixture", "one", "{broken", "[]", 1, "v1", "fixture"))
+        assertEquals(TaskStartAvailability.UNKNOWN, runtime.assessStart(address))
+        assertEquals("{broken", database.taskConfigurations().get("fixture", "one")!!.valuesJson)
+        assertEquals(before, store.load())
+    }
+    @Test fun missingRequiredConfigurationBlocksWhileUnverifiedReadinessStaysUnknown() = runBlocking {
+        val original = bundle()
+        val configured = original.copy(version = "v2", tasks = original.tasks.map { it.copy(fields = listOf(
+            ConfigurationField("choice", "选择", FieldWidget.TEXT, true))) })
+        val text = BundleCodec(factory.contracts).write(configured)
+        library.install(text, "v2", TaskVersionLibrary.sha256(text)); library.activate("v2")
+        val runtime = runtime(readiness = ExecutionContextReadiness { _, _ -> false })
+        val address = TaskAddress("fixture", "one")
+        assertEquals(TaskStartAvailability.BLOCKED, runtime.assessStart(address))
+        val repository = TaskConfigurationRepository(database, library)
+        assertTrue(repository.save(repository.open(address), JsonObject(mapOf("choice" to JsonPrimitive("value")))) is ConfigurationSaveResult.Saved)
+        assertEquals(TaskStartAvailability.UNKNOWN, runtime.assessStart(address))
+        assertNull(runtime.state.value.current)
+    }
     private fun counting(counter: AtomicInteger, execute: suspend (StepAttempt) -> StepOutcome,
         stop: suspend () -> InputStopObservation = { InputStopObservation.Quiet(StepOutcome.Interrupted) }, safeRecovery: Boolean = true) =
         object : StepWorkFactory {

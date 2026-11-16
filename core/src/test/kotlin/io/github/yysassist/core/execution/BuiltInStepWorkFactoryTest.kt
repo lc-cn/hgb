@@ -38,4 +38,12 @@ class BuiltInStepWorkFactoryTest {
         assertFalse(factory.restartHasNoDeviceInput(attempt, unknown))
         assertTrue(factory.restartHasNoDeviceInput(attempt, bundle))
     }
+    @Test fun screenIndependentAdmissionRequiresTheWholeKnownProgramAndMatchingVersion() {
+        val request = attempt.run.request
+        assertTrue(factory.canStartWithoutObservation(request, bundle))
+        assertFalse(factory.canStartWithoutObservation(request.copy(packageVersion = "other"), bundle))
+        val unknown = bundle.copy(tasks = listOf(task.copy(steps = listOf(StepDefinition("step", "Step", listOf(action.copy(capability = "device.tap")))))))
+        assertFalse(factory.canStartWithoutObservation(request, unknown))
+        assertFalse(factory.canStartWithoutObservation(request.copy(tasks = listOf(request.tasks.single().copy(stepIds = listOf("missing")))), bundle))
+    }
 }

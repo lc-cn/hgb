@@ -30,6 +30,7 @@ import io.github.yysassist.core.execution.*
 import io.github.yysassist.core.model.Principal
 import io.github.yysassist.device.GameAccessibilityService
 import io.github.yysassist.device.ScreenshotCheck
+import io.github.yysassist.floating.*
 import io.github.yysassist.storage.ActiveTaskContent
 import io.github.yysassist.storage.TaskAddress
 import kotlinx.coroutines.launch
@@ -43,11 +44,12 @@ private enum class Page(val title: String, val icon: ImageVector) {
 }
 
 @Composable
-fun AssistApp(application: AssistApplication) {
+fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null, navigationHandled: () -> Unit = {}) {
     val appearance by application.appearance.state.collectAsState()
     val executor by application.executor.state.collectAsState()
     val runtimeStatus by application.executor.status.collectAsState()
     val versions by application.taskUpdates.catalog.collectAsState()
+    val floating by application.floating.state.collectAsState()
     val pull by application.taskUpdates.pull.collectAsState()
     val versionOperation by application.taskUpdates.operation.collectAsState()
     val taskDrafts by application.taskEditor.drafts.collectAsState()
@@ -64,6 +66,8 @@ fun AssistApp(application: AssistApplication) {
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(application.taskUpdates) { application.taskUpdates.messages.collect { snackbar.showSnackbar(it) } }
     LaunchedEffect(application.taskEditor) { application.taskEditor.messages.collect { snackbar.showSnackbar(it) } }
+    LaunchedEffect(navigation?.id) { navigation?.let { editTarget = it.task.targetId; editTask = it.task.taskId; selected = Page.TASKS.name; detail = "任务配置"; navigationHandled() } }
+    LaunchedEffect(application.floating) { application.floating.messages.collect { snackbar.showSnackbar(it) } }
     LaunchedEffect(application.executor) { application.executor.messages.collect { snackbar.showSnackbar(it) } }
     val page = Page.valueOf(selected)
     BackHandler(detail != null || page != Page.HOME) {
@@ -104,12 +108,12 @@ fun AssistApp(application: AssistApplication) {
                         Box(Modifier.weight(1f).fillMaxWidth()) {
                             when (detail) {
                                 "运行环境" -> EnvironmentPage()
+                                "悬浮球" -> FloatingSettingsPage(floating, application.floating::setVisible, application.floating::reload)
                                 "任务更新" -> TaskVersionsPage(versions, pull, versionOperation, application.taskUpdates::reloadCatalog,
                                     application.taskUpdates::activate, application.taskUpdates::delete)
                                 "任务配置" -> TaskConfigurationPage(editor, wide, { address?.let { application.taskEditor.reload(it) } },
                                     { field, value -> address?.let { application.taskEditor.change(it, field, value) } },
                                     { address?.let { application.taskEditor.save(it) } })
-                                "运行与数据" -> EmptyContent("暂无运行数据", "执行结果会保留在历史记录中。")
                                 else -> when (page) {
                                     Page.HOME -> ExecutionWorkbench(executor, runtimeStatus, wide,
                                         { application.executor.submit(ExecutorCommand.Pause) },
@@ -121,9 +125,9 @@ fun AssistApp(application: AssistApplication) {
                                         { application.executor.submit(ExecutorCommand.PauseCurrent(it)) },
                                         { application.executor.submit(ExecutorCommand.StopCurrent(it)) },
                                         { id, mode -> application.executor.submit(ExecutorCommand.ResumeCurrent(id, mode)) },
-                                        application.taskUpdates::reloadCatalog, { detail = "任务更新" }) {
+                                        application.taskUpdates::reloadCatalog, { detail = "任务更新" }, edit = {
                                         editTarget = it.targetId; editTask = it.taskId; detail = "任务配置"
-                                    }
+                                    }, favorites = floating, toggleFavorite = application.floating::toggle)
                                     Page.PLANS -> EmptyContent("暂无计划", "取得任务并保存配置后，可组合执行计划。")
                                     Page.HISTORY -> if (runtimeStatus == RuntimeStatus.Loading) Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
                                         else if (runtimeStatus is RuntimeStatus.Failure) EmptyContent("运行记录暂不可用", (runtimeStatus as RuntimeStatus.Failure).message)
@@ -197,7 +201,8 @@ private fun MainNavigation(selected: Page, rail: Boolean, select: (Page) -> Unit
 @Composable
 internal fun TaskCenter(versions: VersionCatalogState, executor: ExecutorSnapshot, status: RuntimeStatus,
     enqueue: (TaskAddress) -> Unit, pause: (Long) -> Unit, stop: (Long) -> Unit, resume: (Long, ResumeMode) -> Unit,
-    reload: () -> Unit, updates: () -> Unit, edit: (TaskAddress) -> Unit) {
+    reload: () -> Unit, updates: () -> Unit, edit: (TaskAddress) -> Unit,
+    favorites: FloatingPreferencesState = FloatingPreferencesState.Loading, toggleFavorite: (TaskAddress) -> Unit = {}) {
     when (versions) {
         VersionCatalogState.Loading -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
         is VersionCatalogState.Failure -> Column(Modifier.padding(UiSpace.page)) {
@@ -223,6 +228,12 @@ internal fun TaskCenter(versions: VersionCatalogState, executor: ExecutorSnapsho
                     ListItem(modifier = Modifier.clickable { edit(TaskAddress(task.targetId, task.id)) }, headlineContent = { Text(task.name, maxLines = 1, overflow = TextOverflow.Ellipsis) }, supportingContent = {
                         Text("${target.name} · ${target.categories.single { it.id == task.category }.name}", maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }, trailingContent = { Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+                        val address = TaskAddress(task.targetId, task.id)
+                        val selected = (favorites as? FloatingPreferencesState.Ready)?.settings?.favorites?.contains(address) == true
+                        IconToggleButton(selected, { toggleFavorite(address) }, enabled = favorites is FloatingPreferencesState.Ready) {
+                            Icon(AssistIcons.Star, if (selected) "取消常用：${task.name}" else "设为常用：${task.name}",
+                                tint = (if (selected) LocalAssistPalette.current.gold else MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = .82f))
+                        }
                         if (queued || current) Text(if (queued) "队列中" else phaseLabel(executor.phase), style = MaterialTheme.typography.labelSmall,
                             color = if (queued) MaterialTheme.colorScheme.onSurfaceVariant else LocalAssistPalette.current.blue)
                         key(currentId) {
@@ -252,6 +263,7 @@ private fun SettingsPage(appearance: AppearanceState, versions: VersionCatalogSt
             is VersionCatalogState.Failure -> "本地版本读取失败"
             is VersionCatalogState.Ready -> versions.catalog.activeVersion?.let { "当前版本 $it" } ?: "暂无已启用任务版本"
         }, AssistIcons.Cloud, p.blue) { open("任务更新") } }
+        item { SettingsRow("悬浮球", "游戏中的快捷控制", AssistIcons.Circle, p.violet) { open("悬浮球") } }
         item { SettingsRow("运行环境", "授权与运行条件", AssistIcons.Phone, p.orange) { open("运行环境") } }
         item { SettingsRow("运行与数据", "执行记录", AssistIcons.Data, p.teal) { open("运行与数据") } }
     }

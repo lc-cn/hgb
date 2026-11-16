@@ -1,6 +1,9 @@
 package io.github.yysassist
 
 import android.app.Application
+import io.github.yysassist.floating.FloatingPreferences
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import io.github.yysassist.core.execution.BuiltInStepWorkFactory
 import io.github.yysassist.core.content.BundleCodec
 import io.github.yysassist.core.content.GitHubTaskSource
@@ -23,6 +26,13 @@ class AssistApplication : Application() {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     lateinit var executor: ExecutionRuntime
         private set
+    lateinit var floating: FloatingPreferences
+        private set
+    private val foregroundActivities = mutableSetOf<MainActivity>()
+    private val mutableMainVisible = MutableStateFlow(false)
+    val mainVisible = mutableMainVisible.asStateFlow()
+    internal fun mainStarted(activity: MainActivity) { foregroundActivities += activity; mutableMainVisible.value = true }
+    internal fun mainStopped(activity: MainActivity) { foregroundActivities -= activity; mutableMainVisible.value = foregroundActivities.isNotEmpty() }
     lateinit var appearance: AppearancePreferences
         private set
     lateinit var taskUpdates: TaskUpdates
@@ -34,6 +44,7 @@ class AssistApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         appearance = AppearancePreferences(this, scope)
+        floating = FloatingPreferences(this, scope)
         val database = AssistDatabase.open(this)
         val workers = BuiltInStepWorkFactory()
         val library = TaskVersionLibrary(database, BundleCodec(workers.contracts))

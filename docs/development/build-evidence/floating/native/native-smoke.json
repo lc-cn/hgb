@@ -1,0 +1,16 @@
+{
+  "scope": "Isolated local Android API36 ARM64 emulator; actual APK UI and DataStore. No game or task execution. Screenshot appearance is also visually reviewed, selection assertions alone do not prove contrast.",
+  "checks": [
+    "cold launch and true empty queue",
+    "manual dark selection",
+    "dark preference survives process stop and restart",
+    "settings route and preference survive rotation",
+    "manual light in landscape",
+    "manual mode remains selected after system dark change",
+    "system preference and actual system bars follow both system changes",
+    "landscape history tabs reachable",
+    "history selection survives portrait return",
+    "permission view reachable; service bridge checked separately without UIAutomator"
+  ],
+  "success": true
+}

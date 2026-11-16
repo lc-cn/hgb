@@ -1,0 +1,4 @@
+view=Rect(922, 404 - 1059, 541)
+service=DisplayMetrics{density=2.625, width=1080, height=2400, scaledDensity=2.625, xdpi=420.0, ydpi=420.0}
+window=Rect(922, 404 - 1059, 541)
+null/展开快捷控制: Rect(922, 404 - 1059, 541)

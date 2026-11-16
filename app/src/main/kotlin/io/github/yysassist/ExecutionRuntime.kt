@@ -23,6 +23,7 @@ sealed interface RuntimeCommandResult {
 class RuntimeReceipt internal constructor(private val result: Deferred<RuntimeCommandResult>) {
     suspend fun await(): RuntimeCommandResult = result.await()
 }
+enum class TaskStartAvailability { READY, BLOCKED, UNKNOWN }
 fun interface ExecutionContextReadiness {
     suspend fun verified(target: TargetProfile, requested: ExecutionContext): Boolean
 }
@@ -63,6 +64,9 @@ class ExecutionRuntime(
     private val pendingStarts = mutableMapOf<AttemptTicket, PendingStart>()
     private val running = mutableMapOf<AttemptTicket, Running>()
     private var restoredInput: AttemptTicket? = null
+    private val readinessRevision = MutableStateFlow(0L)
+    val startConditionChanges: Flow<Unit> = merge(admission.changes.map { Unit }, readinessRevision.map { Unit },
+        state.map { it.context }.distinctUntilChanged().map { Unit })
     /** Input lease projection only; queue decisions remain exclusively in TaskExecutor. */
     @Volatile private var inputPermit: AttemptTicket? = null
 
@@ -85,7 +89,22 @@ class ExecutionRuntime(
     fun submit(command: ExecutorCommand): RuntimeReceipt = receipt { Message.Command(command, it) }
     fun enqueueTask(address: TaskAddress, commandId: String = UUID.randomUUID().toString()): RuntimeReceipt =
         receipt { Message.AddTask(address, commandId, it) }
-    fun readinessChanged() { commands.trySend(Message.Readiness) }
+    fun readinessChanged() { readinessRevision.update { it + 1 }; commands.trySend(Message.Readiness) }
+    /** Read-only candidate assessment; admission still rechecks config/version/context at execution. */
+    suspend fun assessStart(address: TaskAddress): TaskStartAvailability = withContext(Dispatchers.IO) {
+        try {
+            val candidate = admission.task(address)
+            val context = if (candidate.target.identityPolicy == IdentityPolicy.NONE)
+                ExecutionContext(candidate.target.id, Principal.Anonymous)
+            else state.value.context?.takeIf { it.targetId == candidate.target.id } ?: return@withContext TaskStartAvailability.UNKNOWN
+            if (!contextReadiness.verified(candidate.target, context)) return@withContext TaskStartAvailability.UNKNOWN
+            val request = candidate.request(context)
+            if (factory.canStartWithoutObservation(request, library.readVersion(candidate.version))) TaskStartAvailability.READY
+            else TaskStartAvailability.UNKNOWN
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: ExecutionStateRejected) { TaskStartAvailability.BLOCKED }
+        catch (_: Exception) { TaskStartAvailability.UNKNOWN }
+    }
     fun permitsInput(ticket: AttemptTicket): Boolean = scope.isActive && status.value == RuntimeStatus.Ready && inputPermit == ticket
 
     private fun receipt(message: (CompletableDeferred<RuntimeCommandResult>) -> Message): RuntimeReceipt {

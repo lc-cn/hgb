@@ -13,6 +13,7 @@ import java.io.Closeable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resumeWithException
@@ -54,7 +55,8 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) {
     private var connection = Any()
     private var connected = false
     private var owner: InputSession? = null
-    private class InFlight(val result: CompletableDeferred<GestureResult> = CompletableDeferred())
+    internal var obstruction: DeviceUiObstruction? = null
+    private class InFlight(val uiLease: Closeable, val result: CompletableDeferred<GestureResult> = CompletableDeferred())
 
     fun connected() { mainThread(); connection = Any(); connected = true }
     fun disconnected() {
@@ -70,10 +72,20 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) {
     private suspend fun captureScreen(expectedPackage: String?): FrameResult = suspendCancellableCoroutine { continuation ->
         service.mainExecutor.execute {
             if (!continuation.isActive) return@execute
-            try { requestCapture(expectedPackage, continuation) }
-            catch (error: SecurityException) { deliverFrame(continuation, FrameResult.Unavailable(DeviceRejection.DISCONNECTED)) }
-            catch (error: Exception) { continuation.resumeWithException(error) }
+            fun begin(lease: Closeable) {
+                if (!continuation.isActive) { lease.close(); return }
+                try { requestCapture(expectedPackage, continuation, lease) }
+                catch (_: SecurityException) { lease.close(); deliverFrame(continuation, FrameResult.Unavailable(DeviceRejection.DISCONNECTED)) }
+                catch (error: Exception) { lease.close(); continuation.resumeWithException(error) }
+            }
+            try {
+                val lease = obstruction?.excludeCapture(::begin) ?: Closeable {}.also(::begin)
+                continuation.invokeOnCancellation { service.mainExecutor.execute { lease.close() } }
+            } catch (error: Exception) { continuation.resumeWithException(error) }
         }
+    }
+    private fun completeCapture(continuation: CancellableContinuation<FrameResult>, lease: Closeable, value: FrameResult) {
+        lease.close(); deliverFrame(continuation, value)
     }
 
     private fun deliverFrame(continuation: CancellableContinuation<FrameResult>, value: FrameResult) {
@@ -82,15 +94,15 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) {
         continuation.resume(value) { _, dropped, _ -> (dropped as? FrameResult.Ready)?.frame?.close() }
     }
 
-    private fun requestCapture(expectedPackage: String?, continuation: CancellableContinuation<FrameResult>) {
+    private fun requestCapture(expectedPackage: String?, continuation: CancellableContinuation<FrameResult>, lease: Closeable) {
         mainThread()
-        if (!connected) { deliverFrame(continuation, FrameResult.Unavailable(DeviceRejection.DISCONNECTED)); return }
+        if (!connected) { completeCapture(continuation, lease, FrameResult.Unavailable(DeviceRejection.DISCONNECTED)); return }
         if (expectedPackage != null && foreground() != expectedPackage) {
-            deliverFrame(continuation, FrameResult.Unavailable(DeviceRejection.WRONG_FOREGROUND)); return
+            completeCapture(continuation, lease, FrameResult.Unavailable(DeviceRejection.WRONG_FOREGROUND)); return
         }
         val requestedConnection = connection
         val before = geometry()
-        if (before == null) { deliverFrame(continuation, FrameResult.Unavailable(DeviceRejection.DISCONNECTED)); return }
+        if (before == null) { completeCapture(continuation, lease, FrameResult.Unavailable(DeviceRejection.DISCONNECTED)); return }
         service.takeScreenshot(Display.DEFAULT_DISPLAY, service.mainExecutor, object : AccessibilityService.TakeScreenshotCallback {
                     override fun onSuccess(result: AccessibilityService.ScreenshotResult) {
                         var hardware: Bitmap? = null
@@ -110,10 +122,10 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) {
                         } catch (_: IllegalArgumentException) { FrameResult.Unavailable(DeviceRejection.DECODE_FAILED) }
                         finally { hardware?.recycle(); result.hardwareBuffer.close() }
                         if (value !is FrameResult.Ready) pixels?.recycle()
-                        deliverFrame(continuation, value)
+                        completeCapture(continuation, lease, value)
                     }
                     override fun onFailure(errorCode: Int) {
-                        deliverFrame(continuation, FrameResult.Unavailable(DeviceRejection.PLATFORM_REJECTED, errorCode))
+                        completeCapture(continuation, lease, FrameResult.Unavailable(DeviceRejection.PLATFORM_REJECTED, errorCode))
                     }
         })
     }
@@ -156,48 +168,78 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) {
             mainThread()
             if (pending !== record || !connected || connection !== admittedConnection) return
             pending = null
+            record.uiLease.close()
             record.result.complete(result)
             if (closed && owner === this) owner = null
         }
 
+        private fun rejection(stamp: FrameStamp, points: List<ScreenPoint>, duration: Long): DeviceRejection? {
+            mainThread()
+            return when {
+                !connected || connection !== admittedConnection -> DeviceRejection.DISCONNECTED
+                closed || owner !== this || !permitsInput(ticket) -> DeviceRejection.NOT_OWNER
+                pending != null -> DeviceRejection.BUSY
+                stamp.connection !== connection || stamp.geometry != geometry() -> DeviceRejection.SCREEN_CHANGED
+                stamp.packageName == null || foreground() != stamp.packageName -> DeviceRejection.WRONG_FOREGROUND
+                duration !in 1..GestureDescription.getMaxGestureDuration() || points.isEmpty() || points.any {
+                    !it.x.isFinite() || !it.y.isFinite() || it.x < 0 || it.y < 0 || it.x >= stamp.geometry.width || it.y >= stamp.geometry.height
+                } -> DeviceRejection.INVALID_GESTURE
+                else -> null
+            }
+        }
+        private suspend fun prepareGesture(stamp: FrameStamp, points: List<ScreenPoint>, duration: Long): GesturePreparation =
+            suspendCancellableCoroutine { continuation ->
+                service.mainExecutor.execute {
+                    if (!continuation.isActive) return@execute
+                    try {
+                        val reason = rejection(stamp, points, duration)
+                        if (reason != null) { continuation.resume(GesturePreparation.Rejected(reason)) { _, _, _ -> }; return@execute }
+                        val ready: (Closeable) -> Unit = { lease ->
+                            continuation.resume(GesturePreparation.Ready(lease)) { _, dropped, _ ->
+                                service.mainExecutor.execute { (dropped as? GesturePreparation.Ready)?.lease?.close() }
+                            }
+                        }
+                        val lease = obstruction?.excludeGesture(points, ready) ?: Closeable {}.also(ready)
+                        continuation.invokeOnCancellation { service.mainExecutor.execute { lease.close() } }
+                    } catch (error: Exception) { continuation.resumeWithException(error) }
+                }
+            }
         suspend fun gesture(stamp: FrameStamp, points: List<ScreenPoint>, durationMillis: Long): GestureResult {
             val pathPoints = points.toList()
-            val dispatched = withContext(Dispatchers.Main.immediate) {
-                if (!connected || connection !== admittedConnection) return@withContext GestureDispatch.Rejected(DeviceRejection.DISCONNECTED)
-                if (closed || owner !== this@InputSession || !permitsInput(ticket)) return@withContext GestureDispatch.Rejected(DeviceRejection.NOT_OWNER)
-                if (pending != null) return@withContext GestureDispatch.Rejected(DeviceRejection.BUSY)
-                if (stamp.connection !== connection || stamp.geometry != geometry()) return@withContext GestureDispatch.Rejected(DeviceRejection.SCREEN_CHANGED)
-                if (stamp.packageName == null || foreground() != stamp.packageName) return@withContext GestureDispatch.Rejected(DeviceRejection.WRONG_FOREGROUND)
-                if (durationMillis !in 1..GestureDescription.getMaxGestureDuration() || pathPoints.isEmpty() || pathPoints.any {
-                        !it.x.isFinite() || !it.y.isFinite() || it.x < 0 || it.y < 0 || it.x >= stamp.geometry.width || it.y >= stamp.geometry.height
-                    }) return@withContext GestureDispatch.Rejected(DeviceRejection.INVALID_GESTURE)
-                val path = Path().apply {
-                    moveTo(pathPoints.first().x, pathPoints.first().y)
-                    pathPoints.drop(1).forEach { lineTo(it.x, it.y) }
+            val preparation = prepareGesture(stamp, pathPoints, durationMillis)
+            if (preparation is GesturePreparation.Rejected) return GestureResult.Rejected(preparation.reason)
+            val lease = (preparation as GesturePreparation.Ready).lease
+            try {
+                val dispatched = withContext(Dispatchers.Main.immediate) {
+                    val reason = rejection(stamp, pathPoints, durationMillis)
+                    if (reason != null) return@withContext GestureDispatch.Rejected(reason)
+                    val path = Path().apply {
+                        moveTo(pathPoints.first().x, pathPoints.first().y)
+                        pathPoints.drop(1).forEach { lineTo(it.x, it.y) }
+                    }
+                    val gesture = GestureDescription.Builder().addStroke(GestureDescription.StrokeDescription(path, 0, durationMillis)).build()
+                    val record = InFlight(lease)
+                    pending = record
+                    val accepted = try {
+                        service.dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
+                            override fun onCompleted(gestureDescription: GestureDescription) { terminal(record, GestureResult.Completed) }
+                            override fun onCancelled(gestureDescription: GestureDescription) { terminal(record, GestureResult.Cancelled) }
+                        }, null)
+                    } catch (_: SecurityException) {
+                        closed = true
+                        record.result.complete(GestureResult.Unconfirmed)
+                        return@withContext GestureDispatch.Pending(record)
+                    }
+                    if (!accepted) { pending = null; return@withContext GestureDispatch.Rejected(DeviceRejection.PLATFORM_REJECTED) }
+                    GestureDispatch.Pending(record)
                 }
-                val gesture = GestureDescription.Builder().addStroke(GestureDescription.StrokeDescription(path, 0, durationMillis)).build()
-                val record = InFlight()
-                pending = record
-                val accepted = try {
-                    service.dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
-                        override fun onCompleted(gestureDescription: GestureDescription) { terminal(record, GestureResult.Completed) }
-                        override fun onCancelled(gestureDescription: GestureDescription) { terminal(record, GestureResult.Cancelled) }
-                    }, null)
-                } catch (_: SecurityException) {
-                    // A thrown Binder call is not the documented false/not-dispatched acknowledgement.
-                    closed = true
-                    record.result.complete(GestureResult.Unconfirmed)
-                    return@withContext GestureDispatch.Pending(record)
+                return when (dispatched) {
+                    is GestureDispatch.Rejected -> GestureResult.Rejected(dispatched.reason)
+                    is GestureDispatch.Pending -> dispatched.record.result.await()
                 }
-                if (!accepted) {
-                    pending = null
-                    return@withContext GestureDispatch.Rejected(DeviceRejection.PLATFORM_REJECTED)
-                }
-                GestureDispatch.Pending(record)
-            }
-            return when (dispatched) {
-                is GestureDispatch.Rejected -> GestureResult.Rejected(dispatched.reason)
-                is GestureDispatch.Pending -> dispatched.record.result.await()
+            } finally {
+                // Ownership already transferred to pending survives caller cancellation and dispatcher handoff.
+                withContext(NonCancellable + Dispatchers.Main.immediate) { if (pending?.uiLease !== lease) lease.close() }
             }
         }
 
@@ -214,6 +256,10 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) {
 
     }
 
+    private sealed interface GesturePreparation {
+        data class Ready(val lease: Closeable) : GesturePreparation
+        data class Rejected(val reason: DeviceRejection) : GesturePreparation
+    }
     private sealed interface GestureDispatch {
         data class Rejected(val reason: DeviceRejection) : GestureDispatch
         data class Pending(val record: InFlight) : GestureDispatch

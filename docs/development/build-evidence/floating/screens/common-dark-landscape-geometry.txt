@@ -1,0 +1,10 @@
+view=Rect(1250, 190 - 2379, 889)
+service=DisplayMetrics{density=2.625, width=2400, height=1080, scaledDensity=2.625, xdpi=420.0, ydpi=420.0}
+window=Rect(1250, 190 - 2379, 889)
+null/null: Rect(1271, 211 - 1397, 337)
+null/null: Rect(2232, 211 - 2358, 337)
+null/null: Rect(1271, 480 - 2232, 606)
+null/加入队列：等待一: Rect(2232, 479 - 2358, 605)
+null/null: Rect(1271, 606 - 2232, 732)
+null/加入队列：等待二: Rect(2232, 605 - 2358, 731)
+null/null: Rect(2232, 742 - 2358, 868)

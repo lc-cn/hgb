@@ -1,0 +1,6 @@
+{
+  "app/build/outputs/apk/debug/app-debug.apk": "93885d8257f68fac9470fca463bd6a04fe2dae2e83e54c5ff6637d560359117c",
+  "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": "d4901e67b00a23639d1cc924968a0dc0cc2fae18ab3aec43b802aaffb894a455",
+  "app/src/main/kotlin/io/github/yysassist/floating/FloatingOverlayWindow.kt": "b494d56bcd1daa7eee110d2723f5bee827e7598741bc332b702eb104d54c3c52",
+  "app/src/androidTest/kotlin/io/github/yysassist/floating/FloatingOverlayIntegrationTest.kt": "df28f63ad936545aed261067c0b7731c98035e764e54882b6ca0ed83f50c7632"
+}
