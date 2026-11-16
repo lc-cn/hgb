@@ -1,0 +1,80 @@
+docs/development/build-evidence/action-bindings/integer-before.txt
+  s_b0f0af2da7f631::t_389cc6e5c3eeed 1-31
+docs/development/build-evidence/action-bindings/lint.txt
+  s_b0f0af2da7f631::t_389cc6e5c3eeed 1
+docs/development/build-evidence/action-bindings/test-summary.json
+  s_b0f0af2da7f631::t_389cc6e5c3eeed 1-239
+docs/development/build-evidence/action-bindings/README.md
+  s_b0f0af2da7f631::t_9d3bf4225dd993 1-13
+core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt
+  s_b0f0af2da7f631::t_8bbe2bf1d5dd72 67,93-98,113-119,178,184-187
+app/src/main/kotlin/io/github/yysassist/storage/TaskVersionLibrary.kt
+  s_b0f0af2da7f631::t_ab760cc182230e 8-9,54
+core/src/main/kotlin/io/github/yysassist/core/content/ActionBindings.kt
+  s_b0f0af2da7f631::t_8bbe2bf1d5dd72 1-84,86-88,90-92,94-97
+  s_b0f0af2da7f631::t_ab760cc182230e 85,89,93
+app/src/main/kotlin/io/github/yysassist/storage/ExecutionStateStore.kt
+  s_b0f0af2da7f631::t_ab760cc182230e 69
+docs/design/action-step-task-model.md
+  s_b0f0af2da7f631::t_762f84754b9e40 5-6
+core/src/test/kotlin/io/github/yysassist/core/content/ActionBindingContractTest.kt
+  s_b0f0af2da7f631::t_2eb44527457170 1-26,28-66,81-93
+  s_b0f0af2da7f631::t_d8d7afb3408bca 27
+  s_b0f0af2da7f631::t_20deed0ecdfde4 67-80
+docs/development/README.md
+  s_b0f0af2da7f631::t_762f84754b9e40 28,32-33
+docs/development/build-evidence/action-bindings/android-full-tests.txt
+  s_b0f0af2da7f631::t_389cc6e5c3eeed 1-1583
+docs/development/build-evidence/action-bindings/core-tests.txt
+  s_b0f0af2da7f631::t_389cc6e5c3eeed 1-16
+app/src/androidTest/kotlin/io/github/yysassist/storage/ActionBindingIntegrationTest.kt
+  s_b0f0af2da7f631::t_e50529c3e2c99f 66-69
+  s_b0f0af2da7f631::t_a92de32e4c4ef5 1-65,70-123
+core/src/test/kotlin/io/github/yysassist/core/execution/BuiltInStepWorkFactoryTest.kt
+  s_b0f0af2da7f631::t_2eb44527457170 49-85
+  s_b0f0af2da7f631::t_dcf66e5a018112 86-97
+docs/development/action-bindings.md
+  s_b0f0af2da7f631::t_762f84754b9e40 1-56,58-63
+  s_b0f0af2da7f631::t_46e13dedb24ab7 57
+core/src/test/resources/task-bundle-bindings.json
+  s_b0f0af2da7f631::t_dcf66e5a018112 1-40
+core/src/main/kotlin/io/github/yysassist/core/execution/StepWorker.kt
+  s_b0f0af2da7f631::t_ab760cc182230e 31-33,36-47,50,55,58-68,76
+  s_b0f0af2da7f631::t_e50529c3e2c99f 26-30,34
+app/src/main/kotlin/io/github/yysassist/storage/TaskConfigurationRepository.kt
+  s_b0f0af2da7f631::t_ab760cc182230e 46
+docs/development/build-evidence/action-bindings/cleanup.json
+  s_b0f0af2da7f631::t_389cc6e5c3eeed 1-8
+docs/development/build-evidence/action-bindings/verification.json
+  s_b0f0af2da7f631::t_389cc6e5c3eeed 1-29
+docs/development/build-evidence/action-bindings/build-artifacts.json
+  s_b0f0af2da7f631::t_389cc6e5c3eeed 1-22
+docs/development/build-evidence/action-bindings/installed-artifacts.json
+  s_b0f0af2da7f631::t_389cc6e5c3eeed 1-19
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_9d3bf4225dd993 136-145
+docs/development/build-evidence/action-bindings/build.txt
+  s_b0f0af2da7f631::t_389cc6e5c3eeed 1-157
+app/src/main/kotlin/io/github/yysassist/storage/TaskAdmissionRepository.kt
+  s_b0f0af2da7f631::t_ab760cc182230e 26
+docs/development/build-evidence/action-bindings/android-boundary-tests.txt
+  s_b0f0af2da7f631::t_389cc6e5c3eeed 1-474
+docs/development/task-distribution.md
+  s_b0f0af2da7f631::t_762f84754b9e40 20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8b0fe34dec3deac8e6b49bad45ea66a9d150b350",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
