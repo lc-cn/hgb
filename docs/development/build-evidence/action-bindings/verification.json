@@ -1,0 +1,29 @@
+{
+  "date": "2026-11-16",
+  "baseCommit": "75ac105932d7de26214b644317f8f880ff476376",
+  "sourceSha256": {
+    "app/src/androidTest/kotlin/io/github/yysassist/storage/ActionBindingIntegrationTest.kt": "a2f8f6a4ac7f9f6ab3c3917e589c24d58ab797e3ccd22c0d2c6b762feaadc751",
+    "app/src/main/kotlin/io/github/yysassist/storage/ExecutionStateStore.kt": "d81c9fea8eb1effa9e1f60313392b0582f1400cb382e05d01674c1954c347ea1",
+    "app/src/main/kotlin/io/github/yysassist/storage/TaskAdmissionRepository.kt": "6bf6aa8bc75fd59859d3aea8f4e8c254b83c2af818ae9a7a2b68f4e694c243b3",
+    "app/src/main/kotlin/io/github/yysassist/storage/TaskConfigurationRepository.kt": "7c454ab13b50c4b4e9c172d46dc51ca31c4c310587c0c5f8398c62692064409f",
+    "app/src/main/kotlin/io/github/yysassist/storage/TaskVersionLibrary.kt": "846d05058c6ce698fa29e3b860586da3b023e9ac4e7891de13932b1148ea5102",
+    "core/src/main/kotlin/io/github/yysassist/core/content/ActionBindings.kt": "70d13bd060ddfd83c0a7449c33dbb2244ae96e85795c9673fb2c6b128ad6ec24",
+    "core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt": "41ba59ac00483fe44328df957b39f2d1495adaebc34945a4759f7bc87c6fb4b7",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/StepWorker.kt": "c75527c257c5eee7ed90ee797aebe35cb5d227d2c95424c406d70cbcb31be974",
+    "core/src/test/kotlin/io/github/yysassist/core/content/ActionBindingContractTest.kt": "0ac34d002d07624ec9a81375caccd614df6526a01dd7050c5020eb4662e4ef2e",
+    "core/src/test/kotlin/io/github/yysassist/core/execution/BuiltInStepWorkFactoryTest.kt": "70b0ab9dcdb3d8c6d9d49f9b88530617b2e9c2c25c3c1631fa94d43839475e3f",
+    "core/src/test/resources/task-bundle-bindings.json": "6ce2e2ff653c083a0412187c69b981c8ec526dfab128a5495b05311ebb572cbc"
+  },
+  "regression": {
+    "case": "exactIntegralNumbersKeepTheirMeaningAcrossConfigurationAndActionContracts",
+    "before": "Failed on exact numeric 12.00 at the action contract; original parser used longOrNull",
+    "after": "Same assertions pass; decimal integer representations exact, fractions/negative/overflow still rejected",
+    "testComparison": "Core method and assertions unchanged across parser fix; no original Android comparison claimed."
+  },
+  "unchanged": [
+    "Room schema",
+    "TaskExecutor pause/resume/priority policies",
+    "native observation code and its contracts"
+  ],
+  "build": "Debug APK and default test APK built; App Lint no issues. No release, CI or production game verification this checkpoint."
+}

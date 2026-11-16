@@ -5,6 +5,8 @@ import io.github.yysassist.core.content.BundleCodec
 import io.github.yysassist.core.content.BundleReadResult
 import io.github.yysassist.core.content.TaskBundle
 import io.github.yysassist.core.content.TaskResource
+import io.github.yysassist.core.content.TaskDefinition
+import kotlinx.serialization.json.JsonObject
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -49,6 +51,7 @@ class TaskVersionLibrary(
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private val dao = database.taskVersions()
+    fun configurationIssues(task: TaskDefinition, values: JsonObject) = codec.configurationIssues(task, values)
     val catalog = combine(database.invalidationTracker.createFlow("task_versions", "task_version_selection", "task_version_references"),
         resourceFiles?.changes ?: flowOf(0L)) { _, _ -> snapshot() }
 

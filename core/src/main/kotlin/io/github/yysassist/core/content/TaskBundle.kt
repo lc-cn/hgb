@@ -64,6 +64,7 @@ data class ActionDefinition(
     val capability: String,
     val contractVersion: Int,
     val inputs: JsonObject,
+    val bindings: Map<String, ActionInputBinding> = emptyMap(),
 )
 @Serializable
 enum class FieldWidget { SINGLE_CHOICE, MULTI_CHOICE, NUMBER, RANGE, TIME, DATE, DATE_RANGE, TEXT }
@@ -89,7 +90,12 @@ sealed interface BundleReadResult {
 }
 
 /** Capabilities are supplied by the APK; a bundle cannot register a new capability. */
-data class CapabilityContract(val id: String, val version: Int, val validateInputs: (JsonObject) -> String?)
+data class CapabilityContract(
+    val id: String, val version: Int,
+    val inputTypes: Map<String, ActionValueType> = emptyMap(),
+    val outputTypes: Map<String, ActionValueType> = emptyMap(),
+    val validateInputs: (JsonObject) -> String?,
+)
 class BundleCodec(private val capabilities: List<CapabilityContract>) {
     private val json = Json { ignoreUnknownKeys = false; isLenient = false; coerceInputValues = false }
 
@@ -103,6 +109,13 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
     }
 
     fun write(bundle: TaskBundle): String = json.encodeToString(bundle)
+
+    /** Same APK contracts at config save/admission and at execution, without inventing defaults. */
+    fun configurationIssues(task: TaskDefinition, values: JsonObject): List<ContentIssue> {
+        val schema = validateConfiguration(task, values)
+        if (schema.isNotEmpty()) return schema
+        return configuredActionIssues(task, values, capabilities)
+    }
 
     fun validate(bundle: TaskBundle): List<ContentIssue> = buildList {
         fun issue(location: String, reason: String) { add(ContentIssue(location, reason)) }
@@ -162,12 +175,16 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
                 val path = "$location/step/${step.id}"
                 if (step.id.isBlank() || step.name.isBlank() || step.actions.isEmpty()) issue(path, "步骤身份、名称或动作为空")
                 if (step.actions.map { it.id }.distinct().size != step.actions.size) issue(path, "动作身份重复")
+                val previous = mutableMapOf<String, CapabilityContract>()
                 step.actions.forEach { action ->
                     val actionPath = "$path/action/${action.id}"
                     if (action.id.isBlank()) issue(actionPath, "缺少动作身份")
                     val contract = capabilities.find { it.id == action.capability && it.version == action.contractVersion }
                     if (contract == null) issue(actionPath, "容器不支持所需动作或合同版本")
-                    else contract.validateInputs(action.inputs)?.let { issue(actionPath, it) }
+                    else {
+                        actionBindingIssues(task, action, contract, previous).forEach { issue(actionPath, it) }
+                        previous[action.id] = contract
+                    }
                 }
             }
         }

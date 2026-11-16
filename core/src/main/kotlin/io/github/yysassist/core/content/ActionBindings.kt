@@ -1,0 +1,97 @@
+package io.github.yysassist.core.content
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.*
+
+/** References are structured data. No interpolation, executable strings or cross-step scratchpad. */
+@Serializable
+sealed interface ActionInputBinding {
+    @Serializable @SerialName("configuration")
+    data class Configuration(val fieldId: String) : ActionInputBinding
+    @Serializable @SerialName("output")
+    data class Output(val actionId: String, val field: String) : ActionInputBinding
+}
+
+enum class ActionValueType {
+    STRING, NUMBER, BOOLEAN, OBJECT, ARRAY;
+    fun accepts(value: JsonElement): Boolean = when (this) {
+        STRING -> value is JsonPrimitive && value.isString
+        NUMBER -> value is JsonPrimitive && value.decimalOrNull() != null
+        BOOLEAN -> value is JsonPrimitive && !value.isString && value.booleanOrNull != null
+        OBJECT -> value is JsonObject
+        ARRAY -> value is JsonArray
+    }
+}
+
+private fun ConfigurationField.valueType(): ActionValueType = when (widget) {
+    FieldWidget.NUMBER, FieldWidget.RANGE -> ActionValueType.NUMBER
+    FieldWidget.MULTI_CHOICE -> ActionValueType.ARRAY
+    FieldWidget.DATE_RANGE -> ActionValueType.OBJECT
+    else -> ActionValueType.STRING
+}
+
+fun CapabilityContract.inputIssue(values: JsonObject): String? {
+    if (inputTypes.isNotEmpty()) {
+        if (values.keys != inputTypes.keys) return "动作参数缺失或包含未知参数"
+        if (inputTypes.any { (key, type) -> !type.accepts(values.getValue(key)) }) return "动作参数类型不匹配"
+    }
+    return validateInputs(values)
+}
+
+fun CapabilityContract.outputIssue(values: JsonObject): String? = when {
+    values.keys != outputTypes.keys -> "动作输出缺失或包含未声明字段"
+    outputTypes.any { (key, type) -> !type.accepts(values.getValue(key)) } -> "动作输出类型不匹配"
+    else -> null
+}
+
+internal fun actionBindingIssues(task: TaskDefinition, action: ActionDefinition, contract: CapabilityContract,
+    previous: Map<String, CapabilityContract>): List<String> = buildList {
+    if (action.bindings.isEmpty()) { contract.inputIssue(action.inputs)?.let(::add); return@buildList }
+    if (action.inputs.keys.intersect(action.bindings.keys).isNotEmpty()) add("同一动作参数不能同时提供常量与引用")
+    if (contract.inputTypes.keys != action.inputs.keys + action.bindings.keys) add("动作参数缺失、未知或未声明引用类型")
+    action.inputs.forEach { (key, value) ->
+        if (contract.inputTypes[key]?.accepts(value) != true) add("动作常量参数类型不匹配")
+    }
+    action.bindings.forEach { (key, source) ->
+        val type = when (source) {
+            is ActionInputBinding.Configuration -> {
+                val field = task.fields.singleOrNull { it.id == source.fieldId }
+                if (field == null) add("引用的配置字段不存在")
+                else if (!field.required) add("动作引用的配置字段必须显式声明为必填")
+                field?.valueType()
+            }
+            is ActionInputBinding.Output -> {
+                val type = previous[source.actionId]?.outputTypes?.get(source.field)
+                if (type == null) add("只能引用本步骤前序动作已声明的输出字段")
+                type
+            }
+        }
+        if (type != null && type != contract.inputTypes[key]) add("引用值与动作参数类型不匹配")
+    }
+}
+
+/** Output values exist only after a successful action, in this one step attempt. */
+fun resolveActionInputs(action: ActionDefinition, configuration: JsonObject, outputs: Map<String, JsonObject>): JsonObject {
+    require(action.inputs.keys.intersect(action.bindings.keys).isEmpty()) { "常量与引用参数冲突" }
+    val bound = action.bindings.mapValues { (_, source) -> when (source) {
+        is ActionInputBinding.Configuration -> requireNotNull(configuration[source.fieldId]) { "配置引用不可用" }
+        is ActionInputBinding.Output -> requireNotNull(outputs[source.actionId]?.get(source.field)) { "前序动作输出不可用" }
+    } }
+    return JsonObject(action.inputs + bound)
+}
+
+internal fun configuredActionIssues(task: TaskDefinition, values: JsonObject, contracts: List<CapabilityContract>): List<ContentIssue> = buildList {
+    task.steps.forEach { step -> step.actions.forEach actionLoop@ { action ->
+        val contract = contracts.singleOrNull { it.id == action.capability && it.version == action.contractVersion }
+        val fields = action.bindings.values.filterIsInstance<ActionInputBinding.Configuration>().map { it.fieldId }.distinct()
+        val location = fields.singleOrNull() ?: "step/${step.id}/action/${action.id}"
+        if (contract == null) { add(ContentIssue(location, "容器不支持所需动作或合同版本")); return@actionLoop }
+        // Outputs cannot be fabricated at save/admission time. Validate their values only once read.
+        if (action.bindings.values.none { it is ActionInputBinding.Output }) {
+            val inputs = try { resolveActionInputs(action, values, emptyMap()) }
+            catch (_: IllegalArgumentException) { add(ContentIssue(location, "配置引用不可用")); return@actionLoop }
+            contract.inputIssue(inputs)?.let { add(ContentIssue(location, it)) }
+        }
+    } }
+}.distinct()

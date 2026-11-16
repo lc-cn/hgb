@@ -1,0 +1,8 @@
+{
+  "isolatedEmulatorOnly": true,
+  "testPackageUninstalled": true,
+  "mainAssistantPreserved": true,
+  "mainAppDataPreserved": true,
+  "phoneOperated": false,
+  "gameOperated": false
+}

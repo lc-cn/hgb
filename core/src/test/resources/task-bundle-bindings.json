@@ -1,0 +1,40 @@
+{
+  "formatVersion": 1,
+  "version": "bindings-example-v1",
+  "updatedAt": "2026-11-16T00:00:00Z",
+  "changelog": "仅供合同验证的两次等待样例，没有发布或自动安装。",
+  "targets": [
+    {
+      "id": "sample.utility",
+      "name": "自有等待夹具",
+      "androidPackages": ["io.github.yysassist"],
+      "identityPolicy": "NONE",
+      "categories": [{"id": "tools", "name": "工具"}]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "wait-twice",
+      "targetId": "sample.utility",
+      "name": "两次等待（合同样例）",
+      "category": "tools",
+      "priority": 0,
+      "fields": [
+        {"id": "milliseconds", "label": "等待时长", "widget": "NUMBER", "required": true,
+          "unit": "毫秒", "minimum": 0, "step": 1}
+      ],
+      "steps": [
+        {
+          "id": "wait",
+          "name": "按配置等待，再引用前次输出等待",
+          "actions": [
+            {"id": "first", "capability": "control.wait", "contractVersion": 1, "inputs": {},
+              "bindings": {"durationMs": {"type": "configuration", "fieldId": "milliseconds"}}},
+            {"id": "second", "capability": "control.wait", "contractVersion": 1, "inputs": {},
+              "bindings": {"durationMs": {"type": "output", "actionId": "first", "field": "durationMs"}}}
+          ]
+        }
+      ]
+    }
+  ]
+}

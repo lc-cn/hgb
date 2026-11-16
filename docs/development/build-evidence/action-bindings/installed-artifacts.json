@@ -1,0 +1,19 @@
+{
+  "environment": {
+    "android": "16",
+    "androidApi": "36",
+    "abi": "arm64-v8a",
+    "hardware": "ranchu",
+    "pageBytes": 4096
+  },
+  "installed": [
+    {
+      "package": "io.github.yysassist",
+      "sha256": "9394b328e8c7df560d022c4b7584459af11d0b9abdaf7413cfafa74f095974af"
+    },
+    {
+      "package": "io.github.yysassist.test",
+      "sha256": "9bf6495cea20cd3c2c0fdc1f319e2e8b1a767a95ee5ce241e604c5cd67974f69"
+    }
+  ]
+}

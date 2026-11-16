@@ -1,7 +1,6 @@
 package io.github.yysassist.storage
 
 import androidx.room.withTransaction
-import io.github.yysassist.core.content.validateConfiguration
 import io.github.yysassist.core.execution.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -67,7 +66,7 @@ class ExecutionStateStore(private val database: AssistDatabase, private val libr
                     val values = try { saved?.let { Json.parseToJsonElement(it.valuesJson).jsonObject } ?: JsonObject(emptyMap()) }
                     catch (_: IllegalArgumentException) { throw CorruptExecutionState("已保存任务配置损坏，原数据保留") }
                     if (submitted != values) throw ExecutionStateRejected("任务配置已变化，请重新提交")
-                    if (validateConfiguration(definition, submitted).isNotEmpty()) throw ExecutionStateRejected("请先完成有效的任务配置")
+                    if (library.configurationIssues(definition, submitted).isNotEmpty()) throw ExecutionStateRejected("请先完成有效的任务配置")
                 }
             }
             owner

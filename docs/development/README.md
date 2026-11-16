@@ -25,11 +25,12 @@
 | [tiny／small 同轮对照](vision-model-comparison.md) | 同输入字节的模型对照、庭院／菜单／商品价格的文字与位置观测、正式 APK 独立性 |
 | [Maa纯识别实测](maa-recognition-probe.md) | 固定C API／native闭包、同图与16KB对齐、损坏模型真实崩溃及PoC入口缓解；未选定生产后端 |
 | [版本文字观察](versioned-text-observation.md) | App 版本租约与共享 OCR 子进程接入、模型不进主 APK、取消与故障证据及未完成边界 |
+| [动作参数引用](action-bindings.md) | 锁定配置与本步骤前序输出、静态／保存／入队／运行校验、精确数字及重入 |
 | [Android 平台桥](device-bridge.md) | 截图／输入所有权、撤权与取消回归及平台 PoC 边界 |
 | [原生悬浮控制](floating-controls.md) | 三层窗口、常用与同一执行器、显示偏好、截图／输入排除及真实设备测试边界 |
 | [首版任务分发](task-distribution.md) | 当前已实现的 Release 读取／附件校验／本地版本页，及未完成的资源与运行联动边界 |
-| [版本资源](versioned-resources.md) | 同一 Release 资源清单、流式暂存／完整提交、共享删除与 native 使用期租约；尚未接入识别工作器 |
-| [识别进程边界](maa-process-boundary.md) | 独立探针内的 Binder／描述符交接、真实子进程崩溃与阻塞停止；未接生产租约或执行器 |
+| [版本资源](versioned-resources.md) | 同一 Release 资源清单、完整提交、共享删除与使用期租约；已接内部文字观察，尚无游戏动作 |
+| [识别进程边界](maa-process-boundary.md) | Binder／描述符交接、真实子进程崩溃与阻塞停止；载体已由 App 观察 API 复用，未接游戏执行器 |
 
 旧资料保留，不批量删除或搬家：
 

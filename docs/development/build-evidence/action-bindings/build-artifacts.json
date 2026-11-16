@@ -1,0 +1,22 @@
+{
+  "app": {
+    "artifact": "app-debug.apk",
+    "bytes": 179044269,
+    "sha256": "9394b328e8c7df560d022c4b7584459af11d0b9abdaf7413cfafa74f095974af",
+    "assets": [
+      "assets/PublicSuffixDatabase.list",
+      "assets/maa-license/LICENSE.md"
+    ]
+  },
+  "test": {
+    "artifact": "app-debug-androidTest.apk",
+    "bytes": 4007072,
+    "sha256": "9bf6495cea20cd3c2c0fdc1f319e2e8b1a767a95ee5ce241e604c5cd67974f69",
+    "assets": [
+      "assets/io.github.yysassist.storage.AssistDatabase/1.json",
+      "assets/io.github.yysassist.storage.AssistDatabase/2.json",
+      "assets/io.github.yysassist.storage.AssistDatabase/3.json",
+      "assets/io.github.yysassist.storage.AssistDatabase/4.json"
+    ]
+  }
+}

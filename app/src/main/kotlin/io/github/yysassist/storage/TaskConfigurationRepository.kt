@@ -43,7 +43,7 @@ class TaskConfigurationRepository(private val database: AssistDatabase, private 
         catch (_: InvalidLocalTaskVersion) { return@withTransaction ConfigurationSaveResult.Unavailable("任务内容校验失败，设置未保存") }
         if (current.revision != snapshot.revision) return@withTransaction ConfigurationSaveResult.RevisionChanged
         val values = normalizeConfigurationDraft(current.task, draft)
-        val issues = validateConfiguration(current.task, values)
+        val issues = library.configurationIssues(current.task, values)
         if (issues.isNotEmpty()) return@withTransaction ConfigurationSaveResult.Invalid(issues)
         val revision = Math.addExact(current.revision, 1)
         database.taskConfigurations().save(TaskConfigurationEntity(current.address.targetId, current.address.taskId, values.toString(),
