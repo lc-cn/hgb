@@ -21,6 +21,7 @@
 | [环境核查](environment-audit.json) | 本机工具路径和实际执行结果，不能推导目标游戏兼容 |
 | [多目标应用扩展](target-extensibility.md) | 2026-11-16 补充的通用容器／目标内容边界、命名空间和匿名身份；首期仍验证阴阳师 |
 | [执行持久化](execution-persistence.md) | 准备／提交边界、状态与版本引用事务、删除后的迟到未知结果及已接入宿主／待接设备动作的边界 |
+| [离线识别实测](offline-vision-probe.md) | 独立无网络权限 APK、同图指标、实际 native 兼容故障与未定生产选型 |
 | [Android 平台桥](device-bridge.md) | 截图／输入所有权、撤权与取消回归及平台 PoC 边界 |
 | [首版任务分发](task-distribution.md) | 当前已实现的 Release 读取／附件校验／本地版本页，及未完成的资源与运行联动边界 |
 

@@ -1,0 +1,161 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.4.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build
+Calculating task graph as no cached configuration is available for tasks: :visionprobe:assembleDebug :visionprobe:assembleDebugAndroidTest :visionprobe:lintDebug :core:test :app:assembleDebug
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:preBuild UP-TO-DATE
+> Task :visionprobe:generateDebugAssets UP-TO-DATE
+> Task :visionprobe:generateDebugAndroidTestAssets UP-TO-DATE
+> Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :core:processResources NO-SOURCE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :core:processTestResources UP-TO-DATE
+> Task :visionprobe:verifyVisionModels
+> Task :visionprobe:preBuild
+> Task :visionprobe:preDebugBuild
+> Task :visionprobe:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :visionprobe:generateDebugResources UP-TO-DATE
+> Task :app:generateDebugResources
+> Task :app:desugarDebugFileDependencies
+> Task :visionprobe:javaPreCompileDebug UP-TO-DATE
+> Task :visionprobe:packageDebugResources UP-TO-DATE
+> Task :visionprobe:generateDebugGlobalSynthetics UP-TO-DATE
+> Task :visionprobe:checkDebugDuplicateClasses UP-TO-DATE
+> Task :visionprobe:desugarDebugFileDependencies UP-TO-DATE
+> Task :visionprobe:processDebugNavigationResources UP-TO-DATE
+> Task :visionprobe:parseDebugLocalResources UP-TO-DATE
+> Task :visionprobe:generateDebugRFile UP-TO-DATE
+> Task :visionprobe:mergeExtDexDebug UP-TO-DATE
+> Task :visionprobe:mergeLibDexDebug UP-TO-DATE
+> Task :visionprobe:checkDebugAarMetadata UP-TO-DATE
+> Task :visionprobe:mapDebugSourceSetPaths UP-TO-DATE
+> Task :visionprobe:compileDebugNavigationResources UP-TO-DATE
+> Task :visionprobe:mergeDebugAssets UP-TO-DATE
+> Task :visionprobe:compressDebugAssets UP-TO-DATE
+> Task :visionprobe:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :visionprobe:extractDeepLinksDebug UP-TO-DATE
+> Task :visionprobe:processDebugMainManifest UP-TO-DATE
+> Task :visionprobe:processDebugManifest UP-TO-DATE
+> Task :visionprobe:processDebugManifestForPackage UP-TO-DATE
+> Task :visionprobe:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:javaPreCompileDebug
+> Task :visionprobe:validateSigningDebug UP-TO-DATE
+> Task :visionprobe:writeDebugAppMetadata UP-TO-DATE
+> Task :visionprobe:mergeDebugResources UP-TO-DATE
+> Task :app:processDebugNavigationResources
+> Task :visionprobe:preDebugAndroidTestBuild SKIPPED
+> Task :app:checkDebugAarMetadata
+> Task :visionprobe:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :visionprobe:processDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :visionprobe:generateDebugAndroidTestResources UP-TO-DATE
+> Task :visionprobe:javaPreCompileDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:mergeDebugNativeLibs UP-TO-DATE
+> Task :visionprobe:generateDebugAndroidTestGlobalSynthetics UP-TO-DATE
+> Task :visionprobe:packageDebugAndroidTestResources UP-TO-DATE
+> Task :visionprobe:parseDebugAndroidTestLocalResources UP-TO-DATE
+> Task :visionprobe:stripDebugDebugSymbols UP-TO-DATE
+> Task :visionprobe:desugarDebugAndroidTestFileDependencies UP-TO-DATE
+> Task :visionprobe:generateDebugAndroidTestRFile UP-TO-DATE
+> Task :visionprobe:mapDebugAndroidTestSourceSetPaths UP-TO-DATE
+> Task :visionprobe:compileDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :visionprobe:mergeDebugAndroidTestResources UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :visionprobe:mergeDebugAndroidTestJniLibFolders UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses
+> Task :visionprobe:validateSigningDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:writeDebugAndroidTestSigningConfigVersions UP-TO-DATE
+> Task :visionprobe:extractProguardFiles UP-TO-DATE
+> Task :visionprobe:preDebugUnitTestBuild
+> Task :visionprobe:checkDebugAndroidTestAarMetadata UP-TO-DATE
+> Task :visionprobe:mergeDebugAndroidTestNativeLibs NO-SOURCE
+> Task :visionprobe:checkDebugAndroidTestDuplicateClasses UP-TO-DATE
+> Task :visionprobe:stripDebugAndroidTestDebugSymbols NO-SOURCE
+> Task :visionprobe:mergeLibDexDebugAndroidTest UP-TO-DATE
+> Task :app:compressDebugAssets
+> Task :app:mapDebugSourceSetPaths
+> Task :app:packageDebugResources
+> Task :app:parseDebugLocalResources
+> Task :app:generateDebugRFile
+> Task :app:generateDebugGlobalSynthetics
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :visionprobe:processDebugResources
+> Task :app:mergeDebugJniLibFolders
+> Task :app:validateSigningDebug
+> Task :app:writeDebugAppMetadata
+> Task :app:writeDebugSigningConfigVersions
+> Task :visionprobe:mergeDebugAndroidTestAssets
+> Task :visionprobe:compressDebugAndroidTestAssets
+> Task :app:processDebugManifestForPackage
+> Task :visionprobe:compileDebugKotlin
+> Task :visionprobe:compileDebugJavaWithJavac NO-SOURCE
+> Task :visionprobe:processDebugJavaRes UP-TO-DATE
+> Task :visionprobe:dexBuilderDebug UP-TO-DATE
+> Task :visionprobe:mergeProjectDexDebug UP-TO-DATE
+> Task :visionprobe:bundleDebugClassesToCompileJar UP-TO-DATE
+> Task :visionprobe:mergeDebugJavaResource
+> Task :visionprobe:packageDebug UP-TO-DATE
+> Task :visionprobe:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :visionprobe:assembleDebug UP-TO-DATE
+> Task :app:compileDebugNavigationResources
+> Task :app:mergeDebugResources
+> Task :visionprobe:generateDebugUnitTestLintModel
+> Task :visionprobe:compileDebugAndroidTestKotlin
+> Task :visionprobe:compileDebugAndroidTestJavaWithJavac NO-SOURCE
+> Task :visionprobe:processDebugAndroidTestJavaRes UP-TO-DATE
+> Task :visionprobe:processDebugAndroidTestManifest UP-TO-DATE
+> Task :visionprobe:mergeExtDexDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:mergeDebugAndroidTestJavaResource UP-TO-DATE
+> Task :visionprobe:generateDebugLintReportModel
+> Task :visionprobe:generateDebugAndroidTestLintModel
+> Task :visionprobe:processDebugAndroidTestResources UP-TO-DATE
+> Task :visionprobe:dexBuilderDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:mergeProjectDexDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:packageDebugAndroidTest
+> Task :visionprobe:createDebugAndroidTestApkListingFileRedirect UP-TO-DATE
+> Task :visionprobe:assembleDebugAndroidTest
+> Task :core:compileKotlin
+> Task :core:compileJava NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar
+> Task :app:mergeExtDexDebug
+> Task :visionprobe:lintAnalyzeDebugUnitTest
+> Task :app:mergeLibDexDebug
+> Task :core:compileTestKotlin
+> Task :core:compileTestJava NO-SOURCE
+> Task :core:testClasses UP-TO-DATE
+> Task :core:test
+> Task :app:mergeDebugNativeLibs
+
+> Task :app:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libdatastore_shared_counter.so. Run with --info option to learn more.
+
+> Task :app:processDebugResources
+> Task :visionprobe:lintAnalyzeDebugAndroidTest
+> Task :app:kspDebugKotlin
+> Task :visionprobe:lintAnalyzeDebug
+
+> Task :visionprobe:lintReportDebug
+Wrote HTML report to file:///Users/liuchunlang/yys-assit/visionprobe/build/reports/lint-results-debug.html
+
+> Task :visionprobe:lintDebug
+
+> Task :app:compileDebugKotlin
+w: file:///Users/liuchunlang/yys-assit/app/src/main/kotlin/io/github/yysassist/ui/ExecutionControls.kt:68:130 'when' is exhaustive so 'else' is redundant here.
+
+> Task :app:compileDebugJavaWithJavac NO-SOURCE
+> Task :app:processDebugJavaRes
+> Task :app:mergeDebugJavaResource
+> Task :app:dexBuilderDebug
+> Task :app:mergeProjectDexDebug
+> Task :app:packageDebug
+> Task :app:assembleDebug
+> Task :app:createDebugApkListingFileRedirect
+
+[Incubating] Problems report is available at: file:///Users/liuchunlang/yys-assit/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 1m 7s
+118 actionable tasks: 57 executed, 61 up-to-date
+Configuration cache entry stored.

@@ -3,3 +3,7 @@ gradlew text eol=lf
 gradlew.bat text eol=crlf
 *.png binary
 *.jar binary
+
+# Keep owned implementation visible while collapsing unchanged upstream source and generated evidence.
+third_party/paddle-ocr-sdk/src/** linguist-vendored=true
+docs/development/build-evidence/vision-probe/** linguist-generated=true

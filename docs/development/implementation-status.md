@@ -81,4 +81,10 @@ Application 已替换内存实例为唯一持久化宿主，任务行入队、�
 
 该补充通过 62 项核心、65 项 Android 合并回归（含 12 项宿主和 1 项生产宿主／真实平台桥集成），构建与 Lint 通过。没有注册正式点击动作或操作真机，业务动作意图／结果日志仍需与实际定位和完成观察一起实现。
 
-离线 OCR 的可取得源码、模型与精确依赖合同已补充到[接入研究](../research/offline-vision-integration-contracts.md)。固定 Paddle 源码／小模型和 ML Kit 模型 AAR 已取得，Maa native 分发目录已核对；尚未编译或运行识别后端，不据此宣称主题兼容，下一阶段进行隔离 APK 对照。
+离线 OCR 的可取得源码、模型与精确依赖合同已补充到[接入研究](../research/offline-vision-integration-contracts.md)。固定 Paddle 源码／小模型和 ML Kit 模型 AAR 已取得，Maa native 分发目录已核对；该准备阶段尚未编译或运行识别后端；后续实际对照结果单独记录如下，不据此宣称主题兼容。
+
+## 离线识别首轮 APK 对照
+
+独立 `visionprobe` 已编译并在隔离 API36 ARM64 AVD 完成 Paddle v6 tiny／ML Kit中文bundled 的本地推理，实际安装权限无 INTERNET。正式 App 不依赖候选库或模型；无模型目录时仍能单独构建，本轮重构建 APK 的65项 Android 回归及62项核心测试通过。
+
+合成浅／深样本各4/4，空白无输出；商店菜单严格匹配仅2/4与1/4，有真实漏检／错字，不能作为游戏可靠定位结论。旧 OpenCV 符号错误、官方4.14的当前AVD SVE崩溃和实验用4.11的16 KB对齐告警均保留，未冻结生产后端。详见[识别实测](offline-vision-probe.md)及 `build-evidence/vision-probe/`。Maa对照、留出主题、模型／资源生命周期和代表任务仍继续。

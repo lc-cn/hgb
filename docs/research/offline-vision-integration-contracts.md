@@ -88,3 +88,5 @@ Paddle 已读取的 SDK 源文件带 Apache2 声明；模型、OpenCV 打包、O
 ## 后续实验准备记录
 
 主线已把上述固定提交的 26 个 Kotlin 主源码、manifest、构建文件、混淆配置及根 LICENSE 共 30 份文件取到 `.local/vision-poc/upstream/`，逐份核对 Git 树公开的 blob 身份并保存 SHA-256 清单 `upstream-manifest.json`。这是忽略目录中的固定来源准备，没有新增正式模块、依赖或编译／推理通过结论。下一阶段可直接用这些已核对文件建立独立、无 INTERNET 权限的对照 APK，避免同时把多个候选堆入生产容器。
+
+后续已完成两候选的首次独立 APK 识别，并发现上游 OpenCV 依赖／AVD 指令兼容问题与真实菜单误识，见[实际对照](../development/offline-vision-probe.md)。本文前述“未编译／运行”仅描述研究检查点，不代替后续实测或冻结生产选型。

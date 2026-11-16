@@ -1,0 +1,6 @@
+{
+  "visionprobe/build/outputs/apk/debug/visionprobe-debug.apk": "08bbee9cc3a8b9254dd729ff7ed2dfbf8529a92a08877db13b55ecd293686161",
+  "visionprobe/build/outputs/apk/androidTest/debug/visionprobe-debug-androidTest.apk": "e3e96030981f56afa5e6e61c9a5cf1b00c1489a6d2d7eaaf06c0a90aea4c1d5e",
+  "visionprobe/gradle.lockfile": "6a997922cf6e15f4ce5786481ce24486482794649815992e9ed755987e3edcd3",
+  "gradle/libs.versions.toml": "b2fdec40d631d8b5ebcec1da419e08d098221f0993e3874642ecd556b1a28b42"
+}

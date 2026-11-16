@@ -1,0 +1,123 @@
+/Users/liuchunlang/yys-assit/.local/gradle/caches/9.4.1/transforms/f4bac71e151d245f7de1625a5542eb16/transformed/opencv-4.5.3/jni/arm64-v8a/libc++_shared.so: Warning: The native library arm64-v8a/libc++_shared.so (from com.quickbirdstudios:opencv:4.5.3) is not 16 KB aligned [Aligned16KB]
+/Users/liuchunlang/yys-assit/.local/gradle/caches/9.4.1/transforms/f4bac71e151d245f7de1625a5542eb16/transformed/opencv-4.5.3/jni/arm64-v8a/libc++_shared.so: Warning: The native library arm64-v8a/libc++_shared.so (from com.quickbirdstudios:opencv:4.5.3) is not 16 KB aligned [Aligned16KB]
+/Users/liuchunlang/yys-assit/.local/gradle/caches/9.4.1/transforms/f4bac71e151d245f7de1625a5542eb16/transformed/opencv-4.5.3/jni/arm64-v8a/libc++_shared.so: Warning: The native library arm64-v8a/libc++_shared.so (from com.quickbirdstudios:opencv:4.5.3) is not 16 KB aligned [Aligned16KB]
+
+   Explanation for issues of type "Aligned16KB":
+   Android has traditionally used 4 KB memory page sizes. However, to support
+   future devices that only work with 16 KB aligned libraries apps containing
+   native libraries need to be built with 16 KB alignment.
+
+   Apps with 4 KB aligned native libraries may not work correctly on devices
+   requiring 16 KB alignment. To ensure compatibility and future-proof your
+   app, it is strongly recommended that your native libraries are aligned to
+   16 KB boundaries.
+
+   If your app uses any NDK libraries, directly or indirectly through an SDK,
+   you should rebuild your app to meet this recommendation. Make sure all
+   native libraries within your application, including those from
+   dependencies, are built with 16 KB page alignment.
+
+   This lint check looks at all native libraries that your app depends on. If
+   any are found to be aligned to 4 KB instead of 16 KB, you will need to
+   address this.
+
+   When a library is flagged, first try to update to a newer version that
+   supports 16 KB alignment. If an updated version is not available, contact
+   the library vendor to ask about their plans for 16 KB support and request a
+   compatible version. Updating your libraries proactively will help ensure
+   your app works properly on a wider range of devices.
+
+   https://developer.android.com/guide/practices/page-sizes
+
+/Users/liuchunlang/yys-assit/visionprobe/src/main/AndroidManifest.xml:5: Warning: The attribute android:allowBackup is deprecated from Android 12 and higher and may be removed in future versions. Consider adding the attribute android:dataExtractionRules specifying an @xml resource which configures cloud backups and device transfers on Android 12 and higher. [DataExtractionRules]
+    <application android:label="Offline vision probe" android:allowBackup="false" android:supportsRtl="true" />
+                                                                           ~~~~~
+
+   Explanation for issues of type "DataExtractionRules":
+   Before Android 12, the attributes android:allowBackup and
+   android:fullBackupContent were used to configure all forms of backup,
+   including cloud backups, device-to-device transfers and adb backup.
+
+   In Android 12 and higher, these attributes have been deprecated and will
+   only apply to cloud backups. You should instead use the attribute
+   android:dataExtractionRules, specifying an @xml resource that configures
+   which files to back up, for cloud backups and for device-to-device
+   transfers, separately. If your minSdkVersion supports older versions,
+   you'll still want to specify an android:fullBackupContent resource if the
+   default behavior is not right for your app.
+
+   https://developer.android.com/about/versions/12/backup-restore#xml-changes
+   https://goo.gle/DataExtractionRules
+
+/Users/liuchunlang/yys-assit/visionprobe/src/main/AndroidManifest.xml:5: Warning: Should explicitly set android:icon, there is no default [MissingApplicationIcon]
+    <application android:label="Offline vision probe" android:allowBackup="false" android:supportsRtl="true" />
+     ~~~~~~~~~~~
+
+   Explanation for issues of type "MissingApplicationIcon":
+   You should set an icon for the application as whole because there is no
+   default. This attribute must be set as a reference to a drawable resource
+   containing the image (for example @drawable/icon).
+
+   https://developer.android.com/studio/publish/preparing#publishing-configure
+
+/Users/liuchunlang/yys-assit/third_party/paddle-ocr-sdk/src/main/java/com/paddle/ocr/util/BitmapUtils.kt:48: Warning: Use the KTX function createBitmap instead? [UseKtx]
+            Bitmap.createBitmap(rgba.cols(), rgba.rows(), Bitmap.Config.ARGB_8888).also { bitmap ->
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "UseKtx":
+   The Android KTX libraries decorates the Android platform SDK as well as
+   various libraries with more convenient extension functions available from
+   Kotlin, allowing you to use default parameters, named parameters, and
+   more.
+
+   Available options:
+
+   **remove-defaults** (default is true):
+   Whether to skip arguments that match the defaults provided by the extension.
+
+   Extensions often provide default values for some of the parameters. For example:
+   ```kotlin
+   fun Path.readLines(charset: Charset = Charsets.UTF_8): List<String> { return Files.readAllLines(this, charset) }
+   ```
+   This lint check will by default automatically omit parameters that match the default, so if your code was calling
+
+   ```kotlin
+   Files.readAllLines(file, Charset.UTF_8)
+   ```
+   lint would replace this with
+   ```kotlin
+   file.readLines()
+   ```
+   rather than
+
+   ```kotlin
+   file.readLines(Charset.UTF_8
+   ```
+   You can turn this behavior off using this option.
+
+   To configure this option, use a `lint.xml` file with an <option> like this:
+
+   ```xml
+   <lint>
+       <issue id="UseKtx">
+           <option name="remove-defaults" value="true" />
+       </issue>
+   </lint>
+   ```
+
+   **require-present** (default is true):
+   Whether to only offer extensions already available.
+
+   This option lets you only have lint suggest extension replacements if those extensions are already available on the class path (in other words, you're already depending on the library containing the extension method.)
+
+   To configure this option, use a `lint.xml` file with an <option> like this:
+
+   ```xml
+   <lint>
+       <issue id="UseKtx">
+           <option name="require-present" value="true" />
+       </issue>
+   </lint>
+   ```
+
+0 errors, 6 warnings
