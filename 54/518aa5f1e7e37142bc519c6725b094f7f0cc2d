@@ -1,0 +1,81 @@
+docs/development/task-distribution.md
+  s_b0f0af2da7f631::t_1fe97d440e6487 18,20,24,26
+core/src/main/kotlin/io/github/yysassist/core/content/GitHubTaskSource.kt
+  s_b0f0af2da7f631::t_27c493095e0595 4-7,16,27-29,71-72,89-109,114-135,137,158-164
+  s_b0f0af2da7f631::t_5e01ea3af2a159 110-113
+core/src/test/kotlin/io/github/yysassist/core/content/BundleCodecTest.kt
+  s_b0f0af2da7f631::t_5e01ea3af2a159 79-95
+app/src/main/kotlin/io/github/yysassist/TaskUpdates.kt
+  s_b0f0af2da7f631::t_e47dc302b46b62 56-58
+app/src/main/kotlin/io/github/yysassist/storage/AssistDatabase.kt
+  s_b0f0af2da7f631::t_e47dc302b46b62 8,65-67
+docs/development/build-evidence/resource-versions/android-tests.txt
+  s_b0f0af2da7f631::t_cb8401595bc2ac 1-1369
+core/src/test/kotlin/io/github/yysassist/core/content/GitHubTaskSourceTest.kt
+  s_b0f0af2da7f631::t_5e01ea3af2a159 14-18,87-107,109-146
+  s_b0f0af2da7f631::t_15f7b960074028 108
+docs/development/build-evidence/resource-versions/lease-before.txt
+  s_b0f0af2da7f631::t_cb8401595bc2ac 1-73
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_a4e9fe907b27f1 67
+  s_b0f0af2da7f631::t_1fe97d440e6487 15,60
+  s_b0f0af2da7f631::t_7935776ec36869 110-117
+docs/development/build-evidence/resource-versions/README.md
+  s_b0f0af2da7f631::t_a4e9fe907b27f1 1-11
+core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt
+  s_b0f0af2da7f631::t_9f78310b7d8cce 22,24-26,113-123
+app/src/main/kotlin/io/github/yysassist/storage/TaskVersionLibrary.kt
+  s_b0f0af2da7f631::t_e47dc302b46b62 7,12-14,48,52-53,63-64,67-68,77-91,94-105,122-124,130-150,172,232,245,251-257
+  s_b0f0af2da7f631::t_d2b81b4de0ae3b 8-11,151-171
+app/src/androidTest/kotlin/io/github/yysassist/TaskUpdatesIntegrationTest.kt
+  s_b0f0af2da7f631::t_c705bd0731d4b0 21,33,44-45,53,107-131
+  s_b0f0af2da7f631::t_e6edc8825e1e70 132
+docs/development/build-evidence/resource-versions/before-lease-delivery-artifacts.json
+  s_b0f0af2da7f631::t_cb8401595bc2ac 1-11
+docs/development/build-evidence/resource-versions/verification.json
+  s_b0f0af2da7f631::t_cb8401595bc2ac 1-119
+app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_b0f0af2da7f631::t_e47dc302b46b62 13-14,52
+app/src/main/kotlin/io/github/yysassist/storage/TaskResourceFiles.kt
+  s_b0f0af2da7f631::t_4e057cb2883102 181-185
+  s_b0f0af2da7f631::t_5e01ea3af2a159 68,70,106
+  s_b0f0af2da7f631::t_c4ed39bac46118 1-67,69,71-105,107-180,186-188
+docs/development/build-evidence/resource-versions/lease-fix.diff
+  s_b0f0af2da7f631::t_128d354cd29a8b 3,8
+  s_b0f0af2da7f631::t_cb8401595bc2ac 1-2,4-7,9-34
+docs/development/build-evidence/resource-versions/core-results.json
+  s_b0f0af2da7f631::t_cb8401595bc2ac 1-141
+docs/development/versioned-resources.md
+  s_b0f0af2da7f631::t_1fe97d440e6487 27-28
+  s_b0f0af2da7f631::t_9689378cac44ce 1-26,29-45
+docs/development/build-evidence/resource-versions/installed-artifacts.json
+  s_b0f0af2da7f631::t_cb8401595bc2ac 1-10
+app/src/androidTest/kotlin/io/github/yysassist/storage/TaskResourceIntegrationTest.kt
+  s_b0f0af2da7f631::t_dcc4c5dd5210d1 1-4,6-16,18,23-211,276-277
+  s_b0f0af2da7f631::t_6068566826942e 5,19-22,241-275
+  s_b0f0af2da7f631::t_23e468e318b41c 17,212-240
+docs/development/build-evidence/resource-versions/lint.txt
+  s_b0f0af2da7f631::t_cb8401595bc2ac 1
+docs/development/build-evidence/resource-versions/lease-after.txt
+  s_b0f0af2da7f631::t_cb8401595bc2ac 1-27
+docs/development/build-evidence/resource-versions/build.txt
+  s_b0f0af2da7f631::t_cb8401595bc2ac 1-106
+docs/development/README.md
+  s_b0f0af2da7f631::t_1fe97d440e6487 30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "54518aa5f1e7e37142bc519c6725b094f7f0cc2d",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
