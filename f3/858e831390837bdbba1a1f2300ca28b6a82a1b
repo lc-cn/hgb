@@ -1,0 +1,90 @@
+maaprobe/src/main/AndroidManifest.xml
+  s_b0f0af2da7f631::t_8513fd841a04f3 6-8
+maaprobe/src/main/kotlin/io/github/yysassist/maaprobe/MaaObservationService.kt
+  s_b0f0af2da7f631::t_8513fd841a04f3 1-6,8-59,62-85,87-94,96,98,108-111,121-123
+  s_b0f0af2da7f631::t_bffca5fe1cdccc 7
+  s_b0f0af2da7f631::t_2cef4aa1a0e042 61,101,107,112-120
+  s_b0f0af2da7f631::t_04f8c97e1ea6ab 60,86,95,97,99-100,102-106
+docs/development/build-evidence/maa-process/build.txt
+  s_b0f0af2da7f631::t_44706abde4f302 1-6,9-10,12-13,15,17-18,21-22,31,33-34,36-37,39,42,46,50-51,53,57,59-67,77-79,84,91,93-95,98
+  s_b0f0af2da7f631::t_86fe83f084efe2 7-8,11,14,16,19-20,23-30,32,35,38,40-41,43-45,47-49,52,54-56,58,68-76,80-83,85-90,92,96-97
+docs/development/build-evidence/maa-process/production-build.txt
+  s_b0f0af2da7f631::t_44706abde4f302 1-71
+docs/development/build-evidence/maa-process/default-tests.txt
+  s_b0f0af2da7f631::t_86fe83f084efe2 207
+  s_b0f0af2da7f631::t_44706abde4f302 1-206,208-212
+maaprobe/src/main/kotlin/io/github/yysassist/maaprobe/MaaNative.kt
+  s_b0f0af2da7f631::t_8513fd841a04f3 10-11
+docs/development/build-evidence/maa-process/android-process-tests.txt
+  s_b0f0af2da7f631::t_44706abde4f302 1-106,108-112
+  s_b0f0af2da7f631::t_86fe83f084efe2 107
+docs/development/build-evidence/maa-process/crash-excerpt.txt
+  s_b0f0af2da7f631::t_86fe83f084efe2 1-33
+maaprobe/src/main/kotlin/io/github/yysassist/maaprobe/MaaProcessProtocol.kt
+  s_b0f0af2da7f631::t_04f8c97e1ea6ab 33
+  s_b0f0af2da7f631::t_8513fd841a04f3 1-20,23-32,34
+  s_b0f0af2da7f631::t_bffca5fe1cdccc 21
+  s_b0f0af2da7f631::t_840092184beaf9 22
+docs/development/maa-process-boundary.md
+  s_b0f0af2da7f631::t_d820fa885f4316 17-18
+  s_b0f0af2da7f631::t_1f0875439ec272 1-16,19-45
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_9d217bf311222e 118-124
+  s_b0f0af2da7f631::t_d820fa885f4316 125
+docs/development/build-evidence/maa-process/README.md
+  s_b0f0af2da7f631::t_d820fa885f4316 1-16
+docs/development/game-validation.md
+  s_b0f0af2da7f631::t_16280e81a0d6b6 3,13,17,46-51
+docs/development/build-evidence/maa-process/lint.txt
+  s_b0f0af2da7f631::t_44706abde4f302 1
+maaprobe/src/androidTest/kotlin/io/github/yysassist/maaprobe/MaaProcessBoundaryTest.kt
+  s_b0f0af2da7f631::t_b13cce143d7889 4,102-108
+  s_b0f0af2da7f631::t_840092184beaf9 1-3,5-101,109-127,130-132,137-190
+  s_b0f0af2da7f631::t_04f8c97e1ea6ab 128-129,133-136
+docs/development/build-evidence/maa-process/process-boundary.json
+  s_b0f0af2da7f631::t_86fe83f084efe2 4-5,7-8,13-14,16-17,22-23,25-26,31-32,34-35,40-41,43-44,49-50,52-53,58-59,61-62
+  s_b0f0af2da7f631::t_44706abde4f302 1-3,6,9-12,15,18-21,24,27-30,33,36-39,42,45-48,51,54-57,60,63-65
+maaprobe/build.gradle.kts
+  s_b0f0af2da7f631::t_840092184beaf9 29-30
+maaprobe/README.md
+  s_b0f0af2da7f631::t_1f0875439ec272 24,32,37-51
+docs/development/build-evidence/maa-process/installed-artifacts.json
+  s_b0f0af2da7f631::t_86fe83f084efe2 3
+  s_b0f0af2da7f631::t_44706abde4f302 1-2,4-17
+docs/development/maa-recognition-probe.md
+  s_b0f0af2da7f631::t_1f0875439ec272 44
+docs/development/build-evidence/maa-process/production-independence.json
+  s_b0f0af2da7f631::t_44706abde4f302 1-6
+maaprobe/src/main/cpp/MaaProbe.cpp
+  s_b0f0af2da7f631::t_8513fd841a04f3 7-8,122-134
+  s_b0f0af2da7f631::t_29abe65213a3da 135
+docs/development/build-evidence/maa-process/cleanup.json
+  s_b0f0af2da7f631::t_44706abde4f302 1-6
+docs/development/README.md
+  s_b0f0af2da7f631::t_1f0875439ec272 31
+docs/development/build-evidence/maa-process/verification.json
+  s_b0f0af2da7f631::t_86fe83f084efe2 2,36,59,73-74
+  s_b0f0af2da7f631::t_44706abde4f302 1,3-35,37-58,60-72,75
+maaprobe/src/main/kotlin/io/github/yysassist/maaprobe/MaaProcessCall.kt
+  s_b0f0af2da7f631::t_bffca5fe1cdccc 1-13,16-39,44-67,69-149,153-167,172-176,179-196,199-203,205-208,215-216,219-222
+  s_b0f0af2da7f631::t_04f8c97e1ea6ab 14-15,150-152,168-171,177,210-214
+  s_b0f0af2da7f631::t_840092184beaf9 40-43,68,178,197-198,204,209,217-218
+docs/development/build-evidence/maa-process/native-packaging.json
+  s_b0f0af2da7f631::t_44706abde4f302 1-107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f3858e831390837bdbba1a1f2300ca28b6a82a1b",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
