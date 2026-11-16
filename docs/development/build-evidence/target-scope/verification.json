@@ -1,0 +1,60 @@
+{
+  "date": "2026-11-16",
+  "apk": {
+    "path": "app/build/outputs/apk/debug/app-debug.apk",
+    "sha256": "c4040cc70a1d49c534c640653c5c73bddb9f73dea89bb20103c24abab255dd45"
+  },
+  "tests": [
+    {
+      "name": "io.github.yysassist.core.content.BundleCodecTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.yysassist.core.content.ConfigurationValidatorTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.yysassist.core.execution.TaskExecutorTest",
+      "tests": "23",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "lint": "No issues found.",
+  "nativeSmoke": "native-smoke.json",
+  "scope": "Android API36 ARM64 isolated emulator. Core command/effect tests and native empty-state/theme/navigation checks. No game input, multi-app switching or durable recovery validated.",
+  "sourceSha256": {
+    "core/src/main/kotlin/io/github/yysassist/core/content/ConfigurationValidator.kt": "99cff9d23da53c39b7a06df9b1d6a638fdb1825c738916205e15cc0bbc647852",
+    "core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt": "14d7a2bb9946890381db6f101df0acdb35ea7ad24914e13980e4662e64a0a226",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/ExecutionModels.kt": "4add1b688144f6eca7c33dddcab7444cc9f23bf39beeb95ea3ec48877eeeb47f",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/TaskExecutor.kt": "370dfdae486d375ab7f93b309987173564cc2d7e78254f6143fd354a57773bf0",
+    "core/src/main/kotlin/io/github/yysassist/core/model/ExecutionContext.kt": "28bda0b7c71ee750a00ec9938a43120e4f07e6d5c2d6c82d5b30ab6b0b9b4562",
+    "core/src/test/kotlin/io/github/yysassist/core/content/BundleCodecTest.kt": "6f57a92559606556adacc9d39497f61fd5da6e0b53240079d666e9728d6dc038",
+    "core/src/test/kotlin/io/github/yysassist/core/content/ConfigurationValidatorTest.kt": "4385e39d0f54e24c998bfb328b5c93f13ec5315de688a39a6627c172c677eb90",
+    "core/src/test/kotlin/io/github/yysassist/core/execution/TaskExecutorTest.kt": "46dc08bd495a16db330884366a28da64327e086fc4230c47d7e5a5c50a1d36fb",
+    "app/src/main/AndroidManifest.xml": "2a4ba0812add70db6d2e4474d551f0a92c99c4bb000f6da0c33dccb50478d03d",
+    "app/src/main/kotlin/io/github/yysassist/AppearancePreferences.kt": "b1e33fe012e223a381fc3e62af78407ce41cf036f369447f5b7778656991ac6e",
+    "app/src/main/kotlin/io/github/yysassist/AssistApplication.kt": "4ab5670e8aa346f6f80c18ac8ce83054ee9f3110dbc66fa0400833400955645f",
+    "app/src/main/kotlin/io/github/yysassist/MainActivity.kt": "5421060e01cee891f6af006d7602197a0996dba84dd18932571b7f7b9c0f8407",
+    "app/src/main/kotlin/io/github/yysassist/device/GameAccessibilityService.kt": "bee1b541cc9dfabff8456aac3be12e1e40b51cabe623a544817109a64ff7fa95",
+    "app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt": "9895c13b0760442d37a3e0b8fe31f3b22b9fb1b8f836240f126d3ff944e11dc6",
+    "app/src/main/kotlin/io/github/yysassist/ui/AssistIcons.kt": "b929069e48aea35fe0e8edb7e7b5ca68f177a0be84223e4e34cce11ebc8fe049",
+    "app/src/main/kotlin/io/github/yysassist/ui/AssistTheme.kt": "a04bdae2faa535987b7840ae5f2142f731f79b5c77a44d12efe25367bd00cab9",
+    "app/src/main/kotlin/io/github/yysassist/ui/GlassControls.kt": "761814150c5f5ff3c2ad3888ac2314194c6a515343f5b92294841cba74210666",
+    "app/src/main/res/drawable/ic_launcher_foreground.xml": "6ad1f4d7fd76172a0d715dac020afdc6bd919f62853d17f1c0ca843a3cb047de",
+    "app/src/main/res/mipmap-anydpi/ic_launcher.xml": "d6a9c9225b56729fa8c5c82c0ae404fa13e0994361dccc91d64909999b8b2d36",
+    "app/src/main/res/values/colors.xml": "d4bc03b7d3b52a7c142ecf31d6c2aa1be4bbeeaffa89c3a1ba7443c0b8c9cce7",
+    "app/src/main/res/values/strings.xml": "cb0ad47256b9275b84d16a53cf29476bff9a472cd931891a8ce4e7907179c545",
+    "app/src/main/res/values/styles.xml": "8f15ed84a9766e1a9d55607f866146a7e982ee5a0b5b869645cbdf4e72286d8d",
+    "app/src/main/res/xml/accessibility_service.xml": "598a86a984211d6eaceb7cc1060c8d4a10a3816343e355ad85d51cb3d481b10a",
+    "app/src/main/res/xml/backup_rules.xml": "865cae97840e81b9950d70457a05c5c1125a68364b0a83f44cd3daa030bc7e96",
+    "app/src/main/res/xml/data_extraction_rules.xml": "cb029b35db0e976c087100424e16e14a6256b46962398887520e51508c3b5842"
+  }
+}

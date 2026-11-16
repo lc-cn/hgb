@@ -1,0 +1,180 @@
+{
+  "checks": [
+    {
+      "name": "portrait star toggles without navigation",
+      "pass": true
+    },
+    {
+      "name": "portrait plan common toggles from list",
+      "pass": true
+    },
+    {
+      "name": "portrait initial collapsed ball",
+      "pass": true
+    },
+    {
+      "name": "portrait ball opens quick layer",
+      "pass": true
+    },
+    {
+      "name": "portrait quick opens common layer",
+      "pass": true
+    },
+    {
+      "name": "portrait starred task appears in common",
+      "pass": true
+    },
+    {
+      "name": "portrait queued overlay control disabled",
+      "pass": true
+    },
+    {
+      "name": "portrait current remains while candidates filtered",
+      "pass": true
+    },
+    {
+      "name": "portrait common returns to quick",
+      "pass": true
+    },
+    {
+      "name": "portrait collapse preserves execution",
+      "pass": true
+    },
+    {
+      "name": "portrait plan missing tasks stays in editor",
+      "pass": true
+    },
+    {
+      "name": "portrait rotation retains Monday plan draft",
+      "pass": true
+    },
+    {
+      "name": "portrait save schedules without immediate enqueue",
+      "pass": true
+    },
+    {
+      "name": "portrait no weekly or master scheduling control",
+      "pass": true
+    },
+    {
+      "name": "portrait continue design uses unfinished step",
+      "pass": true
+    },
+    {
+      "name": "portrait recovery row uses pause icon and label",
+      "pass": true
+    },
+    {
+      "name": "portrait tasklist pending transition disabled",
+      "pass": true
+    },
+    {
+      "name": "portrait workbench pending transition disabled",
+      "pass": true
+    },
+    {
+      "name": "portrait overlay pending transition disabled",
+      "pass": true
+    },
+    {
+      "name": "landscape star toggles without navigation",
+      "pass": true
+    },
+    {
+      "name": "landscape plan common toggles from list",
+      "pass": true
+    },
+    {
+      "name": "landscape initial collapsed ball",
+      "pass": true
+    },
+    {
+      "name": "landscape ball opens quick layer",
+      "pass": true
+    },
+    {
+      "name": "landscape quick opens common layer",
+      "pass": true
+    },
+    {
+      "name": "landscape starred task appears in common",
+      "pass": true
+    },
+    {
+      "name": "landscape queued overlay control disabled",
+      "pass": true
+    },
+    {
+      "name": "landscape current remains while candidates filtered",
+      "pass": true
+    },
+    {
+      "name": "landscape common returns to quick",
+      "pass": true
+    },
+    {
+      "name": "landscape collapse preserves execution",
+      "pass": true
+    },
+    {
+      "name": "landscape plan missing tasks stays in editor",
+      "pass": true
+    },
+    {
+      "name": "landscape rotation retains Monday plan draft",
+      "pass": true
+    },
+    {
+      "name": "landscape save schedules without immediate enqueue",
+      "pass": true
+    },
+    {
+      "name": "landscape no weekly or master scheduling control",
+      "pass": true
+    },
+    {
+      "name": "landscape continue design uses unfinished step",
+      "pass": true
+    },
+    {
+      "name": "landscape recovery row uses pause icon and label",
+      "pass": true
+    },
+    {
+      "name": "landscape tasklist pending transition disabled",
+      "pass": true
+    },
+    {
+      "name": "landscape workbench pending transition disabled",
+      "pass": true
+    },
+    {
+      "name": "landscape overlay pending transition disabled",
+      "pass": true
+    },
+    {
+      "name": "landscape current and complete alert fit one left region",
+      "pass": true,
+      "detail": {
+        "primary": [
+          430,
+          687
+        ],
+        "alert": [
+          591.59375,
+          643.59375
+        ],
+        "resultParent": "home-secondary"
+      }
+    },
+    {
+      "name": "landscape results share right secondary scroll",
+      "pass": true
+    },
+    {
+      "name": "no runtime errors",
+      "pass": true,
+      "detail": []
+    }
+  ]
+}

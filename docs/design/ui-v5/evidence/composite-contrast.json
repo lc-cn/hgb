@@ -1,0 +1,2249 @@
+{
+  "method": "Same rendered UI with text/icon paint temporarily hidden; sample final background within original text/icon bounds. Unsupported branch forced from actual stylesheet for cascade proof, not old-device testing.",
+  "disabledThreshold": "3:1 readability target; disabled controls are normally exempt from WCAG contrast criteria",
+  "results": [
+    {
+      "case": "tasks-light",
+      "label": "设为常用 每日物资领取",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.59,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        85,
+        85,
+        85
+      ],
+      "background": [
+        251,
+        251,
+        251
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "加入队列 每日物资领取",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 12.63,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        51,
+        51,
+        51
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "加入队列 每日物资领取",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.63,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        168,
+        207,
+        249
+      ],
+      "background": [
+        68,
+        68,
+        68
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "设为常用 每周物资领取",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.59,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        85,
+        85,
+        85
+      ],
+      "background": [
+        251,
+        251,
+        251
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "加入队列 每周物资领取",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 12.63,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        51,
+        51,
+        51
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "加入队列 每周物资领取",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.63,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        168,
+        207,
+        249
+      ],
+      "background": [
+        68,
+        68,
+        68
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "取消常用 永久勾玉卡产出",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 5.93,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        255,
+        220,
+        128
+      ],
+      "background": [
+        63,
+        63,
+        63
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "加入队列 永久勾玉卡产出",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 12.63,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        51,
+        51,
+        51
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "加入队列 永久勾玉卡产出",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.63,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        168,
+        207,
+        249
+      ],
+      "background": [
+        68,
+        68,
+        68
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "设为常用 花合战奖励",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.59,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        85,
+        85,
+        85
+      ],
+      "background": [
+        251,
+        251,
+        251
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "加入队列 花合战奖励",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 12.63,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        51,
+        51,
+        51
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "加入队列 花合战奖励",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.63,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        168,
+        207,
+        249
+      ],
+      "background": [
+        68,
+        68,
+        68
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "设为常用 悬赏封印",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.59,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        85,
+        85,
+        85
+      ],
+      "background": [
+        251,
+        251,
+        251
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "已在队列 悬赏封印",
+      "kind": "text",
+      "disabled": true,
+      "ratio": 5.04,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        96,
+        96,
+        96
+      ],
+      "background": [
+        230,
+        230,
+        230
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "已在队列 悬赏封印",
+      "kind": "icon",
+      "disabled": true,
+      "ratio": 5.04,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        96,
+        96,
+        96
+      ],
+      "background": [
+        230,
+        230,
+        230
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "设为常用 宠物照料",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.59,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        85,
+        85,
+        85
+      ],
+      "background": [
+        251,
+        251,
+        251
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "加入队列 宠物照料",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 12.63,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        51,
+        51,
+        51
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "加入队列 宠物照料",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.63,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        168,
+        207,
+        249
+      ],
+      "background": [
+        68,
+        68,
+        68
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "任务中心",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 12.27,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        53,
+        53,
+        53
+      ]
+    },
+    {
+      "case": "tasks-light",
+      "label": "任务中心",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.64,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        219,
+        192,
+        255
+      ],
+      "background": [
+        68,
+        68,
+        68
+      ]
+    },
+    {
+      "case": "overlay-light",
+      "label": "暂停执行，长按停止",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.29,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        125,
+        83,
+        21
+      ],
+      "background": [
+        250,
+        250,
+        250
+      ]
+    },
+    {
+      "case": "overlay-light",
+      "label": "停止执行",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 5.64,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        161,
+        51,
+        58
+      ],
+      "background": [
+        250,
+        250,
+        250
+      ]
+    },
+    {
+      "case": "overlay-light",
+      "label": "常用",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 17.31,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        252,
+        252,
+        252
+      ]
+    },
+    {
+      "case": "overlay-light",
+      "label": "常用",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 9.83,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        250,
+        250,
+        250
+      ]
+    },
+    {
+      "case": "overlay-light",
+      "label": "收起到悬浮球",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 9.83,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        250,
+        250,
+        250
+      ]
+    },
+    {
+      "case": "settings-light",
+      "label": "跟随系统",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 17.31,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        252,
+        252,
+        252
+      ]
+    },
+    {
+      "case": "settings-light",
+      "label": "浅色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 10.37,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        64,
+        64,
+        64
+      ]
+    },
+    {
+      "case": "settings-light",
+      "label": "深色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 17.31,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        252,
+        252,
+        252
+      ]
+    },
+    {
+      "case": "settings-light",
+      "label": "设置",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 12.63,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        51,
+        51,
+        51
+      ]
+    },
+    {
+      "case": "settings-light",
+      "label": "设置",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.9,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        255,
+        192,
+        218
+      ],
+      "background": [
+        68,
+        68,
+        68
+      ]
+    },
+    {
+      "case": "schema-light",
+      "label": "返回",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 9.89,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        251,
+        251,
+        251
+      ]
+    },
+    {
+      "case": "schema-light",
+      "label": "保存",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 17.31,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        252,
+        252,
+        252
+      ]
+    },
+    {
+      "case": "schema-light",
+      "label": "文本",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 17.61,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        254,
+        254,
+        254
+      ]
+    },
+    {
+      "case": "schema-light",
+      "label": "数值",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 8.06,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        80,
+        80,
+        80
+      ]
+    },
+    {
+      "case": "schema-light",
+      "label": "单选",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 17.61,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        254,
+        254,
+        254
+      ]
+    },
+    {
+      "case": "schema-light",
+      "label": "多选",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 17.61,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        254,
+        254,
+        254
+      ]
+    },
+    {
+      "case": "schema-light",
+      "label": "时间",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 17.61,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        254,
+        254,
+        254
+      ]
+    },
+    {
+      "case": "schema-light",
+      "label": "日期",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 17.61,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        254,
+        254,
+        254
+      ]
+    },
+    {
+      "case": "schema-light",
+      "label": "日期范围",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 17.46,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        253,
+        253,
+        253
+      ]
+    },
+    {
+      "case": "selected-hover-light",
+      "label": "跟随系统",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 17.31,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        252,
+        252,
+        252
+      ]
+    },
+    {
+      "case": "selected-hover-light",
+      "label": "浅色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 8.86,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        74,
+        74,
+        74
+      ]
+    },
+    {
+      "case": "selected-hover-light",
+      "label": "深色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 17.31,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        252,
+        252,
+        252
+      ]
+    },
+    {
+      "case": "selected-hover-light",
+      "label": "设置",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 12.63,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        51,
+        51,
+        51
+      ]
+    },
+    {
+      "case": "selected-hover-light",
+      "label": "设置",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.9,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        255,
+        192,
+        218
+      ],
+      "background": [
+        68,
+        68,
+        68
+      ]
+    },
+    {
+      "case": "selected-pressed-light",
+      "label": "跟随系统",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 17.31,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        252,
+        252,
+        252
+      ]
+    },
+    {
+      "case": "selected-pressed-light",
+      "label": "浅色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 14.74,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        40,
+        40,
+        40
+      ]
+    },
+    {
+      "case": "selected-pressed-light",
+      "label": "深色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 17.31,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        252,
+        252,
+        252
+      ]
+    },
+    {
+      "case": "selected-pressed-light",
+      "label": "设置",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 12.63,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        51,
+        51,
+        51
+      ]
+    },
+    {
+      "case": "selected-pressed-light",
+      "label": "设置",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.9,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        255,
+        192,
+        218
+      ],
+      "background": [
+        68,
+        68,
+        68
+      ]
+    },
+    {
+      "case": "selected-reduced-light",
+      "label": "跟随系统",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 15.58,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        240,
+        240,
+        240
+      ]
+    },
+    {
+      "case": "selected-reduced-light",
+      "label": "浅色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 16.29,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        32,
+        32,
+        32
+      ]
+    },
+    {
+      "case": "selected-reduced-light",
+      "label": "深色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 15.58,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        240,
+        240,
+        240
+      ]
+    },
+    {
+      "case": "selected-reduced-light",
+      "label": "设置",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 16.29,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        32,
+        32,
+        32
+      ]
+    },
+    {
+      "case": "selected-reduced-light",
+      "label": "设置",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 7.63,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        255,
+        192,
+        218
+      ],
+      "background": [
+        32,
+        32,
+        32
+      ]
+    },
+    {
+      "case": "selected-unsupported-light",
+      "label": "跟随系统",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 15.58,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        240,
+        240,
+        240
+      ]
+    },
+    {
+      "case": "selected-unsupported-light",
+      "label": "浅色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 16.29,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        32,
+        32,
+        32
+      ]
+    },
+    {
+      "case": "selected-unsupported-light",
+      "label": "深色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 15.58,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        24,
+        24,
+        24
+      ],
+      "background": [
+        240,
+        240,
+        240
+      ]
+    },
+    {
+      "case": "selected-unsupported-light",
+      "label": "设置",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 16.29,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        255,
+        255,
+        255
+      ],
+      "background": [
+        32,
+        32,
+        32
+      ]
+    },
+    {
+      "case": "selected-unsupported-light",
+      "label": "设置",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 7.63,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        255,
+        192,
+        218
+      ],
+      "background": [
+        32,
+        32,
+        32
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "设为常用 每日物资领取",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.3,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        188,
+        188,
+        188
+      ],
+      "background": [
+        63,
+        63,
+        63
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "加入队列 每日物资领取",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 13.25,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        216,
+        216,
+        216
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "加入队列 每日物资领取",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 3.3,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        40,
+        104,
+        178
+      ],
+      "background": [
+        228,
+        228,
+        228
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "设为常用 每周物资领取",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.3,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        188,
+        188,
+        188
+      ],
+      "background": [
+        63,
+        63,
+        63
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "加入队列 每周物资领取",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 13.25,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        216,
+        216,
+        216
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "加入队列 每周物资领取",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 3.3,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        40,
+        104,
+        178
+      ],
+      "background": [
+        228,
+        228,
+        228
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "取消常用 永久勾玉卡产出",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 3.5,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        128,
+        84,
+        9
+      ],
+      "background": [
+        221,
+        221,
+        221
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "加入队列 永久勾玉卡产出",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 13.25,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        216,
+        216,
+        216
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "加入队列 永久勾玉卡产出",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 3.3,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        40,
+        104,
+        178
+      ],
+      "background": [
+        228,
+        228,
+        228
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "设为常用 花合战奖励",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.3,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        188,
+        188,
+        188
+      ],
+      "background": [
+        63,
+        63,
+        63
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "加入队列 花合战奖励",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 13.25,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        216,
+        216,
+        216
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "加入队列 花合战奖励",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 3.3,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        40,
+        104,
+        178
+      ],
+      "background": [
+        228,
+        228,
+        228
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "设为常用 悬赏封印",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.3,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        188,
+        188,
+        188
+      ],
+      "background": [
+        63,
+        63,
+        63
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "已在队列 悬赏封印",
+      "kind": "text",
+      "disabled": true,
+      "ratio": 6.26,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        170,
+        170,
+        170
+      ],
+      "background": [
+        41,
+        41,
+        41
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "已在队列 悬赏封印",
+      "kind": "icon",
+      "disabled": true,
+      "ratio": 6.26,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        170,
+        170,
+        170
+      ],
+      "background": [
+        41,
+        41,
+        41
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "设为常用 宠物照料",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 4.3,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        188,
+        188,
+        188
+      ],
+      "background": [
+        63,
+        63,
+        63
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "加入队列 宠物照料",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 13.25,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        216,
+        216,
+        216
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "加入队列 宠物照料",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 3.3,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        40,
+        104,
+        178
+      ],
+      "background": [
+        228,
+        228,
+        228
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "任务中心",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 13.25,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        216,
+        216,
+        216
+      ]
+    },
+    {
+      "case": "tasks-dark",
+      "label": "任务中心",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 3.27,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        121,
+        80,
+        186
+      ],
+      "background": [
+        226,
+        226,
+        226
+      ]
+    },
+    {
+      "case": "overlay-dark",
+      "label": "暂停执行，长按停止",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 5.23,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        241,
+        206,
+        142
+      ],
+      "background": [
+        64,
+        64,
+        64
+      ]
+    },
+    {
+      "case": "overlay-dark",
+      "label": "停止执行",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 5.49,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        255,
+        180,
+        184
+      ],
+      "background": [
+        64,
+        64,
+        64
+      ]
+    },
+    {
+      "case": "overlay-dark",
+      "label": "常用",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 6.76,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        84,
+        84,
+        84
+      ]
+    },
+    {
+      "case": "overlay-dark",
+      "label": "常用",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 7.14,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        61,
+        61,
+        61
+      ]
+    },
+    {
+      "case": "overlay-dark",
+      "label": "收起到悬浮球",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 6.86,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        64,
+        64,
+        64
+      ]
+    },
+    {
+      "case": "settings-dark",
+      "label": "跟随系统",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 9.26,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        64,
+        64,
+        64
+      ]
+    },
+    {
+      "case": "settings-dark",
+      "label": "浅色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 9.26,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        64,
+        64,
+        64
+      ]
+    },
+    {
+      "case": "settings-dark",
+      "label": "深色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 13.9,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        221,
+        221,
+        221
+      ]
+    },
+    {
+      "case": "settings-dark",
+      "label": "设置",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 13.25,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        216,
+        216,
+        216
+      ]
+    },
+    {
+      "case": "settings-dark",
+      "label": "设置",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 3.33,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        177,
+        62,
+        112
+      ],
+      "background": [
+        228,
+        228,
+        228
+      ]
+    },
+    {
+      "case": "schema-dark",
+      "label": "返回",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 6.95,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        63,
+        63,
+        63
+      ]
+    },
+    {
+      "case": "schema-dark",
+      "label": "保存",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 8.56,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        69,
+        69,
+        69
+      ]
+    },
+    {
+      "case": "schema-dark",
+      "label": "文本",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 6.76,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        84,
+        84,
+        84
+      ]
+    },
+    {
+      "case": "schema-dark",
+      "label": "数值",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 16.13,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        237,
+        237,
+        237
+      ]
+    },
+    {
+      "case": "schema-dark",
+      "label": "单选",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 6.76,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        84,
+        84,
+        84
+      ]
+    },
+    {
+      "case": "schema-dark",
+      "label": "多选",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 6.76,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        84,
+        84,
+        84
+      ]
+    },
+    {
+      "case": "schema-dark",
+      "label": "时间",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 6.76,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        84,
+        84,
+        84
+      ]
+    },
+    {
+      "case": "schema-dark",
+      "label": "日期",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 6.76,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        84,
+        84,
+        84
+      ]
+    },
+    {
+      "case": "schema-dark",
+      "label": "日期范围",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 6.76,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        84,
+        84,
+        84
+      ]
+    },
+    {
+      "case": "selected-hover-dark",
+      "label": "跟随系统",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 9.26,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        64,
+        64,
+        64
+      ]
+    },
+    {
+      "case": "selected-hover-dark",
+      "label": "浅色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 9.26,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        64,
+        64,
+        64
+      ]
+    },
+    {
+      "case": "selected-hover-dark",
+      "label": "深色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 16.42,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        239,
+        239,
+        239
+      ]
+    },
+    {
+      "case": "selected-hover-dark",
+      "label": "设置",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 13.25,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        216,
+        216,
+        216
+      ]
+    },
+    {
+      "case": "selected-hover-dark",
+      "label": "设置",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 3.33,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        177,
+        62,
+        112
+      ],
+      "background": [
+        228,
+        228,
+        228
+      ]
+    },
+    {
+      "case": "selected-pressed-dark",
+      "label": "跟随系统",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 9.26,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        64,
+        64,
+        64
+      ]
+    },
+    {
+      "case": "selected-pressed-dark",
+      "label": "浅色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 9.26,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        64,
+        64,
+        64
+      ]
+    },
+    {
+      "case": "selected-pressed-dark",
+      "label": "深色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 10.71,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        195,
+        195,
+        195
+      ]
+    },
+    {
+      "case": "selected-pressed-dark",
+      "label": "设置",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 13.25,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        216,
+        216,
+        216
+      ]
+    },
+    {
+      "case": "selected-pressed-dark",
+      "label": "设置",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 3.33,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        177,
+        62,
+        112
+      ],
+      "background": [
+        228,
+        228,
+        228
+      ]
+    },
+    {
+      "case": "selected-reduced-dark",
+      "label": "跟随系统",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 11.12,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        52,
+        52,
+        52
+      ]
+    },
+    {
+      "case": "selected-reduced-dark",
+      "label": "浅色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 11.12,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        52,
+        52,
+        52
+      ]
+    },
+    {
+      "case": "selected-reduced-dark",
+      "label": "深色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 16.28,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        238,
+        238,
+        238
+      ]
+    },
+    {
+      "case": "selected-reduced-dark",
+      "label": "设置",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 16.28,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        238,
+        238,
+        238
+      ]
+    },
+    {
+      "case": "selected-reduced-dark",
+      "label": "设置",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 3.57,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        177,
+        62,
+        112
+      ],
+      "background": [
+        238,
+        238,
+        238
+      ]
+    },
+    {
+      "case": "selected-unsupported-dark",
+      "label": "跟随系统",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 11.12,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        52,
+        52,
+        52
+      ]
+    },
+    {
+      "case": "selected-unsupported-dark",
+      "label": "浅色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 11.12,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        242,
+        242,
+        242
+      ],
+      "background": [
+        52,
+        52,
+        52
+      ]
+    },
+    {
+      "case": "selected-unsupported-dark",
+      "label": "深色主题",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 16.28,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        238,
+        238,
+        238
+      ]
+    },
+    {
+      "case": "selected-unsupported-dark",
+      "label": "设置",
+      "kind": "text",
+      "disabled": false,
+      "ratio": 16.28,
+      "threshold": 4.5,
+      "pass": true,
+      "foreground": [
+        17,
+        17,
+        17
+      ],
+      "background": [
+        238,
+        238,
+        238
+      ]
+    },
+    {
+      "case": "selected-unsupported-dark",
+      "label": "设置",
+      "kind": "icon",
+      "disabled": false,
+      "ratio": 3.57,
+      "threshold": 3,
+      "pass": true,
+      "foreground": [
+        177,
+        62,
+        112
+      ],
+      "background": [
+        238,
+        238,
+        238
+      ]
+    }
+  ],
+  "failures": []
+}

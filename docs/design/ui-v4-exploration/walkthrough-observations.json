@@ -1,0 +1,129 @@
+{
+  "scope": "Local UI observation only, no human usability test or Android validation",
+  "journeys": [
+    {
+      "name": "portrait：看队列并接管当前任务",
+      "outcome": "observed",
+      "facts": {
+        "current": "每日物资领取",
+        "next": "御魂副本",
+        "pauseClicks": 1,
+        "queueRetained": true
+      }
+    },
+    {
+      "name": "portrait：星标与入队不进入配置",
+      "outcome": "observed",
+      "facts": {
+        "starClicks": 1,
+        "enqueueClicks": 1,
+        "result": "原位队列中，当前任务继续",
+        "configurationOpened": false
+      }
+    },
+    {
+      "name": "portrait：调配置并旋转保留上下文",
+      "outcome": "observed",
+      "facts": {
+        "selectionRetained": true,
+        "draftRetained": true,
+        "sourceSchemaPreserved": true,
+        "currentPlanPriority": 30
+      }
+    },
+    {
+      "name": "portrait：长御魂表单底部仍能保存",
+      "outcome": "observed",
+      "facts": {
+        "scrollTop": 339,
+        "scrollHeight": 1021,
+        "clientHeight": 682,
+        "saveVisible": true,
+        "saveReceivesPointer": true
+      }
+    },
+    {
+      "name": "portrait：小球到暂停再到常用",
+      "outcome": "observed",
+      "facts": {
+        "ballToPauseClicks": 2,
+        "commonLayerPreserved": true,
+        "currentControlCopies": 1
+      }
+    },
+    {
+      "name": "landscape：看队列并接管当前任务",
+      "outcome": "observed",
+      "facts": {
+        "current": "每日物资领取",
+        "next": "御魂副本",
+        "pauseClicks": 1,
+        "queueRetained": true
+      }
+    },
+    {
+      "name": "landscape：星标与入队不进入配置",
+      "outcome": "observed",
+      "facts": {
+        "starClicks": 1,
+        "enqueueClicks": 1,
+        "result": "原位队列中，当前任务继续",
+        "configurationOpened": false
+      }
+    },
+    {
+      "name": "landscape：调配置并旋转保留上下文",
+      "outcome": "observed",
+      "facts": {
+        "selectionRetained": true,
+        "draftRetained": true,
+        "sourceSchemaPreserved": true,
+        "currentPlanPriority": 30
+      }
+    },
+    {
+      "name": "landscape：长御魂表单底部仍能保存",
+      "outcome": "observed",
+      "facts": {
+        "scrollTop": 468,
+        "scrollHeight": 753,
+        "clientHeight": 285,
+        "saveVisible": true,
+        "saveReceivesPointer": true
+      }
+    },
+    {
+      "name": "landscape：小球到暂停再到常用",
+      "outcome": "observed",
+      "facts": {
+        "ballToPauseClicks": 2,
+        "commonLayerPreserved": true,
+        "currentControlCopies": 1
+      }
+    },
+    {
+      "name": "新旧任务内容相同",
+      "outcome": "observed",
+      "facts": {
+        "tasks": 22,
+        "fieldsStepsAndValues": "same exported fixture"
+      }
+    },
+    {
+      "name": "新旧对照入口可切换",
+      "outcome": "observed",
+      "facts": {
+        "before": 900,
+        "after": 900
+      }
+    },
+    {
+      "name": "浏览器运行边界",
+      "outcome": "observed",
+      "facts": {
+        "runtimeErrors": 0,
+        "remoteResources": []
+      }
+    }
+  ]
+}

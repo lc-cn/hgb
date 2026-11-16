@@ -1,0 +1,23 @@
+{
+  "scope": "Actual application and real public GitHub source on isolated API36 emulator. No task Release is published; loaded rows are checked in separate component fixtures. No game or phone interaction.",
+  "startupVisibleTexts": [
+    "任务更新",
+    "拉取",
+    "暂无本地任务版本",
+    "暂无已发布的任务版本"
+  ],
+  "manualVisibleTexts": [
+    "任务更新",
+    "拉取",
+    "暂无本地任务版本",
+    "暂无已发布的任务版本"
+  ],
+  "checks": [
+    "task center title and active-version entry visible",
+    "version route survives rotation",
+    "manual pull reaches terminal state",
+    "dark version page renders",
+    "no downloaded version is invented"
+  ],
+  "success": true
+}

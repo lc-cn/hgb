@@ -1,0 +1,337 @@
+{
+  "fixture": {
+    "account": "账号 A",
+    "server": "demo-server",
+    "plan": "每日物资托管",
+    "currentTask": "每日物资领取",
+    "stepIndex": 0,
+    "planPriority": 30,
+    "queue": [
+      [
+        "御魂副本",
+        25
+      ],
+      [
+        "悬赏封印",
+        10
+      ],
+      [
+        "结界挂卡",
+        10
+      ]
+    ],
+    "waitMinutes": 7,
+    "issue": "商店兑换结果未知"
+  },
+  "records": [
+    {
+      "scene": "workbench",
+      "orientation": "portrait",
+      "path": "screens/before-workbench-portrait.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 412,
+          "height": 860
+        },
+        "firstTask": null,
+        "queueItems": [
+          {
+            "x": 9,
+            "y": 406.390625,
+            "width": 394,
+            "height": 72
+          },
+          {
+            "x": 9,
+            "y": 478.390625,
+            "width": 394,
+            "height": 72
+          },
+          {
+            "x": 9,
+            "y": 550.390625,
+            "width": 394,
+            "height": 72
+          }
+        ],
+        "current": {
+          "x": 1,
+          "y": 89,
+          "width": 410,
+          "height": 192.890625
+        },
+        "panel": null,
+        "nav": {
+          "x": 1,
+          "y": 765,
+          "width": 410,
+          "height": 76
+        },
+        "text": "移除\n运行中 · 优先级 30\n每日物资领取\n\n每日物资托管\n\n暂停\n本轮 0 / 6 步骤\n运行记录\n商店兑换结果未知\n核对结果\n待执行\n3\n移除\n御魂副本\n等待执行 · 已等 7 分钟\n优先级25\n移除\n悬赏封印\n等待执行 · 已等 7 分钟\n优先级10\n移除\n结界挂卡\n等待执行 · 已等 7 分钟\n优先级10\n下次计划\n每日物资托管\n每日 · 09:00\n周期商店计划\n周三、周六 · 20:00\n最近结果\n永久勾玉卡产出\n09:41 · 示例 · 账号 A\n完成"
+      }
+    },
+    {
+      "scene": "tasks",
+      "orientation": "portrait",
+      "path": "screens/before-tasks-portrait.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 412,
+          "height": 860
+        },
+        "firstTask": {
+          "x": 9,
+          "y": 253,
+          "width": 394,
+          "height": 76
+        },
+        "queueItems": [],
+        "current": null,
+        "panel": null,
+        "nav": {
+          "x": 1,
+          "y": 765,
+          "width": 410,
+          "height": 76
+        },
+        "text": "日常与领取\n商店兑换\n副本与挑战\n御魂管理\n结界与阴阳寮\n限时活动\n全部\n每日\n每周\n每日物资领取\n每日 · 优先级 10\n每周物资领取\n每周 · 优先级 10\n永久勾玉卡产出\n每日 · 优先级 20\n花合战奖励\n每日 · 优先级 10\n悬赏封印 队列中\n每日 · 优先级 10\n宠物照料\n每日 · 优先级 10"
+      }
+    },
+    {
+      "scene": "detail",
+      "orientation": "portrait",
+      "path": "screens/before-detail-portrait.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 412,
+          "height": 860
+        },
+        "firstTask": null,
+        "queueItems": [],
+        "current": null,
+        "panel": null,
+        "nav": null,
+        "text": "仅领取所选物资，不购买额外权益\n\n周期\n每日\n领取状态\n等待核对资格与可领取物资\n执行步骤 · 3 步\n优先级\n领取来源\n签到奖励\n每日物资\n花合战奖励\n最近结果\n\n暂无执行记录"
+      }
+    },
+    {
+      "scene": "quick",
+      "orientation": "portrait",
+      "path": "screens/before-quick-portrait.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 412,
+          "height": 860
+        },
+        "firstTask": null,
+        "queueItems": [],
+        "current": {
+          "x": 156,
+          "y": 135,
+          "width": 240,
+          "height": 58
+        },
+        "panel": {
+          "x": 141,
+          "y": 86,
+          "width": 270,
+          "height": 270
+        },
+        "nav": null,
+        "text": "阴阳师助手\n每日物资托管\n运行中 · 0 / 6 步骤已核对\n常用任务与计划\n商店兑换结果未知 · 核对结果\n返回助手"
+      }
+    },
+    {
+      "scene": "common",
+      "orientation": "portrait",
+      "path": "screens/before-common-portrait.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 412,
+          "height": 860
+        },
+        "firstTask": null,
+        "queueItems": [],
+        "current": {
+          "x": 156,
+          "y": 135,
+          "width": 240,
+          "height": 58
+        },
+        "panel": {
+          "x": 141,
+          "y": 86,
+          "width": 270,
+          "height": 410
+        },
+        "nav": null,
+        "text": "常用任务与计划\n每日物资托管\n运行中 · 0 / 6 步骤已核对\n永久勾玉卡产出\n任务\n周三商店兑换\n任务\n御魂副本\n队列中\n御魂强化\n任务\n周期商店计划\n计划"
+      }
+    },
+    {
+      "scene": "workbench",
+      "orientation": "landscape",
+      "path": "screens/before-workbench-landscape.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 900,
+          "height": 412
+        },
+        "firstTask": null,
+        "queueItems": [
+          {
+            "x": 494.90625,
+            "y": 118.5,
+            "width": 396.09375,
+            "height": 68
+          },
+          {
+            "x": 494.90625,
+            "y": 186.5,
+            "width": 396.09375,
+            "height": 68
+          },
+          {
+            "x": 494.90625,
+            "y": 254.5,
+            "width": 396.09375,
+            "height": 68
+          }
+        ],
+        "current": {
+          "x": 1,
+          "y": 77,
+          "width": 484.90625,
+          "height": 161.59375
+        },
+        "panel": null,
+        "nav": {
+          "x": 1,
+          "y": 334,
+          "width": 898,
+          "height": 62
+        },
+        "text": "移除\n运行中 · 优先级 30\n每日物资领取\n\n每日物资托管\n\n暂停\n本轮 0 / 6 步骤\n运行记录\n商店兑换结果未知\n核对结果\n待执行\n3\n移除\n御魂副本\n等待执行 · 已等 7 分钟\n优先级25\n移除\n悬赏封印\n等待执行 · 已等 7 分钟\n优先级10\n移除\n结界挂卡\n等待执行 · 已等 7 分钟\n优先级10\n下次计划\n每日物资托管\n每日 · 09:00\n周期商店计划\n周三、周六 · 20:00\n最近结果\n永久勾玉卡产出\n09:41 · 示例 · 账号 A\n完成"
+      }
+    },
+    {
+      "scene": "tasks",
+      "orientation": "landscape",
+      "path": "screens/before-tasks-landscape.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 900,
+          "height": 412
+        },
+        "firstTask": {
+          "x": 165,
+          "y": 78,
+          "width": 364,
+          "height": 72
+        },
+        "queueItems": [],
+        "current": null,
+        "panel": null,
+        "nav": {
+          "x": 1,
+          "y": 334,
+          "width": 898,
+          "height": 62
+        },
+        "text": "日常与领取\n商店兑换\n副本与挑战\n御魂管理\n结界与阴阳寮\n限时活动\n全部\n每日\n每周\n每日物资领取\n每日 · 优先级 10\n每周物资领取\n每周 · 优先级 10\n永久勾玉卡产出\n每日 · 优先级 20\n花合战奖励\n每日 · 优先级 10\n悬赏封印 队列中\n每日 · 优先级 10\n宠物照料\n每日 · 优先级 10"
+      }
+    },
+    {
+      "scene": "detail",
+      "orientation": "landscape",
+      "path": "screens/before-detail-landscape.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 900,
+          "height": 412
+        },
+        "firstTask": null,
+        "queueItems": [],
+        "current": null,
+        "panel": null,
+        "nav": null,
+        "text": "仅领取所选物资，不购买额外权益\n\n周期\n每日\n领取状态\n等待核对资格与可领取物资\n执行步骤 · 3 步\n优先级\n领取来源\n签到奖励\n每日物资\n花合战奖励\n最近结果\n\n暂无执行记录"
+      }
+    },
+    {
+      "scene": "quick",
+      "orientation": "landscape",
+      "path": "screens/before-quick-landscape.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 900,
+          "height": 412
+        },
+        "firstTask": null,
+        "queueItems": [],
+        "current": {
+          "x": 644,
+          "y": 98,
+          "width": 240,
+          "height": 53.234375
+        },
+        "panel": {
+          "x": 629,
+          "y": 49,
+          "width": 270,
+          "height": 260.234375
+        },
+        "nav": null,
+        "text": "阴阳师助手\n每日物资托管\n运行中 · 0 / 6 步骤已核对\n常用任务与计划\n商店兑换结果未知 · 核对结果\n返回助手"
+      }
+    },
+    {
+      "scene": "common",
+      "orientation": "landscape",
+      "path": "screens/before-common-landscape.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 900,
+          "height": 412
+        },
+        "firstTask": null,
+        "queueItems": [],
+        "current": {
+          "x": 428,
+          "y": 98,
+          "width": 456,
+          "height": 53.234375
+        },
+        "panel": {
+          "x": 413,
+          "y": 49,
+          "width": 486,
+          "height": 274.9375
+        },
+        "nav": null,
+        "text": "常用任务与计划\n每日物资托管\n运行中 · 0 / 6 步骤已核对\n永久勾玉卡产出\n任务\n周三商店兑换\n任务\n御魂副本\n队列中\n御魂强化\n任务\n周期商店计划\n计划"
+      }
+    }
+  ],
+  "errors": []
+}

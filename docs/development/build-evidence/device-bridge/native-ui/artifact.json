@@ -1,0 +1,4 @@
+{
+  "apkSha256": "135d2549c8b66f14fa20510fa2edc359b1f856e1ed2e8b5a3f411b977467aff2",
+  "scope": "10 native UI smoke checks, before input-acquisition cancellation fix. The later fix changes bridge ownership only; this is not a final-APK UI rerun."
+}

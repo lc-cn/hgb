@@ -1,0 +1,224 @@
+{
+  "checks": [
+    {
+      "name": "portrait: settings has one notification management entry",
+      "pass": true
+    },
+    {
+      "name": "portrait: management separates channels rules and events",
+      "pass": true
+    },
+    {
+      "name": "portrait: eleven rules default off",
+      "pass": true
+    },
+    {
+      "name": "portrait: can enable task-started",
+      "pass": true
+    },
+    {
+      "name": "portrait: can enable task-succeeded",
+      "pass": true
+    },
+    {
+      "name": "portrait: can enable plan-started",
+      "pass": true
+    },
+    {
+      "name": "portrait: can enable plan-completed",
+      "pass": true
+    },
+    {
+      "name": "portrait: first dispatch produces one plan and child start",
+      "pass": true
+    },
+    {
+      "name": "portrait: subscriptions route task and plan events separately",
+      "pass": true
+    },
+    {
+      "name": "portrait: child success and next task start are distinct",
+      "pass": true
+    },
+    {
+      "name": "portrait: legacy event fixture resume never repeats start",
+      "pass": true
+    },
+    {
+      "name": "portrait: two task successes and one plan end",
+      "pass": true
+    },
+    {
+      "name": "portrait: each triggered event has only matched delivery",
+      "pass": true
+    },
+    {
+      "name": "portrait: rerender never redelivers",
+      "pass": true
+    },
+    {
+      "name": "portrait: event log stores facts independently",
+      "pass": true
+    },
+    {
+      "name": "portrait: event detail links rule and matched channel",
+      "pass": true
+    },
+    {
+      "name": "portrait: history menu and title renamed",
+      "pass": true
+    },
+    {
+      "name": "portrait: exactly notification and run tabs, no pending",
+      "pass": true
+    },
+    {
+      "name": "portrait: run tab contains actual completed plan",
+      "pass": true
+    },
+    {
+      "name": "portrait: portrait tabs remain horizontal above results",
+      "pass": true
+    },
+    {
+      "name": "portrait: keyboard tab selection works",
+      "pass": true
+    },
+    {
+      "name": "portrait: changing direction preserves selected tab",
+      "pass": true
+    },
+    {
+      "name": "landscape: settings has one notification management entry",
+      "pass": true
+    },
+    {
+      "name": "landscape: management separates channels rules and events",
+      "pass": true
+    },
+    {
+      "name": "landscape: eleven rules default off",
+      "pass": true
+    },
+    {
+      "name": "landscape: can enable task-started",
+      "pass": true
+    },
+    {
+      "name": "landscape: can enable task-succeeded",
+      "pass": true
+    },
+    {
+      "name": "landscape: can enable plan-started",
+      "pass": true
+    },
+    {
+      "name": "landscape: can enable plan-completed",
+      "pass": true
+    },
+    {
+      "name": "landscape: first dispatch produces one plan and child start",
+      "pass": true
+    },
+    {
+      "name": "landscape: subscriptions route task and plan events separately",
+      "pass": true
+    },
+    {
+      "name": "landscape: child success and next task start are distinct",
+      "pass": true
+    },
+    {
+      "name": "landscape: legacy event fixture resume never repeats start",
+      "pass": true
+    },
+    {
+      "name": "landscape: two task successes and one plan end",
+      "pass": true
+    },
+    {
+      "name": "landscape: each triggered event has only matched delivery",
+      "pass": true
+    },
+    {
+      "name": "landscape: rerender never redelivers",
+      "pass": true
+    },
+    {
+      "name": "landscape: event log stores facts independently",
+      "pass": true
+    },
+    {
+      "name": "landscape: event detail links rule and matched channel",
+      "pass": true
+    },
+    {
+      "name": "landscape: history menu and title renamed",
+      "pass": true
+    },
+    {
+      "name": "landscape: exactly notification and run tabs, no pending",
+      "pass": true
+    },
+    {
+      "name": "landscape: run tab contains actual completed plan",
+      "pass": true
+    },
+    {
+      "name": "landscape: tabs left, results right and independently scrollable",
+      "pass": true
+    },
+    {
+      "name": "landscape: keyboard tab selection works",
+      "pass": true
+    },
+    {
+      "name": "landscape: changing direction preserves selected tab",
+      "pass": true
+    },
+    {
+      "name": "unsubscribed event exists without any delivery",
+      "pass": true
+    },
+    {
+      "name": "enabling subscription never backfills past events",
+      "pass": true
+    },
+    {
+      "name": "manual hold does not count as queue delay",
+      "pass": true
+    },
+    {
+      "name": "queue delay below threshold does not trigger",
+      "pass": true
+    },
+    {
+      "name": "queue delay fires while execution queue unchanged",
+      "pass": true
+    },
+    {
+      "name": "lost runtime condition becomes event without pretending task failure",
+      "pass": true
+    },
+    {
+      "name": "resource incident triggers after configured duration",
+      "pass": true
+    },
+    {
+      "name": "same resource incident never repeats",
+      "pass": true
+    },
+    {
+      "name": "recovered condition permits a later independent incident",
+      "pass": true
+    },
+    {
+      "name": "old waiting module URL now opens notification management",
+      "pass": true
+    },
+    {
+      "name": "no runtime exceptions",
+      "pass": true
+    }
+  ]
+}

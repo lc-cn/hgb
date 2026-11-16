@@ -1,0 +1,2159 @@
+{
+  "routeCount": 98,
+  "manifestCount": 49,
+  "checkCount": 146,
+  "passed": 146,
+  "failed": [],
+  "checks": [
+    {
+      "name": "portrait: home",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 683
+      }
+    },
+    {
+      "name": "portrait: tasks",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 683
+      }
+    },
+    {
+      "name": "portrait: plans",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 683
+      }
+    },
+    {
+      "name": "portrait: messages",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 683
+      }
+    },
+    {
+      "name": "portrait: settings",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 683
+      }
+    },
+    {
+      "name": "portrait: task/daily-rewards",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/weekly-rewards",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/jade-card",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/flower",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/bounty",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/pet",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/shop-general",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/shop-wed",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/shop-sat",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/soul-run",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/awake-run",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/explore-run",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/spirit-run",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/soul-enhance",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/soul-sort",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/realm-claim",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/realm-card",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/realm-raid",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/guild-raid",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/hunt",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/event-repeat",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: task/event-auto",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: plan/daily",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: plan/shops",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: inputs-demo",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 758
+      }
+    },
+    {
+      "name": "portrait: task-updates",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 758
+      }
+    },
+    {
+      "name": "portrait: model",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: environment",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 758
+      }
+    },
+    {
+      "name": "portrait: channels",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: channel/local",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: channel/webhook",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: notification-rules",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: float-settings",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: data-settings",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: diagnostics",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 758
+      }
+    },
+    {
+      "name": "portrait: issue/auth",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: issue/resource",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: issue/delivery",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: issue/unknown",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 694
+      }
+    },
+    {
+      "name": "portrait: history/sample-result",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 758
+      }
+    },
+    {
+      "name": "portrait: delivery/sample-delivery",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 758
+      }
+    },
+    {
+      "name": "portrait: preview/soul-sort",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 758
+      }
+    },
+    {
+      "name": "portrait: preview/soul-enhance",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 758
+      }
+    },
+    {
+      "name": "portrait: activity/event-auto",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 758
+      }
+    },
+    {
+      "name": "landscape: home",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 259
+      }
+    },
+    {
+      "name": "landscape: tasks",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 259
+      }
+    },
+    {
+      "name": "landscape: plans",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 259
+      }
+    },
+    {
+      "name": "landscape: messages",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 259
+      }
+    },
+    {
+      "name": "landscape: settings",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 259
+      }
+    },
+    {
+      "name": "landscape: task/daily-rewards",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/weekly-rewards",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/jade-card",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/flower",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/bounty",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/pet",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/shop-general",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/shop-wed",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/shop-sat",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/soul-run",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/awake-run",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/explore-run",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/spirit-run",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/soul-enhance",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/soul-sort",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/realm-claim",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/realm-card",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/realm-raid",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/guild-raid",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/hunt",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/event-repeat",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: task/event-auto",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: plan/daily",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: plan/shops",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: inputs-demo",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 321
+      }
+    },
+    {
+      "name": "landscape: task-updates",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 321
+      }
+    },
+    {
+      "name": "landscape: model",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: environment",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 321
+      }
+    },
+    {
+      "name": "landscape: channels",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: channel/local",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: channel/webhook",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: notification-rules",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: float-settings",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: data-settings",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: diagnostics",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 321
+      }
+    },
+    {
+      "name": "landscape: issue/auth",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: issue/resource",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: issue/delivery",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: issue/unknown",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 262
+      }
+    },
+    {
+      "name": "landscape: history/sample-result",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 321
+      }
+    },
+    {
+      "name": "landscape: delivery/sample-delivery",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 321
+      }
+    },
+    {
+      "name": "landscape: preview/soul-sort",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 321
+      }
+    },
+    {
+      "name": "landscape: preview/soul-enhance",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 321
+      }
+    },
+    {
+      "name": "landscape: activity/event-auto",
+      "ok": true,
+      "detail": {
+        "overflow": false,
+        "bodyHeight": 321
+      }
+    },
+    {
+      "name": "category daily",
+      "ok": true
+    },
+    {
+      "name": "category shops",
+      "ok": true
+    },
+    {
+      "name": "category dungeons",
+      "ok": true
+    },
+    {
+      "name": "category souls",
+      "ok": true
+    },
+    {
+      "name": "category guild",
+      "ok": true
+    },
+    {
+      "name": "category activities",
+      "ok": true
+    },
+    {
+      "name": "task opens direct config",
+      "ok": true
+    },
+    {
+      "name": "orientation retains task draft",
+      "ok": true
+    },
+    {
+      "name": "navigation retains task draft",
+      "ok": true
+    },
+    {
+      "name": "saved task version and no auto run",
+      "ok": true
+    },
+    {
+      "name": "single common property toggles",
+      "ok": true
+    },
+    {
+      "name": "task list executes saved version",
+      "ok": true
+    },
+    {
+      "name": "current row has pause",
+      "ok": true
+    },
+    {
+      "name": "pause pending visible",
+      "ok": true
+    },
+    {
+      "name": "pause confirmed",
+      "ok": true
+    },
+    {
+      "name": "paused run blocks another request",
+      "ok": true
+    },
+    {
+      "name": "busy message no pause-and-retry",
+      "ok": true
+    },
+    {
+      "name": "unknown no candidates, common retained",
+      "ok": true
+    },
+    {
+      "name": "unknown current controls independent",
+      "ok": true
+    },
+    {
+      "name": "resume unknown retains same run",
+      "ok": true
+    },
+    {
+      "name": "stop pending",
+      "ok": true
+    },
+    {
+      "name": "stop confirmed no next run",
+      "ok": true
+    },
+    {
+      "name": "scene filters, common remains",
+      "ok": true
+    },
+    {
+      "name": "whole plan requires all conditions",
+      "ok": true
+    },
+    {
+      "name": "normal navigation qualifies",
+      "ok": true
+    },
+    {
+      "name": "plan common independent of enabled",
+      "ok": true
+    },
+    {
+      "name": "plan one round not enable periodic",
+      "ok": true
+    },
+    {
+      "name": "model main path only key",
+      "ok": true
+    },
+    {
+      "name": "Gemini direct official key link",
+      "ok": true
+    },
+    {
+      "name": "Qwen official key link",
+      "ok": true
+    },
+    {
+      "name": "save does not test or run",
+      "ok": true
+    },
+    {
+      "name": "explicit model test is marked simulated",
+      "ok": true
+    },
+    {
+      "name": "model test success stays separate from issue",
+      "ok": true
+    },
+    {
+      "name": "key not in exported state",
+      "ok": true
+    },
+    {
+      "name": "error direct specific task",
+      "ok": true
+    },
+    {
+      "name": "save does not clear issues or run",
+      "ok": true
+    },
+    {
+      "name": "unknown first action checks result",
+      "ok": true
+    },
+    {
+      "name": "unknown check explains no repeat",
+      "ok": true
+    },
+    {
+      "name": "unknown remains blocking",
+      "ok": true
+    },
+    {
+      "name": "local notification no external fields",
+      "ok": true
+    },
+    {
+      "name": "external fields appear",
+      "ok": true
+    },
+    {
+      "name": "type switching hides external fields",
+      "ok": true
+    },
+    {
+      "name": "notification test leaves unknown unresolved",
+      "ok": true
+    },
+    {
+      "name": "developer mode initially off",
+      "ok": true
+    },
+    {
+      "name": "diagnostic gated",
+      "ok": true
+    },
+    {
+      "name": "diagnostic observations only",
+      "ok": true
+    },
+    {
+      "name": "new plan uses original task reference",
+      "ok": true
+    },
+    {
+      "name": "no runtime exceptions",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "layouts": [
+    {
+      "dir": "portrait",
+      "id": "home",
+      "page": "home",
+      "title": "工作台",
+      "overflow": false,
+      "bodyHeight": 683,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "tasks",
+      "page": "tasks",
+      "title": "任务中心",
+      "overflow": false,
+      "bodyHeight": 683,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "plans",
+      "page": "plans",
+      "title": "托管计划",
+      "overflow": false,
+      "bodyHeight": 683,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "messages",
+      "page": "messages",
+      "title": "消息与记录",
+      "overflow": false,
+      "bodyHeight": 683,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "settings",
+      "page": "settings",
+      "title": "设置",
+      "overflow": false,
+      "bodyHeight": 683,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/daily-rewards",
+      "page": "task/daily-rewards",
+      "title": "每日物资领取",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/weekly-rewards",
+      "page": "task/weekly-rewards",
+      "title": "每周物资领取",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/jade-card",
+      "page": "task/jade-card",
+      "title": "永久勾玉卡产出",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/flower",
+      "page": "task/flower",
+      "title": "花合战奖励",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/bounty",
+      "page": "task/bounty",
+      "title": "悬赏封印",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/pet",
+      "page": "task/pet",
+      "title": "宠物照料",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/shop-general",
+      "page": "task/shop-general",
+      "title": "一般商店兑换",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/shop-wed",
+      "page": "task/shop-wed",
+      "title": "周三商店兑换",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/shop-sat",
+      "page": "task/shop-sat",
+      "title": "周六商店兑换",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/soul-run",
+      "page": "task/soul-run",
+      "title": "御魂副本",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/awake-run",
+      "page": "task/awake-run",
+      "title": "觉醒副本",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/explore-run",
+      "page": "task/explore-run",
+      "title": "探索",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/spirit-run",
+      "page": "task/spirit-run",
+      "title": "御灵",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/soul-enhance",
+      "page": "task/soul-enhance",
+      "title": "御魂强化",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/soul-sort",
+      "page": "task/soul-sort",
+      "title": "御魂整理",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/realm-claim",
+      "page": "task/realm-claim",
+      "title": "结界物资收取",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/realm-card",
+      "page": "task/realm-card",
+      "title": "结界挂卡",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/realm-raid",
+      "page": "task/realm-raid",
+      "title": "个人结界突破",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/guild-raid",
+      "page": "task/guild-raid",
+      "title": "寮突破",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/hunt",
+      "page": "task/hunt",
+      "title": "狩猎战",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/event-repeat",
+      "page": "task/event-repeat",
+      "title": "已适配活动",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task/event-auto",
+      "page": "task/event-auto",
+      "title": "自主理解新活动",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "plan/daily",
+      "page": "plan/daily",
+      "title": "每日物资托管",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "plan/shops",
+      "page": "plan/shops",
+      "title": "周期商店计划",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "inputs-demo",
+      "page": "inputs-demo",
+      "title": "输入控件示例",
+      "overflow": false,
+      "bodyHeight": 758,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "task-updates",
+      "page": "task-updates",
+      "title": "任务更新",
+      "overflow": false,
+      "bodyHeight": 758,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "model",
+      "page": "model",
+      "title": "云端视觉模型",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "environment",
+      "page": "environment",
+      "title": "运行环境",
+      "overflow": false,
+      "bodyHeight": 758,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "channels",
+      "page": "channels",
+      "title": "通知渠道",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "channel/local",
+      "page": "channel/local",
+      "title": "渠道配置",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "channel/webhook",
+      "page": "channel/webhook",
+      "title": "渠道配置",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "notification-rules",
+      "page": "notification-rules",
+      "title": "提醒规则",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "float-settings",
+      "page": "float-settings",
+      "title": "悬浮球",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "data-settings",
+      "page": "data-settings",
+      "title": "运行与数据",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "diagnostics",
+      "page": "diagnostics",
+      "title": "开发诊断",
+      "overflow": false,
+      "bodyHeight": 758,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "issue/auth",
+      "page": "issue/auth",
+      "title": "问题原因",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "issue/resource",
+      "page": "issue/resource",
+      "title": "问题原因",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "issue/delivery",
+      "page": "issue/delivery",
+      "title": "问题原因",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "issue/unknown",
+      "page": "issue/unknown",
+      "title": "问题原因",
+      "overflow": false,
+      "bodyHeight": 694,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "history/sample-result",
+      "page": "history/sample-result",
+      "title": "运行记录",
+      "overflow": false,
+      "bodyHeight": 758,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "delivery/sample-delivery",
+      "page": "delivery/sample-delivery",
+      "title": "通知投递",
+      "overflow": false,
+      "bodyHeight": 758,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "preview/soul-sort",
+      "page": "preview/soul-sort",
+      "title": "御魂对象预览",
+      "overflow": false,
+      "bodyHeight": 758,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "preview/soul-enhance",
+      "page": "preview/soul-enhance",
+      "title": "御魂对象预览",
+      "overflow": false,
+      "bodyHeight": 758,
+      "footerInside": true
+    },
+    {
+      "dir": "portrait",
+      "id": "activity/event-auto",
+      "page": "activity/event-auto",
+      "title": "活动规则与进度",
+      "overflow": false,
+      "bodyHeight": 758,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "home",
+      "page": "home",
+      "title": "工作台",
+      "overflow": false,
+      "bodyHeight": 259,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "tasks",
+      "page": "tasks",
+      "title": "任务中心",
+      "overflow": false,
+      "bodyHeight": 259,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "plans",
+      "page": "plans",
+      "title": "托管计划",
+      "overflow": false,
+      "bodyHeight": 259,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "messages",
+      "page": "messages",
+      "title": "消息与记录",
+      "overflow": false,
+      "bodyHeight": 259,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "settings",
+      "page": "settings",
+      "title": "设置",
+      "overflow": false,
+      "bodyHeight": 259,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/daily-rewards",
+      "page": "task/daily-rewards",
+      "title": "每日物资领取",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/weekly-rewards",
+      "page": "task/weekly-rewards",
+      "title": "每周物资领取",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/jade-card",
+      "page": "task/jade-card",
+      "title": "永久勾玉卡产出",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/flower",
+      "page": "task/flower",
+      "title": "花合战奖励",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/bounty",
+      "page": "task/bounty",
+      "title": "悬赏封印",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/pet",
+      "page": "task/pet",
+      "title": "宠物照料",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/shop-general",
+      "page": "task/shop-general",
+      "title": "一般商店兑换",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/shop-wed",
+      "page": "task/shop-wed",
+      "title": "周三商店兑换",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/shop-sat",
+      "page": "task/shop-sat",
+      "title": "周六商店兑换",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/soul-run",
+      "page": "task/soul-run",
+      "title": "御魂副本",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/awake-run",
+      "page": "task/awake-run",
+      "title": "觉醒副本",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/explore-run",
+      "page": "task/explore-run",
+      "title": "探索",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/spirit-run",
+      "page": "task/spirit-run",
+      "title": "御灵",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/soul-enhance",
+      "page": "task/soul-enhance",
+      "title": "御魂强化",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/soul-sort",
+      "page": "task/soul-sort",
+      "title": "御魂整理",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/realm-claim",
+      "page": "task/realm-claim",
+      "title": "结界物资收取",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/realm-card",
+      "page": "task/realm-card",
+      "title": "结界挂卡",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/realm-raid",
+      "page": "task/realm-raid",
+      "title": "个人结界突破",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/guild-raid",
+      "page": "task/guild-raid",
+      "title": "寮突破",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/hunt",
+      "page": "task/hunt",
+      "title": "狩猎战",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/event-repeat",
+      "page": "task/event-repeat",
+      "title": "已适配活动",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task/event-auto",
+      "page": "task/event-auto",
+      "title": "自主理解新活动",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "plan/daily",
+      "page": "plan/daily",
+      "title": "每日物资托管",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "plan/shops",
+      "page": "plan/shops",
+      "title": "周期商店计划",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "inputs-demo",
+      "page": "inputs-demo",
+      "title": "输入控件示例",
+      "overflow": false,
+      "bodyHeight": 321,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "task-updates",
+      "page": "task-updates",
+      "title": "任务更新",
+      "overflow": false,
+      "bodyHeight": 321,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "model",
+      "page": "model",
+      "title": "云端视觉模型",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "environment",
+      "page": "environment",
+      "title": "运行环境",
+      "overflow": false,
+      "bodyHeight": 321,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "channels",
+      "page": "channels",
+      "title": "通知渠道",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "channel/local",
+      "page": "channel/local",
+      "title": "渠道配置",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "channel/webhook",
+      "page": "channel/webhook",
+      "title": "渠道配置",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "notification-rules",
+      "page": "notification-rules",
+      "title": "提醒规则",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "float-settings",
+      "page": "float-settings",
+      "title": "悬浮球",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "data-settings",
+      "page": "data-settings",
+      "title": "运行与数据",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "diagnostics",
+      "page": "diagnostics",
+      "title": "开发诊断",
+      "overflow": false,
+      "bodyHeight": 321,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "issue/auth",
+      "page": "issue/auth",
+      "title": "问题原因",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "issue/resource",
+      "page": "issue/resource",
+      "title": "问题原因",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "issue/delivery",
+      "page": "issue/delivery",
+      "title": "问题原因",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "issue/unknown",
+      "page": "issue/unknown",
+      "title": "问题原因",
+      "overflow": false,
+      "bodyHeight": 262,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "history/sample-result",
+      "page": "history/sample-result",
+      "title": "运行记录",
+      "overflow": false,
+      "bodyHeight": 321,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "delivery/sample-delivery",
+      "page": "delivery/sample-delivery",
+      "title": "通知投递",
+      "overflow": false,
+      "bodyHeight": 321,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "preview/soul-sort",
+      "page": "preview/soul-sort",
+      "title": "御魂对象预览",
+      "overflow": false,
+      "bodyHeight": 321,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "preview/soul-enhance",
+      "page": "preview/soul-enhance",
+      "title": "御魂对象预览",
+      "overflow": false,
+      "bodyHeight": 321,
+      "footerInside": true
+    },
+    {
+      "dir": "landscape",
+      "id": "activity/event-auto",
+      "page": "activity/event-auto",
+      "title": "活动规则与进度",
+      "overflow": false,
+      "bodyHeight": 321,
+      "footerInside": true
+    }
+  ],
+  "source": {
+    "path": "docs/prototype/app-v2.html",
+    "sha256": "def74656356d1dfc48fcc28251b46ea5de51b55c9507af4f167ef8559066c402"
+  },
+  "extraChecks": [
+    {
+      "name": "provider draft does not alter saved connection",
+      "ok": true
+    },
+    {
+      "name": "new provider cannot reuse saved key",
+      "ok": true
+    },
+    {
+      "name": "return original connection retains own key",
+      "ok": true
+    },
+    {
+      "name": "changed endpoint cannot reuse old key",
+      "ok": true
+    },
+    {
+      "name": "cannot enable changed endpoint without new key",
+      "ok": true
+    },
+    {
+      "name": "keys and custom endpoint absent in snapshot",
+      "ok": true
+    },
+    {
+      "name": "portrait a: one current pause",
+      "ok": true
+    },
+    {
+      "name": "portrait a: one current stop",
+      "ok": true
+    },
+    {
+      "name": "portrait a: current excluded from quick list",
+      "ok": true
+    },
+    {
+      "name": "portrait a: unknown retains control",
+      "ok": true
+    },
+    {
+      "name": "portrait a: collapsed can reopen",
+      "ok": true
+    },
+    {
+      "name": "portrait b: one current pause",
+      "ok": true
+    },
+    {
+      "name": "portrait b: one current stop",
+      "ok": true
+    },
+    {
+      "name": "portrait b: current excluded from quick list",
+      "ok": true
+    },
+    {
+      "name": "portrait b: unknown retains control",
+      "ok": true
+    },
+    {
+      "name": "portrait b: collapsed can reopen",
+      "ok": true
+    },
+    {
+      "name": "portrait c: one current pause",
+      "ok": true
+    },
+    {
+      "name": "portrait c: one current stop",
+      "ok": true
+    },
+    {
+      "name": "portrait c: current excluded from quick list",
+      "ok": true
+    },
+    {
+      "name": "portrait c: unknown retains control",
+      "ok": true
+    },
+    {
+      "name": "portrait c: collapsed can reopen",
+      "ok": true
+    },
+    {
+      "name": "landscape a: one current pause",
+      "ok": true
+    },
+    {
+      "name": "landscape a: one current stop",
+      "ok": true
+    },
+    {
+      "name": "landscape a: current excluded from quick list",
+      "ok": true
+    },
+    {
+      "name": "landscape a: unknown retains control",
+      "ok": true
+    },
+    {
+      "name": "landscape a: collapsed can reopen",
+      "ok": true
+    },
+    {
+      "name": "landscape b: one current pause",
+      "ok": true
+    },
+    {
+      "name": "landscape b: one current stop",
+      "ok": true
+    },
+    {
+      "name": "landscape b: current excluded from quick list",
+      "ok": true
+    },
+    {
+      "name": "landscape b: unknown retains control",
+      "ok": true
+    },
+    {
+      "name": "landscape b: collapsed can reopen",
+      "ok": true
+    },
+    {
+      "name": "landscape c: one current pause",
+      "ok": true
+    },
+    {
+      "name": "landscape c: one current stop",
+      "ok": true
+    },
+    {
+      "name": "landscape c: current excluded from quick list",
+      "ok": true
+    },
+    {
+      "name": "landscape c: unknown retains control",
+      "ok": true
+    },
+    {
+      "name": "landscape c: collapsed can reopen",
+      "ok": true
+    },
+    {
+      "name": "drag does not expand ball",
+      "ok": true
+    },
+    {
+      "name": "drag keeps control inside game",
+      "ok": true
+    },
+    {
+      "name": "overlay actions preserve run identity",
+      "ok": true
+    },
+    {
+      "name": "task center update entry",
+      "ok": true
+    },
+    {
+      "name": "cloud check pending",
+      "ok": true
+    },
+    {
+      "name": "cloud check does not activate",
+      "ok": true
+    },
+    {
+      "name": "download stages only",
+      "ok": true
+    },
+    {
+      "name": "running package activation blocked",
+      "ok": true
+    },
+    {
+      "name": "run ending does not auto activate",
+      "ok": true
+    },
+    {
+      "name": "explicit activation changes package",
+      "ok": true
+    },
+    {
+      "name": "activation retains configs common plans unknown",
+      "ok": true
+    },
+    {
+      "name": "next run binds new package",
+      "ok": true
+    },
+    {
+      "name": "network failure keeps cached tasks",
+      "ok": true
+    },
+    {
+      "name": "incompatible update rejected old cache preserved",
+      "ok": true
+    },
+    {
+      "name": "first offline no cache empty state",
+      "ok": true
+    },
+    {
+      "name": "no cache cannot execute",
+      "ok": true
+    },
+    {
+      "name": "first install online fetch can enable cache",
+      "ok": true
+    },
+    {
+      "name": "no runtime errors",
+      "ok": true
+    }
+  ],
+  "inputChecks": [
+    {
+      "name": "bounded settings have slider and precise number",
+      "ok": true
+    },
+    {
+      "name": "real mouse slider syncs exact and draft",
+      "ok": true
+    },
+    {
+      "name": "slider pointer interaction keeps focus and element",
+      "ok": true
+    },
+    {
+      "name": "precise number syncs slider without rerender",
+      "ok": true
+    },
+    {
+      "name": "slider draft retained on rotate",
+      "ok": true
+    },
+    {
+      "name": "invalid slider precision rejected visibly",
+      "ok": true
+    },
+    {
+      "name": "invalid precise value not silently rounded",
+      "ok": true
+    },
+    {
+      "name": "task step mismatch rejected",
+      "ok": true
+    },
+    {
+      "name": "task below minimum rejected",
+      "ok": true
+    },
+    {
+      "name": "no invented quantity maximum",
+      "ok": true
+    },
+    {
+      "name": "plan time uses native time picker",
+      "ok": true
+    },
+    {
+      "name": "time draft retains on rotate",
+      "ok": true
+    },
+    {
+      "name": "date and date-range endpoints native",
+      "ok": true
+    },
+    {
+      "name": "date and large number drafts retain on rotate",
+      "ok": true
+    },
+    {
+      "name": "controls demo does not change schedule",
+      "ok": true
+    },
+    {
+      "name": "no runtime errors",
+      "ok": true
+    }
+  ],
+  "totalChecks": 216
+}

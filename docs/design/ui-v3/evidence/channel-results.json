@@ -1,0 +1,288 @@
+{
+  "checks": [
+    {
+      "name": "portrait: add action in app bar without bottom action bar",
+      "pass": true
+    },
+    {
+      "name": "portrait: test and save share top navigation row",
+      "pass": true
+    },
+    {
+      "name": "portrait: six channel types available",
+      "pass": true
+    },
+    {
+      "name": "portrait local: responsive form has no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "portrait local: top actions stay inside navigation bar",
+      "pass": true
+    },
+    {
+      "name": "portrait: local hides destinations and credential",
+      "pass": true
+    },
+    {
+      "name": "portrait dingtalk: responsive form has no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "portrait dingtalk: top actions stay inside navigation bar",
+      "pass": true
+    },
+    {
+      "name": "portrait wecom: responsive form has no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "portrait wecom: top actions stay inside navigation bar",
+      "pass": true
+    },
+    {
+      "name": "portrait: enterprise wechat webhook needs no signing input",
+      "pass": true
+    },
+    {
+      "name": "portrait bark: responsive form has no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "portrait bark: top actions stay inside navigation bar",
+      "pass": true
+    },
+    {
+      "name": "portrait email: responsive form has no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "portrait email: top actions stay inside navigation bar",
+      "pass": true
+    },
+    {
+      "name": "portrait webhook: responsive form has no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "portrait webhook: top actions stay inside navigation bar",
+      "pass": true
+    },
+    {
+      "name": "portrait: test uses draft without saving channel",
+      "pass": true
+    },
+    {
+      "name": "portrait: test record keeps tested draft name",
+      "pass": true
+    },
+    {
+      "name": "portrait: dingtalk saves correct type and secret metadata",
+      "pass": true
+    },
+    {
+      "name": "portrait: type switch never borrows webhook signing key",
+      "pass": true
+    },
+    {
+      "name": "portrait: missing Bark device key blocks test and save",
+      "pass": true
+    },
+    {
+      "name": "portrait: Bark configured separately",
+      "pass": true
+    },
+    {
+      "name": "portrait: destination change does not reuse device key",
+      "pass": true
+    },
+    {
+      "name": "portrait: SMTP auth requires own credential",
+      "pass": true
+    },
+    {
+      "name": "portrait: fractional SMTP port rejected",
+      "pass": true
+    },
+    {
+      "name": "portrait: invalid recipient rejected",
+      "pass": true
+    },
+    {
+      "name": "portrait: SMTP sender recipient auth saved",
+      "pass": true
+    },
+    {
+      "name": "portrait: changing SMTP account never reuses password",
+      "pass": true
+    },
+    {
+      "name": "portrait: relay mode hides unused login fields",
+      "pass": true
+    },
+    {
+      "name": "portrait: no-auth relay does not claim saved credential",
+      "pass": true
+    },
+    {
+      "name": "portrait: wecom saves without SMTP or signing fields",
+      "pass": true
+    },
+    {
+      "name": "portrait: returning to a type restores only its own draft and credential",
+      "pass": true
+    },
+    {
+      "name": "portrait: direction switch preserves draft type and destinations",
+      "pass": true
+    },
+    {
+      "name": "portrait: public API and export omit all credentials and webhook targets",
+      "pass": true
+    },
+    {
+      "name": "landscape: add action in app bar without bottom action bar",
+      "pass": true
+    },
+    {
+      "name": "landscape: test and save share top navigation row",
+      "pass": true
+    },
+    {
+      "name": "landscape: six channel types available",
+      "pass": true
+    },
+    {
+      "name": "landscape local: responsive form has no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "landscape local: top actions stay inside navigation bar",
+      "pass": true
+    },
+    {
+      "name": "landscape: local hides destinations and credential",
+      "pass": true
+    },
+    {
+      "name": "landscape dingtalk: responsive form has no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "landscape dingtalk: top actions stay inside navigation bar",
+      "pass": true
+    },
+    {
+      "name": "landscape wecom: responsive form has no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "landscape wecom: top actions stay inside navigation bar",
+      "pass": true
+    },
+    {
+      "name": "landscape: enterprise wechat webhook needs no signing input",
+      "pass": true
+    },
+    {
+      "name": "landscape bark: responsive form has no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "landscape bark: top actions stay inside navigation bar",
+      "pass": true
+    },
+    {
+      "name": "landscape email: responsive form has no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "landscape email: top actions stay inside navigation bar",
+      "pass": true
+    },
+    {
+      "name": "landscape webhook: responsive form has no horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "landscape webhook: top actions stay inside navigation bar",
+      "pass": true
+    },
+    {
+      "name": "landscape: test uses draft without saving channel",
+      "pass": true
+    },
+    {
+      "name": "landscape: test record keeps tested draft name",
+      "pass": true
+    },
+    {
+      "name": "landscape: dingtalk saves correct type and secret metadata",
+      "pass": true
+    },
+    {
+      "name": "landscape: type switch never borrows webhook signing key",
+      "pass": true
+    },
+    {
+      "name": "landscape: missing Bark device key blocks test and save",
+      "pass": true
+    },
+    {
+      "name": "landscape: Bark configured separately",
+      "pass": true
+    },
+    {
+      "name": "landscape: destination change does not reuse device key",
+      "pass": true
+    },
+    {
+      "name": "landscape: SMTP auth requires own credential",
+      "pass": true
+    },
+    {
+      "name": "landscape: fractional SMTP port rejected",
+      "pass": true
+    },
+    {
+      "name": "landscape: invalid recipient rejected",
+      "pass": true
+    },
+    {
+      "name": "landscape: SMTP sender recipient auth saved",
+      "pass": true
+    },
+    {
+      "name": "landscape: changing SMTP account never reuses password",
+      "pass": true
+    },
+    {
+      "name": "landscape: relay mode hides unused login fields",
+      "pass": true
+    },
+    {
+      "name": "landscape: no-auth relay does not claim saved credential",
+      "pass": true
+    },
+    {
+      "name": "landscape: wecom saves without SMTP or signing fields",
+      "pass": true
+    },
+    {
+      "name": "landscape: returning to a type restores only its own draft and credential",
+      "pass": true
+    },
+    {
+      "name": "landscape: direction switch preserves draft type and destinations",
+      "pass": true
+    },
+    {
+      "name": "landscape: public API and export omit all credentials and webhook targets",
+      "pass": true
+    },
+    {
+      "name": "no runtime exceptions",
+      "pass": true
+    }
+  ]
+}

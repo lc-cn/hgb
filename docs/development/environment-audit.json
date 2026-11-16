@@ -1,0 +1,103 @@
+{
+  "checkedAt": "2026-11-15T18:09:22.381558+08:00",
+  "timezone": "Asia/Manila",
+  "scope": "Read-only local filesystem and executable version probes; no install, device connection, emulator start, build or game operation",
+  "git": {
+    "command": [
+      "git",
+      "status",
+      "--short",
+      "--branch"
+    ],
+    "exitCode": 128,
+    "output": "fatal: not a git repository (or any of the parent directories): .git"
+  },
+  "javaHomeLocator": {
+    "command": [
+      "/usr/libexec/java_home",
+      "-V"
+    ],
+    "exitCode": 1,
+    "output": "The operation couldn’t be completed. Unable to locate a Java Runtime.\nPlease visit http://www.java.com for information on installing Java."
+  },
+  "jdk": {
+    "command": [
+      "/opt/homebrew/opt/openjdk@17/bin/java",
+      "-version"
+    ],
+    "exitCode": 0,
+    "output": "openjdk version \"17.0.20.1\" 2026-08-18\nOpenJDK Runtime Environment Homebrew (build 17.0.20.1+0)\nOpenJDK 64-Bit Server VM Homebrew (build 17.0.20.1+0, mixed mode, sharing)"
+  },
+  "adb": {
+    "command": [
+      "/opt/homebrew/share/android-commandlinetools/platform-tools/adb",
+      "version"
+    ],
+    "exitCode": 0,
+    "output": "Android Debug Bridge version 1.0.41\nVersion 37.0.1-15733141\nInstalled as /opt/homebrew/share/android-commandlinetools/platform-tools/adb\nRunning on Darwin 25.6.0 (arm64)"
+  },
+  "pathEntries": {
+    "java": "/usr/bin/java",
+    "javac": "/usr/bin/javac",
+    "adb": null,
+    "sdkmanager": "/opt/homebrew/bin/sdkmanager",
+    "gradle": null
+  },
+  "sdkRoot": "/opt/homebrew/share/android-commandlinetools",
+  "packages": [
+    {
+      "package": "platforms;android-37.0",
+      "revision": {
+        "major": "2"
+      }
+    },
+    {
+      "package": "build-tools;36.0.0",
+      "revision": {
+        "major": "36",
+        "minor": "0",
+        "micro": "0"
+      }
+    },
+    {
+      "package": "build-tools;37.0.0",
+      "revision": {
+        "major": "37",
+        "minor": "0",
+        "micro": "0"
+      }
+    },
+    {
+      "package": "platform-tools",
+      "revision": {
+        "major": "37",
+        "minor": "0",
+        "micro": "1"
+      }
+    },
+    {
+      "package": "system-images;android-36;google_apis;arm64-v8a",
+      "revision": {
+        "major": "7"
+      }
+    },
+    {
+      "package": "system-images;android-36;google_apis_playstore;arm64-v8a",
+      "revision": {
+        "major": "7"
+      }
+    }
+  ],
+  "executables": {
+    "platform-tools/adb": true,
+    "emulator/emulator": true,
+    "cmdline-tools/latest/bin/sdkmanager": true
+  },
+  "androidProjectFiles": [],
+  "avdDefinitionCount": 2,
+  "limitations": [
+    "Installed components do not establish a compatible build combination",
+    "Local Mac ARM64 tools/images do not prove Windows emulator compatibility",
+    "No adb server/device discovery or game account access performed"
+  ]
+}

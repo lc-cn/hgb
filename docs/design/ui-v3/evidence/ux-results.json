@@ -1,0 +1,76 @@
+{
+  "checks": [
+    {
+      "name": "portrait: active name is primary, phase and priority are secondary",
+      "pass": true
+    },
+    {
+      "name": "portrait: no redundant current-run menu",
+      "pass": true
+    },
+    {
+      "name": "portrait: selected tasks appear once and only unselected tasks are candidates",
+      "pass": true
+    },
+    {
+      "name": "portrait: remove moves selected item back to candidate list",
+      "pass": true
+    },
+    {
+      "name": "portrait: adding removes duplicate candidate and appends in chosen order",
+      "pass": true
+    },
+    {
+      "name": "portrait: escape closes account menu and returns focus",
+      "pass": true
+    },
+    {
+      "name": "portrait: outside tap dismisses account menu",
+      "pass": true
+    },
+    {
+      "name": "landscape: active name is primary, phase and priority are secondary",
+      "pass": true
+    },
+    {
+      "name": "landscape: no redundant current-run menu",
+      "pass": true
+    },
+    {
+      "name": "landscape: selected tasks appear once and only unselected tasks are candidates",
+      "pass": true
+    },
+    {
+      "name": "landscape: remove moves selected item back to candidate list",
+      "pass": true
+    },
+    {
+      "name": "landscape: adding removes duplicate candidate and appends in chosen order",
+      "pass": true
+    },
+    {
+      "name": "landscape: escape closes account menu and returns focus",
+      "pass": true
+    },
+    {
+      "name": "landscape: outside tap dismisses account menu",
+      "pass": true
+    },
+    {
+      "name": "foreign-account due plan keeps original binding and cannot run",
+      "pass": true
+    },
+    {
+      "name": "queue continue cannot run foreign-account plan on current account",
+      "pass": true
+    },
+    {
+      "name": "global history labels its account source",
+      "pass": true
+    },
+    {
+      "name": "no runtime exceptions",
+      "pass": true
+    }
+  ]
+}

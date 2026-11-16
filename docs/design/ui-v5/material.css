@@ -1,0 +1,109 @@
+/* Shared control material owns visual states; component layers own layout. */
+.glass-button {
+  --button-fill:var(--glass-fill);--button-ink:var(--ink);--button-sheen:var(--glass-gloss);
+  --button-hover:var(--glass-hover);--button-pressed:var(--glass-pressed);
+  position:relative;isolation:isolate;box-sizing:border-box;
+  border:var(--glass-border-width) solid var(--glass-edge);border-radius:var(--glass-radius);
+  color:var(--button-ink);background:var(--button-sheen),var(--button-fill);
+  box-shadow:var(--glass-inset-shadow),var(--glass-drop-shadow);
+  -webkit-backdrop-filter:blur(var(--glass-blur));backdrop-filter:blur(var(--glass-blur));
+  transition:background-color var(--motion-fast) var(--motion-ease),box-shadow var(--motion-fast) var(--motion-ease),transform var(--motion-fast) var(--motion-ease);
+}
+.glass-button:is(.is-primary,.selected,.active,[aria-current="page"],[aria-pressed="true"],[aria-checked="true"],[aria-selected="true"]) {
+  --button-fill:var(--glass-strong-fill);--button-ink:var(--glass-strong-ink);
+  --button-sheen:var(--glass-strong-gloss);--button-hover:var(--glass-strong-hover);--button-pressed:var(--glass-strong-pressed);
+}
+.glass-button:not(:disabled):not([aria-disabled="true"]):hover {--button-fill:var(--button-hover)}
+.glass-button:not(:disabled):not([aria-disabled="true"]):active {--button-fill:var(--button-pressed);box-shadow:var(--glass-inset-shadow);transform:translateY(1px)}
+.glass-button.is-quiet {box-shadow:var(--glass-inset-shadow);border-color:var(--line)}
+.glass-button:disabled,.glass-button[aria-disabled="true"] {
+  --button-ink:var(--disabled-ink);--button-fill:var(--disabled-surface);--button-sheen:none;
+  border-color:var(--line);opacity:1;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;transform:none;cursor:default;
+}
+.glass-button:focus-visible {outline:2px solid var(--focus-ring);outline-offset:3px}
+/* Role changes keep every hover/selected state on the same opaque fallback. */
+:root[data-transparency="reduced"] {
+  --glass-fill:var(--glass-solid);--glass-hover:var(--glass-solid);--glass-pressed:var(--surface-pressed);--glass-gloss:none;
+  --glass-strong-fill:var(--glass-solid-strong);--glass-strong-hover:var(--glass-solid-strong);--glass-strong-pressed:var(--glass-solid-strong);--glass-strong-gloss:none;
+}
+:root[data-transparency="reduced"] .glass-button {backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:var(--glass-inset-shadow)}
+:root[data-transparency="reduced"] :is(.floating,.floating-panel,.recovery,.recovery-sheet,.dev-sheet,.dialog) {background:var(--surface-high);backdrop-filter:none;-webkit-backdrop-filter:none}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  :root[data-theme] {
+    --glass-fill:var(--glass-solid);--glass-hover:var(--glass-solid);--glass-pressed:var(--surface-pressed);--glass-gloss:none;
+    --glass-strong-fill:var(--glass-solid-strong);--glass-strong-hover:var(--glass-solid-strong);--glass-strong-pressed:var(--glass-solid-strong);--glass-strong-gloss:none;
+  }
+  .glass-button {backdrop-filter:none;-webkit-backdrop-filter:none}
+}
+:root[data-motion="reduced"] *, :root[data-motion="reduced"] *::before, :root[data-motion="reduced"] *::after {animation:none!important;transition:none!important;scroll-behavior:auto!important}
+:root[data-motion="reduced"] .glass-button:active {transform:none}
+@media (prefers-reduced-motion:reduce) {*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.glass-button:active{transform:none}}
+.appearance-review {display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);font-size:var(--font-small);color:var(--muted)}
+.appearance-review label {display:flex;align-items:center;gap:var(--space-1)}
+.appearance-review select,.appearance-review button {font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:var(--space-2);min-height:var(--space-10)}
+.appearance-review button[aria-pressed="true"] {background:var(--tonal)}
+.appearance-switch {display:flex;align-items:center;gap:var(--tap-gap);margin-inline-start:auto;flex:none}
+.appearance-switch .theme-choice {width:var(--hit);min-width:var(--hit);height:var(--hit);padding:0;font-size:var(--font-small);font-weight:500;flex:none;border-radius:var(--radius-md)}
+
+/* Shared colorful glyph palette; labels, hit areas and layout remain unchanged. */
+:is([data-icon="home"],[data-icon="cloud"],[data-icon="wifi"],[data-icon="phone"],[data-icon="save"],[data-icon="locate"],[data-icon="shield"],[data-icon="upload"]){--glyph-accent:var(--icon-blue);--glyph-tint:var(--icon-blue-bg);--glyph-inverse:var(--icon-strong-blue)}
+:is([data-icon="tasks"],[data-icon="soul"],[data-icon="code"],[data-icon="form"],[data-icon="text"]){--glyph-accent:var(--icon-violet);--glyph-tint:var(--icon-violet-bg);--glyph-inverse:var(--icon-strong-violet)}
+:is([data-icon="plans"],[data-icon="gift"],[data-icon="shop"],[data-icon="wait"]){--glyph-accent:var(--icon-orange);--glyph-tint:var(--icon-orange-bg);--glyph-inverse:var(--icon-strong-orange)}
+:is([data-icon="messages"],[data-icon="data"],[data-icon="guild"],[data-icon="steps"],[data-icon="swipe"]){--glyph-accent:var(--icon-teal);--glyph-tint:var(--icon-teal-bg);--glyph-inverse:var(--icon-strong-teal)}
+:is([data-icon="settings"],[data-icon="float"],[data-icon="sword"],[data-icon="image"],[data-icon="tap"]){--glyph-accent:var(--icon-rose);--glyph-tint:var(--icon-rose-bg);--glyph-inverse:var(--icon-strong-rose)}
+:is([data-icon="star"]){--glyph-accent:var(--icon-gold);--glyph-tint:var(--icon-gold-bg);--glyph-inverse:var(--icon-strong-gold)}
+
+svg[data-icon] {color:var(--glyph-accent,currentColor)}
+:is(.row-icon,.dev-type-icon):has(svg[data-icon]) {background:var(--glyph-tint,var(--raised));border-radius:var(--radius-sm)}
+:is(.row-icon,.dev-type-icon) {--glyph-tint:var(--raised)}
+:is(.row-icon,.dev-type-icon):has(:is([data-icon="home"],[data-icon="cloud"],[data-icon="wifi"],[data-icon="phone"],[data-icon="save"],[data-icon="locate"],[data-icon="shield"],[data-icon="upload"])){--glyph-tint:var(--icon-blue-bg)}
+:is(.row-icon,.dev-type-icon):has(:is([data-icon="tasks"],[data-icon="soul"],[data-icon="code"],[data-icon="form"],[data-icon="text"])){--glyph-tint:var(--icon-violet-bg)}
+:is(.row-icon,.dev-type-icon):has(:is([data-icon="plans"],[data-icon="gift"],[data-icon="shop"],[data-icon="wait"])){--glyph-tint:var(--icon-orange-bg)}
+:is(.row-icon,.dev-type-icon):has(:is([data-icon="messages"],[data-icon="data"],[data-icon="guild"],[data-icon="steps"],[data-icon="swipe"])){--glyph-tint:var(--icon-teal-bg)}
+:is(.row-icon,.dev-type-icon):has(:is([data-icon="settings"],[data-icon="float"],[data-icon="sword"],[data-icon="image"],[data-icon="tap"])){--glyph-tint:var(--icon-rose-bg)}
+:is(.row-icon,.dev-type-icon):has(:is([data-icon="star"])){--glyph-tint:var(--icon-gold-bg)}
+
+.glass-button:is(.is-primary,.selected,.active,[aria-current="page"],[aria-pressed="true"],[aria-checked="true"],[aria-selected="true"]) svg[data-icon] {color:var(--glyph-inverse,currentColor)}
+svg:is([data-icon="play"],[data-icon="queue"],[data-icon="restart"],[data-icon="reset"]) {color:var(--status-running)}
+svg[data-icon="pause"] {color:var(--status-warning)}
+svg:is([data-icon="stop"],[data-icon="trash"],[data-icon="error"]) {color:var(--status-error)}
+svg[data-icon="check"] {color:var(--status-success)}
+svg[data-icon="warn"] {color:var(--status-warning)}
+/* Status glyphs on strong buttons use the same high-contrast inverse palette. */
+svg:is([data-icon="play"],[data-icon="queue"],[data-icon="restart"],[data-icon="reset"]) {--glyph-inverse:var(--icon-strong-blue)}
+svg[data-icon="pause"] {--glyph-inverse:var(--icon-strong-gold)}
+svg:is([data-icon="stop"],[data-icon="trash"],[data-icon="error"]) {--glyph-inverse:var(--icon-strong-rose)}
+svg[data-icon="check"] {--glyph-inverse:var(--icon-strong-teal)}
+.star:not(.on):not([aria-pressed="true"]) svg[data-icon="star"] {color:var(--muted)}
+:is(button:disabled,[aria-disabled="true"]) svg[data-icon] {color:var(--disabled-ink)}
+/* Settings destinations get their own small colored tile without adding copy. */
+.device[data-page-id="settings"] .row-icon {width:var(--space-8);min-width:var(--space-8);height:var(--space-8)}
+.device[data-page-id="settings"] [data-page="task-updates"] .row-icon {background:var(--icon-blue-bg)}
+.device[data-page-id="settings"] [data-page="task-updates"] .row-icon svg {color:var(--icon-blue)}
+.device[data-page-id="settings"] [data-page="environment"] .row-icon {background:var(--icon-orange-bg)}
+.device[data-page-id="settings"] [data-page="environment"] .row-icon svg {color:var(--icon-orange)}
+.device[data-page-id="settings"] [data-page="game-control"] .row-icon {background:var(--icon-teal-bg)}
+.device[data-page-id="settings"] [data-page="game-control"] .row-icon svg {color:var(--icon-teal)}
+.device[data-page-id="settings"] [data-page="network"] .row-icon {background:var(--icon-blue-bg)}
+.device[data-page-id="settings"] [data-page="network"] .row-icon svg {color:var(--icon-blue)}
+.device[data-page-id="settings"] [data-page="model"] .row-icon {background:var(--icon-violet-bg)}
+.device[data-page-id="settings"] [data-page="model"] .row-icon svg {color:var(--icon-violet)}
+.device[data-page-id="settings"] [data-page="notification-management"] .row-icon {background:var(--icon-rose-bg)}
+.device[data-page-id="settings"] [data-page="notification-management"] .row-icon svg {color:var(--icon-rose)}
+.device[data-page-id="settings"] [data-page="float-settings"] .row-icon {background:var(--icon-gold-bg)}
+.device[data-page-id="settings"] [data-page="float-settings"] .row-icon svg {color:var(--icon-gold)}
+.device[data-page-id="settings"] [data-page="data-settings"] .row-icon {background:var(--icon-orange-bg)}
+.device[data-page-id="settings"] [data-page="data-settings"] .row-icon svg {color:var(--icon-orange)}
+/* Context reports the actual event state; a reused glyph never reinterprets it. */
+:is(.dev-error,.dev-state-title,.dev-debug-state,.dev-upload-symbol,.dev-json-status)>svg[data-icon] {color:inherit}
+:is([data-status="running"],[data-status="uploading"]) svg[data-icon] {color:var(--status-running)}
+[data-status="success"] svg[data-icon] {color:var(--status-success)}
+:is([data-status="error"],[data-status="failed"]) svg[data-icon] {color:var(--status-error)}
+:is([data-status="warning"],[data-status="unknown"],[data-status="expired"]) svg[data-icon] {color:var(--status-warning)}
+[data-status="info"] svg[data-icon] {color:var(--status-info)}
+.glass-button:is(:disabled,[aria-disabled="true"]) svg[data-icon] {color:var(--disabled-ink)}
+/* Translucent color softens glyphs without fading labels or touch targets. */
+.device svg[data-icon] {opacity:var(--icon-opacity)}
+.device :is([data-status],.dev-error,.dev-state-title,.notice,.float-warning) svg[data-icon],
+.device svg:is([data-icon="warn"],[data-icon="error"],[data-icon="stop"],[data-icon="trash"]) {opacity:var(--icon-status-opacity)}
+.glass-button:is(:disabled,[aria-disabled="true"]) svg[data-icon] {opacity:var(--icon-disabled-opacity)}

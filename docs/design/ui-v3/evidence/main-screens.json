@@ -1,0 +1,1471 @@
+{
+  "capturedAt": "2026-11-15T08:25:17.816Z",
+  "manifest": [
+    {
+      "id": "home",
+      "title": "工作台",
+      "group": "main",
+      "url": "#home",
+      "protected": false
+    },
+    {
+      "id": "tasks",
+      "title": "任务中心",
+      "group": "main",
+      "url": "#tasks",
+      "protected": false
+    },
+    {
+      "id": "plans",
+      "title": "托管计划",
+      "group": "main",
+      "url": "#plans",
+      "protected": false
+    },
+    {
+      "id": "messages",
+      "title": "历史记录",
+      "group": "main",
+      "url": "#messages",
+      "protected": false
+    },
+    {
+      "id": "settings",
+      "title": "设置",
+      "group": "main",
+      "url": "#settings",
+      "protected": false
+    },
+    {
+      "id": "task/daily-rewards",
+      "title": "每日物资领取",
+      "group": "daily",
+      "url": "#task/daily-rewards",
+      "protected": false
+    },
+    {
+      "id": "task/weekly-rewards",
+      "title": "每周物资领取",
+      "group": "daily",
+      "url": "#task/weekly-rewards",
+      "protected": false
+    },
+    {
+      "id": "task/jade-card",
+      "title": "永久勾玉卡产出",
+      "group": "daily",
+      "url": "#task/jade-card",
+      "protected": false
+    },
+    {
+      "id": "task/flower",
+      "title": "花合战奖励",
+      "group": "daily",
+      "url": "#task/flower",
+      "protected": false
+    },
+    {
+      "id": "task/bounty",
+      "title": "悬赏封印",
+      "group": "daily",
+      "url": "#task/bounty",
+      "protected": false
+    },
+    {
+      "id": "task/pet",
+      "title": "宠物照料",
+      "group": "daily",
+      "url": "#task/pet",
+      "protected": false
+    },
+    {
+      "id": "task/shop-general",
+      "title": "一般商店兑换",
+      "group": "shops",
+      "url": "#task/shop-general",
+      "protected": false
+    },
+    {
+      "id": "task/shop-wed",
+      "title": "周三商店兑换",
+      "group": "shops",
+      "url": "#task/shop-wed",
+      "protected": false
+    },
+    {
+      "id": "task/shop-sat",
+      "title": "周六商店兑换",
+      "group": "shops",
+      "url": "#task/shop-sat",
+      "protected": false
+    },
+    {
+      "id": "task/soul-run",
+      "title": "御魂副本",
+      "group": "dungeons",
+      "url": "#task/soul-run",
+      "protected": false
+    },
+    {
+      "id": "task/awake-run",
+      "title": "觉醒副本",
+      "group": "dungeons",
+      "url": "#task/awake-run",
+      "protected": false
+    },
+    {
+      "id": "task/explore-run",
+      "title": "探索",
+      "group": "dungeons",
+      "url": "#task/explore-run",
+      "protected": false
+    },
+    {
+      "id": "task/spirit-run",
+      "title": "御灵",
+      "group": "dungeons",
+      "url": "#task/spirit-run",
+      "protected": false
+    },
+    {
+      "id": "task/soul-enhance",
+      "title": "御魂强化",
+      "group": "souls",
+      "url": "#task/soul-enhance",
+      "protected": false
+    },
+    {
+      "id": "task/soul-sort",
+      "title": "御魂整理",
+      "group": "souls",
+      "url": "#task/soul-sort",
+      "protected": false
+    },
+    {
+      "id": "task/realm-claim",
+      "title": "结界物资收取",
+      "group": "guild",
+      "url": "#task/realm-claim",
+      "protected": false
+    },
+    {
+      "id": "task/realm-card",
+      "title": "结界挂卡",
+      "group": "guild",
+      "url": "#task/realm-card",
+      "protected": false
+    },
+    {
+      "id": "task/realm-raid",
+      "title": "个人结界突破",
+      "group": "guild",
+      "url": "#task/realm-raid",
+      "protected": false
+    },
+    {
+      "id": "task/guild-raid",
+      "title": "寮突破",
+      "group": "guild",
+      "url": "#task/guild-raid",
+      "protected": false
+    },
+    {
+      "id": "task/hunt",
+      "title": "狩猎战",
+      "group": "guild",
+      "url": "#task/hunt",
+      "protected": false
+    },
+    {
+      "id": "task/event-repeat",
+      "title": "已适配活动",
+      "group": "activities",
+      "url": "#task/event-repeat",
+      "protected": false
+    },
+    {
+      "id": "task/event-auto",
+      "title": "自主理解新活动",
+      "group": "activities",
+      "url": "#task/event-auto",
+      "protected": false
+    },
+    {
+      "id": "plan/daily",
+      "title": "每日物资托管",
+      "group": "plan",
+      "url": "#plan/daily",
+      "protected": false
+    },
+    {
+      "id": "plan/shops",
+      "title": "周期商店计划",
+      "group": "plan",
+      "url": "#plan/shops",
+      "protected": false
+    },
+    {
+      "id": "inputs-demo",
+      "title": "输入控件示例",
+      "group": "settings-and-state",
+      "url": "#inputs-demo",
+      "protected": false
+    },
+    {
+      "id": "task-updates",
+      "title": "任务更新",
+      "group": "settings-and-state",
+      "url": "#task-updates",
+      "protected": false
+    },
+    {
+      "id": "model",
+      "title": "云端视觉模型",
+      "group": "settings-and-state",
+      "url": "#model",
+      "protected": false
+    },
+    {
+      "id": "environment",
+      "title": "运行环境",
+      "group": "settings-and-state",
+      "url": "#environment",
+      "protected": false
+    },
+    {
+      "id": "game-control",
+      "title": "账号与启动",
+      "group": "settings-and-state",
+      "url": "#game-control",
+      "protected": false
+    },
+    {
+      "id": "accounts",
+      "title": "账号快照",
+      "group": "settings-and-state",
+      "url": "#accounts",
+      "protected": false
+    },
+    {
+      "id": "network",
+      "title": "网络设置",
+      "group": "settings-and-state",
+      "url": "#network",
+      "protected": false
+    },
+    {
+      "id": "channels",
+      "title": "通知渠道",
+      "group": "settings-and-state",
+      "url": "#channels",
+      "protected": false
+    },
+    {
+      "id": "channel/local",
+      "title": "渠道配置",
+      "group": "settings-and-state",
+      "url": "#channel/local",
+      "protected": false
+    },
+    {
+      "id": "channel/webhook",
+      "title": "渠道配置",
+      "group": "settings-and-state",
+      "url": "#channel/webhook",
+      "protected": false
+    },
+    {
+      "id": "notification-management",
+      "title": "通知管理",
+      "group": "settings-and-state",
+      "url": "#notification-management",
+      "protected": false
+    },
+    {
+      "id": "event-rules",
+      "title": "事件规则",
+      "group": "settings-and-state",
+      "url": "#event-rules",
+      "protected": false
+    },
+    {
+      "id": "event-log",
+      "title": "事件记录",
+      "group": "settings-and-state",
+      "url": "#event-log",
+      "protected": false
+    },
+    {
+      "id": "event-rule/execution-failed",
+      "title": "连续执行失败",
+      "group": "settings-and-state",
+      "url": "#event-rule/execution-failed",
+      "protected": false
+    },
+    {
+      "id": "event-rule/unknown-result",
+      "title": "结果待核对",
+      "group": "settings-and-state",
+      "url": "#event-rule/unknown-result",
+      "protected": false
+    },
+    {
+      "id": "event-rule/queue-wait",
+      "title": "排队等待过久",
+      "group": "settings-and-state",
+      "url": "#event-rule/queue-wait",
+      "protected": false
+    },
+    {
+      "id": "event-rule/no-progress",
+      "title": "执行无进展",
+      "group": "settings-and-state",
+      "url": "#event-rule/no-progress",
+      "protected": false
+    },
+    {
+      "id": "event-rule/condition-lost",
+      "title": "运行条件中断",
+      "group": "settings-and-state",
+      "url": "#event-rule/condition-lost",
+      "protected": false
+    },
+    {
+      "id": "event-rule/resource-shortage",
+      "title": "资源或容量受限",
+      "group": "settings-and-state",
+      "url": "#event-rule/resource-shortage",
+      "protected": false
+    },
+    {
+      "id": "event-rule/vision-unavailable",
+      "title": "视觉服务异常",
+      "group": "settings-and-state",
+      "url": "#event-rule/vision-unavailable",
+      "protected": false
+    },
+    {
+      "id": "event-rule/task-started",
+      "title": "任务开始",
+      "group": "settings-and-state",
+      "url": "#event-rule/task-started",
+      "protected": false
+    },
+    {
+      "id": "event-rule/task-succeeded",
+      "title": "任务成功",
+      "group": "settings-and-state",
+      "url": "#event-rule/task-succeeded",
+      "protected": false
+    },
+    {
+      "id": "event-rule/plan-started",
+      "title": "计划开始",
+      "group": "settings-and-state",
+      "url": "#event-rule/plan-started",
+      "protected": false
+    },
+    {
+      "id": "event-rule/plan-completed",
+      "title": "计划结束",
+      "group": "settings-and-state",
+      "url": "#event-rule/plan-completed",
+      "protected": false
+    },
+    {
+      "id": "float-settings",
+      "title": "悬浮球",
+      "group": "settings-and-state",
+      "url": "#float-settings",
+      "protected": false
+    },
+    {
+      "id": "data-settings",
+      "title": "运行与数据",
+      "group": "settings-and-state",
+      "url": "#data-settings",
+      "protected": false
+    },
+    {
+      "id": "developer-access",
+      "title": "开发者授权",
+      "group": "settings-and-state",
+      "url": "#developer-access",
+      "protected": true
+    },
+    {
+      "id": "issue/auth",
+      "title": "问题原因",
+      "group": "settings-and-state",
+      "url": "#issue/auth",
+      "protected": false
+    },
+    {
+      "id": "issue/resource",
+      "title": "问题原因",
+      "group": "settings-and-state",
+      "url": "#issue/resource",
+      "protected": false
+    },
+    {
+      "id": "issue/delivery",
+      "title": "问题原因",
+      "group": "settings-and-state",
+      "url": "#issue/delivery",
+      "protected": false
+    },
+    {
+      "id": "issue/unknown",
+      "title": "问题原因",
+      "group": "settings-and-state",
+      "url": "#issue/unknown",
+      "protected": false
+    },
+    {
+      "id": "history/sample-result",
+      "title": "运行记录",
+      "group": "settings-and-state",
+      "url": "#history/sample-result",
+      "protected": false
+    },
+    {
+      "id": "delivery/sample-delivery",
+      "title": "通知投递",
+      "group": "settings-and-state",
+      "url": "#delivery/sample-delivery",
+      "protected": false
+    },
+    {
+      "id": "preview/soul-sort",
+      "title": "御魂对象预览",
+      "group": "settings-and-state",
+      "url": "#preview/soul-sort",
+      "protected": false
+    },
+    {
+      "id": "preview/soul-enhance",
+      "title": "御魂对象预览",
+      "group": "settings-and-state",
+      "url": "#preview/soul-enhance",
+      "protected": false
+    },
+    {
+      "id": "activity/event-auto",
+      "title": "活动规则与进度",
+      "group": "settings-and-state",
+      "url": "#activity/event-auto",
+      "protected": false
+    }
+  ],
+  "records": [
+    {
+      "id": "home",
+      "title": "工作台",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-home-portrait.png"
+    },
+    {
+      "id": "tasks",
+      "title": "任务中心",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-tasks-portrait.png"
+    },
+    {
+      "id": "plans",
+      "title": "托管计划",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-plans-portrait.png"
+    },
+    {
+      "id": "messages",
+      "title": "历史记录",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-messages-portrait.png"
+    },
+    {
+      "id": "settings",
+      "title": "设置",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-settings-portrait.png"
+    },
+    {
+      "id": "task/daily-rewards",
+      "title": "每日物资领取",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-daily-rewards-portrait.png"
+    },
+    {
+      "id": "task/weekly-rewards",
+      "title": "每周物资领取",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-weekly-rewards-portrait.png"
+    },
+    {
+      "id": "task/jade-card",
+      "title": "永久勾玉卡产出",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-jade-card-portrait.png"
+    },
+    {
+      "id": "task/flower",
+      "title": "花合战奖励",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-flower-portrait.png"
+    },
+    {
+      "id": "task/bounty",
+      "title": "悬赏封印",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-bounty-portrait.png"
+    },
+    {
+      "id": "task/pet",
+      "title": "宠物照料",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-pet-portrait.png"
+    },
+    {
+      "id": "task/shop-general",
+      "title": "一般商店兑换",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-shop-general-portrait.png"
+    },
+    {
+      "id": "task/shop-wed",
+      "title": "周三商店兑换",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-shop-wed-portrait.png"
+    },
+    {
+      "id": "task/shop-sat",
+      "title": "周六商店兑换",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-shop-sat-portrait.png"
+    },
+    {
+      "id": "task/soul-run",
+      "title": "御魂副本",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-soul-run-portrait.png"
+    },
+    {
+      "id": "task/awake-run",
+      "title": "觉醒副本",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-awake-run-portrait.png"
+    },
+    {
+      "id": "task/explore-run",
+      "title": "探索",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-explore-run-portrait.png"
+    },
+    {
+      "id": "task/spirit-run",
+      "title": "御灵",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-spirit-run-portrait.png"
+    },
+    {
+      "id": "task/soul-enhance",
+      "title": "御魂强化",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-soul-enhance-portrait.png"
+    },
+    {
+      "id": "task/soul-sort",
+      "title": "御魂整理",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-soul-sort-portrait.png"
+    },
+    {
+      "id": "task/realm-claim",
+      "title": "结界物资收取",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-realm-claim-portrait.png"
+    },
+    {
+      "id": "task/realm-card",
+      "title": "结界挂卡",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-realm-card-portrait.png"
+    },
+    {
+      "id": "task/realm-raid",
+      "title": "个人结界突破",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-realm-raid-portrait.png"
+    },
+    {
+      "id": "task/guild-raid",
+      "title": "寮突破",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-guild-raid-portrait.png"
+    },
+    {
+      "id": "task/hunt",
+      "title": "狩猎战",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-hunt-portrait.png"
+    },
+    {
+      "id": "task/event-repeat",
+      "title": "已适配活动",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-event-repeat-portrait.png"
+    },
+    {
+      "id": "task/event-auto",
+      "title": "自主理解新活动",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-event-auto-portrait.png"
+    },
+    {
+      "id": "plan/daily",
+      "title": "每日物资托管",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-plan-daily-portrait.png"
+    },
+    {
+      "id": "plan/shops",
+      "title": "周期商店计划",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-plan-shops-portrait.png"
+    },
+    {
+      "id": "inputs-demo",
+      "title": "输入控件示例",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-inputs-demo-portrait.png"
+    },
+    {
+      "id": "task-updates",
+      "title": "任务更新",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-task-updates-portrait.png"
+    },
+    {
+      "id": "model",
+      "title": "云端视觉模型",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-model-portrait.png"
+    },
+    {
+      "id": "environment",
+      "title": "运行环境",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-environment-portrait.png"
+    },
+    {
+      "id": "game-control",
+      "title": "账号与启动",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-game-control-portrait.png"
+    },
+    {
+      "id": "accounts",
+      "title": "账号快照",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-accounts-portrait.png"
+    },
+    {
+      "id": "network",
+      "title": "网络设置",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-network-portrait.png"
+    },
+    {
+      "id": "channels",
+      "title": "通知渠道",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-channels-portrait.png"
+    },
+    {
+      "id": "channel/local",
+      "title": "渠道配置",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-channel-local-portrait.png"
+    },
+    {
+      "id": "channel/webhook",
+      "title": "渠道配置",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-channel-webhook-portrait.png"
+    },
+    {
+      "id": "notification-management",
+      "title": "通知管理",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-notification-management-portrait.png"
+    },
+    {
+      "id": "event-rules",
+      "title": "事件规则",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-event-rules-portrait.png"
+    },
+    {
+      "id": "event-log",
+      "title": "事件记录",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-event-log-portrait.png"
+    },
+    {
+      "id": "event-rule/execution-failed",
+      "title": "连续执行失败",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-event-rule-execution-failed-portrait.png"
+    },
+    {
+      "id": "event-rule/unknown-result",
+      "title": "结果待核对",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-event-rule-unknown-result-portrait.png"
+    },
+    {
+      "id": "event-rule/queue-wait",
+      "title": "排队等待过久",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-event-rule-queue-wait-portrait.png"
+    },
+    {
+      "id": "event-rule/no-progress",
+      "title": "执行无进展",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-event-rule-no-progress-portrait.png"
+    },
+    {
+      "id": "event-rule/condition-lost",
+      "title": "运行条件中断",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-event-rule-condition-lost-portrait.png"
+    },
+    {
+      "id": "event-rule/resource-shortage",
+      "title": "资源或容量受限",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-event-rule-resource-shortage-portrait.png"
+    },
+    {
+      "id": "event-rule/vision-unavailable",
+      "title": "视觉服务异常",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-event-rule-vision-unavailable-portrait.png"
+    },
+    {
+      "id": "event-rule/task-started",
+      "title": "任务开始",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-event-rule-task-started-portrait.png"
+    },
+    {
+      "id": "event-rule/task-succeeded",
+      "title": "任务成功",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-event-rule-task-succeeded-portrait.png"
+    },
+    {
+      "id": "event-rule/plan-started",
+      "title": "计划开始",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-event-rule-plan-started-portrait.png"
+    },
+    {
+      "id": "event-rule/plan-completed",
+      "title": "计划结束",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-event-rule-plan-completed-portrait.png"
+    },
+    {
+      "id": "float-settings",
+      "title": "悬浮球",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-float-settings-portrait.png"
+    },
+    {
+      "id": "data-settings",
+      "title": "运行与数据",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-data-settings-portrait.png"
+    },
+    {
+      "id": "developer-access",
+      "title": "开发者授权",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-developer-access-portrait.png"
+    },
+    {
+      "id": "issue/auth",
+      "title": "问题原因",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-issue-auth-portrait.png"
+    },
+    {
+      "id": "issue/resource",
+      "title": "问题原因",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-issue-resource-portrait.png"
+    },
+    {
+      "id": "issue/delivery",
+      "title": "问题原因",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-issue-delivery-portrait.png"
+    },
+    {
+      "id": "issue/unknown",
+      "title": "问题原因",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-issue-unknown-portrait.png"
+    },
+    {
+      "id": "history/sample-result",
+      "title": "运行记录",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-history-sample-result-portrait.png"
+    },
+    {
+      "id": "delivery/sample-delivery",
+      "title": "通知投递",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-delivery-sample-delivery-portrait.png"
+    },
+    {
+      "id": "preview/soul-sort",
+      "title": "御魂对象预览",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-preview-soul-sort-portrait.png"
+    },
+    {
+      "id": "preview/soul-enhance",
+      "title": "御魂对象预览",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-preview-soul-enhance-portrait.png"
+    },
+    {
+      "id": "activity/event-auto",
+      "title": "活动规则与进度",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-activity-event-auto-portrait.png"
+    },
+    {
+      "id": "home",
+      "title": "工作台",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-home-landscape.png"
+    },
+    {
+      "id": "tasks",
+      "title": "任务中心",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-tasks-landscape.png"
+    },
+    {
+      "id": "plans",
+      "title": "托管计划",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-plans-landscape.png"
+    },
+    {
+      "id": "messages",
+      "title": "历史记录",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-messages-landscape.png"
+    },
+    {
+      "id": "settings",
+      "title": "设置",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-settings-landscape.png"
+    },
+    {
+      "id": "task/daily-rewards",
+      "title": "每日物资领取",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-daily-rewards-landscape.png"
+    },
+    {
+      "id": "task/weekly-rewards",
+      "title": "每周物资领取",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-weekly-rewards-landscape.png"
+    },
+    {
+      "id": "task/jade-card",
+      "title": "永久勾玉卡产出",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-jade-card-landscape.png"
+    },
+    {
+      "id": "task/flower",
+      "title": "花合战奖励",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-flower-landscape.png"
+    },
+    {
+      "id": "task/bounty",
+      "title": "悬赏封印",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-bounty-landscape.png"
+    },
+    {
+      "id": "task/pet",
+      "title": "宠物照料",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-pet-landscape.png"
+    },
+    {
+      "id": "task/shop-general",
+      "title": "一般商店兑换",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-shop-general-landscape.png"
+    },
+    {
+      "id": "task/shop-wed",
+      "title": "周三商店兑换",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-shop-wed-landscape.png"
+    },
+    {
+      "id": "task/shop-sat",
+      "title": "周六商店兑换",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-shop-sat-landscape.png"
+    },
+    {
+      "id": "task/soul-run",
+      "title": "御魂副本",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-soul-run-landscape.png"
+    },
+    {
+      "id": "task/awake-run",
+      "title": "觉醒副本",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-awake-run-landscape.png"
+    },
+    {
+      "id": "task/explore-run",
+      "title": "探索",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-explore-run-landscape.png"
+    },
+    {
+      "id": "task/spirit-run",
+      "title": "御灵",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-spirit-run-landscape.png"
+    },
+    {
+      "id": "task/soul-enhance",
+      "title": "御魂强化",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-soul-enhance-landscape.png"
+    },
+    {
+      "id": "task/soul-sort",
+      "title": "御魂整理",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-soul-sort-landscape.png"
+    },
+    {
+      "id": "task/realm-claim",
+      "title": "结界物资收取",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-realm-claim-landscape.png"
+    },
+    {
+      "id": "task/realm-card",
+      "title": "结界挂卡",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-realm-card-landscape.png"
+    },
+    {
+      "id": "task/realm-raid",
+      "title": "个人结界突破",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-realm-raid-landscape.png"
+    },
+    {
+      "id": "task/guild-raid",
+      "title": "寮突破",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-guild-raid-landscape.png"
+    },
+    {
+      "id": "task/hunt",
+      "title": "狩猎战",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-hunt-landscape.png"
+    },
+    {
+      "id": "task/event-repeat",
+      "title": "已适配活动",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-event-repeat-landscape.png"
+    },
+    {
+      "id": "task/event-auto",
+      "title": "自主理解新活动",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-event-auto-landscape.png"
+    },
+    {
+      "id": "plan/daily",
+      "title": "每日物资托管",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-plan-daily-landscape.png"
+    },
+    {
+      "id": "plan/shops",
+      "title": "周期商店计划",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-plan-shops-landscape.png"
+    },
+    {
+      "id": "inputs-demo",
+      "title": "输入控件示例",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-inputs-demo-landscape.png"
+    },
+    {
+      "id": "task-updates",
+      "title": "任务更新",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-task-updates-landscape.png"
+    },
+    {
+      "id": "model",
+      "title": "云端视觉模型",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-model-landscape.png"
+    },
+    {
+      "id": "environment",
+      "title": "运行环境",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-environment-landscape.png"
+    },
+    {
+      "id": "game-control",
+      "title": "账号与启动",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-game-control-landscape.png"
+    },
+    {
+      "id": "accounts",
+      "title": "账号快照",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-accounts-landscape.png"
+    },
+    {
+      "id": "network",
+      "title": "网络设置",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-network-landscape.png"
+    },
+    {
+      "id": "channels",
+      "title": "通知渠道",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-channels-landscape.png"
+    },
+    {
+      "id": "channel/local",
+      "title": "渠道配置",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-channel-local-landscape.png"
+    },
+    {
+      "id": "channel/webhook",
+      "title": "渠道配置",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-channel-webhook-landscape.png"
+    },
+    {
+      "id": "notification-management",
+      "title": "通知管理",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-notification-management-landscape.png"
+    },
+    {
+      "id": "event-rules",
+      "title": "事件规则",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-event-rules-landscape.png"
+    },
+    {
+      "id": "event-log",
+      "title": "事件记录",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-event-log-landscape.png"
+    },
+    {
+      "id": "event-rule/execution-failed",
+      "title": "连续执行失败",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-event-rule-execution-failed-landscape.png"
+    },
+    {
+      "id": "event-rule/unknown-result",
+      "title": "结果待核对",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-event-rule-unknown-result-landscape.png"
+    },
+    {
+      "id": "event-rule/queue-wait",
+      "title": "排队等待过久",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-event-rule-queue-wait-landscape.png"
+    },
+    {
+      "id": "event-rule/no-progress",
+      "title": "执行无进展",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-event-rule-no-progress-landscape.png"
+    },
+    {
+      "id": "event-rule/condition-lost",
+      "title": "运行条件中断",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-event-rule-condition-lost-landscape.png"
+    },
+    {
+      "id": "event-rule/resource-shortage",
+      "title": "资源或容量受限",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-event-rule-resource-shortage-landscape.png"
+    },
+    {
+      "id": "event-rule/vision-unavailable",
+      "title": "视觉服务异常",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-event-rule-vision-unavailable-landscape.png"
+    },
+    {
+      "id": "event-rule/task-started",
+      "title": "任务开始",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-event-rule-task-started-landscape.png"
+    },
+    {
+      "id": "event-rule/task-succeeded",
+      "title": "任务成功",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-event-rule-task-succeeded-landscape.png"
+    },
+    {
+      "id": "event-rule/plan-started",
+      "title": "计划开始",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-event-rule-plan-started-landscape.png"
+    },
+    {
+      "id": "event-rule/plan-completed",
+      "title": "计划结束",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-event-rule-plan-completed-landscape.png"
+    },
+    {
+      "id": "float-settings",
+      "title": "悬浮球",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-float-settings-landscape.png"
+    },
+    {
+      "id": "data-settings",
+      "title": "运行与数据",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-data-settings-landscape.png"
+    },
+    {
+      "id": "developer-access",
+      "title": "开发者授权",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-developer-access-landscape.png"
+    },
+    {
+      "id": "issue/auth",
+      "title": "问题原因",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-issue-auth-landscape.png"
+    },
+    {
+      "id": "issue/resource",
+      "title": "问题原因",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-issue-resource-landscape.png"
+    },
+    {
+      "id": "issue/delivery",
+      "title": "问题原因",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-issue-delivery-landscape.png"
+    },
+    {
+      "id": "issue/unknown",
+      "title": "问题原因",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-issue-unknown-landscape.png"
+    },
+    {
+      "id": "history/sample-result",
+      "title": "运行记录",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-history-sample-result-landscape.png"
+    },
+    {
+      "id": "delivery/sample-delivery",
+      "title": "通知投递",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-delivery-sample-delivery-landscape.png"
+    },
+    {
+      "id": "preview/soul-sort",
+      "title": "御魂对象预览",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-preview-soul-sort-landscape.png"
+    },
+    {
+      "id": "preview/soul-enhance",
+      "title": "御魂对象预览",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-preview-soul-enhance-landscape.png"
+    },
+    {
+      "id": "activity/event-auto",
+      "title": "活动规则与进度",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-activity-event-auto-landscape.png"
+    },
+    {
+      "id": "workbench-running",
+      "title": "当前任务与等待队列",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-workbench-running-portrait.png"
+    },
+    {
+      "id": "recovery-options",
+      "title": "恢复执行选项",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-recovery-options-portrait.png"
+    },
+    {
+      "id": "recovery-continue",
+      "title": "继续未完成步骤 · UI态",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-recovery-continue-portrait.png"
+    },
+    {
+      "id": "recovery-restart",
+      "title": "重做当前任务 · UI态",
+      "group": "main",
+      "orientation": "portrait",
+      "path": "screens/main-recovery-restart-portrait.png"
+    },
+    {
+      "id": "ball",
+      "title": "收起小球",
+      "group": "overlay",
+      "orientation": "portrait",
+      "path": "screens/overlay-ball-portrait.png"
+    },
+    {
+      "id": "quick",
+      "title": "快捷面板",
+      "group": "overlay",
+      "orientation": "portrait",
+      "path": "screens/overlay-quick-portrait.png"
+    },
+    {
+      "id": "common",
+      "title": "常用任务与计划",
+      "group": "overlay",
+      "orientation": "portrait",
+      "path": "screens/overlay-common-portrait.png"
+    },
+    {
+      "id": "workbench-running",
+      "title": "当前任务与等待队列",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-workbench-running-landscape.png"
+    },
+    {
+      "id": "recovery-options",
+      "title": "恢复执行选项",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-recovery-options-landscape.png"
+    },
+    {
+      "id": "recovery-continue",
+      "title": "继续未完成步骤 · UI态",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-recovery-continue-landscape.png"
+    },
+    {
+      "id": "recovery-restart",
+      "title": "重做当前任务 · UI态",
+      "group": "main",
+      "orientation": "landscape",
+      "path": "screens/main-recovery-restart-landscape.png"
+    },
+    {
+      "id": "ball",
+      "title": "收起小球",
+      "group": "overlay",
+      "orientation": "landscape",
+      "path": "screens/overlay-ball-landscape.png"
+    },
+    {
+      "id": "quick",
+      "title": "快捷面板",
+      "group": "overlay",
+      "orientation": "landscape",
+      "path": "screens/overlay-quick-landscape.png"
+    },
+    {
+      "id": "common",
+      "title": "常用任务与计划",
+      "group": "overlay",
+      "orientation": "landscape",
+      "path": "screens/overlay-common-landscape.png"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,1881 @@
+{
+  "checkedAt": "2026-11-15T08:27:04.822Z",
+  "scope": "UI design fixtures only",
+  "checks": [
+    {
+      "name": "portrait route home",
+      "pass": true,
+      "detail": {
+        "page": "home",
+        "overflow": false,
+        "bodyHeight": 676,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 1,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route tasks",
+      "pass": true,
+      "detail": {
+        "page": "tasks",
+        "overflow": false,
+        "bodyHeight": 676,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 1,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route plans",
+      "pass": true,
+      "detail": {
+        "page": "plans",
+        "overflow": false,
+        "bodyHeight": 676,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 1,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route messages",
+      "pass": true,
+      "detail": {
+        "page": "messages",
+        "overflow": false,
+        "bodyHeight": 676,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 1,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route settings",
+      "pass": true,
+      "detail": {
+        "page": "settings",
+        "overflow": false,
+        "bodyHeight": 676,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 1,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/daily-rewards",
+      "pass": true,
+      "detail": {
+        "page": "task/daily-rewards",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/weekly-rewards",
+      "pass": true,
+      "detail": {
+        "page": "task/weekly-rewards",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/jade-card",
+      "pass": true,
+      "detail": {
+        "page": "task/jade-card",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/flower",
+      "pass": true,
+      "detail": {
+        "page": "task/flower",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/bounty",
+      "pass": true,
+      "detail": {
+        "page": "task/bounty",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/pet",
+      "pass": true,
+      "detail": {
+        "page": "task/pet",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/shop-general",
+      "pass": true,
+      "detail": {
+        "page": "task/shop-general",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/shop-wed",
+      "pass": true,
+      "detail": {
+        "page": "task/shop-wed",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/shop-sat",
+      "pass": true,
+      "detail": {
+        "page": "task/shop-sat",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/soul-run",
+      "pass": true,
+      "detail": {
+        "page": "task/soul-run",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/awake-run",
+      "pass": true,
+      "detail": {
+        "page": "task/awake-run",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/explore-run",
+      "pass": true,
+      "detail": {
+        "page": "task/explore-run",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/spirit-run",
+      "pass": true,
+      "detail": {
+        "page": "task/spirit-run",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/soul-enhance",
+      "pass": true,
+      "detail": {
+        "page": "task/soul-enhance",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/soul-sort",
+      "pass": true,
+      "detail": {
+        "page": "task/soul-sort",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/realm-claim",
+      "pass": true,
+      "detail": {
+        "page": "task/realm-claim",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/realm-card",
+      "pass": true,
+      "detail": {
+        "page": "task/realm-card",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/realm-raid",
+      "pass": true,
+      "detail": {
+        "page": "task/realm-raid",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/guild-raid",
+      "pass": true,
+      "detail": {
+        "page": "task/guild-raid",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/hunt",
+      "pass": true,
+      "detail": {
+        "page": "task/hunt",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/event-repeat",
+      "pass": true,
+      "detail": {
+        "page": "task/event-repeat",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task/event-auto",
+      "pass": true,
+      "detail": {
+        "page": "task/event-auto",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route plan/daily",
+      "pass": true,
+      "detail": {
+        "page": "plan/daily",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route plan/shops",
+      "pass": true,
+      "detail": {
+        "page": "plan/shops",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route inputs-demo",
+      "pass": true,
+      "detail": {
+        "page": "inputs-demo",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route task-updates",
+      "pass": true,
+      "detail": {
+        "page": "task-updates",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route model",
+      "pass": true,
+      "detail": {
+        "page": "model",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route environment",
+      "pass": true,
+      "detail": {
+        "page": "environment",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route game-control",
+      "pass": true,
+      "detail": {
+        "page": "game-control",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route accounts",
+      "pass": true,
+      "detail": {
+        "page": "accounts",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route network",
+      "pass": true,
+      "detail": {
+        "page": "network",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route channels",
+      "pass": true,
+      "detail": {
+        "page": "channels",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route channel/local",
+      "pass": true,
+      "detail": {
+        "page": "channel/local",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route channel/webhook",
+      "pass": true,
+      "detail": {
+        "page": "channel/webhook",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route notification-management",
+      "pass": true,
+      "detail": {
+        "page": "notification-management",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route event-rules",
+      "pass": true,
+      "detail": {
+        "page": "event-rules",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route event-log",
+      "pass": true,
+      "detail": {
+        "page": "event-log",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route event-rule/execution-failed",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/execution-failed",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route event-rule/unknown-result",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/unknown-result",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route event-rule/queue-wait",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/queue-wait",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route event-rule/no-progress",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/no-progress",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route event-rule/condition-lost",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/condition-lost",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route event-rule/resource-shortage",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/resource-shortage",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route event-rule/vision-unavailable",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/vision-unavailable",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route event-rule/task-started",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/task-started",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route event-rule/task-succeeded",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/task-succeeded",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route event-rule/plan-started",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/plan-started",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route event-rule/plan-completed",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/plan-completed",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route float-settings",
+      "pass": true,
+      "detail": {
+        "page": "float-settings",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route data-settings",
+      "pass": true,
+      "detail": {
+        "page": "data-settings",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route developer-access",
+      "pass": true,
+      "detail": {
+        "page": "developer-access",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route issue/auth",
+      "pass": true,
+      "detail": {
+        "page": "issue/auth",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route issue/resource",
+      "pass": true,
+      "detail": {
+        "page": "issue/resource",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route issue/delivery",
+      "pass": true,
+      "detail": {
+        "page": "issue/delivery",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route issue/unknown",
+      "pass": true,
+      "detail": {
+        "page": "issue/unknown",
+        "overflow": false,
+        "bodyHeight": 686,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route history/sample-result",
+      "pass": true,
+      "detail": {
+        "page": "history/sample-result",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route delivery/sample-delivery",
+      "pass": true,
+      "detail": {
+        "page": "delivery/sample-delivery",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route preview/soul-sort",
+      "pass": true,
+      "detail": {
+        "page": "preview/soul-sort",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route preview/soul-enhance",
+      "pass": true,
+      "detail": {
+        "page": "preview/soul-enhance",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait route activity/event-auto",
+      "pass": true,
+      "detail": {
+        "page": "activity/event-auto",
+        "overflow": false,
+        "bodyHeight": 752,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route home",
+      "pass": true,
+      "detail": {
+        "page": "home",
+        "overflow": false,
+        "bodyHeight": 257,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 1,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route tasks",
+      "pass": true,
+      "detail": {
+        "page": "tasks",
+        "overflow": false,
+        "bodyHeight": 257,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 1,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route plans",
+      "pass": true,
+      "detail": {
+        "page": "plans",
+        "overflow": false,
+        "bodyHeight": 257,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 1,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route messages",
+      "pass": true,
+      "detail": {
+        "page": "messages",
+        "overflow": false,
+        "bodyHeight": 257,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 1,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route settings",
+      "pass": true,
+      "detail": {
+        "page": "settings",
+        "overflow": false,
+        "bodyHeight": 257,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 1,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/daily-rewards",
+      "pass": true,
+      "detail": {
+        "page": "task/daily-rewards",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/weekly-rewards",
+      "pass": true,
+      "detail": {
+        "page": "task/weekly-rewards",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/jade-card",
+      "pass": true,
+      "detail": {
+        "page": "task/jade-card",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/flower",
+      "pass": true,
+      "detail": {
+        "page": "task/flower",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/bounty",
+      "pass": true,
+      "detail": {
+        "page": "task/bounty",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/pet",
+      "pass": true,
+      "detail": {
+        "page": "task/pet",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/shop-general",
+      "pass": true,
+      "detail": {
+        "page": "task/shop-general",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/shop-wed",
+      "pass": true,
+      "detail": {
+        "page": "task/shop-wed",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/shop-sat",
+      "pass": true,
+      "detail": {
+        "page": "task/shop-sat",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/soul-run",
+      "pass": true,
+      "detail": {
+        "page": "task/soul-run",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/awake-run",
+      "pass": true,
+      "detail": {
+        "page": "task/awake-run",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/explore-run",
+      "pass": true,
+      "detail": {
+        "page": "task/explore-run",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/spirit-run",
+      "pass": true,
+      "detail": {
+        "page": "task/spirit-run",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/soul-enhance",
+      "pass": true,
+      "detail": {
+        "page": "task/soul-enhance",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/soul-sort",
+      "pass": true,
+      "detail": {
+        "page": "task/soul-sort",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/realm-claim",
+      "pass": true,
+      "detail": {
+        "page": "task/realm-claim",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/realm-card",
+      "pass": true,
+      "detail": {
+        "page": "task/realm-card",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/realm-raid",
+      "pass": true,
+      "detail": {
+        "page": "task/realm-raid",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/guild-raid",
+      "pass": true,
+      "detail": {
+        "page": "task/guild-raid",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/hunt",
+      "pass": true,
+      "detail": {
+        "page": "task/hunt",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/event-repeat",
+      "pass": true,
+      "detail": {
+        "page": "task/event-repeat",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task/event-auto",
+      "pass": true,
+      "detail": {
+        "page": "task/event-auto",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route plan/daily",
+      "pass": true,
+      "detail": {
+        "page": "plan/daily",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route plan/shops",
+      "pass": true,
+      "detail": {
+        "page": "plan/shops",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route inputs-demo",
+      "pass": true,
+      "detail": {
+        "page": "inputs-demo",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route task-updates",
+      "pass": true,
+      "detail": {
+        "page": "task-updates",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route model",
+      "pass": true,
+      "detail": {
+        "page": "model",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route environment",
+      "pass": true,
+      "detail": {
+        "page": "environment",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route game-control",
+      "pass": true,
+      "detail": {
+        "page": "game-control",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route accounts",
+      "pass": true,
+      "detail": {
+        "page": "accounts",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route network",
+      "pass": true,
+      "detail": {
+        "page": "network",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route channels",
+      "pass": true,
+      "detail": {
+        "page": "channels",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route channel/local",
+      "pass": true,
+      "detail": {
+        "page": "channel/local",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route channel/webhook",
+      "pass": true,
+      "detail": {
+        "page": "channel/webhook",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route notification-management",
+      "pass": true,
+      "detail": {
+        "page": "notification-management",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route event-rules",
+      "pass": true,
+      "detail": {
+        "page": "event-rules",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route event-log",
+      "pass": true,
+      "detail": {
+        "page": "event-log",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route event-rule/execution-failed",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/execution-failed",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route event-rule/unknown-result",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/unknown-result",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route event-rule/queue-wait",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/queue-wait",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route event-rule/no-progress",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/no-progress",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route event-rule/condition-lost",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/condition-lost",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route event-rule/resource-shortage",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/resource-shortage",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route event-rule/vision-unavailable",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/vision-unavailable",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route event-rule/task-started",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/task-started",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route event-rule/task-succeeded",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/task-succeeded",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route event-rule/plan-started",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/plan-started",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route event-rule/plan-completed",
+      "pass": true,
+      "detail": {
+        "page": "event-rule/plan-completed",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route float-settings",
+      "pass": true,
+      "detail": {
+        "page": "float-settings",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route data-settings",
+      "pass": true,
+      "detail": {
+        "page": "data-settings",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route developer-access",
+      "pass": true,
+      "detail": {
+        "page": "developer-access",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route issue/auth",
+      "pass": true,
+      "detail": {
+        "page": "issue/auth",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route issue/resource",
+      "pass": true,
+      "detail": {
+        "page": "issue/resource",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route issue/delivery",
+      "pass": true,
+      "detail": {
+        "page": "issue/delivery",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route issue/unknown",
+      "pass": true,
+      "detail": {
+        "page": "issue/unknown",
+        "overflow": false,
+        "bodyHeight": 258,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route history/sample-result",
+      "pass": true,
+      "detail": {
+        "page": "history/sample-result",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route delivery/sample-delivery",
+      "pass": true,
+      "detail": {
+        "page": "delivery/sample-delivery",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route preview/soul-sort",
+      "pass": true,
+      "detail": {
+        "page": "preview/soul-sort",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route preview/soul-enhance",
+      "pass": true,
+      "detail": {
+        "page": "preview/soul-enhance",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "landscape route activity/event-auto",
+      "pass": true,
+      "detail": {
+        "page": "activity/event-auto",
+        "overflow": false,
+        "bodyHeight": 319,
+        "wrongControls": 0,
+        "choice": true,
+        "nav": 0,
+        "text": true
+      }
+    },
+    {
+      "name": "portrait enqueue through list",
+      "pass": true
+    },
+    {
+      "name": "portrait active row pause",
+      "pass": true
+    },
+    {
+      "name": "portrait duplicate prevented",
+      "pass": true
+    },
+    {
+      "name": "portrait queued row disabled badge",
+      "pass": true
+    },
+    {
+      "name": "portrait pause whole executor",
+      "pass": true
+    },
+    {
+      "name": "portrait resume options visible",
+      "pass": true
+    },
+    {
+      "name": "portrait restart UI selects current task first step",
+      "pass": true
+    },
+    {
+      "name": "portrait restart is UI-only evidence",
+      "pass": true
+    },
+    {
+      "name": "portrait active row after design recovery uses pause icon",
+      "pass": true
+    },
+    {
+      "name": "portrait stop holds queued work",
+      "pass": true
+    },
+    {
+      "name": "portrait queue-only continue enters safe reconciliation",
+      "pass": true
+    },
+    {
+      "name": "portrait queue-only continue dispatches waiting task",
+      "pass": true
+    },
+    {
+      "name": "portrait actual swipe current hands queue onward",
+      "pass": true
+    },
+    {
+      "name": "portrait real longpress stops without resume",
+      "pass": true
+    },
+    {
+      "name": "portrait plan sum priority30 beats task25",
+      "pass": true
+    },
+    {
+      "name": "portrait confirmed child failure continues remaining task locked30",
+      "pass": true
+    },
+    {
+      "name": "portrait row expands changelog",
+      "pass": true
+    },
+    {
+      "name": "portrait row collapses changelog",
+      "pass": true
+    },
+    {
+      "name": "portrait active version controls disabled",
+      "pass": true
+    },
+    {
+      "name": "portrait pulling does not activate",
+      "pass": true
+    },
+    {
+      "name": "portrait history only two tabs",
+      "pass": true
+    },
+    {
+      "name": "landscape enqueue through list",
+      "pass": true
+    },
+    {
+      "name": "landscape active row pause",
+      "pass": true
+    },
+    {
+      "name": "landscape duplicate prevented",
+      "pass": true
+    },
+    {
+      "name": "landscape queued row disabled badge",
+      "pass": true
+    },
+    {
+      "name": "landscape pause whole executor",
+      "pass": true
+    },
+    {
+      "name": "landscape resume options visible",
+      "pass": true
+    },
+    {
+      "name": "landscape restart UI selects current task first step",
+      "pass": true
+    },
+    {
+      "name": "landscape restart is UI-only evidence",
+      "pass": true
+    },
+    {
+      "name": "landscape active row after design recovery uses pause icon",
+      "pass": true
+    },
+    {
+      "name": "landscape stop holds queued work",
+      "pass": true
+    },
+    {
+      "name": "landscape queue-only continue enters safe reconciliation",
+      "pass": true
+    },
+    {
+      "name": "landscape queue-only continue dispatches waiting task",
+      "pass": true
+    },
+    {
+      "name": "landscape actual swipe current hands queue onward",
+      "pass": true
+    },
+    {
+      "name": "landscape real longpress stops without resume",
+      "pass": true
+    },
+    {
+      "name": "landscape plan sum priority30 beats task25",
+      "pass": true
+    },
+    {
+      "name": "landscape confirmed child failure continues remaining task locked30",
+      "pass": true
+    },
+    {
+      "name": "landscape row expands changelog",
+      "pass": true
+    },
+    {
+      "name": "landscape row collapses changelog",
+      "pass": true
+    },
+    {
+      "name": "landscape active version controls disabled",
+      "pass": true
+    },
+    {
+      "name": "landscape pulling does not activate",
+      "pass": true
+    },
+    {
+      "name": "landscape history only two tabs",
+      "pass": true
+    },
+    {
+      "name": "diagnostics deep link gated",
+      "pass": true
+    },
+    {
+      "name": "diagnostics board gated",
+      "pass": true
+    },
+    {
+      "name": "offline update persistent cause",
+      "pass": true
+    },
+    {
+      "name": "no runtime exceptions",
+      "pass": true,
+      "detail": []
+    }
+  ]
+}

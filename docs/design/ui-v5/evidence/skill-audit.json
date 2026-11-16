@@ -1,0 +1,18 @@
+{
+  "readiness": 97,
+  "counts": {
+    "error": 0,
+    "warning": 1,
+    "suggestion": 0
+  },
+  "findings": [
+    {
+      "validator": "rtl_check",
+      "rule_id": "L10N-RTL",
+      "severity": "warning",
+      "file": "docs/design/ui-v5/app.js",
+      "line": 9,
+      "message": "Absolute left/right offset \u2014 use start/end or logical inset for RTL."
+    }
+  ]
+}

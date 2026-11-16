@@ -1,0 +1,1692 @@
+{
+  "method": "Same rendered UI with text/icon paint temporarily hidden; sample final background within original text/icon bounds. Unsupported branch forced from actual stylesheet for cascade proof, not old-device testing.",
+  "records": [
+    {
+      "name": "tasks-light",
+      "image": "composite-tasks-light.png",
+      "samples": [
+        {
+          "label": "设为常用 每日物资领取",
+          "kind": "icon",
+          "foreground": "rgb(85, 85, 85)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 299,
+            "y": 226.5,
+            "width": 16,
+            "height": 16
+          }
+        },
+        {
+          "label": "加入队列 每日物资领取",
+          "text": "入队",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 357,
+            "y": 238.25,
+            "width": 20,
+            "height": 12
+          }
+        },
+        {
+          "label": "加入队列 每日物资领取",
+          "kind": "icon",
+          "foreground": "rgb(168, 207, 249)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 360.5,
+            "y": 220.25,
+            "width": 13,
+            "height": 13
+          }
+        },
+        {
+          "label": "设为常用 每周物资领取",
+          "kind": "icon",
+          "foreground": "rgb(85, 85, 85)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 299,
+            "y": 304.5,
+            "width": 16,
+            "height": 16
+          }
+        },
+        {
+          "label": "加入队列 每周物资领取",
+          "text": "入队",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 357,
+            "y": 316.25,
+            "width": 20,
+            "height": 12
+          }
+        },
+        {
+          "label": "加入队列 每周物资领取",
+          "kind": "icon",
+          "foreground": "rgb(168, 207, 249)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 360.5,
+            "y": 298.25,
+            "width": 13,
+            "height": 13
+          }
+        },
+        {
+          "label": "取消常用 永久勾玉卡产出",
+          "kind": "icon",
+          "foreground": "rgb(255, 220, 128)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 299,
+            "y": 382.5,
+            "width": 16,
+            "height": 16
+          }
+        },
+        {
+          "label": "加入队列 永久勾玉卡产出",
+          "text": "入队",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 357,
+            "y": 394.25,
+            "width": 20,
+            "height": 12
+          }
+        },
+        {
+          "label": "加入队列 永久勾玉卡产出",
+          "kind": "icon",
+          "foreground": "rgb(168, 207, 249)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 360.5,
+            "y": 376.25,
+            "width": 13,
+            "height": 13
+          }
+        },
+        {
+          "label": "设为常用 花合战奖励",
+          "kind": "icon",
+          "foreground": "rgb(85, 85, 85)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 299,
+            "y": 460.5,
+            "width": 16,
+            "height": 16
+          }
+        },
+        {
+          "label": "加入队列 花合战奖励",
+          "text": "入队",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 357,
+            "y": 472.25,
+            "width": 20,
+            "height": 12
+          }
+        },
+        {
+          "label": "加入队列 花合战奖励",
+          "kind": "icon",
+          "foreground": "rgb(168, 207, 249)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 360.5,
+            "y": 454.25,
+            "width": 13,
+            "height": 13
+          }
+        },
+        {
+          "label": "设为常用 悬赏封印",
+          "kind": "icon",
+          "foreground": "rgb(85, 85, 85)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 299,
+            "y": 538.5,
+            "width": 16,
+            "height": 16
+          }
+        },
+        {
+          "label": "已在队列 悬赏封印",
+          "text": "队列中",
+          "kind": "text",
+          "foreground": "rgb(96, 96, 96)",
+          "disabled": true,
+          "rect": {
+            "x": 352,
+            "y": 550.25,
+            "width": 30,
+            "height": 12
+          }
+        },
+        {
+          "label": "已在队列 悬赏封印",
+          "kind": "icon",
+          "foreground": "rgb(96, 96, 96)",
+          "opacity": 1,
+          "disabled": true,
+          "rect": {
+            "x": 360.5,
+            "y": 532.25,
+            "width": 13,
+            "height": 13
+          }
+        },
+        {
+          "label": "设为常用 宠物照料",
+          "kind": "icon",
+          "foreground": "rgb(85, 85, 85)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 299,
+            "y": 616.5,
+            "width": 16,
+            "height": 16
+          }
+        },
+        {
+          "label": "加入队列 宠物照料",
+          "text": "入队",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 357,
+            "y": 628.25,
+            "width": 20,
+            "height": 12
+          }
+        },
+        {
+          "label": "加入队列 宠物照料",
+          "kind": "icon",
+          "foreground": "rgb(168, 207, 249)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 360.5,
+            "y": 610.25,
+            "width": 13,
+            "height": 13
+          }
+        },
+        {
+          "label": "任务中心",
+          "text": "任务中心",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 105.1875,
+            "y": 813.53125,
+            "width": 44,
+            "height": 13
+          }
+        },
+        {
+          "label": "任务中心",
+          "kind": "icon",
+          "foreground": "rgb(219, 192, 255)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 119.1875,
+            "y": 789.53125,
+            "width": 16,
+            "height": 16
+          }
+        }
+      ]
+    },
+    {
+      "name": "overlay-light",
+      "image": "composite-overlay-light.png",
+      "samples": [
+        {
+          "label": "暂停执行，长按停止",
+          "kind": "icon",
+          "foreground": "rgb(125, 83, 21)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 299,
+            "y": 123,
+            "width": 14,
+            "height": 14
+          }
+        },
+        {
+          "label": "停止执行",
+          "kind": "icon",
+          "foreground": "rgb(161, 51, 58)",
+          "opacity": 0.92,
+          "disabled": false,
+          "rect": {
+            "x": 355,
+            "y": 123,
+            "width": 14,
+            "height": 14
+          }
+        },
+        {
+          "label": "常用",
+          "text": "常用",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 122,
+            "y": 175.578125,
+            "width": 26,
+            "height": 16
+          }
+        },
+        {
+          "label": "常用",
+          "kind": "icon",
+          "foreground": "rgb(24, 24, 24)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 259,
+            "y": 179,
+            "width": 10,
+            "height": 10
+          }
+        },
+        {
+          "label": "收起到悬浮球",
+          "kind": "icon",
+          "foreground": "rgb(24, 24, 24)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 355,
+            "y": 177,
+            "width": 14,
+            "height": 14
+          }
+        }
+      ]
+    },
+    {
+      "name": "settings-light",
+      "image": "composite-settings-light.png",
+      "samples": [
+        {
+          "label": "跟随系统",
+          "text": "系统",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 247,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "浅色主题",
+          "text": "浅色",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 303,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "深色主题",
+          "text": "深色",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 359,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "text": "设置",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 355.59375,
+            "y": 813.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "kind": "icon",
+          "foreground": "rgb(255, 192, 218)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 359.59375,
+            "y": 784.5,
+            "width": 16,
+            "height": 16
+          }
+        }
+      ]
+    },
+    {
+      "name": "schema-light",
+      "image": "composite-schema-light.png",
+      "samples": [
+        {
+          "label": "返回",
+          "kind": "icon",
+          "foreground": "rgb(24, 24, 24)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 33,
+            "y": 49.5,
+            "width": 16,
+            "height": 16
+          }
+        },
+        {
+          "label": "保存",
+          "text": "保存",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 355,
+            "y": 49,
+            "width": 28,
+            "height": 17
+          }
+        },
+        {
+          "label": "文本",
+          "text": "文本",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 40,
+            "y": 315,
+            "width": 28,
+            "height": 17
+          }
+        },
+        {
+          "label": "数值",
+          "text": "数值",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 59.1875,
+            "y": 370.75,
+            "width": 28,
+            "height": 17
+          }
+        },
+        {
+          "label": "单选",
+          "text": "单选",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 40,
+            "y": 427,
+            "width": 28,
+            "height": 17
+          }
+        },
+        {
+          "label": "多选",
+          "text": "多选",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 40,
+            "y": 483,
+            "width": 28,
+            "height": 17
+          }
+        },
+        {
+          "label": "时间",
+          "text": "时间",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 40,
+            "y": 539,
+            "width": 28,
+            "height": 17
+          }
+        },
+        {
+          "label": "日期",
+          "text": "日期",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 40,
+            "y": 595,
+            "width": 28,
+            "height": 17
+          }
+        },
+        {
+          "label": "日期范围",
+          "text": "日期范围",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 40,
+            "y": 651,
+            "width": 56,
+            "height": 17
+          }
+        }
+      ]
+    },
+    {
+      "name": "selected-hover-light",
+      "image": "composite-selected-hover-light.png",
+      "samples": [
+        {
+          "label": "跟随系统",
+          "text": "系统",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 247,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "浅色主题",
+          "text": "浅色",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 303,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "深色主题",
+          "text": "深色",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 359,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "text": "设置",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 355.59375,
+            "y": 813.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "kind": "icon",
+          "foreground": "rgb(255, 192, 218)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 359.59375,
+            "y": 784.5,
+            "width": 16,
+            "height": 16
+          }
+        }
+      ],
+      "computed": {
+        "background": "linear-gradient(155deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.03) 50%, rgba(0, 0, 0, 0.08)), none",
+        "backgroundColor": "rgba(45, 45, 45, 0.95)",
+        "filter": "blur(14px)",
+        "color": "rgb(255, 255, 255)"
+      },
+      "forcedUnsupportedBranch": false
+    },
+    {
+      "name": "selected-pressed-light",
+      "image": "composite-selected-pressed-light.png",
+      "samples": [
+        {
+          "label": "跟随系统",
+          "text": "系统",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 247,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "浅色主题",
+          "text": "浅色",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 303,
+            "y": 50.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "深色主题",
+          "text": "深色",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 359,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "text": "设置",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 355.59375,
+            "y": 813.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "kind": "icon",
+          "foreground": "rgb(255, 192, 218)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 359.59375,
+            "y": 784.5,
+            "width": 16,
+            "height": 16
+          }
+        }
+      ],
+      "computed": {
+        "background": "linear-gradient(155deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.03) 50%, rgba(0, 0, 0, 0.08)), none",
+        "backgroundColor": "rgba(12, 12, 12, 0.96)",
+        "filter": "blur(14px)",
+        "color": "rgb(255, 255, 255)"
+      },
+      "forcedUnsupportedBranch": false
+    },
+    {
+      "name": "selected-reduced-light",
+      "image": "composite-selected-reduced-light.png",
+      "samples": [
+        {
+          "label": "跟随系统",
+          "text": "系统",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 247,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "浅色主题",
+          "text": "浅色",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 303,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "深色主题",
+          "text": "深色",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 359,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "text": "设置",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 355.59375,
+            "y": 813.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "kind": "icon",
+          "foreground": "rgb(255, 192, 218)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 359.59375,
+            "y": 784.5,
+            "width": 16,
+            "height": 16
+          }
+        }
+      ],
+      "computed": {
+        "background": "none, none",
+        "backgroundColor": "rgb(32, 32, 32)",
+        "filter": "none",
+        "color": "rgb(255, 255, 255)"
+      },
+      "forcedUnsupportedBranch": false
+    },
+    {
+      "name": "selected-unsupported-light",
+      "image": "composite-selected-unsupported-light.png",
+      "samples": [
+        {
+          "label": "跟随系统",
+          "text": "系统",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 247,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "浅色主题",
+          "text": "浅色",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 303,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "深色主题",
+          "text": "深色",
+          "kind": "text",
+          "foreground": "rgb(24, 24, 24)",
+          "disabled": false,
+          "rect": {
+            "x": 359,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "text": "设置",
+          "kind": "text",
+          "foreground": "rgb(255, 255, 255)",
+          "disabled": false,
+          "rect": {
+            "x": 355.59375,
+            "y": 813.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "kind": "icon",
+          "foreground": "rgb(255, 192, 218)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 359.59375,
+            "y": 784.5,
+            "width": 16,
+            "height": 16
+          }
+        }
+      ],
+      "computed": {
+        "background": "none, none",
+        "backgroundColor": "rgb(32, 32, 32)",
+        "filter": "none",
+        "color": "rgb(255, 255, 255)"
+      },
+      "forcedUnsupportedBranch": true
+    },
+    {
+      "name": "tasks-dark",
+      "image": "composite-tasks-dark.png",
+      "samples": [
+        {
+          "label": "设为常用 每日物资领取",
+          "kind": "icon",
+          "foreground": "rgb(188, 188, 188)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 299,
+            "y": 226.5,
+            "width": 16,
+            "height": 16
+          }
+        },
+        {
+          "label": "加入队列 每日物资领取",
+          "text": "入队",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 357,
+            "y": 238.25,
+            "width": 20,
+            "height": 12
+          }
+        },
+        {
+          "label": "加入队列 每日物资领取",
+          "kind": "icon",
+          "foreground": "rgb(40, 104, 178)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 360.5,
+            "y": 220.25,
+            "width": 13,
+            "height": 13
+          }
+        },
+        {
+          "label": "设为常用 每周物资领取",
+          "kind": "icon",
+          "foreground": "rgb(188, 188, 188)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 299,
+            "y": 304.5,
+            "width": 16,
+            "height": 16
+          }
+        },
+        {
+          "label": "加入队列 每周物资领取",
+          "text": "入队",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 357,
+            "y": 316.25,
+            "width": 20,
+            "height": 12
+          }
+        },
+        {
+          "label": "加入队列 每周物资领取",
+          "kind": "icon",
+          "foreground": "rgb(40, 104, 178)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 360.5,
+            "y": 298.25,
+            "width": 13,
+            "height": 13
+          }
+        },
+        {
+          "label": "取消常用 永久勾玉卡产出",
+          "kind": "icon",
+          "foreground": "rgb(128, 84, 9)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 299,
+            "y": 382.5,
+            "width": 16,
+            "height": 16
+          }
+        },
+        {
+          "label": "加入队列 永久勾玉卡产出",
+          "text": "入队",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 357,
+            "y": 394.25,
+            "width": 20,
+            "height": 12
+          }
+        },
+        {
+          "label": "加入队列 永久勾玉卡产出",
+          "kind": "icon",
+          "foreground": "rgb(40, 104, 178)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 360.5,
+            "y": 376.25,
+            "width": 13,
+            "height": 13
+          }
+        },
+        {
+          "label": "设为常用 花合战奖励",
+          "kind": "icon",
+          "foreground": "rgb(188, 188, 188)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 299,
+            "y": 460.5,
+            "width": 16,
+            "height": 16
+          }
+        },
+        {
+          "label": "加入队列 花合战奖励",
+          "text": "入队",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 357,
+            "y": 472.25,
+            "width": 20,
+            "height": 12
+          }
+        },
+        {
+          "label": "加入队列 花合战奖励",
+          "kind": "icon",
+          "foreground": "rgb(40, 104, 178)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 360.5,
+            "y": 454.25,
+            "width": 13,
+            "height": 13
+          }
+        },
+        {
+          "label": "设为常用 悬赏封印",
+          "kind": "icon",
+          "foreground": "rgb(188, 188, 188)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 299,
+            "y": 538.5,
+            "width": 16,
+            "height": 16
+          }
+        },
+        {
+          "label": "已在队列 悬赏封印",
+          "text": "队列中",
+          "kind": "text",
+          "foreground": "rgb(170, 170, 170)",
+          "disabled": true,
+          "rect": {
+            "x": 352,
+            "y": 550.25,
+            "width": 30,
+            "height": 12
+          }
+        },
+        {
+          "label": "已在队列 悬赏封印",
+          "kind": "icon",
+          "foreground": "rgb(170, 170, 170)",
+          "opacity": 1,
+          "disabled": true,
+          "rect": {
+            "x": 360.5,
+            "y": 532.25,
+            "width": 13,
+            "height": 13
+          }
+        },
+        {
+          "label": "设为常用 宠物照料",
+          "kind": "icon",
+          "foreground": "rgb(188, 188, 188)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 299,
+            "y": 616.5,
+            "width": 16,
+            "height": 16
+          }
+        },
+        {
+          "label": "加入队列 宠物照料",
+          "text": "入队",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 357,
+            "y": 628.25,
+            "width": 20,
+            "height": 12
+          }
+        },
+        {
+          "label": "加入队列 宠物照料",
+          "kind": "icon",
+          "foreground": "rgb(40, 104, 178)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 360.5,
+            "y": 610.25,
+            "width": 13,
+            "height": 13
+          }
+        },
+        {
+          "label": "任务中心",
+          "text": "任务中心",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 105.1875,
+            "y": 813.53125,
+            "width": 44,
+            "height": 13
+          }
+        },
+        {
+          "label": "任务中心",
+          "kind": "icon",
+          "foreground": "rgb(121, 80, 186)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 119.1875,
+            "y": 789.53125,
+            "width": 16,
+            "height": 16
+          }
+        }
+      ]
+    },
+    {
+      "name": "overlay-dark",
+      "image": "composite-overlay-dark.png",
+      "samples": [
+        {
+          "label": "暂停执行，长按停止",
+          "kind": "icon",
+          "foreground": "rgb(241, 206, 142)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 299,
+            "y": 123,
+            "width": 14,
+            "height": 14
+          }
+        },
+        {
+          "label": "停止执行",
+          "kind": "icon",
+          "foreground": "rgb(255, 180, 184)",
+          "opacity": 0.92,
+          "disabled": false,
+          "rect": {
+            "x": 355,
+            "y": 123,
+            "width": 14,
+            "height": 14
+          }
+        },
+        {
+          "label": "常用",
+          "text": "常用",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 122,
+            "y": 175.578125,
+            "width": 26,
+            "height": 16
+          }
+        },
+        {
+          "label": "常用",
+          "kind": "icon",
+          "foreground": "rgb(242, 242, 242)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 259,
+            "y": 179,
+            "width": 10,
+            "height": 10
+          }
+        },
+        {
+          "label": "收起到悬浮球",
+          "kind": "icon",
+          "foreground": "rgb(242, 242, 242)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 355,
+            "y": 177,
+            "width": 14,
+            "height": 14
+          }
+        }
+      ]
+    },
+    {
+      "name": "settings-dark",
+      "image": "composite-settings-dark.png",
+      "samples": [
+        {
+          "label": "跟随系统",
+          "text": "系统",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 247,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "浅色主题",
+          "text": "浅色",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 303,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "深色主题",
+          "text": "深色",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 359,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "text": "设置",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 355.59375,
+            "y": 813.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "kind": "icon",
+          "foreground": "rgb(177, 62, 112)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 359.59375,
+            "y": 784.5,
+            "width": 16,
+            "height": 16
+          }
+        }
+      ]
+    },
+    {
+      "name": "schema-dark",
+      "image": "composite-schema-dark.png",
+      "samples": [
+        {
+          "label": "返回",
+          "kind": "icon",
+          "foreground": "rgb(242, 242, 242)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 33,
+            "y": 49.5,
+            "width": 16,
+            "height": 16
+          }
+        },
+        {
+          "label": "保存",
+          "text": "保存",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 355,
+            "y": 49,
+            "width": 28,
+            "height": 17
+          }
+        },
+        {
+          "label": "文本",
+          "text": "文本",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 40,
+            "y": 315,
+            "width": 28,
+            "height": 17
+          }
+        },
+        {
+          "label": "数值",
+          "text": "数值",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 59.1875,
+            "y": 370.75,
+            "width": 28,
+            "height": 17
+          }
+        },
+        {
+          "label": "单选",
+          "text": "单选",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 40,
+            "y": 427,
+            "width": 28,
+            "height": 17
+          }
+        },
+        {
+          "label": "多选",
+          "text": "多选",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 40,
+            "y": 483,
+            "width": 28,
+            "height": 17
+          }
+        },
+        {
+          "label": "时间",
+          "text": "时间",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 40,
+            "y": 539,
+            "width": 28,
+            "height": 17
+          }
+        },
+        {
+          "label": "日期",
+          "text": "日期",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 40,
+            "y": 595,
+            "width": 28,
+            "height": 17
+          }
+        },
+        {
+          "label": "日期范围",
+          "text": "日期范围",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 40,
+            "y": 651,
+            "width": 56,
+            "height": 17
+          }
+        }
+      ]
+    },
+    {
+      "name": "selected-hover-dark",
+      "image": "composite-selected-hover-dark.png",
+      "samples": [
+        {
+          "label": "跟随系统",
+          "text": "系统",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 247,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "浅色主题",
+          "text": "浅色",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 303,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "深色主题",
+          "text": "深色",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 359,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "text": "设置",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 355.59375,
+            "y": 813.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "kind": "icon",
+          "foreground": "rgb(177, 62, 112)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 359.59375,
+            "y": 784.5,
+            "width": 16,
+            "height": 16
+          }
+        }
+      ],
+      "computed": {
+        "background": "linear-gradient(155deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.05) 50%, rgba(0, 0, 0, 0.08)), none",
+        "backgroundColor": "rgba(250, 250, 250, 0.97)",
+        "filter": "blur(14px)",
+        "color": "rgb(17, 17, 17)"
+      },
+      "forcedUnsupportedBranch": false
+    },
+    {
+      "name": "selected-pressed-dark",
+      "image": "composite-selected-pressed-dark.png",
+      "samples": [
+        {
+          "label": "跟随系统",
+          "text": "系统",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 247,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "浅色主题",
+          "text": "浅色",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 303,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "深色主题",
+          "text": "深色",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 359,
+            "y": 50.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "text": "设置",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 355.59375,
+            "y": 813.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "kind": "icon",
+          "foreground": "rgb(177, 62, 112)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 359.59375,
+            "y": 784.5,
+            "width": 16,
+            "height": 16
+          }
+        }
+      ],
+      "computed": {
+        "background": "linear-gradient(155deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.05) 50%, rgba(0, 0, 0, 0.08)), none",
+        "backgroundColor": "rgba(211, 211, 211, 0.98)",
+        "filter": "blur(14px)",
+        "color": "rgb(17, 17, 17)"
+      },
+      "forcedUnsupportedBranch": false
+    },
+    {
+      "name": "selected-reduced-dark",
+      "image": "composite-selected-reduced-dark.png",
+      "samples": [
+        {
+          "label": "跟随系统",
+          "text": "系统",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 247,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "浅色主题",
+          "text": "浅色",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 303,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "深色主题",
+          "text": "深色",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 359,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "text": "设置",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 355.59375,
+            "y": 813.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "kind": "icon",
+          "foreground": "rgb(177, 62, 112)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 359.59375,
+            "y": 784.5,
+            "width": 16,
+            "height": 16
+          }
+        }
+      ],
+      "computed": {
+        "background": "none, none",
+        "backgroundColor": "rgb(238, 238, 238)",
+        "filter": "none",
+        "color": "rgb(17, 17, 17)"
+      },
+      "forcedUnsupportedBranch": false
+    },
+    {
+      "name": "selected-unsupported-dark",
+      "image": "composite-selected-unsupported-dark.png",
+      "samples": [
+        {
+          "label": "跟随系统",
+          "text": "系统",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 247,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "浅色主题",
+          "text": "浅色",
+          "kind": "text",
+          "foreground": "rgb(242, 242, 242)",
+          "disabled": false,
+          "rect": {
+            "x": 303,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "深色主题",
+          "text": "深色",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 359,
+            "y": 49.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "text": "设置",
+          "kind": "text",
+          "foreground": "rgb(17, 17, 17)",
+          "disabled": false,
+          "rect": {
+            "x": 355.59375,
+            "y": 813.5,
+            "width": 24,
+            "height": 15
+          }
+        },
+        {
+          "label": "设置",
+          "kind": "icon",
+          "foreground": "rgb(177, 62, 112)",
+          "opacity": 0.82,
+          "disabled": false,
+          "rect": {
+            "x": 359.59375,
+            "y": 784.5,
+            "width": 16,
+            "height": 16
+          }
+        }
+      ],
+      "computed": {
+        "background": "none, none",
+        "backgroundColor": "rgb(238, 238, 238)",
+        "filter": "none",
+        "color": "rgb(17, 17, 17)"
+      },
+      "forcedUnsupportedBranch": true
+    }
+  ],
+  "errors": []
+}

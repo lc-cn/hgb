@@ -1,0 +1,398 @@
+{
+  "scope": "GPU-composited browser design renders",
+  "records": [
+    {
+      "scene": "home",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/home-light-portrait.png"
+    },
+    {
+      "scene": "tasks",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/tasks-light-portrait.png"
+    },
+    {
+      "scene": "config",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/config-light-portrait.png"
+    },
+    {
+      "scene": "quick",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/quick-light-portrait.png"
+    },
+    {
+      "scene": "common",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/common-light-portrait.png"
+    },
+    {
+      "scene": "settings",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/settings-light-portrait.png"
+    },
+    {
+      "scene": "plans",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/plans-light-portrait.png"
+    },
+    {
+      "scene": "versions",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/versions-light-portrait.png"
+    },
+    {
+      "scene": "history",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/history-light-portrait.png"
+    },
+    {
+      "scene": "model",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/model-light-portrait.png"
+    },
+    {
+      "scene": "channels",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/channels-light-portrait.png"
+    },
+    {
+      "scene": "devtask",
+      "file": "developer.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/devtask-light-portrait.png"
+    },
+    {
+      "scene": "devdebug",
+      "file": "developer.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/devdebug-light-portrait.png"
+    },
+    {
+      "scene": "devpublish",
+      "file": "developer.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/devpublish-light-portrait.png"
+    },
+    {
+      "scene": "home",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/home-light-landscape.png"
+    },
+    {
+      "scene": "tasks",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/tasks-light-landscape.png"
+    },
+    {
+      "scene": "config",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/config-light-landscape.png"
+    },
+    {
+      "scene": "quick",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/quick-light-landscape.png"
+    },
+    {
+      "scene": "common",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/common-light-landscape.png"
+    },
+    {
+      "scene": "settings",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/settings-light-landscape.png"
+    },
+    {
+      "scene": "plans",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/plans-light-landscape.png"
+    },
+    {
+      "scene": "versions",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/versions-light-landscape.png"
+    },
+    {
+      "scene": "history",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/history-light-landscape.png"
+    },
+    {
+      "scene": "model",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/model-light-landscape.png"
+    },
+    {
+      "scene": "channels",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/channels-light-landscape.png"
+    },
+    {
+      "scene": "devtask",
+      "file": "developer.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/devtask-light-landscape.png"
+    },
+    {
+      "scene": "devdebug",
+      "file": "developer.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/devdebug-light-landscape.png"
+    },
+    {
+      "scene": "devpublish",
+      "file": "developer.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/devpublish-light-landscape.png"
+    },
+    {
+      "scene": "home",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/home-dark-portrait.png"
+    },
+    {
+      "scene": "tasks",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/tasks-dark-portrait.png"
+    },
+    {
+      "scene": "config",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/config-dark-portrait.png"
+    },
+    {
+      "scene": "quick",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/quick-dark-portrait.png"
+    },
+    {
+      "scene": "common",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/common-dark-portrait.png"
+    },
+    {
+      "scene": "settings",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/settings-dark-portrait.png"
+    },
+    {
+      "scene": "plans",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/plans-dark-portrait.png"
+    },
+    {
+      "scene": "versions",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/versions-dark-portrait.png"
+    },
+    {
+      "scene": "history",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/history-dark-portrait.png"
+    },
+    {
+      "scene": "model",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/model-dark-portrait.png"
+    },
+    {
+      "scene": "channels",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/channels-dark-portrait.png"
+    },
+    {
+      "scene": "devtask",
+      "file": "developer.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/devtask-dark-portrait.png"
+    },
+    {
+      "scene": "devdebug",
+      "file": "developer.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/devdebug-dark-portrait.png"
+    },
+    {
+      "scene": "devpublish",
+      "file": "developer.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/devpublish-dark-portrait.png"
+    },
+    {
+      "scene": "home",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/home-dark-landscape.png"
+    },
+    {
+      "scene": "tasks",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/tasks-dark-landscape.png"
+    },
+    {
+      "scene": "config",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/config-dark-landscape.png"
+    },
+    {
+      "scene": "quick",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/quick-dark-landscape.png"
+    },
+    {
+      "scene": "common",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/common-dark-landscape.png"
+    },
+    {
+      "scene": "settings",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/settings-dark-landscape.png"
+    },
+    {
+      "scene": "plans",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/plans-dark-landscape.png"
+    },
+    {
+      "scene": "versions",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/versions-dark-landscape.png"
+    },
+    {
+      "scene": "history",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/history-dark-landscape.png"
+    },
+    {
+      "scene": "model",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/model-dark-landscape.png"
+    },
+    {
+      "scene": "channels",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/channels-dark-landscape.png"
+    },
+    {
+      "scene": "devtask",
+      "file": "developer.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/devtask-dark-landscape.png"
+    },
+    {
+      "scene": "devdebug",
+      "file": "developer.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/devdebug-dark-landscape.png"
+    },
+    {
+      "scene": "devpublish",
+      "file": "developer.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/devpublish-dark-landscape.png"
+    }
+  ],
+  "errors": []
+}

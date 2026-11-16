@@ -1,0 +1,71 @@
+INSTRUMENTATION_STATUS: class=io.github.yysassist.device.AndroidDeviceBridgeTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+io.github.yysassist.device.AndroidDeviceBridgeTest:
+INSTRUMENTATION_STATUS: test=cancellationBeforeAnAcquiredSessionIsDeliveredReleasesThatUnusedSession
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.device.AndroidDeviceBridgeTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Cancellation must not orphan an unused device input session
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertNotNull(Assert.java:713)
+	at io.github.yysassist.device.AndroidDeviceBridgeTest$cancellationBeforeAnAcquiredSessionIsDeliveredReleasesThatUnusedSession$1.invokeSuspend(AndroidDeviceBridgeTest.kt:239)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.device.AndroidDeviceBridgeTest.cancellationBeforeAnAcquiredSessionIsDeliveredReleasesThatUnusedSession(AndroidDeviceBridgeTest.kt:218)
+
+INSTRUMENTATION_STATUS: stream=
+Error in cancellationBeforeAnAcquiredSessionIsDeliveredReleasesThatUnusedSession(io.github.yysassist.device.AndroidDeviceBridgeTest):
+java.lang.AssertionError: Cancellation must not orphan an unused device input session
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertNotNull(Assert.java:713)
+	at io.github.yysassist.device.AndroidDeviceBridgeTest$cancellationBeforeAnAcquiredSessionIsDeliveredReleasesThatUnusedSession$1.invokeSuspend(AndroidDeviceBridgeTest.kt:239)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.device.AndroidDeviceBridgeTest.cancellationBeforeAnAcquiredSessionIsDeliveredReleasesThatUnusedSession(AndroidDeviceBridgeTest.kt:218)
+
+INSTRUMENTATION_STATUS: test=cancellationBeforeAnAcquiredSessionIsDeliveredReleasesThatUnusedSession
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 2.604
+There was 1 failure:
+1) cancellationBeforeAnAcquiredSessionIsDeliveredReleasesThatUnusedSession(io.github.yysassist.device.AndroidDeviceBridgeTest)
+java.lang.AssertionError: Cancellation must not orphan an unused device input session
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at org.junit.Assert.assertNotNull(Assert.java:713)
+	at io.github.yysassist.device.AndroidDeviceBridgeTest$cancellationBeforeAnAcquiredSessionIsDeliveredReleasesThatUnusedSession$1.invokeSuspend(AndroidDeviceBridgeTest.kt:239)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.device.AndroidDeviceBridgeTest.cancellationBeforeAnAcquiredSessionIsDeliveredReleasesThatUnusedSession(AndroidDeviceBridgeTest.kt:218)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

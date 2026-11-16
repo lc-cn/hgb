@@ -1,0 +1,3196 @@
+{
+  "date": "2026-11-15",
+  "scope": "Local memory-only HTML prototype; no Android, game, login-state extraction/restore, network, actual scheduling or real notification delivery.",
+  "sourceSha256": {
+    "docs/prototype/app-v2.html": "3fef8a4d6cb275e72a6e7fccdacd6ab617f1b891b1b5c2827285775fa58d57b4",
+    "docs/prototype/execution-simulator.js": "122ea8c28c1b1f6bf9f1218633e4b269aa8789cc3d2eac598aeda05473e4bb41",
+    "docs/prototype/event-rules-simulator.js": "a9b86b5807f3272d3376c414993248b9f89e1dda2ead711501a5e0c0f246e176",
+    "docs/prototype/game-session-simulator.js": "21c89d5acfd53816afdf2069540af4ec618472ccba05f9e76980e9b7c396cf91",
+    "docs/prototype/tests/execution-simulator.test.cjs": "a661fae75ec9a9f65345ebbf9fb6288a874859330ecfa39e53b16d662f137d83",
+    "docs/prototype/tests/event-rules-simulator.test.cjs": "6f2bf39486b13f03426dbdc527ca963d01f606e0c347fa71b52edafb8c25e4b5",
+    "docs/prototype/tests/game-session-simulator.test.cjs": "26f9d10c27e9751e49ca0a539287d0ffedb19217127577f02a6932a1b388e6fd"
+  },
+  "nodeScenarios": {
+    "execution": {
+      "passed": 32,
+      "failed": 0
+    },
+    "eventRules": {
+      "passed": 18,
+      "failed": 0
+    },
+    "gameSession": {
+      "passed": 22,
+      "failed": 0
+    },
+    "command": "node --test docs/prototype/tests/*.test.cjs"
+  },
+  "browser": {
+    "workbenchAccountIsolation": {
+      "passed": 39,
+      "failed": 0,
+      "checks": [
+        {
+          "name": "portrait: account and actions share title row",
+          "pass": true
+        },
+        {
+          "name": "portrait: running account cannot open picker",
+          "pass": true
+        },
+        {
+          "name": "portrait: unsaved running account has save and stop icons",
+          "pass": true
+        },
+        {
+          "name": "portrait: header fits without overlap",
+          "pass": true
+        },
+        {
+          "name": "portrait: save discloses stop before changing game",
+          "pass": true
+        },
+        {
+          "name": "portrait: save captures once and stopped header offers start",
+          "pass": true
+        },
+        {
+          "name": "portrait: saved A plans retained",
+          "pass": true
+        },
+        {
+          "name": "portrait: B does not show A plans or results",
+          "pass": true
+        },
+        {
+          "name": "portrait: B plan list is empty",
+          "pass": true
+        },
+        {
+          "name": "portrait: B plan saves with immutable B owner",
+          "pass": true
+        },
+        {
+          "name": "portrait: A plans return and B plan stays stored separately",
+          "pass": true
+        },
+        {
+          "name": "portrait: stopped account opens anchored picker",
+          "pass": true
+        },
+        {
+          "name": "portrait: selection closes picker without pretending login succeeded",
+          "pass": true
+        },
+        {
+          "name": "portrait: launching locks switch and shows conditional pending status",
+          "pass": true
+        },
+        {
+          "name": "portrait: verified B changes isolated workspace",
+          "pass": true
+        },
+        {
+          "name": "portrait: saved running account no longer shows save icon",
+          "pass": true
+        },
+        {
+          "name": "portrait: settings has one low-frequency account entry",
+          "pass": true
+        },
+        {
+          "name": "portrait: settings no longer duplicates launch or account selection",
+          "pass": true
+        },
+        {
+          "name": "portrait: task steps can expand without preceding all editable fields",
+          "pass": true
+        },
+        {
+          "name": "landscape: account and actions share title row",
+          "pass": true
+        },
+        {
+          "name": "landscape: running account cannot open picker",
+          "pass": true
+        },
+        {
+          "name": "landscape: unsaved running account has save and stop icons",
+          "pass": true
+        },
+        {
+          "name": "landscape: header fits without overlap",
+          "pass": true
+        },
+        {
+          "name": "landscape: save discloses stop before changing game",
+          "pass": true
+        },
+        {
+          "name": "landscape: save captures once and stopped header offers start",
+          "pass": true
+        },
+        {
+          "name": "landscape: saved A plans retained",
+          "pass": true
+        },
+        {
+          "name": "landscape: B does not show A plans or results",
+          "pass": true
+        },
+        {
+          "name": "landscape: B plan list is empty",
+          "pass": true
+        },
+        {
+          "name": "landscape: B plan saves with immutable B owner",
+          "pass": true
+        },
+        {
+          "name": "landscape: A plans return and B plan stays stored separately",
+          "pass": true
+        },
+        {
+          "name": "landscape: stopped account opens anchored picker",
+          "pass": true
+        },
+        {
+          "name": "landscape: selection closes picker without pretending login succeeded",
+          "pass": true
+        },
+        {
+          "name": "landscape: launching locks switch and shows conditional pending status",
+          "pass": true
+        },
+        {
+          "name": "landscape: verified B changes isolated workspace",
+          "pass": true
+        },
+        {
+          "name": "landscape: saved running account no longer shows save icon",
+          "pass": true
+        },
+        {
+          "name": "landscape: settings has one low-frequency account entry",
+          "pass": true
+        },
+        {
+          "name": "landscape: settings no longer duplicates launch or account selection",
+          "pass": true
+        },
+        {
+          "name": "landscape: task steps can expand without preceding all editable fields",
+          "pass": true
+        },
+        {
+          "name": "no runtime exceptions",
+          "pass": true
+        }
+      ]
+    },
+    "gameLifecycle": {
+      "passed": 40,
+      "failed": 0,
+      "checks": [
+        {
+          "name": "portrait: default capability is unverified and snapshot list empty",
+          "pass": true
+        },
+        {
+          "name": "portrait: unsupported capture cannot pretend success",
+          "pass": true
+        },
+        {
+          "name": "portrait: snapshots saved unverified and game stopped",
+          "pass": true
+        },
+        {
+          "name": "portrait: local snapshot alias can be edited",
+          "pass": true
+        },
+        {
+          "name": "portrait: restore waits for fresh login identity",
+          "pass": true
+        },
+        {
+          "name": "portrait: continue cannot bypass pending identity",
+          "pass": true
+        },
+        {
+          "name": "portrait: matching account confirmed without resuming queue",
+          "pass": true
+        },
+        {
+          "name": "portrait: switching holds old queue until account is confirmed",
+          "pass": true
+        },
+        {
+          "name": "portrait: mismatch keeps old queue and rollback evidence",
+          "pass": true
+        },
+        {
+          "name": "portrait: rollback retains old execution and remains held",
+          "pass": true
+        },
+        {
+          "name": "portrait: successful account change clears original queue",
+          "pass": true
+        },
+        {
+          "name": "portrait: history retains account-switch cancellation reason",
+          "pass": true
+        },
+        {
+          "name": "portrait: newly added task binds new identity",
+          "pass": true
+        },
+        {
+          "name": "portrait: new account task starts only after user continues",
+          "pass": true
+        },
+        {
+          "name": "portrait: unknown business result blocks cross-account restore",
+          "pass": true
+        },
+        {
+          "name": "portrait: current account launch never clears unknown result",
+          "pass": true
+        },
+        {
+          "name": "portrait: exports contain no login-state payload",
+          "pass": true
+        },
+        {
+          "name": "landscape: default capability is unverified and snapshot list empty",
+          "pass": true
+        },
+        {
+          "name": "landscape: unsupported capture cannot pretend success",
+          "pass": true
+        },
+        {
+          "name": "landscape: snapshots saved unverified and game stopped",
+          "pass": true
+        },
+        {
+          "name": "landscape: local snapshot alias can be edited",
+          "pass": true
+        },
+        {
+          "name": "landscape: restore waits for fresh login identity",
+          "pass": true
+        },
+        {
+          "name": "landscape: continue cannot bypass pending identity",
+          "pass": true
+        },
+        {
+          "name": "landscape: matching account confirmed without resuming queue",
+          "pass": true
+        },
+        {
+          "name": "landscape: switching holds old queue until account is confirmed",
+          "pass": true
+        },
+        {
+          "name": "landscape: mismatch keeps old queue and rollback evidence",
+          "pass": true
+        },
+        {
+          "name": "landscape: rollback retains old execution and remains held",
+          "pass": true
+        },
+        {
+          "name": "landscape: successful account change clears original queue",
+          "pass": true
+        },
+        {
+          "name": "landscape: history retains account-switch cancellation reason",
+          "pass": true
+        },
+        {
+          "name": "landscape: newly added task binds new identity",
+          "pass": true
+        },
+        {
+          "name": "landscape: new account task starts only after user continues",
+          "pass": true
+        },
+        {
+          "name": "landscape: unknown business result blocks cross-account restore",
+          "pass": true
+        },
+        {
+          "name": "landscape: current account launch never clears unknown result",
+          "pass": true
+        },
+        {
+          "name": "landscape: exports contain no login-state payload",
+          "pass": true
+        },
+        {
+          "name": "capture waits for old input quiescence",
+          "pass": true
+        },
+        {
+          "name": "quiescence callback permits capture but holds queue",
+          "pass": true
+        },
+        {
+          "name": "close stops simulated game and does not resume queue",
+          "pass": true
+        },
+        {
+          "name": "autostart only saves preference",
+          "pass": true
+        },
+        {
+          "name": "boot restores assistant pending authorization, not game or task",
+          "pass": true
+        },
+        {
+          "name": "no runtime exceptions",
+          "pass": true
+        }
+      ]
+    },
+    "modelProviders": {
+      "passed": 47,
+      "failed": 0,
+      "checks": [
+        {
+          "name": "portrait: provider is native dropdown with two initial presets",
+          "pass": true
+        },
+        {
+          "name": "portrait: configuration initially hidden",
+          "pass": true
+        },
+        {
+          "name": "portrait: configure is right of dropdown",
+          "pass": true
+        },
+        {
+          "name": "portrait: configure reveals key and official guide",
+          "pass": true
+        },
+        {
+          "name": "portrait: selecting provider collapses details and does not apply",
+          "pass": true
+        },
+        {
+          "name": "portrait: different preset cannot reuse key",
+          "pass": true
+        },
+        {
+          "name": "portrait: unsaved first provider key survives switching",
+          "pass": true
+        },
+        {
+          "name": "portrait: preset saved and verified without auto enable",
+          "pass": true
+        },
+        {
+          "name": "portrait: second provider retains own draft key",
+          "pass": true
+        },
+        {
+          "name": "portrait: saved first provider key remains available with masked placeholder",
+          "pass": true
+        },
+        {
+          "name": "portrait: unchanged validated configuration retains validation",
+          "pass": true
+        },
+        {
+          "name": "portrait: add reveals new provider name and connection fields",
+          "pass": true
+        },
+        {
+          "name": "portrait: incomplete add rejected without registration",
+          "pass": true
+        },
+        {
+          "name": "portrait: invalid service url rejected",
+          "pass": true
+        },
+        {
+          "name": "portrait: valid add registers and selects provider",
+          "pass": true
+        },
+        {
+          "name": "portrait: added provider appears as selected dropdown option",
+          "pass": true
+        },
+        {
+          "name": "portrait: adding custom did not replace builtin key",
+          "pass": true
+        },
+        {
+          "name": "portrait: custom connection and key restored",
+          "pass": true
+        },
+        {
+          "name": "portrait: changing destination never reuses saved credential",
+          "pass": true
+        },
+        {
+          "name": "portrait: new destination saved without claiming key or verification",
+          "pass": true
+        },
+        {
+          "name": "portrait: cancel discards unregistered provider and retains selection",
+          "pass": true
+        },
+        {
+          "name": "portrait: API and record export do not expose any demo keys",
+          "pass": true
+        },
+        {
+          "name": "portrait: rotation preserves provider and collapsed config",
+          "pass": true
+        },
+        {
+          "name": "landscape: provider is native dropdown with two initial presets",
+          "pass": true
+        },
+        {
+          "name": "landscape: configuration initially hidden",
+          "pass": true
+        },
+        {
+          "name": "landscape: configure is right of dropdown",
+          "pass": true
+        },
+        {
+          "name": "landscape: configure reveals key and official guide",
+          "pass": true
+        },
+        {
+          "name": "landscape: selecting provider collapses details and does not apply",
+          "pass": true
+        },
+        {
+          "name": "landscape: different preset cannot reuse key",
+          "pass": true
+        },
+        {
+          "name": "landscape: unsaved first provider key survives switching",
+          "pass": true
+        },
+        {
+          "name": "landscape: preset saved and verified without auto enable",
+          "pass": true
+        },
+        {
+          "name": "landscape: second provider retains own draft key",
+          "pass": true
+        },
+        {
+          "name": "landscape: saved first provider key remains available with masked placeholder",
+          "pass": true
+        },
+        {
+          "name": "landscape: unchanged validated configuration retains validation",
+          "pass": true
+        },
+        {
+          "name": "landscape: add reveals new provider name and connection fields",
+          "pass": true
+        },
+        {
+          "name": "landscape: incomplete add rejected without registration",
+          "pass": true
+        },
+        {
+          "name": "landscape: invalid service url rejected",
+          "pass": true
+        },
+        {
+          "name": "landscape: valid add registers and selects provider",
+          "pass": true
+        },
+        {
+          "name": "landscape: added provider appears as selected dropdown option",
+          "pass": true
+        },
+        {
+          "name": "landscape: adding custom did not replace builtin key",
+          "pass": true
+        },
+        {
+          "name": "landscape: custom connection and key restored",
+          "pass": true
+        },
+        {
+          "name": "landscape: changing destination never reuses saved credential",
+          "pass": true
+        },
+        {
+          "name": "landscape: new destination saved without claiming key or verification",
+          "pass": true
+        },
+        {
+          "name": "landscape: cancel discards unregistered provider and retains selection",
+          "pass": true
+        },
+        {
+          "name": "landscape: API and record export do not expose any demo keys",
+          "pass": true
+        },
+        {
+          "name": "landscape: rotation preserves provider and collapsed config",
+          "pass": true
+        },
+        {
+          "name": "no runtime errors",
+          "pass": true
+        }
+      ]
+    },
+    "notificationChannels": {
+      "passed": 71,
+      "failed": 0,
+      "checks": [
+        {
+          "name": "portrait: add action in app bar without bottom action bar",
+          "pass": true
+        },
+        {
+          "name": "portrait: test and save share top navigation row",
+          "pass": true
+        },
+        {
+          "name": "portrait: six channel types available",
+          "pass": true
+        },
+        {
+          "name": "portrait local: responsive form has no horizontal overflow",
+          "pass": true
+        },
+        {
+          "name": "portrait local: top actions stay inside navigation bar",
+          "pass": true
+        },
+        {
+          "name": "portrait: local hides destinations and credential",
+          "pass": true
+        },
+        {
+          "name": "portrait dingtalk: responsive form has no horizontal overflow",
+          "pass": true
+        },
+        {
+          "name": "portrait dingtalk: top actions stay inside navigation bar",
+          "pass": true
+        },
+        {
+          "name": "portrait wecom: responsive form has no horizontal overflow",
+          "pass": true
+        },
+        {
+          "name": "portrait wecom: top actions stay inside navigation bar",
+          "pass": true
+        },
+        {
+          "name": "portrait: enterprise wechat webhook needs no signing input",
+          "pass": true
+        },
+        {
+          "name": "portrait bark: responsive form has no horizontal overflow",
+          "pass": true
+        },
+        {
+          "name": "portrait bark: top actions stay inside navigation bar",
+          "pass": true
+        },
+        {
+          "name": "portrait email: responsive form has no horizontal overflow",
+          "pass": true
+        },
+        {
+          "name": "portrait email: top actions stay inside navigation bar",
+          "pass": true
+        },
+        {
+          "name": "portrait webhook: responsive form has no horizontal overflow",
+          "pass": true
+        },
+        {
+          "name": "portrait webhook: top actions stay inside navigation bar",
+          "pass": true
+        },
+        {
+          "name": "portrait: test uses draft without saving channel",
+          "pass": true
+        },
+        {
+          "name": "portrait: test record keeps tested draft name",
+          "pass": true
+        },
+        {
+          "name": "portrait: dingtalk saves correct type and secret metadata",
+          "pass": true
+        },
+        {
+          "name": "portrait: type switch never borrows webhook signing key",
+          "pass": true
+        },
+        {
+          "name": "portrait: missing Bark device key blocks test and save",
+          "pass": true
+        },
+        {
+          "name": "portrait: Bark configured separately",
+          "pass": true
+        },
+        {
+          "name": "portrait: destination change does not reuse device key",
+          "pass": true
+        },
+        {
+          "name": "portrait: SMTP auth requires own credential",
+          "pass": true
+        },
+        {
+          "name": "portrait: fractional SMTP port rejected",
+          "pass": true
+        },
+        {
+          "name": "portrait: invalid recipient rejected",
+          "pass": true
+        },
+        {
+          "name": "portrait: SMTP sender recipient auth saved",
+          "pass": true
+        },
+        {
+          "name": "portrait: changing SMTP account never reuses password",
+          "pass": true
+        },
+        {
+          "name": "portrait: relay mode hides unused login fields",
+          "pass": true
+        },
+        {
+          "name": "portrait: no-auth relay does not claim saved credential",
+          "pass": true
+        },
+        {
+          "name": "portrait: wecom saves without SMTP or signing fields",
+          "pass": true
+        },
+        {
+          "name": "portrait: returning to a type restores only its own draft and credential",
+          "pass": true
+        },
+        {
+          "name": "portrait: direction switch preserves draft type and destinations",
+          "pass": true
+        },
+        {
+          "name": "portrait: public API and export omit all credentials and webhook targets",
+          "pass": true
+        },
+        {
+          "name": "landscape: add action in app bar without bottom action bar",
+          "pass": true
+        },
+        {
+          "name": "landscape: test and save share top navigation row",
+          "pass": true
+        },
+        {
+          "name": "landscape: six channel types available",
+          "pass": true
+        },
+        {
+          "name": "landscape local: responsive form has no horizontal overflow",
+          "pass": true
+        },
+        {
+          "name": "landscape local: top actions stay inside navigation bar",
+          "pass": true
+        },
+        {
+          "name": "landscape: local hides destinations and credential",
+          "pass": true
+        },
+        {
+          "name": "landscape dingtalk: responsive form has no horizontal overflow",
+          "pass": true
+        },
+        {
+          "name": "landscape dingtalk: top actions stay inside navigation bar",
+          "pass": true
+        },
+        {
+          "name": "landscape wecom: responsive form has no horizontal overflow",
+          "pass": true
+        },
+        {
+          "name": "landscape wecom: top actions stay inside navigation bar",
+          "pass": true
+        },
+        {
+          "name": "landscape: enterprise wechat webhook needs no signing input",
+          "pass": true
+        },
+        {
+          "name": "landscape bark: responsive form has no horizontal overflow",
+          "pass": true
+        },
+        {
+          "name": "landscape bark: top actions stay inside navigation bar",
+          "pass": true
+        },
+        {
+          "name": "landscape email: responsive form has no horizontal overflow",
+          "pass": true
+        },
+        {
+          "name": "landscape email: top actions stay inside navigation bar",
+          "pass": true
+        },
+        {
+          "name": "landscape webhook: responsive form has no horizontal overflow",
+          "pass": true
+        },
+        {
+          "name": "landscape webhook: top actions stay inside navigation bar",
+          "pass": true
+        },
+        {
+          "name": "landscape: test uses draft without saving channel",
+          "pass": true
+        },
+        {
+          "name": "landscape: test record keeps tested draft name",
+          "pass": true
+        },
+        {
+          "name": "landscape: dingtalk saves correct type and secret metadata",
+          "pass": true
+        },
+        {
+          "name": "landscape: type switch never borrows webhook signing key",
+          "pass": true
+        },
+        {
+          "name": "landscape: missing Bark device key blocks test and save",
+          "pass": true
+        },
+        {
+          "name": "landscape: Bark configured separately",
+          "pass": true
+        },
+        {
+          "name": "landscape: destination change does not reuse device key",
+          "pass": true
+        },
+        {
+          "name": "landscape: SMTP auth requires own credential",
+          "pass": true
+        },
+        {
+          "name": "landscape: fractional SMTP port rejected",
+          "pass": true
+        },
+        {
+          "name": "landscape: invalid recipient rejected",
+          "pass": true
+        },
+        {
+          "name": "landscape: SMTP sender recipient auth saved",
+          "pass": true
+        },
+        {
+          "name": "landscape: changing SMTP account never reuses password",
+          "pass": true
+        },
+        {
+          "name": "landscape: relay mode hides unused login fields",
+          "pass": true
+        },
+        {
+          "name": "landscape: no-auth relay does not claim saved credential",
+          "pass": true
+        },
+        {
+          "name": "landscape: wecom saves without SMTP or signing fields",
+          "pass": true
+        },
+        {
+          "name": "landscape: returning to a type restores only its own draft and credential",
+          "pass": true
+        },
+        {
+          "name": "landscape: direction switch preserves draft type and destinations",
+          "pass": true
+        },
+        {
+          "name": "landscape: public API and export omit all credentials and webhook targets",
+          "pass": true
+        },
+        {
+          "name": "no runtime exceptions",
+          "pass": true
+        }
+      ]
+    },
+    "eventsHistory": {
+      "passed": 55,
+      "failed": 0,
+      "checks": [
+        {
+          "name": "portrait: settings has one notification management entry",
+          "pass": true
+        },
+        {
+          "name": "portrait: management separates channels rules and events",
+          "pass": true
+        },
+        {
+          "name": "portrait: eleven rules default off",
+          "pass": true
+        },
+        {
+          "name": "portrait: can enable task-started",
+          "pass": true
+        },
+        {
+          "name": "portrait: can enable task-succeeded",
+          "pass": true
+        },
+        {
+          "name": "portrait: can enable plan-started",
+          "pass": true
+        },
+        {
+          "name": "portrait: can enable plan-completed",
+          "pass": true
+        },
+        {
+          "name": "portrait: first dispatch produces one plan and child start",
+          "pass": true
+        },
+        {
+          "name": "portrait: subscriptions route task and plan events separately",
+          "pass": true
+        },
+        {
+          "name": "portrait: child success and next task start are distinct",
+          "pass": true
+        },
+        {
+          "name": "portrait: restore never repeats start",
+          "pass": true
+        },
+        {
+          "name": "portrait: two task successes and one plan end",
+          "pass": true
+        },
+        {
+          "name": "portrait: each triggered event has only matched delivery",
+          "pass": true
+        },
+        {
+          "name": "portrait: rerender never redelivers",
+          "pass": true
+        },
+        {
+          "name": "portrait: event log stores facts independently",
+          "pass": true
+        },
+        {
+          "name": "portrait: event detail links rule and matched channel",
+          "pass": true
+        },
+        {
+          "name": "portrait: history menu and title renamed",
+          "pass": true
+        },
+        {
+          "name": "portrait: exactly notification and run tabs, no pending",
+          "pass": true
+        },
+        {
+          "name": "portrait: run tab contains actual completed plan",
+          "pass": true
+        },
+        {
+          "name": "portrait: portrait tabs remain horizontal above results",
+          "pass": true
+        },
+        {
+          "name": "portrait: keyboard tab selection works",
+          "pass": true
+        },
+        {
+          "name": "portrait: changing direction preserves selected tab",
+          "pass": true
+        },
+        {
+          "name": "landscape: settings has one notification management entry",
+          "pass": true
+        },
+        {
+          "name": "landscape: management separates channels rules and events",
+          "pass": true
+        },
+        {
+          "name": "landscape: eleven rules default off",
+          "pass": true
+        },
+        {
+          "name": "landscape: can enable task-started",
+          "pass": true
+        },
+        {
+          "name": "landscape: can enable task-succeeded",
+          "pass": true
+        },
+        {
+          "name": "landscape: can enable plan-started",
+          "pass": true
+        },
+        {
+          "name": "landscape: can enable plan-completed",
+          "pass": true
+        },
+        {
+          "name": "landscape: first dispatch produces one plan and child start",
+          "pass": true
+        },
+        {
+          "name": "landscape: subscriptions route task and plan events separately",
+          "pass": true
+        },
+        {
+          "name": "landscape: child success and next task start are distinct",
+          "pass": true
+        },
+        {
+          "name": "landscape: restore never repeats start",
+          "pass": true
+        },
+        {
+          "name": "landscape: two task successes and one plan end",
+          "pass": true
+        },
+        {
+          "name": "landscape: each triggered event has only matched delivery",
+          "pass": true
+        },
+        {
+          "name": "landscape: rerender never redelivers",
+          "pass": true
+        },
+        {
+          "name": "landscape: event log stores facts independently",
+          "pass": true
+        },
+        {
+          "name": "landscape: event detail links rule and matched channel",
+          "pass": true
+        },
+        {
+          "name": "landscape: history menu and title renamed",
+          "pass": true
+        },
+        {
+          "name": "landscape: exactly notification and run tabs, no pending",
+          "pass": true
+        },
+        {
+          "name": "landscape: run tab contains actual completed plan",
+          "pass": true
+        },
+        {
+          "name": "landscape: tabs left, results right and independently scrollable",
+          "pass": true
+        },
+        {
+          "name": "landscape: keyboard tab selection works",
+          "pass": true
+        },
+        {
+          "name": "landscape: changing direction preserves selected tab",
+          "pass": true
+        },
+        {
+          "name": "unsubscribed event exists without any delivery",
+          "pass": true
+        },
+        {
+          "name": "enabling subscription never backfills past events",
+          "pass": true
+        },
+        {
+          "name": "manual hold does not count as queue delay",
+          "pass": true
+        },
+        {
+          "name": "queue delay below threshold does not trigger",
+          "pass": true
+        },
+        {
+          "name": "queue delay fires while execution queue unchanged",
+          "pass": true
+        },
+        {
+          "name": "lost runtime condition becomes event without pretending task failure",
+          "pass": true
+        },
+        {
+          "name": "resource incident triggers after configured duration",
+          "pass": true
+        },
+        {
+          "name": "same resource incident never repeats",
+          "pass": true
+        },
+        {
+          "name": "recovered condition permits a later independent incident",
+          "pass": true
+        },
+        {
+          "name": "old waiting module URL now opens notification management",
+          "pass": true
+        },
+        {
+          "name": "no runtime exceptions",
+          "pass": true
+        }
+      ]
+    },
+    "allPagesQueue": {
+      "passed": 195,
+      "failed": 0,
+      "checks": [
+        {
+          "name": "portrait: home",
+          "pass": true,
+          "detail": {
+            "page": "home",
+            "title": "工作台",
+            "overflow": false,
+            "h": 683,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: tasks",
+          "pass": true,
+          "detail": {
+            "page": "tasks",
+            "title": "任务中心",
+            "overflow": false,
+            "h": 683,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: plans",
+          "pass": true,
+          "detail": {
+            "page": "plans",
+            "title": "托管计划",
+            "overflow": false,
+            "h": 683,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: messages",
+          "pass": true,
+          "detail": {
+            "page": "messages",
+            "title": "历史记录",
+            "overflow": false,
+            "h": 683,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: settings",
+          "pass": true,
+          "detail": {
+            "page": "settings",
+            "title": "设置",
+            "overflow": false,
+            "h": 683,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/daily-rewards",
+          "pass": true,
+          "detail": {
+            "page": "task/daily-rewards",
+            "title": "每日物资领取",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/weekly-rewards",
+          "pass": true,
+          "detail": {
+            "page": "task/weekly-rewards",
+            "title": "每周物资领取",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/jade-card",
+          "pass": true,
+          "detail": {
+            "page": "task/jade-card",
+            "title": "永久勾玉卡产出",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/flower",
+          "pass": true,
+          "detail": {
+            "page": "task/flower",
+            "title": "花合战奖励",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/bounty",
+          "pass": true,
+          "detail": {
+            "page": "task/bounty",
+            "title": "悬赏封印",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/pet",
+          "pass": true,
+          "detail": {
+            "page": "task/pet",
+            "title": "宠物照料",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/shop-general",
+          "pass": true,
+          "detail": {
+            "page": "task/shop-general",
+            "title": "一般商店兑换",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/shop-wed",
+          "pass": true,
+          "detail": {
+            "page": "task/shop-wed",
+            "title": "周三商店兑换",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/shop-sat",
+          "pass": true,
+          "detail": {
+            "page": "task/shop-sat",
+            "title": "周六商店兑换",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/soul-run",
+          "pass": true,
+          "detail": {
+            "page": "task/soul-run",
+            "title": "御魂副本",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/awake-run",
+          "pass": true,
+          "detail": {
+            "page": "task/awake-run",
+            "title": "觉醒副本",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/explore-run",
+          "pass": true,
+          "detail": {
+            "page": "task/explore-run",
+            "title": "探索",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/spirit-run",
+          "pass": true,
+          "detail": {
+            "page": "task/spirit-run",
+            "title": "御灵",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/soul-enhance",
+          "pass": true,
+          "detail": {
+            "page": "task/soul-enhance",
+            "title": "御魂强化",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/soul-sort",
+          "pass": true,
+          "detail": {
+            "page": "task/soul-sort",
+            "title": "御魂整理",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/realm-claim",
+          "pass": true,
+          "detail": {
+            "page": "task/realm-claim",
+            "title": "结界物资收取",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/realm-card",
+          "pass": true,
+          "detail": {
+            "page": "task/realm-card",
+            "title": "结界挂卡",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/realm-raid",
+          "pass": true,
+          "detail": {
+            "page": "task/realm-raid",
+            "title": "个人结界突破",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/guild-raid",
+          "pass": true,
+          "detail": {
+            "page": "task/guild-raid",
+            "title": "寮突破",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/hunt",
+          "pass": true,
+          "detail": {
+            "page": "task/hunt",
+            "title": "狩猎战",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/event-repeat",
+          "pass": true,
+          "detail": {
+            "page": "task/event-repeat",
+            "title": "已适配活动",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task/event-auto",
+          "pass": true,
+          "detail": {
+            "page": "task/event-auto",
+            "title": "自主理解新活动",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: plan/daily",
+          "pass": true,
+          "detail": {
+            "page": "plan/daily",
+            "title": "每日物资托管",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: plan/shops",
+          "pass": true,
+          "detail": {
+            "page": "plan/shops",
+            "title": "周期商店计划",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: inputs-demo",
+          "pass": true,
+          "detail": {
+            "page": "inputs-demo",
+            "title": "输入控件示例",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: task-updates",
+          "pass": true,
+          "detail": {
+            "page": "task-updates",
+            "title": "任务更新",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: model",
+          "pass": true,
+          "detail": {
+            "page": "model",
+            "title": "云端视觉模型",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: environment",
+          "pass": true,
+          "detail": {
+            "page": "environment",
+            "title": "运行环境",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: game-control",
+          "pass": true,
+          "detail": {
+            "page": "game-control",
+            "title": "账号与启动",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: accounts",
+          "pass": true,
+          "detail": {
+            "page": "accounts",
+            "title": "账号快照",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: network",
+          "pass": true,
+          "detail": {
+            "page": "network",
+            "title": "网络设置",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: channels",
+          "pass": true,
+          "detail": {
+            "page": "channels",
+            "title": "通知渠道",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: channel/local",
+          "pass": true,
+          "detail": {
+            "page": "channel/local",
+            "title": "渠道配置",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: channel/webhook",
+          "pass": true,
+          "detail": {
+            "page": "channel/webhook",
+            "title": "渠道配置",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: notification-management",
+          "pass": true,
+          "detail": {
+            "page": "notification-management",
+            "title": "通知管理",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: event-rules",
+          "pass": true,
+          "detail": {
+            "page": "event-rules",
+            "title": "事件规则",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: event-log",
+          "pass": true,
+          "detail": {
+            "page": "event-log",
+            "title": "事件记录",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: event-rule/execution-failed",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/execution-failed",
+            "title": "连续执行失败",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: event-rule/unknown-result",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/unknown-result",
+            "title": "结果待核对",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: event-rule/queue-wait",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/queue-wait",
+            "title": "排队等待过久",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: event-rule/no-progress",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/no-progress",
+            "title": "执行无进展",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: event-rule/condition-lost",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/condition-lost",
+            "title": "运行条件中断",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: event-rule/resource-shortage",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/resource-shortage",
+            "title": "资源或容量受限",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: event-rule/vision-unavailable",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/vision-unavailable",
+            "title": "视觉服务异常",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: event-rule/task-started",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/task-started",
+            "title": "任务开始",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: event-rule/task-succeeded",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/task-succeeded",
+            "title": "任务成功",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: event-rule/plan-started",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/plan-started",
+            "title": "计划开始",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: event-rule/plan-completed",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/plan-completed",
+            "title": "计划结束",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: float-settings",
+          "pass": true,
+          "detail": {
+            "page": "float-settings",
+            "title": "悬浮球",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: data-settings",
+          "pass": true,
+          "detail": {
+            "page": "data-settings",
+            "title": "运行与数据",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: diagnostics",
+          "pass": true,
+          "detail": {
+            "page": "diagnostics",
+            "title": "开发诊断",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: issue/auth",
+          "pass": true,
+          "detail": {
+            "page": "issue/auth",
+            "title": "问题原因",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: issue/resource",
+          "pass": true,
+          "detail": {
+            "page": "issue/resource",
+            "title": "问题原因",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: issue/delivery",
+          "pass": true,
+          "detail": {
+            "page": "issue/delivery",
+            "title": "问题原因",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: issue/unknown",
+          "pass": true,
+          "detail": {
+            "page": "issue/unknown",
+            "title": "问题原因",
+            "overflow": false,
+            "h": 694,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: history/sample-result",
+          "pass": true,
+          "detail": {
+            "page": "history/sample-result",
+            "title": "运行记录",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: delivery/sample-delivery",
+          "pass": true,
+          "detail": {
+            "page": "delivery/sample-delivery",
+            "title": "通知投递",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: preview/soul-sort",
+          "pass": true,
+          "detail": {
+            "page": "preview/soul-sort",
+            "title": "御魂对象预览",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: preview/soul-enhance",
+          "pass": true,
+          "detail": {
+            "page": "preview/soul-enhance",
+            "title": "御魂对象预览",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "portrait: activity/event-auto",
+          "pass": true,
+          "detail": {
+            "page": "activity/event-auto",
+            "title": "活动规则与进度",
+            "overflow": false,
+            "h": 758,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: home",
+          "pass": true,
+          "detail": {
+            "page": "home",
+            "title": "工作台",
+            "overflow": false,
+            "h": 259,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: tasks",
+          "pass": true,
+          "detail": {
+            "page": "tasks",
+            "title": "任务中心",
+            "overflow": false,
+            "h": 259,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: plans",
+          "pass": true,
+          "detail": {
+            "page": "plans",
+            "title": "托管计划",
+            "overflow": false,
+            "h": 259,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: messages",
+          "pass": true,
+          "detail": {
+            "page": "messages",
+            "title": "历史记录",
+            "overflow": false,
+            "h": 259,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: settings",
+          "pass": true,
+          "detail": {
+            "page": "settings",
+            "title": "设置",
+            "overflow": false,
+            "h": 259,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/daily-rewards",
+          "pass": true,
+          "detail": {
+            "page": "task/daily-rewards",
+            "title": "每日物资领取",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/weekly-rewards",
+          "pass": true,
+          "detail": {
+            "page": "task/weekly-rewards",
+            "title": "每周物资领取",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/jade-card",
+          "pass": true,
+          "detail": {
+            "page": "task/jade-card",
+            "title": "永久勾玉卡产出",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/flower",
+          "pass": true,
+          "detail": {
+            "page": "task/flower",
+            "title": "花合战奖励",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/bounty",
+          "pass": true,
+          "detail": {
+            "page": "task/bounty",
+            "title": "悬赏封印",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/pet",
+          "pass": true,
+          "detail": {
+            "page": "task/pet",
+            "title": "宠物照料",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/shop-general",
+          "pass": true,
+          "detail": {
+            "page": "task/shop-general",
+            "title": "一般商店兑换",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/shop-wed",
+          "pass": true,
+          "detail": {
+            "page": "task/shop-wed",
+            "title": "周三商店兑换",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/shop-sat",
+          "pass": true,
+          "detail": {
+            "page": "task/shop-sat",
+            "title": "周六商店兑换",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/soul-run",
+          "pass": true,
+          "detail": {
+            "page": "task/soul-run",
+            "title": "御魂副本",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/awake-run",
+          "pass": true,
+          "detail": {
+            "page": "task/awake-run",
+            "title": "觉醒副本",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/explore-run",
+          "pass": true,
+          "detail": {
+            "page": "task/explore-run",
+            "title": "探索",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/spirit-run",
+          "pass": true,
+          "detail": {
+            "page": "task/spirit-run",
+            "title": "御灵",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/soul-enhance",
+          "pass": true,
+          "detail": {
+            "page": "task/soul-enhance",
+            "title": "御魂强化",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/soul-sort",
+          "pass": true,
+          "detail": {
+            "page": "task/soul-sort",
+            "title": "御魂整理",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/realm-claim",
+          "pass": true,
+          "detail": {
+            "page": "task/realm-claim",
+            "title": "结界物资收取",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/realm-card",
+          "pass": true,
+          "detail": {
+            "page": "task/realm-card",
+            "title": "结界挂卡",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/realm-raid",
+          "pass": true,
+          "detail": {
+            "page": "task/realm-raid",
+            "title": "个人结界突破",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/guild-raid",
+          "pass": true,
+          "detail": {
+            "page": "task/guild-raid",
+            "title": "寮突破",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/hunt",
+          "pass": true,
+          "detail": {
+            "page": "task/hunt",
+            "title": "狩猎战",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/event-repeat",
+          "pass": true,
+          "detail": {
+            "page": "task/event-repeat",
+            "title": "已适配活动",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task/event-auto",
+          "pass": true,
+          "detail": {
+            "page": "task/event-auto",
+            "title": "自主理解新活动",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: plan/daily",
+          "pass": true,
+          "detail": {
+            "page": "plan/daily",
+            "title": "每日物资托管",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: plan/shops",
+          "pass": true,
+          "detail": {
+            "page": "plan/shops",
+            "title": "周期商店计划",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: inputs-demo",
+          "pass": true,
+          "detail": {
+            "page": "inputs-demo",
+            "title": "输入控件示例",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: task-updates",
+          "pass": true,
+          "detail": {
+            "page": "task-updates",
+            "title": "任务更新",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: model",
+          "pass": true,
+          "detail": {
+            "page": "model",
+            "title": "云端视觉模型",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: environment",
+          "pass": true,
+          "detail": {
+            "page": "environment",
+            "title": "运行环境",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: game-control",
+          "pass": true,
+          "detail": {
+            "page": "game-control",
+            "title": "账号与启动",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: accounts",
+          "pass": true,
+          "detail": {
+            "page": "accounts",
+            "title": "账号快照",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: network",
+          "pass": true,
+          "detail": {
+            "page": "network",
+            "title": "网络设置",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: channels",
+          "pass": true,
+          "detail": {
+            "page": "channels",
+            "title": "通知渠道",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: channel/local",
+          "pass": true,
+          "detail": {
+            "page": "channel/local",
+            "title": "渠道配置",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: channel/webhook",
+          "pass": true,
+          "detail": {
+            "page": "channel/webhook",
+            "title": "渠道配置",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: notification-management",
+          "pass": true,
+          "detail": {
+            "page": "notification-management",
+            "title": "通知管理",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: event-rules",
+          "pass": true,
+          "detail": {
+            "page": "event-rules",
+            "title": "事件规则",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: event-log",
+          "pass": true,
+          "detail": {
+            "page": "event-log",
+            "title": "事件记录",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: event-rule/execution-failed",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/execution-failed",
+            "title": "连续执行失败",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: event-rule/unknown-result",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/unknown-result",
+            "title": "结果待核对",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: event-rule/queue-wait",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/queue-wait",
+            "title": "排队等待过久",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: event-rule/no-progress",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/no-progress",
+            "title": "执行无进展",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: event-rule/condition-lost",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/condition-lost",
+            "title": "运行条件中断",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: event-rule/resource-shortage",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/resource-shortage",
+            "title": "资源或容量受限",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: event-rule/vision-unavailable",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/vision-unavailable",
+            "title": "视觉服务异常",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: event-rule/task-started",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/task-started",
+            "title": "任务开始",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: event-rule/task-succeeded",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/task-succeeded",
+            "title": "任务成功",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: event-rule/plan-started",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/plan-started",
+            "title": "计划开始",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: event-rule/plan-completed",
+          "pass": true,
+          "detail": {
+            "page": "event-rule/plan-completed",
+            "title": "计划结束",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: float-settings",
+          "pass": true,
+          "detail": {
+            "page": "float-settings",
+            "title": "悬浮球",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: data-settings",
+          "pass": true,
+          "detail": {
+            "page": "data-settings",
+            "title": "运行与数据",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: diagnostics",
+          "pass": true,
+          "detail": {
+            "page": "diagnostics",
+            "title": "开发诊断",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: issue/auth",
+          "pass": true,
+          "detail": {
+            "page": "issue/auth",
+            "title": "问题原因",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: issue/resource",
+          "pass": true,
+          "detail": {
+            "page": "issue/resource",
+            "title": "问题原因",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: issue/delivery",
+          "pass": true,
+          "detail": {
+            "page": "issue/delivery",
+            "title": "问题原因",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: issue/unknown",
+          "pass": true,
+          "detail": {
+            "page": "issue/unknown",
+            "title": "问题原因",
+            "overflow": false,
+            "h": 262,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: history/sample-result",
+          "pass": true,
+          "detail": {
+            "page": "history/sample-result",
+            "title": "运行记录",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: delivery/sample-delivery",
+          "pass": true,
+          "detail": {
+            "page": "delivery/sample-delivery",
+            "title": "通知投递",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: preview/soul-sort",
+          "pass": true,
+          "detail": {
+            "page": "preview/soul-sort",
+            "title": "御魂对象预览",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: preview/soul-enhance",
+          "pass": true,
+          "detail": {
+            "page": "preview/soul-enhance",
+            "title": "御魂对象预览",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "landscape: activity/event-auto",
+          "pass": true,
+          "detail": {
+            "page": "activity/event-auto",
+            "title": "活动规则与进度",
+            "overflow": false,
+            "h": 321,
+            "old": 0,
+            "choice": true
+          }
+        },
+        {
+          "name": "task row submits through queue engine",
+          "pass": true
+        },
+        {
+          "name": "running task row shows pause action",
+          "pass": true
+        },
+        {
+          "name": "direct request cannot duplicate current task",
+          "pass": true
+        },
+        {
+          "name": "task row pause holds entire queue",
+          "pass": true
+        },
+        {
+          "name": "paused task row continues through reconciliation",
+          "pass": true
+        },
+        {
+          "name": "plan row submits whole plan with sum priority",
+          "pass": true
+        },
+        {
+          "name": "running plan row shows pause action",
+          "pass": true
+        },
+        {
+          "name": "run projection has no separate mutable owner",
+          "pass": true
+        },
+        {
+          "name": "portrait: queued task shows badge and disabled button",
+          "pass": true
+        },
+        {
+          "name": "portrait: disabled task cannot enqueue again",
+          "pass": true
+        },
+        {
+          "name": "portrait: removal restores task add button and clears badge",
+          "pass": true
+        },
+        {
+          "name": "portrait: queued plan shows badge and disabled button",
+          "pass": true
+        },
+        {
+          "name": "portrait: disabled plan cannot enqueue again",
+          "pass": true
+        },
+        {
+          "name": "portrait: running plan pause preserves entity identity",
+          "pass": true
+        },
+        {
+          "name": "portrait: preempted plan is queued and disabled",
+          "pass": true
+        },
+        {
+          "name": "portrait: overlay queued task and plan are disabled",
+          "pass": true
+        },
+        {
+          "name": "landscape: queued task shows badge and disabled button",
+          "pass": true
+        },
+        {
+          "name": "landscape: disabled task cannot enqueue again",
+          "pass": true
+        },
+        {
+          "name": "landscape: removal restores task add button and clears badge",
+          "pass": true
+        },
+        {
+          "name": "landscape: queued plan shows badge and disabled button",
+          "pass": true
+        },
+        {
+          "name": "landscape: disabled plan cannot enqueue again",
+          "pass": true
+        },
+        {
+          "name": "landscape: running plan pause preserves entity identity",
+          "pass": true
+        },
+        {
+          "name": "landscape: preempted plan is queued and disabled",
+          "pass": true
+        },
+        {
+          "name": "landscape: overlay queued task and plan are disabled",
+          "pass": true
+        },
+        {
+          "name": "portrait: workbench queue visible with current task",
+          "pass": true,
+          "detail": {
+            "h": 211,
+            "scroll": 211,
+            "visible": 3,
+            "top": 589.78125,
+            "bottom": 800.5625,
+            "bodyBottom": 1043.28125
+          }
+        },
+        {
+          "name": "portrait: queue shows wait duration and labelled priority",
+          "pass": true
+        },
+        {
+          "name": "portrait: short horizontal drag does not remove",
+          "pass": true
+        },
+        {
+          "name": "portrait: real right swipe removes queued item",
+          "pass": true
+        },
+        {
+          "name": "portrait: swipe does not navigate into item",
+          "pass": true
+        },
+        {
+          "name": "portrait: removing waiting item preserves current",
+          "pass": true
+        },
+        {
+          "name": "portrait: swipe current removes then automatically continues",
+          "pass": true
+        },
+        {
+          "name": "landscape: workbench queue visible with current task",
+          "pass": true,
+          "detail": {
+            "h": 195,
+            "scroll": 195,
+            "visible": 3,
+            "top": 352.28125,
+            "bottom": 547.5625,
+            "bodyBottom": 611.28125
+          }
+        },
+        {
+          "name": "landscape: queue shows wait duration and labelled priority",
+          "pass": true
+        },
+        {
+          "name": "landscape: short horizontal drag does not remove",
+          "pass": true
+        },
+        {
+          "name": "landscape: real right swipe removes queued item",
+          "pass": true
+        },
+        {
+          "name": "landscape: swipe does not navigate into item",
+          "pass": true
+        },
+        {
+          "name": "landscape: removing waiting item preserves current",
+          "pass": true
+        },
+        {
+          "name": "landscape: swipe current removes then automatically continues",
+          "pass": true
+        },
+        {
+          "name": "stuck worker removal visibly revoking, not false success",
+          "pass": true
+        },
+        {
+          "name": "next item cannot input before dispatcher quiescence",
+          "pass": true
+        },
+        {
+          "name": "independent dispatcher confirmation dispatches next",
+          "pass": true
+        },
+        {
+          "name": "short press pauses entire queue",
+          "pass": true
+        },
+        {
+          "name": "high priority submission cannot bypass manual hold",
+          "pass": true
+        },
+        {
+          "name": "continue first waits for new observation",
+          "pass": true
+        },
+        {
+          "name": "after reconciliation scheduler selects highest queued item",
+          "pass": true
+        },
+        {
+          "name": "long press stops and keeps remaining queue held",
+          "pass": true
+        },
+        {
+          "name": "empty current still offers continue queue",
+          "pass": true
+        },
+        {
+          "name": "queue continue resumes highest remaining plan",
+          "pass": true
+        },
+        {
+          "name": "waiting rule starts disabled with no runtime threshold",
+          "pass": true
+        },
+        {
+          "name": "no arbitrary reminder rule text input",
+          "pass": true
+        },
+        {
+          "name": "zero reminder duration rejected",
+          "pass": true
+        },
+        {
+          "name": "minute bounds enforced",
+          "pass": true
+        },
+        {
+          "name": "user duration saves exact rule threshold",
+          "pass": true
+        },
+        {
+          "name": "below threshold no waiting notification",
+          "pass": true
+        },
+        {
+          "name": "configured threshold emits wait event",
+          "pass": true
+        },
+        {
+          "name": "wait event projects only subscribed channel delivery",
+          "pass": true
+        },
+        {
+          "name": "notification does not cancel, boost or interrupt current",
+          "pass": true
+        },
+        {
+          "name": "same waiting event is not repeatedly projected",
+          "pass": true
+        },
+        {
+          "name": "wait reminder visible in notification records",
+          "pass": true
+        },
+        {
+          "name": "confirmed child failure continues plan at locked sum",
+          "pass": true
+        },
+        {
+          "name": "plan ends partial failure then dispatches next",
+          "pass": true
+        },
+        {
+          "name": "negative retention cannot be saved",
+          "pass": true
+        },
+        {
+          "name": "fractional retention cannot be saved",
+          "pass": true
+        },
+        {
+          "name": "valid retention remains saveable",
+          "pass": true
+        },
+        {
+          "name": "no runtime exceptions",
+          "pass": true,
+          "detail": []
+        }
+      ]
+    },
+    "network": {
+      "passed": 47,
+      "failed": 0,
+      "checks": [
+        {
+          "name": "portrait: network initially direct without proxy scopes",
+          "pass": true
+        },
+        {
+          "name": "portrait: save and test are reachable in top bar",
+          "pass": true
+        },
+        {
+          "name": "portrait: incomplete proxy cannot replace current direct policy",
+          "pass": true
+        },
+        {
+          "name": "portrait: proxy scope must be explicitly selected",
+          "pass": true
+        },
+        {
+          "name": "portrait: authenticated proxy requires credential",
+          "pass": true
+        },
+        {
+          "name": "portrait: fractional proxy port rejected",
+          "pass": true
+        },
+        {
+          "name": "portrait: out of range proxy port rejected",
+          "pass": true
+        },
+        {
+          "name": "portrait: proxy test is explicit simulation and does not save",
+          "pass": true
+        },
+        {
+          "name": "portrait: only selected model scope uses proxy",
+          "pass": true
+        },
+        {
+          "name": "portrait: invalid scope is distinct from direct route",
+          "pass": true
+        },
+        {
+          "name": "portrait: editing destination never retargets saved credential",
+          "pass": true
+        },
+        {
+          "name": "portrait: unsaved new destination leaves saved routing intact",
+          "pass": true
+        },
+        {
+          "name": "portrait: protocol change has an independent credential binding",
+          "pass": true
+        },
+        {
+          "name": "portrait: SOCKS5 configuration saved",
+          "pass": true
+        },
+        {
+          "name": "portrait: orientation preserves saved scope and proxy form",
+          "pass": true
+        },
+        {
+          "name": "portrait: public snapshots and export redact proxy credentials",
+          "pass": true
+        },
+        {
+          "name": "portrait: model test captures selected route metadata",
+          "pass": true
+        },
+        {
+          "name": "portrait: unselected external notifications remain direct",
+          "pass": true
+        },
+        {
+          "name": "portrait: selected external notification test captures proxy route",
+          "pass": true
+        },
+        {
+          "name": "portrait: local notifications never enter network proxy",
+          "pass": true
+        },
+        {
+          "name": "portrait: task source fetch captures its chosen proxy route",
+          "pass": true
+        },
+        {
+          "name": "portrait: in-flight fetch retains original route snapshot",
+          "pass": true
+        },
+        {
+          "name": "portrait: explicit direct mode routes all modules directly",
+          "pass": true
+        },
+        {
+          "name": "landscape: network initially direct without proxy scopes",
+          "pass": true
+        },
+        {
+          "name": "landscape: save and test are reachable in top bar",
+          "pass": true
+        },
+        {
+          "name": "landscape: incomplete proxy cannot replace current direct policy",
+          "pass": true
+        },
+        {
+          "name": "landscape: proxy scope must be explicitly selected",
+          "pass": true
+        },
+        {
+          "name": "landscape: authenticated proxy requires credential",
+          "pass": true
+        },
+        {
+          "name": "landscape: fractional proxy port rejected",
+          "pass": true
+        },
+        {
+          "name": "landscape: out of range proxy port rejected",
+          "pass": true
+        },
+        {
+          "name": "landscape: proxy test is explicit simulation and does not save",
+          "pass": true
+        },
+        {
+          "name": "landscape: only selected model scope uses proxy",
+          "pass": true
+        },
+        {
+          "name": "landscape: invalid scope is distinct from direct route",
+          "pass": true
+        },
+        {
+          "name": "landscape: editing destination never retargets saved credential",
+          "pass": true
+        },
+        {
+          "name": "landscape: unsaved new destination leaves saved routing intact",
+          "pass": true
+        },
+        {
+          "name": "landscape: protocol change has an independent credential binding",
+          "pass": true
+        },
+        {
+          "name": "landscape: SOCKS5 configuration saved",
+          "pass": true
+        },
+        {
+          "name": "landscape: orientation preserves saved scope and proxy form",
+          "pass": true
+        },
+        {
+          "name": "landscape: public snapshots and export redact proxy credentials",
+          "pass": true
+        },
+        {
+          "name": "landscape: model test captures selected route metadata",
+          "pass": true
+        },
+        {
+          "name": "landscape: unselected external notifications remain direct",
+          "pass": true
+        },
+        {
+          "name": "landscape: selected external notification test captures proxy route",
+          "pass": true
+        },
+        {
+          "name": "landscape: local notifications never enter network proxy",
+          "pass": true
+        },
+        {
+          "name": "landscape: task source fetch captures its chosen proxy route",
+          "pass": true
+        },
+        {
+          "name": "landscape: in-flight fetch retains original route snapshot",
+          "pass": true
+        },
+        {
+          "name": "landscape: explicit direct mode routes all modules directly",
+          "pass": true
+        },
+        {
+          "name": "no runtime exceptions",
+          "pass": true
+        }
+      ]
+    },
+    "layoutAndPlanOwnership": {
+      "passed": 18,
+      "failed": 0,
+      "checks": [
+        {
+          "name": "portrait: active name is primary, phase and priority are secondary",
+          "pass": true
+        },
+        {
+          "name": "portrait: no redundant current-run menu",
+          "pass": true
+        },
+        {
+          "name": "portrait: selected tasks appear once and only unselected tasks are candidates",
+          "pass": true
+        },
+        {
+          "name": "portrait: remove moves selected item back to candidate list",
+          "pass": true
+        },
+        {
+          "name": "portrait: adding removes duplicate candidate and appends in chosen order",
+          "pass": true
+        },
+        {
+          "name": "portrait: escape closes account menu and returns focus",
+          "pass": true
+        },
+        {
+          "name": "portrait: outside tap dismisses account menu",
+          "pass": true
+        },
+        {
+          "name": "landscape: active name is primary, phase and priority are secondary",
+          "pass": true
+        },
+        {
+          "name": "landscape: no redundant current-run menu",
+          "pass": true
+        },
+        {
+          "name": "landscape: selected tasks appear once and only unselected tasks are candidates",
+          "pass": true
+        },
+        {
+          "name": "landscape: remove moves selected item back to candidate list",
+          "pass": true
+        },
+        {
+          "name": "landscape: adding removes duplicate candidate and appends in chosen order",
+          "pass": true
+        },
+        {
+          "name": "landscape: escape closes account menu and returns focus",
+          "pass": true
+        },
+        {
+          "name": "landscape: outside tap dismisses account menu",
+          "pass": true
+        },
+        {
+          "name": "foreign-account due plan keeps original binding and cannot run",
+          "pass": true
+        },
+        {
+          "name": "queue continue cannot run foreign-account plan on current account",
+          "pass": true
+        },
+        {
+          "name": "global history labels its account source",
+          "pass": true
+        },
+        {
+          "name": "no runtime exceptions",
+          "pass": true
+        }
+      ]
+    }
+  },
+  "notes": [
+    "All browser groups ran after the final HTML and module edits.",
+    "Account switching fixtures explicitly stop game first under the new approved guard.",
+    "The queue removal assertion now checks phase in .runlabel, because primary h3 displays task/plan name.",
+    "Older verification-execution.json is source-specific historical evidence and does not validate this revision.",
+    "Screenshots show demo metadata and no real credentials.",
+    "No ADB or Android device connector available; real Root session recovery remains unverified."
+  ],
+  "totals": {
+    "browserPassed": 512,
+    "nodeScenariosPassed": 72,
+    "failed": 0
+  }
+}

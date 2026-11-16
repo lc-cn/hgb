@@ -1,0 +1,596 @@
+{
+  "capturedAt": "2026-11-15T08:23:44.226Z",
+  "manifest": [
+    {
+      "id": "auth",
+      "title": "GitHub 授权",
+      "group": "保护",
+      "protected": false
+    },
+    {
+      "id": "tasks",
+      "title": "任务制作列表",
+      "group": "制作",
+      "protected": true
+    },
+    {
+      "id": "task/jade-claim",
+      "title": "任务信息与步骤",
+      "group": "制作",
+      "protected": true
+    },
+    {
+      "id": "step/open-entry",
+      "title": "步骤与动作",
+      "group": "制作",
+      "protected": true
+    },
+    {
+      "id": "actions",
+      "title": "添加基础动作",
+      "group": "制作",
+      "protected": true
+    },
+    {
+      "id": "action/locate-entry",
+      "title": "动作参数与引用",
+      "group": "制作",
+      "protected": true
+    },
+    {
+      "id": "schema",
+      "title": "配置 schema",
+      "group": "配置",
+      "protected": true
+    },
+    {
+      "id": "field/retryLimit",
+      "title": "配置字段编辑",
+      "group": "配置",
+      "protected": true
+    },
+    {
+      "id": "preview",
+      "title": "用户配置预览",
+      "group": "配置",
+      "protected": true
+    },
+    {
+      "id": "resources",
+      "title": "资源与缺失状态",
+      "group": "验证",
+      "protected": true
+    },
+    {
+      "id": "json",
+      "title": "生成 JSON / 定位校验",
+      "group": "验证",
+      "protected": true
+    },
+    {
+      "id": "debug",
+      "title": "动作 / 步骤 / 任务调试",
+      "group": "调试",
+      "protected": true
+    },
+    {
+      "id": "publish",
+      "title": "上传 GitHub Release",
+      "group": "发布",
+      "protected": true
+    },
+    {
+      "id": "diagnostics",
+      "title": "开发诊断",
+      "group": "诊断",
+      "protected": true
+    }
+  ],
+  "records": [
+    {
+      "id": "auth",
+      "title": "GitHub 授权",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-auth-portrait.png"
+    },
+    {
+      "id": "tasks",
+      "title": "任务制作列表",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-tasks-portrait.png"
+    },
+    {
+      "id": "task/jade-claim",
+      "title": "任务信息与步骤",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-task-jade-claim-portrait.png"
+    },
+    {
+      "id": "step/open-entry",
+      "title": "步骤与动作",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-step-open-entry-portrait.png"
+    },
+    {
+      "id": "actions",
+      "title": "添加基础动作",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-actions-portrait.png"
+    },
+    {
+      "id": "action/locate-entry",
+      "title": "动作参数与引用",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-action-locate-entry-portrait.png"
+    },
+    {
+      "id": "schema",
+      "title": "配置 schema",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-schema-portrait.png"
+    },
+    {
+      "id": "field/retryLimit",
+      "title": "配置字段编辑",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-field-retryLimit-portrait.png"
+    },
+    {
+      "id": "preview",
+      "title": "用户配置预览",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-preview-portrait.png"
+    },
+    {
+      "id": "resources",
+      "title": "资源与缺失状态",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-resources-portrait.png"
+    },
+    {
+      "id": "json",
+      "title": "生成 JSON / 定位校验",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-json-portrait.png"
+    },
+    {
+      "id": "debug",
+      "title": "动作 / 步骤 / 任务调试",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-debug-portrait.png"
+    },
+    {
+      "id": "publish",
+      "title": "上传 GitHub Release",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-publish-portrait.png"
+    },
+    {
+      "id": "diagnostics",
+      "title": "开发诊断",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-diagnostics-portrait.png"
+    },
+    {
+      "id": "auth-signedout",
+      "title": "开发者授权入口",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-auth-signedout-portrait.png"
+    },
+    {
+      "id": "auth-pending",
+      "title": "等待 GitHub 授权",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-auth-pending-portrait.png"
+    },
+    {
+      "id": "auth-denied",
+      "title": "指定仓库无写权限",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-auth-denied-portrait.png"
+    },
+    {
+      "id": "auth-unknown",
+      "title": "仓库权限检查未知",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-auth-unknown-portrait.png"
+    },
+    {
+      "id": "auth-expired",
+      "title": "授权失效",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-auth-expired-portrait.png"
+    },
+    {
+      "id": "debug-running",
+      "title": "调试执行中",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-debug-running-portrait.png"
+    },
+    {
+      "id": "debug-paused",
+      "title": "调试已暂停",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-debug-paused-portrait.png"
+    },
+    {
+      "id": "debug-success",
+      "title": "调试完成",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-debug-success-portrait.png"
+    },
+    {
+      "id": "debug-failed",
+      "title": "动作定位失败",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-debug-failed-portrait.png"
+    },
+    {
+      "id": "debug-unknown",
+      "title": "调试结果未知",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-debug-unknown-portrait.png"
+    },
+    {
+      "id": "debug-resume",
+      "title": "调试继续与重新开始",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-debug-resume-portrait.png"
+    },
+    {
+      "id": "publish-uploading",
+      "title": "上传版本中",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-publish-uploading-portrait.png"
+    },
+    {
+      "id": "publish-success",
+      "title": "新版本已发布",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-publish-success-portrait.png"
+    },
+    {
+      "id": "publish-failed",
+      "title": "发布确定失败",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-publish-failed-portrait.png"
+    },
+    {
+      "id": "publish-unknown",
+      "title": "发布结果未知",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-publish-unknown-portrait.png"
+    },
+    {
+      "id": "publish-expired",
+      "title": "发布权限失效",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-publish-expired-portrait.png"
+    },
+    {
+      "id": "field-type-text",
+      "title": "文本字段编辑",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-field-type-text-portrait.png"
+    },
+    {
+      "id": "field-type-single",
+      "title": "单选字段编辑",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-field-type-single-portrait.png"
+    },
+    {
+      "id": "field-type-multi",
+      "title": "多选字段编辑",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-field-type-multi-portrait.png"
+    },
+    {
+      "id": "field-type-time",
+      "title": "时间字段编辑",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-field-type-time-portrait.png"
+    },
+    {
+      "id": "field-type-date",
+      "title": "日期字段编辑",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-field-type-date-portrait.png"
+    },
+    {
+      "id": "field-type-range",
+      "title": "日期范围字段编辑",
+      "group": "developer",
+      "orientation": "portrait",
+      "path": "screens/developer-field-type-range-portrait.png"
+    },
+    {
+      "id": "auth",
+      "title": "GitHub 授权",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-auth-landscape.png"
+    },
+    {
+      "id": "tasks",
+      "title": "任务制作列表",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-tasks-landscape.png"
+    },
+    {
+      "id": "task/jade-claim",
+      "title": "任务信息与步骤",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-task-jade-claim-landscape.png"
+    },
+    {
+      "id": "step/open-entry",
+      "title": "步骤与动作",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-step-open-entry-landscape.png"
+    },
+    {
+      "id": "actions",
+      "title": "添加基础动作",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-actions-landscape.png"
+    },
+    {
+      "id": "action/locate-entry",
+      "title": "动作参数与引用",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-action-locate-entry-landscape.png"
+    },
+    {
+      "id": "schema",
+      "title": "配置 schema",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-schema-landscape.png"
+    },
+    {
+      "id": "field/retryLimit",
+      "title": "配置字段编辑",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-field-retryLimit-landscape.png"
+    },
+    {
+      "id": "preview",
+      "title": "用户配置预览",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-preview-landscape.png"
+    },
+    {
+      "id": "resources",
+      "title": "资源与缺失状态",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-resources-landscape.png"
+    },
+    {
+      "id": "json",
+      "title": "生成 JSON / 定位校验",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-json-landscape.png"
+    },
+    {
+      "id": "debug",
+      "title": "动作 / 步骤 / 任务调试",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-debug-landscape.png"
+    },
+    {
+      "id": "publish",
+      "title": "上传 GitHub Release",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-publish-landscape.png"
+    },
+    {
+      "id": "diagnostics",
+      "title": "开发诊断",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-diagnostics-landscape.png"
+    },
+    {
+      "id": "auth-signedout",
+      "title": "开发者授权入口",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-auth-signedout-landscape.png"
+    },
+    {
+      "id": "auth-pending",
+      "title": "等待 GitHub 授权",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-auth-pending-landscape.png"
+    },
+    {
+      "id": "auth-denied",
+      "title": "指定仓库无写权限",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-auth-denied-landscape.png"
+    },
+    {
+      "id": "auth-unknown",
+      "title": "仓库权限检查未知",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-auth-unknown-landscape.png"
+    },
+    {
+      "id": "auth-expired",
+      "title": "授权失效",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-auth-expired-landscape.png"
+    },
+    {
+      "id": "debug-running",
+      "title": "调试执行中",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-debug-running-landscape.png"
+    },
+    {
+      "id": "debug-paused",
+      "title": "调试已暂停",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-debug-paused-landscape.png"
+    },
+    {
+      "id": "debug-success",
+      "title": "调试完成",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-debug-success-landscape.png"
+    },
+    {
+      "id": "debug-failed",
+      "title": "动作定位失败",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-debug-failed-landscape.png"
+    },
+    {
+      "id": "debug-unknown",
+      "title": "调试结果未知",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-debug-unknown-landscape.png"
+    },
+    {
+      "id": "debug-resume",
+      "title": "调试继续与重新开始",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-debug-resume-landscape.png"
+    },
+    {
+      "id": "publish-uploading",
+      "title": "上传版本中",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-publish-uploading-landscape.png"
+    },
+    {
+      "id": "publish-success",
+      "title": "新版本已发布",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-publish-success-landscape.png"
+    },
+    {
+      "id": "publish-failed",
+      "title": "发布确定失败",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-publish-failed-landscape.png"
+    },
+    {
+      "id": "publish-unknown",
+      "title": "发布结果未知",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-publish-unknown-landscape.png"
+    },
+    {
+      "id": "publish-expired",
+      "title": "发布权限失效",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-publish-expired-landscape.png"
+    },
+    {
+      "id": "field-type-text",
+      "title": "文本字段编辑",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-field-type-text-landscape.png"
+    },
+    {
+      "id": "field-type-single",
+      "title": "单选字段编辑",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-field-type-single-landscape.png"
+    },
+    {
+      "id": "field-type-multi",
+      "title": "多选字段编辑",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-field-type-multi-landscape.png"
+    },
+    {
+      "id": "field-type-time",
+      "title": "时间字段编辑",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-field-type-time-landscape.png"
+    },
+    {
+      "id": "field-type-date",
+      "title": "日期字段编辑",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-field-type-date-landscape.png"
+    },
+    {
+      "id": "field-type-range",
+      "title": "日期范围字段编辑",
+      "group": "developer",
+      "orientation": "landscape",
+      "path": "screens/developer-field-type-range-landscape.png"
+    }
+  ],
+  "errors": []
+}

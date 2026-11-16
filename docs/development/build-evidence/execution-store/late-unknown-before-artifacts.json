@@ -1,0 +1,7 @@
+{
+  "app/build/outputs/apk/debug/app-debug.apk": "418c973a06ecfeba5513c795bea2f0bcd3ad1dae9b8f7acfd7639f210125191c",
+  "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": "1011660fd27c59d350fcfc18c9e21a1e3d0ae85662c95606b33b12fb8e4d8a24",
+  "app/src/main/kotlin/io/github/yysassist/storage/ExecutionStateStore.kt": "195a64b7bacef4ce3755c2858682aa03f5de5b67bc20f98f8658bb73d94e407d",
+  "app/src/main/kotlin/io/github/yysassist/storage/TaskVersionLibrary.kt": "c1c21f03bef03404f7e8db5b457b051b95322da264d9a40b09fd01b49d9ba331",
+  "app/src/main/kotlin/io/github/yysassist/storage/AssistDatabase.kt": "1925e5873c2691f4297096c0e5cbca4d2e997bcf9750e1ff243fa7656d9ae35c"
+}

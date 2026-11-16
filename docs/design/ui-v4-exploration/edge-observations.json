@@ -1,0 +1,52 @@
+{
+  "scope": "Browser UI fixture geometry only",
+  "observations": [
+    {
+      "orientation": "portrait",
+      "case": "拖至左下角再展开常用",
+      "panelFits": true,
+      "currentFits": true,
+      "pauseTarget": [
+        48,
+        48
+      ],
+      "stopTarget": [
+        48,
+        48
+      ],
+      "controlGap": 8,
+      "anchorUnchanged": true
+    },
+    {
+      "orientation": "portrait",
+      "case": "常用列表滚到底",
+      "candidateScrollHeight": 1127,
+      "candidateVisibleHeight": 378,
+      "currentStayedFixed": true
+    },
+    {
+      "orientation": "landscape",
+      "case": "拖至左下角再展开常用",
+      "panelFits": true,
+      "currentFits": true,
+      "pauseTarget": [
+        48,
+        48
+      ],
+      "stopTarget": [
+        48,
+        48
+      ],
+      "controlGap": 8,
+      "anchorUnchanged": true
+    },
+    {
+      "orientation": "landscape",
+      "case": "常用列表滚到底",
+      "candidateScrollHeight": 553,
+      "candidateVisibleHeight": 241,
+      "currentStayedFixed": true
+    }
+  ],
+  "errors": []
+}

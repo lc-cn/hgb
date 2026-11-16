@@ -1,0 +1,192 @@
+{
+  "checks": [
+    {
+      "name": "portrait: provider is native dropdown with two initial presets",
+      "pass": true
+    },
+    {
+      "name": "portrait: configuration initially hidden",
+      "pass": true
+    },
+    {
+      "name": "portrait: configure is right of dropdown",
+      "pass": true
+    },
+    {
+      "name": "portrait: configure reveals key and official guide",
+      "pass": true
+    },
+    {
+      "name": "portrait: selecting provider collapses details and does not apply",
+      "pass": true
+    },
+    {
+      "name": "portrait: different preset cannot reuse key",
+      "pass": true
+    },
+    {
+      "name": "portrait: unsaved first provider key survives switching",
+      "pass": true
+    },
+    {
+      "name": "portrait: preset saved and verified without auto enable",
+      "pass": true
+    },
+    {
+      "name": "portrait: second provider retains own draft key",
+      "pass": true
+    },
+    {
+      "name": "portrait: saved first provider key remains available with masked placeholder",
+      "pass": true
+    },
+    {
+      "name": "portrait: unchanged validated configuration retains validation",
+      "pass": true
+    },
+    {
+      "name": "portrait: add reveals new provider name and connection fields",
+      "pass": true
+    },
+    {
+      "name": "portrait: incomplete add rejected without registration",
+      "pass": true
+    },
+    {
+      "name": "portrait: invalid service url rejected",
+      "pass": true
+    },
+    {
+      "name": "portrait: valid add registers and selects provider",
+      "pass": true
+    },
+    {
+      "name": "portrait: added provider appears as selected dropdown option",
+      "pass": true
+    },
+    {
+      "name": "portrait: adding custom did not replace builtin key",
+      "pass": true
+    },
+    {
+      "name": "portrait: custom connection and key restored",
+      "pass": true
+    },
+    {
+      "name": "portrait: changing destination never reuses saved credential",
+      "pass": true
+    },
+    {
+      "name": "portrait: new destination saved without claiming key or verification",
+      "pass": true
+    },
+    {
+      "name": "portrait: cancel discards unregistered provider and retains selection",
+      "pass": true
+    },
+    {
+      "name": "portrait: API and record export do not expose any demo keys",
+      "pass": true
+    },
+    {
+      "name": "portrait: rotation preserves provider and collapsed config",
+      "pass": true
+    },
+    {
+      "name": "landscape: provider is native dropdown with two initial presets",
+      "pass": true
+    },
+    {
+      "name": "landscape: configuration initially hidden",
+      "pass": true
+    },
+    {
+      "name": "landscape: configure is right of dropdown",
+      "pass": true
+    },
+    {
+      "name": "landscape: configure reveals key and official guide",
+      "pass": true
+    },
+    {
+      "name": "landscape: selecting provider collapses details and does not apply",
+      "pass": true
+    },
+    {
+      "name": "landscape: different preset cannot reuse key",
+      "pass": true
+    },
+    {
+      "name": "landscape: unsaved first provider key survives switching",
+      "pass": true
+    },
+    {
+      "name": "landscape: preset saved and verified without auto enable",
+      "pass": true
+    },
+    {
+      "name": "landscape: second provider retains own draft key",
+      "pass": true
+    },
+    {
+      "name": "landscape: saved first provider key remains available with masked placeholder",
+      "pass": true
+    },
+    {
+      "name": "landscape: unchanged validated configuration retains validation",
+      "pass": true
+    },
+    {
+      "name": "landscape: add reveals new provider name and connection fields",
+      "pass": true
+    },
+    {
+      "name": "landscape: incomplete add rejected without registration",
+      "pass": true
+    },
+    {
+      "name": "landscape: invalid service url rejected",
+      "pass": true
+    },
+    {
+      "name": "landscape: valid add registers and selects provider",
+      "pass": true
+    },
+    {
+      "name": "landscape: added provider appears as selected dropdown option",
+      "pass": true
+    },
+    {
+      "name": "landscape: adding custom did not replace builtin key",
+      "pass": true
+    },
+    {
+      "name": "landscape: custom connection and key restored",
+      "pass": true
+    },
+    {
+      "name": "landscape: changing destination never reuses saved credential",
+      "pass": true
+    },
+    {
+      "name": "landscape: new destination saved without claiming key or verification",
+      "pass": true
+    },
+    {
+      "name": "landscape: cancel discards unregistered provider and retains selection",
+      "pass": true
+    },
+    {
+      "name": "landscape: API and record export do not expose any demo keys",
+      "pass": true
+    },
+    {
+      "name": "landscape: rotation preserves provider and collapsed config",
+      "pass": true
+    },
+    {
+      "name": "no runtime errors",
+      "pass": true
+    }
+  ]
+}

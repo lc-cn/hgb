@@ -1,0 +1,192 @@
+{
+  "checks": [
+    {
+      "name": "portrait: network initially direct without proxy scopes",
+      "pass": true
+    },
+    {
+      "name": "portrait: save and test are reachable in top bar",
+      "pass": true
+    },
+    {
+      "name": "portrait: incomplete proxy cannot replace current direct policy",
+      "pass": true
+    },
+    {
+      "name": "portrait: proxy scope must be explicitly selected",
+      "pass": true
+    },
+    {
+      "name": "portrait: authenticated proxy requires credential",
+      "pass": true
+    },
+    {
+      "name": "portrait: fractional proxy port rejected",
+      "pass": true
+    },
+    {
+      "name": "portrait: out of range proxy port rejected",
+      "pass": true
+    },
+    {
+      "name": "portrait: proxy test is explicit simulation and does not save",
+      "pass": true
+    },
+    {
+      "name": "portrait: only selected model scope uses proxy",
+      "pass": true
+    },
+    {
+      "name": "portrait: invalid scope is distinct from direct route",
+      "pass": true
+    },
+    {
+      "name": "portrait: editing destination never retargets saved credential",
+      "pass": true
+    },
+    {
+      "name": "portrait: unsaved new destination leaves saved routing intact",
+      "pass": true
+    },
+    {
+      "name": "portrait: protocol change has an independent credential binding",
+      "pass": true
+    },
+    {
+      "name": "portrait: SOCKS5 configuration saved",
+      "pass": true
+    },
+    {
+      "name": "portrait: orientation preserves saved scope and proxy form",
+      "pass": true
+    },
+    {
+      "name": "portrait: public snapshots and export redact proxy credentials",
+      "pass": true
+    },
+    {
+      "name": "portrait: model test captures selected route metadata",
+      "pass": true
+    },
+    {
+      "name": "portrait: unselected external notifications remain direct",
+      "pass": true
+    },
+    {
+      "name": "portrait: selected external notification test captures proxy route",
+      "pass": true
+    },
+    {
+      "name": "portrait: local notifications never enter network proxy",
+      "pass": true
+    },
+    {
+      "name": "portrait: task source fetch captures its chosen proxy route",
+      "pass": true
+    },
+    {
+      "name": "portrait: in-flight fetch retains original route snapshot",
+      "pass": true
+    },
+    {
+      "name": "portrait: explicit direct mode routes all modules directly",
+      "pass": true
+    },
+    {
+      "name": "landscape: network initially direct without proxy scopes",
+      "pass": true
+    },
+    {
+      "name": "landscape: save and test are reachable in top bar",
+      "pass": true
+    },
+    {
+      "name": "landscape: incomplete proxy cannot replace current direct policy",
+      "pass": true
+    },
+    {
+      "name": "landscape: proxy scope must be explicitly selected",
+      "pass": true
+    },
+    {
+      "name": "landscape: authenticated proxy requires credential",
+      "pass": true
+    },
+    {
+      "name": "landscape: fractional proxy port rejected",
+      "pass": true
+    },
+    {
+      "name": "landscape: out of range proxy port rejected",
+      "pass": true
+    },
+    {
+      "name": "landscape: proxy test is explicit simulation and does not save",
+      "pass": true
+    },
+    {
+      "name": "landscape: only selected model scope uses proxy",
+      "pass": true
+    },
+    {
+      "name": "landscape: invalid scope is distinct from direct route",
+      "pass": true
+    },
+    {
+      "name": "landscape: editing destination never retargets saved credential",
+      "pass": true
+    },
+    {
+      "name": "landscape: unsaved new destination leaves saved routing intact",
+      "pass": true
+    },
+    {
+      "name": "landscape: protocol change has an independent credential binding",
+      "pass": true
+    },
+    {
+      "name": "landscape: SOCKS5 configuration saved",
+      "pass": true
+    },
+    {
+      "name": "landscape: orientation preserves saved scope and proxy form",
+      "pass": true
+    },
+    {
+      "name": "landscape: public snapshots and export redact proxy credentials",
+      "pass": true
+    },
+    {
+      "name": "landscape: model test captures selected route metadata",
+      "pass": true
+    },
+    {
+      "name": "landscape: unselected external notifications remain direct",
+      "pass": true
+    },
+    {
+      "name": "landscape: selected external notification test captures proxy route",
+      "pass": true
+    },
+    {
+      "name": "landscape: local notifications never enter network proxy",
+      "pass": true
+    },
+    {
+      "name": "landscape: task source fetch captures its chosen proxy route",
+      "pass": true
+    },
+    {
+      "name": "landscape: in-flight fetch retains original route snapshot",
+      "pass": true
+    },
+    {
+      "name": "landscape: explicit direct mode routes all modules directly",
+      "pass": true
+    },
+    {
+      "name": "no runtime exceptions",
+      "pass": true
+    }
+  ]
+}

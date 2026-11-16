@@ -1,0 +1,32 @@
+{
+  "scope": "Documentation and read-only environment audit; link checks do not prove product correctness",
+  "checks": {
+    "allLocalLinksResolve": true,
+    "acceptedV5ReferencedByPRD": true,
+    "oldVisualStateRemoved": true,
+    "architectureUsesV5": true,
+    "recoveryNotAwaitingOldUIReview": true,
+    "githubSourceCorrected": true,
+    "environmentActuallyExecutable": true,
+    "noProductionEngineeringCreated": true,
+    "phaseAndStackRemainProposals": true,
+    "knownUnvalidatedCapabilitiesSeparated": true
+  },
+  "files": {
+    "README.md": "9214b9755e365a80ed7b5de50d07584a36a62f78e3ab50cc01d75cc4705c8d9b",
+    "docs/development/README.md": "f8fa25b8e9ecd5d5cc28ac6d1ce6692a8fe2d76d2963745484919a34583a80e8",
+    "docs/PRD.md": "b0685296b006a8077f1e38b8e27f7d1c3b65f3e41afdd6536a3d9eb69a8cfa97",
+    "docs/design/README.md": "31f3bfc5123f1b797c451420ee91cad6b090f82bb2ce124182d2ecf7ba6414f1",
+    "docs/design/technical-plan.md": "effd92714f2e66736a10a501cb9fe9bc84240e2eb1f168c55a568b5ec24f4b3e",
+    "docs/design/architecture-validation-plan.md": "f8cb29195d2b2a8f9fc09f972c1af0607587cdbe8cbdb0b88f6977310a309cf5",
+    "docs/design/system-architecture.md": "34e35cc47af1fd08fa5c31a69977c7c73a90ed5b0fbbfb94a5702ce6c0db4258",
+    "docs/design/task-container-architecture.md": "df4b30394503f9dc9ce71e37f9551c298b298381db2937e81385e3e394156c3f"
+  },
+  "environmentSha256": "00f6454bdc547adbfa27a6a8fb66feaffd93c82cdf0f1b53915cf9c06271fab8",
+  "manualReview": [
+    "Cross-checked domain/queue/resume/update/account/notification decisions against current PRD, architecture and latest user decisions",
+    "First-phase split and implementation stack clearly proposed; no product defaults silently assigned",
+    "UI acceptance distinguished from fixture behavior and real Android/game evidence",
+    "Only dependent work blocked by each missing decision; full product scope retained"
+  ]
+}

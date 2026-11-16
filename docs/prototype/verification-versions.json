@@ -1,0 +1,1425 @@
+{
+  "source": {
+    "path": "docs/prototype/app-v2.html",
+    "sha256": "a33ded4cf493cbdc85f634a2e76d370d6545f8634b0091bf0a6380b8d6169363"
+  },
+  "pages": 49,
+  "layoutCombinations": 98,
+  "groups": {
+    "core": [
+      {
+        "name": "portrait: home",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 683
+        }
+      },
+      {
+        "name": "portrait: tasks",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 683
+        }
+      },
+      {
+        "name": "portrait: plans",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 683
+        }
+      },
+      {
+        "name": "portrait: messages",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 683
+        }
+      },
+      {
+        "name": "portrait: settings",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 683
+        }
+      },
+      {
+        "name": "portrait: task/daily-rewards",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/weekly-rewards",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/jade-card",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/flower",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/bounty",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/pet",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/shop-general",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/shop-wed",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/shop-sat",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/soul-run",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/awake-run",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/explore-run",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/spirit-run",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/soul-enhance",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/soul-sort",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/realm-claim",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/realm-card",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/realm-raid",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/guild-raid",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/hunt",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/event-repeat",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: task/event-auto",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: plan/daily",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: plan/shops",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: inputs-demo",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 758
+        }
+      },
+      {
+        "name": "portrait: task-updates",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 758
+        }
+      },
+      {
+        "name": "portrait: model",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: environment",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 758
+        }
+      },
+      {
+        "name": "portrait: channels",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: channel/local",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: channel/webhook",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: notification-rules",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: float-settings",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: data-settings",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: diagnostics",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 758
+        }
+      },
+      {
+        "name": "portrait: issue/auth",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: issue/resource",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: issue/delivery",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: issue/unknown",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 694
+        }
+      },
+      {
+        "name": "portrait: history/sample-result",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 758
+        }
+      },
+      {
+        "name": "portrait: delivery/sample-delivery",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 758
+        }
+      },
+      {
+        "name": "portrait: preview/soul-sort",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 758
+        }
+      },
+      {
+        "name": "portrait: preview/soul-enhance",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 758
+        }
+      },
+      {
+        "name": "portrait: activity/event-auto",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 758
+        }
+      },
+      {
+        "name": "landscape: home",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 259
+        }
+      },
+      {
+        "name": "landscape: tasks",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 259
+        }
+      },
+      {
+        "name": "landscape: plans",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 259
+        }
+      },
+      {
+        "name": "landscape: messages",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 259
+        }
+      },
+      {
+        "name": "landscape: settings",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 259
+        }
+      },
+      {
+        "name": "landscape: task/daily-rewards",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/weekly-rewards",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/jade-card",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/flower",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/bounty",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/pet",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/shop-general",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/shop-wed",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/shop-sat",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/soul-run",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/awake-run",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/explore-run",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/spirit-run",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/soul-enhance",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/soul-sort",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/realm-claim",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/realm-card",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/realm-raid",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/guild-raid",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/hunt",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/event-repeat",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: task/event-auto",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: plan/daily",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: plan/shops",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: inputs-demo",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 321
+        }
+      },
+      {
+        "name": "landscape: task-updates",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 321
+        }
+      },
+      {
+        "name": "landscape: model",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: environment",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 321
+        }
+      },
+      {
+        "name": "landscape: channels",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: channel/local",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: channel/webhook",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: notification-rules",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: float-settings",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: data-settings",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: diagnostics",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 321
+        }
+      },
+      {
+        "name": "landscape: issue/auth",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: issue/resource",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: issue/delivery",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: issue/unknown",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 262
+        }
+      },
+      {
+        "name": "landscape: history/sample-result",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 321
+        }
+      },
+      {
+        "name": "landscape: delivery/sample-delivery",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 321
+        }
+      },
+      {
+        "name": "landscape: preview/soul-sort",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 321
+        }
+      },
+      {
+        "name": "landscape: preview/soul-enhance",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 321
+        }
+      },
+      {
+        "name": "landscape: activity/event-auto",
+        "ok": true,
+        "detail": {
+          "overflow": false,
+          "bodyHeight": 321
+        }
+      },
+      {
+        "name": "category daily",
+        "ok": true
+      },
+      {
+        "name": "category shops",
+        "ok": true
+      },
+      {
+        "name": "category dungeons",
+        "ok": true
+      },
+      {
+        "name": "category souls",
+        "ok": true
+      },
+      {
+        "name": "category guild",
+        "ok": true
+      },
+      {
+        "name": "category activities",
+        "ok": true
+      },
+      {
+        "name": "task opens direct config",
+        "ok": true
+      },
+      {
+        "name": "orientation retains task draft",
+        "ok": true
+      },
+      {
+        "name": "navigation retains task draft",
+        "ok": true
+      },
+      {
+        "name": "saved task version and no auto run",
+        "ok": true
+      },
+      {
+        "name": "single common property toggles",
+        "ok": true
+      },
+      {
+        "name": "task list executes saved version",
+        "ok": true
+      },
+      {
+        "name": "current row has pause",
+        "ok": true
+      },
+      {
+        "name": "pause pending visible",
+        "ok": true
+      },
+      {
+        "name": "pause confirmed",
+        "ok": true
+      },
+      {
+        "name": "paused run blocks another request",
+        "ok": true
+      },
+      {
+        "name": "busy message no pause-and-retry",
+        "ok": true
+      },
+      {
+        "name": "unknown no candidates, common retained",
+        "ok": true
+      },
+      {
+        "name": "unknown current controls independent",
+        "ok": true
+      },
+      {
+        "name": "resume unknown retains same run",
+        "ok": true
+      },
+      {
+        "name": "stop pending",
+        "ok": true
+      },
+      {
+        "name": "stop confirmed no next run",
+        "ok": true
+      },
+      {
+        "name": "scene filters, common remains",
+        "ok": true
+      },
+      {
+        "name": "whole plan requires all conditions",
+        "ok": true
+      },
+      {
+        "name": "normal navigation qualifies",
+        "ok": true
+      },
+      {
+        "name": "plan common independent of enabled",
+        "ok": true
+      },
+      {
+        "name": "plan one round not enable periodic",
+        "ok": true
+      },
+      {
+        "name": "model main path only key",
+        "ok": true
+      },
+      {
+        "name": "Gemini direct official key link",
+        "ok": true
+      },
+      {
+        "name": "Qwen official key link",
+        "ok": true
+      },
+      {
+        "name": "save does not test or run",
+        "ok": true
+      },
+      {
+        "name": "explicit model test is marked simulated",
+        "ok": true
+      },
+      {
+        "name": "model test success stays separate from issue",
+        "ok": true
+      },
+      {
+        "name": "key not in exported state",
+        "ok": true
+      },
+      {
+        "name": "error direct specific task",
+        "ok": true
+      },
+      {
+        "name": "save does not clear issues or run",
+        "ok": true
+      },
+      {
+        "name": "unknown first action checks result",
+        "ok": true
+      },
+      {
+        "name": "unknown check explains no repeat",
+        "ok": true
+      },
+      {
+        "name": "unknown remains blocking",
+        "ok": true
+      },
+      {
+        "name": "local notification no external fields",
+        "ok": true
+      },
+      {
+        "name": "external fields appear",
+        "ok": true
+      },
+      {
+        "name": "type switching hides external fields",
+        "ok": true
+      },
+      {
+        "name": "notification test leaves unknown unresolved",
+        "ok": true
+      },
+      {
+        "name": "developer mode initially off",
+        "ok": true
+      },
+      {
+        "name": "diagnostic gated",
+        "ok": true
+      },
+      {
+        "name": "diagnostic observations only",
+        "ok": true
+      },
+      {
+        "name": "new plan uses original task reference",
+        "ok": true
+      },
+      {
+        "name": "no runtime exceptions",
+        "ok": true,
+        "detail": []
+      }
+    ],
+    "overlayAndModel": [
+      {
+        "name": "provider draft does not alter saved connection",
+        "ok": true
+      },
+      {
+        "name": "new provider cannot reuse saved key",
+        "ok": true
+      },
+      {
+        "name": "return original connection retains own key",
+        "ok": true
+      },
+      {
+        "name": "changed endpoint cannot reuse old key",
+        "ok": true
+      },
+      {
+        "name": "cannot enable changed endpoint without new key",
+        "ok": true
+      },
+      {
+        "name": "keys and custom endpoint absent in snapshot",
+        "ok": true
+      },
+      {
+        "name": "portrait a: one current pause",
+        "ok": true
+      },
+      {
+        "name": "portrait a: one current stop",
+        "ok": true
+      },
+      {
+        "name": "portrait a: current excluded from quick list",
+        "ok": true
+      },
+      {
+        "name": "portrait a: unknown retains control",
+        "ok": true
+      },
+      {
+        "name": "portrait a: collapsed can reopen",
+        "ok": true
+      },
+      {
+        "name": "portrait b: one current pause",
+        "ok": true
+      },
+      {
+        "name": "portrait b: one current stop",
+        "ok": true
+      },
+      {
+        "name": "portrait b: current excluded from quick list",
+        "ok": true
+      },
+      {
+        "name": "portrait b: unknown retains control",
+        "ok": true
+      },
+      {
+        "name": "portrait b: collapsed can reopen",
+        "ok": true
+      },
+      {
+        "name": "portrait c: one current pause",
+        "ok": true
+      },
+      {
+        "name": "portrait c: one current stop",
+        "ok": true
+      },
+      {
+        "name": "portrait c: current excluded from quick list",
+        "ok": true
+      },
+      {
+        "name": "portrait c: unknown retains control",
+        "ok": true
+      },
+      {
+        "name": "portrait c: collapsed can reopen",
+        "ok": true
+      },
+      {
+        "name": "landscape a: one current pause",
+        "ok": true
+      },
+      {
+        "name": "landscape a: one current stop",
+        "ok": true
+      },
+      {
+        "name": "landscape a: current excluded from quick list",
+        "ok": true
+      },
+      {
+        "name": "landscape a: unknown retains control",
+        "ok": true
+      },
+      {
+        "name": "landscape a: collapsed can reopen",
+        "ok": true
+      },
+      {
+        "name": "landscape b: one current pause",
+        "ok": true
+      },
+      {
+        "name": "landscape b: one current stop",
+        "ok": true
+      },
+      {
+        "name": "landscape b: current excluded from quick list",
+        "ok": true
+      },
+      {
+        "name": "landscape b: unknown retains control",
+        "ok": true
+      },
+      {
+        "name": "landscape b: collapsed can reopen",
+        "ok": true
+      },
+      {
+        "name": "landscape c: one current pause",
+        "ok": true
+      },
+      {
+        "name": "landscape c: one current stop",
+        "ok": true
+      },
+      {
+        "name": "landscape c: current excluded from quick list",
+        "ok": true
+      },
+      {
+        "name": "landscape c: unknown retains control",
+        "ok": true
+      },
+      {
+        "name": "landscape c: collapsed can reopen",
+        "ok": true
+      },
+      {
+        "name": "drag does not expand ball",
+        "ok": true
+      },
+      {
+        "name": "drag keeps control inside game",
+        "ok": true
+      },
+      {
+        "name": "overlay actions preserve run identity",
+        "ok": true
+      },
+      {
+        "name": "no runtime errors",
+        "ok": true
+      }
+    ],
+    "inputs": [
+      {
+        "name": "bounded settings have slider and precise number",
+        "ok": true
+      },
+      {
+        "name": "real mouse slider syncs exact and draft",
+        "ok": true
+      },
+      {
+        "name": "slider pointer interaction keeps focus and element",
+        "ok": true
+      },
+      {
+        "name": "precise number syncs slider without rerender",
+        "ok": true
+      },
+      {
+        "name": "slider draft retained on rotate",
+        "ok": true
+      },
+      {
+        "name": "invalid slider precision rejected visibly",
+        "ok": true
+      },
+      {
+        "name": "invalid precise value not silently rounded",
+        "ok": true
+      },
+      {
+        "name": "task step mismatch rejected",
+        "ok": true
+      },
+      {
+        "name": "task below minimum rejected",
+        "ok": true
+      },
+      {
+        "name": "no invented quantity maximum",
+        "ok": true
+      },
+      {
+        "name": "plan time uses native time picker",
+        "ok": true
+      },
+      {
+        "name": "time draft retains on rotate",
+        "ok": true
+      },
+      {
+        "name": "date and date-range endpoints native",
+        "ok": true
+      },
+      {
+        "name": "date and large number drafts retain on rotate",
+        "ok": true
+      },
+      {
+        "name": "controls demo does not change schedule",
+        "ok": true
+      },
+      {
+        "name": "no runtime errors",
+        "ok": true
+      }
+    ],
+    "versions": [
+      {
+        "name": "startup downloads latest once",
+        "ok": true
+      },
+      {
+        "name": "startup retains selected version",
+        "ok": true
+      },
+      {
+        "name": "version metadata and changelog",
+        "ok": true
+      },
+      {
+        "name": "changelog expands inline",
+        "ok": true
+      },
+      {
+        "name": "choose downloaded version",
+        "ok": true
+      },
+      {
+        "name": "rollback selects old version",
+        "ok": true
+      },
+      {
+        "name": "manual latest retains pinned old version",
+        "ok": true
+      },
+      {
+        "name": "navigation rotation do not restart auto pull",
+        "ok": true
+      },
+      {
+        "name": "current version delete disabled",
+        "ok": true
+      },
+      {
+        "name": "current version delete rejected",
+        "ok": true
+      },
+      {
+        "name": "delete historical local copy",
+        "ok": true
+      },
+      {
+        "name": "remote record remains after local delete",
+        "ok": true
+      },
+      {
+        "name": "specific download pending",
+        "ok": true
+      },
+      {
+        "name": "specific version can be fetched again",
+        "ok": true
+      },
+      {
+        "name": "unknown dependencies block old version delete",
+        "ok": true
+      },
+      {
+        "name": "inflight duplicate does not start second request",
+        "ok": true
+      },
+      {
+        "name": "inflight target delete rejected",
+        "ok": true
+      },
+      {
+        "name": "inflight target delete disabled",
+        "ok": true
+      },
+      {
+        "name": "unrelated history can delete during pull",
+        "ok": true
+      },
+      {
+        "name": "download releases target reference",
+        "ok": true
+      },
+      {
+        "name": "deleted version does not resurrect",
+        "ok": true
+      },
+      {
+        "name": "cancelled stale callback cannot restore deleted version",
+        "ok": true
+      },
+      {
+        "name": "offline pull retains local selection and data",
+        "ok": true
+      },
+      {
+        "name": "offline failure distinct status",
+        "ok": true
+      },
+      {
+        "name": "cached local task still eligible",
+        "ok": true
+      },
+      {
+        "name": "new run binds chosen old version",
+        "ok": true
+      },
+      {
+        "name": "download does not replace in-flight package",
+        "ok": true
+      },
+      {
+        "name": "running switch blocked",
+        "ok": true
+      },
+      {
+        "name": "paused switch still blocked",
+        "ok": true
+      },
+      {
+        "name": "running package deletion protected",
+        "ok": true
+      },
+      {
+        "name": "portrait b: controls match launch and sit on task right",
+        "ok": true
+      },
+      {
+        "name": "portrait b: filtered candidates keep current row",
+        "ok": true
+      },
+      {
+        "name": "portrait c: controls match launch and sit on task right",
+        "ok": true
+      },
+      {
+        "name": "portrait c: filtered candidates keep current row",
+        "ok": true
+      },
+      {
+        "name": "landscape b: controls match launch and sit on task right",
+        "ok": true
+      },
+      {
+        "name": "landscape b: filtered candidates keep current row",
+        "ok": true
+      },
+      {
+        "name": "landscape c: controls match launch and sit on task right",
+        "ok": true
+      },
+      {
+        "name": "landscape c: filtered candidates keep current row",
+        "ok": true
+      },
+      {
+        "name": "ending run does not auto switch version",
+        "ok": true
+      },
+      {
+        "name": "completed history does not permanently lock old package",
+        "ok": true
+      },
+      {
+        "name": "version operations preserve common configs plans unknown",
+        "ok": true
+      },
+      {
+        "name": "first startup offline has no invented local package",
+        "ok": true
+      },
+      {
+        "name": "offline no cache task empty state",
+        "ok": true
+      },
+      {
+        "name": "first successful download does not imply selection",
+        "ok": true
+      },
+      {
+        "name": "first downloaded version can be explicitly selected",
+        "ok": true
+      },
+      {
+        "name": "incompatible latest preserves existing version",
+        "ok": true
+      },
+      {
+        "name": "model: background startup preserves input node focus and value",
+        "ok": true
+      },
+      {
+        "name": "task/soul-run: background startup preserves input node focus and value",
+        "ok": true
+      },
+      {
+        "name": "plan/daily: background startup preserves input node focus and value",
+        "ok": true
+      },
+      {
+        "name": "channel/local: background startup preserves input node focus and value",
+        "ok": true
+      },
+      {
+        "name": "no browser runtime errors",
+        "ok": true
+      }
+    ]
+  },
+  "checks": 253,
+  "passed": 253
+}

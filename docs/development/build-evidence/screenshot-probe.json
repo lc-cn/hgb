@@ -1,0 +1,9 @@
+{
+  "scope": "Fresh local API36 ARM64 emulator, real user-facing system permission UI and screenshot callback. No game input.",
+  "success": true,
+  "observedResult": "已取得可读取画面 · 1080 × 2400",
+  "method": "After granting in Android Settings, used the visible Check Screenshot button and inspected an adb screencap; no UIAutomator session active.",
+  "evidence": "environment-screenshot-verified.png",
+  "qaInterference": "Legacy uiautomator dump suppresses accessibility services while connected; polling service state with it produced a false negative. Product code unchanged for that test-side issue.",
+  "reference": "https://developer.android.com/reference/android/app/UiAutomation#FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES"
+}

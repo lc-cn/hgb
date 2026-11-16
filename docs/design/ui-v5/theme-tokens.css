@@ -1,0 +1,90 @@
+/* Shared preview tokens. Raw neutral values live only in this definition file. */
+:root {
+  color-scheme:light;
+  --neutral-white:#fff;--neutral-black:#000;
+  --canvas:#e7e7e7;--surface:#f6f6f6;--raised:#ededed;--surface-high:#fff;
+  --surface-input:#fafafa;--surface-pressed:#dedede;--ink:#181818;--muted:#555;
+  --subtle:#666;--primary:#202020;--on-primary:#fff;--tonal:#e4e4e4;
+  --line:#d3d3d3;--line-strong:#777;--focus-ring:#333;
+  --disabled-ink:#606060;--disabled-surface:#e6e6e6;
+  --status-running:#245b92;--status-running-bg:#e8f1fc;
+  --status-success:#276547;--status-success-bg:#e7f2eb;
+  --status-warning:#7d5315;--status-warning-bg:#fff0d4;
+  --status-error:#a1333a;--status-error-bg:#fce8ea;
+  --status-info:#2d5e9d;--status-info-bg:#e8f0fc;--update-dot:#c83e48;
+  --notice-bg:var(--status-warning-bg);--notice-ink:var(--status-warning);
+  --warn:var(--status-warning);--danger:var(--status-error);--danger-bg:var(--status-error-bg);
+  --scrim:rgba(0,0,0,.36);--overlay:rgba(249,249,249,.93);--overlay-ink:#171717;
+  --overlay-muted:#505050;--overlay-line:#b0b0b0;
+  --game-bg:#949494;--game-shape:#7e7e7e;--game-muted:#616161;--game-ink:#fff;
+  --shadow-sm:0 2px 6px rgba(0,0,0,.08);--shadow-md:0 8px 24px rgba(0,0,0,.12);
+  --shadow-lg:0 16px 48px rgba(0,0,0,.16);
+  --glass-fill:rgba(255,255,255,.66);--glass-hover:rgba(255,255,255,.86);
+  --glass-pressed:rgba(218,218,218,.90);--glass-edge:rgba(80,80,80,.34);
+  --glass-gloss:linear-gradient(155deg,rgba(255,255,255,.95),rgba(255,255,255,.14) 42%,rgba(255,255,255,.02) 65%,rgba(255,255,255,.48));
+  --glass-inset-shadow:inset 0 1px 1px rgba(255,255,255,.98),inset 0 -1px 1px rgba(0,0,0,.12);
+  --glass-drop-shadow:0 3px 8px rgba(0,0,0,.09),0 1px 2px rgba(0,0,0,.05);
+  --glass-strong-fill:rgba(31,31,31,.93);--glass-strong-ink:#fff;
+  --glass-strong-hover:rgba(45,45,45,.95);--glass-strong-pressed:rgba(12,12,12,.96);
+  --glass-strong-gloss:linear-gradient(155deg,rgba(255,255,255,.22),rgba(255,255,255,.03) 50%,rgba(0,0,0,.08));
+  --glass-solid:#f0f0f0;--glass-solid-strong:#202020;
+  --glass-border-width:1px;--glass-radius:18px;--glass-blur:14px;
+  --hit:48px;--icon:22px;--icon-compact:20px;--tap-gap:8px;
+  --font-body:15px;--font-compact:14px;--font-small:12px;--font-title:22px;
+  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;
+  --space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;
+  --radius-sm:8px;--radius-md:12px;--radius-lg:20px;--radius-pill:999px;
+  --motion-fast:140ms;--motion-ease:cubic-bezier(.2,0,0,1);
+  /* Compatibility aliases used by the complete-flow preview. */
+  --accent:var(--primary);--accent-soft:var(--tonal);--text:var(--ink);
+  --secondary:var(--muted);--paper:var(--surface);--panel:var(--raised);
+  --radius:var(--radius-md);--space:var(--space-2);
+}
+:root[data-theme="dark"] {
+  color-scheme:dark;
+  --canvas:#0c0c0c;--surface:#161616;--raised:#222;--surface-high:#2b2b2b;
+  --surface-input:#202020;--surface-pressed:#353535;--ink:#f2f2f2;--muted:#bcbcbc;
+  --subtle:#aaa;--primary:#eee;--on-primary:#171717;--tonal:#363636;
+  --line:#414141;--line-strong:#999;--focus-ring:#eee;
+  --disabled-ink:#aaa;--disabled-surface:#292929;
+  --status-running:#a8cff9;--status-running-bg:#1e3048;
+  --status-success:#a4d5b4;--status-success-bg:#1d3326;
+  --status-warning:#f1ce8e;--status-warning-bg:#3d2f1d;
+  --status-error:#ffb4b8;--status-error-bg:#48262a;
+  --status-info:#b4d1fa;--status-info-bg:#23344d;--update-dot:#ff8a91;
+  --notice-bg:var(--status-warning-bg);--notice-ink:var(--status-warning);
+  --warn:var(--status-warning);--danger:var(--status-error);--danger-bg:var(--status-error-bg);
+  --scrim:rgba(0,0,0,.64);--overlay:rgba(31,31,31,.95);--overlay-ink:#f5f5f5;
+  --overlay-muted:#c3c3c3;--overlay-line:#747474;
+  --game-bg:#494949;--game-shape:#393939;--game-muted:#292929;--game-ink:#f2f2f2;
+  --shadow-sm:0 2px 6px rgba(0,0,0,.32);--shadow-md:0 8px 24px rgba(0,0,0,.42);
+  --shadow-lg:0 16px 48px rgba(0,0,0,.56);
+  --glass-fill:rgba(63,63,63,.76);--glass-hover:rgba(86,86,86,.86);
+  --glass-pressed:rgba(40,40,40,.94);--glass-edge:rgba(222,222,222,.38);
+  --glass-gloss:linear-gradient(155deg,rgba(255,255,255,.20),rgba(255,255,255,.025) 42%,rgba(0,0,0,.03) 65%,rgba(255,255,255,.065));
+  --glass-inset-shadow:inset 0 1px 1px rgba(255,255,255,.25),inset 0 -1px 1px rgba(0,0,0,.55);
+  --glass-drop-shadow:0 3px 10px rgba(0,0,0,.34),0 1px 2px rgba(0,0,0,.30);
+  --glass-strong-fill:rgba(235,235,235,.95);--glass-strong-ink:#111;
+  --glass-strong-hover:rgba(250,250,250,.97);--glass-strong-pressed:rgba(211,211,211,.98);
+  --glass-strong-gloss:linear-gradient(155deg,rgba(255,255,255,.80),rgba(255,255,255,.05) 50%,rgba(0,0,0,.08));
+  --glass-solid:#343434;--glass-solid-strong:#eee;
+}
+
+/* Colorful icon accents are identity, separate from execution status roles. */
+:root {
+ --icon-blue:#2868b2;--icon-violet:#7950ba;--icon-orange:#aa5319;
+ --icon-teal:#167474;--icon-rose:#b13e70;--icon-gold:#946611;
+ --icon-blue-bg:#e4efff;--icon-violet-bg:#f0e8fc;--icon-orange-bg:#fff0de;
+ --icon-teal-bg:#def3ef;--icon-rose-bg:#fce5ee;--icon-gold-bg:#fff1ca;
+ --icon-strong-blue:#a8cff9;--icon-strong-violet:#dbc0ff;--icon-strong-orange:#ffd09e;
+ --icon-strong-teal:#9ae1d2;--icon-strong-rose:#ffc0da;--icon-strong-gold:#ffdc80;
+}
+:root[data-theme="dark"] {
+ --icon-blue:#a8cff9;--icon-violet:#cfb1fc;--icon-orange:#f8bf89;
+ --icon-teal:#8bd9cd;--icon-rose:#f5abc9;--icon-gold:#f5d079;
+ --icon-blue-bg:#203552;--icon-violet-bg:#352949;--icon-orange-bg:#422e20;
+ --icon-teal-bg:#1d3935;--icon-rose-bg:#432b38;--icon-gold-bg:#40351e;
+ --icon-strong-blue:#2868b2;--icon-strong-violet:#7950ba;--icon-strong-orange:#aa5319;
+ --icon-strong-teal:#167474;--icon-strong-rose:#b13e70;--icon-strong-gold:#805409;
+}
+:root {--icon-opacity:.82;--icon-status-opacity:.92;--icon-disabled-opacity:1}

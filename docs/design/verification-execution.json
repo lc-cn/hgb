@@ -1,0 +1,1686 @@
+{
+  "date": "2026-11-15",
+  "scope": "Local HTML and in-memory execution simulator only; no Android, game, network, actual timers or notification delivery.",
+  "sourceSha256": {
+    "docs/prototype/app-v2.html": "11a0eca94d36f316629134463f3f2226334f07993e0e683d4c60beece6962484",
+    "docs/prototype/execution-simulator.js": "04371c02b4439f223d18e8479081e0df1ea90923470e2ee3478f2de1b6005ac8",
+    "docs/prototype/tests/execution-simulator.test.cjs": "53c7700b3c9a2a1aacf86ea8ce9a43dd03896c59724955c1b9838485efd6b729"
+  },
+  "nodeScenarios": {
+    "passed": 30,
+    "failed": 0,
+    "command": "node docs/prototype/tests/execution-simulator.test.cjs"
+  },
+  "browser": {
+    "checks": [
+      {
+        "name": "portrait: home",
+        "pass": true,
+        "detail": {
+          "page": "home",
+          "title": "工作台",
+          "overflow": false,
+          "h": 683,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: tasks",
+        "pass": true,
+        "detail": {
+          "page": "tasks",
+          "title": "任务中心",
+          "overflow": false,
+          "h": 683,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: plans",
+        "pass": true,
+        "detail": {
+          "page": "plans",
+          "title": "托管计划",
+          "overflow": false,
+          "h": 683,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: messages",
+        "pass": true,
+        "detail": {
+          "page": "messages",
+          "title": "消息与记录",
+          "overflow": false,
+          "h": 683,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: settings",
+        "pass": true,
+        "detail": {
+          "page": "settings",
+          "title": "设置",
+          "overflow": false,
+          "h": 683,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/daily-rewards",
+        "pass": true,
+        "detail": {
+          "page": "task/daily-rewards",
+          "title": "每日物资领取",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/weekly-rewards",
+        "pass": true,
+        "detail": {
+          "page": "task/weekly-rewards",
+          "title": "每周物资领取",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/jade-card",
+        "pass": true,
+        "detail": {
+          "page": "task/jade-card",
+          "title": "永久勾玉卡产出",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/flower",
+        "pass": true,
+        "detail": {
+          "page": "task/flower",
+          "title": "花合战奖励",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/bounty",
+        "pass": true,
+        "detail": {
+          "page": "task/bounty",
+          "title": "悬赏封印",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/pet",
+        "pass": true,
+        "detail": {
+          "page": "task/pet",
+          "title": "宠物照料",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/shop-general",
+        "pass": true,
+        "detail": {
+          "page": "task/shop-general",
+          "title": "一般商店兑换",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/shop-wed",
+        "pass": true,
+        "detail": {
+          "page": "task/shop-wed",
+          "title": "周三商店兑换",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/shop-sat",
+        "pass": true,
+        "detail": {
+          "page": "task/shop-sat",
+          "title": "周六商店兑换",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/soul-run",
+        "pass": true,
+        "detail": {
+          "page": "task/soul-run",
+          "title": "御魂副本",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/awake-run",
+        "pass": true,
+        "detail": {
+          "page": "task/awake-run",
+          "title": "觉醒副本",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/explore-run",
+        "pass": true,
+        "detail": {
+          "page": "task/explore-run",
+          "title": "探索",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/spirit-run",
+        "pass": true,
+        "detail": {
+          "page": "task/spirit-run",
+          "title": "御灵",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/soul-enhance",
+        "pass": true,
+        "detail": {
+          "page": "task/soul-enhance",
+          "title": "御魂强化",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/soul-sort",
+        "pass": true,
+        "detail": {
+          "page": "task/soul-sort",
+          "title": "御魂整理",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/realm-claim",
+        "pass": true,
+        "detail": {
+          "page": "task/realm-claim",
+          "title": "结界物资收取",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/realm-card",
+        "pass": true,
+        "detail": {
+          "page": "task/realm-card",
+          "title": "结界挂卡",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/realm-raid",
+        "pass": true,
+        "detail": {
+          "page": "task/realm-raid",
+          "title": "个人结界突破",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/guild-raid",
+        "pass": true,
+        "detail": {
+          "page": "task/guild-raid",
+          "title": "寮突破",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/hunt",
+        "pass": true,
+        "detail": {
+          "page": "task/hunt",
+          "title": "狩猎战",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/event-repeat",
+        "pass": true,
+        "detail": {
+          "page": "task/event-repeat",
+          "title": "已适配活动",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task/event-auto",
+        "pass": true,
+        "detail": {
+          "page": "task/event-auto",
+          "title": "自主理解新活动",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: plan/daily",
+        "pass": true,
+        "detail": {
+          "page": "plan/daily",
+          "title": "每日物资托管",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: plan/shops",
+        "pass": true,
+        "detail": {
+          "page": "plan/shops",
+          "title": "周期商店计划",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: inputs-demo",
+        "pass": true,
+        "detail": {
+          "page": "inputs-demo",
+          "title": "输入控件示例",
+          "overflow": false,
+          "h": 758,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: task-updates",
+        "pass": true,
+        "detail": {
+          "page": "task-updates",
+          "title": "任务更新",
+          "overflow": false,
+          "h": 758,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: model",
+        "pass": true,
+        "detail": {
+          "page": "model",
+          "title": "云端视觉模型",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: environment",
+        "pass": true,
+        "detail": {
+          "page": "environment",
+          "title": "运行环境",
+          "overflow": false,
+          "h": 758,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: channels",
+        "pass": true,
+        "detail": {
+          "page": "channels",
+          "title": "通知渠道",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: channel/local",
+        "pass": true,
+        "detail": {
+          "page": "channel/local",
+          "title": "渠道配置",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: channel/webhook",
+        "pass": true,
+        "detail": {
+          "page": "channel/webhook",
+          "title": "渠道配置",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: notification-rules",
+        "pass": true,
+        "detail": {
+          "page": "notification-rules",
+          "title": "提醒规则",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: float-settings",
+        "pass": true,
+        "detail": {
+          "page": "float-settings",
+          "title": "悬浮球",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: data-settings",
+        "pass": true,
+        "detail": {
+          "page": "data-settings",
+          "title": "运行与数据",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: diagnostics",
+        "pass": true,
+        "detail": {
+          "page": "diagnostics",
+          "title": "开发诊断",
+          "overflow": false,
+          "h": 758,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: issue/auth",
+        "pass": true,
+        "detail": {
+          "page": "issue/auth",
+          "title": "问题原因",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: issue/resource",
+        "pass": true,
+        "detail": {
+          "page": "issue/resource",
+          "title": "问题原因",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: issue/delivery",
+        "pass": true,
+        "detail": {
+          "page": "issue/delivery",
+          "title": "问题原因",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: issue/unknown",
+        "pass": true,
+        "detail": {
+          "page": "issue/unknown",
+          "title": "问题原因",
+          "overflow": false,
+          "h": 694,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: history/sample-result",
+        "pass": true,
+        "detail": {
+          "page": "history/sample-result",
+          "title": "运行记录",
+          "overflow": false,
+          "h": 758,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: delivery/sample-delivery",
+        "pass": true,
+        "detail": {
+          "page": "delivery/sample-delivery",
+          "title": "通知投递",
+          "overflow": false,
+          "h": 758,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: preview/soul-sort",
+        "pass": true,
+        "detail": {
+          "page": "preview/soul-sort",
+          "title": "御魂对象预览",
+          "overflow": false,
+          "h": 758,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: preview/soul-enhance",
+        "pass": true,
+        "detail": {
+          "page": "preview/soul-enhance",
+          "title": "御魂对象预览",
+          "overflow": false,
+          "h": 758,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "portrait: activity/event-auto",
+        "pass": true,
+        "detail": {
+          "page": "activity/event-auto",
+          "title": "活动规则与进度",
+          "overflow": false,
+          "h": 758,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: home",
+        "pass": true,
+        "detail": {
+          "page": "home",
+          "title": "工作台",
+          "overflow": false,
+          "h": 259,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: tasks",
+        "pass": true,
+        "detail": {
+          "page": "tasks",
+          "title": "任务中心",
+          "overflow": false,
+          "h": 259,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: plans",
+        "pass": true,
+        "detail": {
+          "page": "plans",
+          "title": "托管计划",
+          "overflow": false,
+          "h": 259,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: messages",
+        "pass": true,
+        "detail": {
+          "page": "messages",
+          "title": "消息与记录",
+          "overflow": false,
+          "h": 259,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: settings",
+        "pass": true,
+        "detail": {
+          "page": "settings",
+          "title": "设置",
+          "overflow": false,
+          "h": 259,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/daily-rewards",
+        "pass": true,
+        "detail": {
+          "page": "task/daily-rewards",
+          "title": "每日物资领取",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/weekly-rewards",
+        "pass": true,
+        "detail": {
+          "page": "task/weekly-rewards",
+          "title": "每周物资领取",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/jade-card",
+        "pass": true,
+        "detail": {
+          "page": "task/jade-card",
+          "title": "永久勾玉卡产出",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/flower",
+        "pass": true,
+        "detail": {
+          "page": "task/flower",
+          "title": "花合战奖励",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/bounty",
+        "pass": true,
+        "detail": {
+          "page": "task/bounty",
+          "title": "悬赏封印",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/pet",
+        "pass": true,
+        "detail": {
+          "page": "task/pet",
+          "title": "宠物照料",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/shop-general",
+        "pass": true,
+        "detail": {
+          "page": "task/shop-general",
+          "title": "一般商店兑换",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/shop-wed",
+        "pass": true,
+        "detail": {
+          "page": "task/shop-wed",
+          "title": "周三商店兑换",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/shop-sat",
+        "pass": true,
+        "detail": {
+          "page": "task/shop-sat",
+          "title": "周六商店兑换",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/soul-run",
+        "pass": true,
+        "detail": {
+          "page": "task/soul-run",
+          "title": "御魂副本",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/awake-run",
+        "pass": true,
+        "detail": {
+          "page": "task/awake-run",
+          "title": "觉醒副本",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/explore-run",
+        "pass": true,
+        "detail": {
+          "page": "task/explore-run",
+          "title": "探索",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/spirit-run",
+        "pass": true,
+        "detail": {
+          "page": "task/spirit-run",
+          "title": "御灵",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/soul-enhance",
+        "pass": true,
+        "detail": {
+          "page": "task/soul-enhance",
+          "title": "御魂强化",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/soul-sort",
+        "pass": true,
+        "detail": {
+          "page": "task/soul-sort",
+          "title": "御魂整理",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/realm-claim",
+        "pass": true,
+        "detail": {
+          "page": "task/realm-claim",
+          "title": "结界物资收取",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/realm-card",
+        "pass": true,
+        "detail": {
+          "page": "task/realm-card",
+          "title": "结界挂卡",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/realm-raid",
+        "pass": true,
+        "detail": {
+          "page": "task/realm-raid",
+          "title": "个人结界突破",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/guild-raid",
+        "pass": true,
+        "detail": {
+          "page": "task/guild-raid",
+          "title": "寮突破",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/hunt",
+        "pass": true,
+        "detail": {
+          "page": "task/hunt",
+          "title": "狩猎战",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/event-repeat",
+        "pass": true,
+        "detail": {
+          "page": "task/event-repeat",
+          "title": "已适配活动",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task/event-auto",
+        "pass": true,
+        "detail": {
+          "page": "task/event-auto",
+          "title": "自主理解新活动",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: plan/daily",
+        "pass": true,
+        "detail": {
+          "page": "plan/daily",
+          "title": "每日物资托管",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: plan/shops",
+        "pass": true,
+        "detail": {
+          "page": "plan/shops",
+          "title": "周期商店计划",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: inputs-demo",
+        "pass": true,
+        "detail": {
+          "page": "inputs-demo",
+          "title": "输入控件示例",
+          "overflow": false,
+          "h": 321,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: task-updates",
+        "pass": true,
+        "detail": {
+          "page": "task-updates",
+          "title": "任务更新",
+          "overflow": false,
+          "h": 321,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: model",
+        "pass": true,
+        "detail": {
+          "page": "model",
+          "title": "云端视觉模型",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: environment",
+        "pass": true,
+        "detail": {
+          "page": "environment",
+          "title": "运行环境",
+          "overflow": false,
+          "h": 321,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: channels",
+        "pass": true,
+        "detail": {
+          "page": "channels",
+          "title": "通知渠道",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: channel/local",
+        "pass": true,
+        "detail": {
+          "page": "channel/local",
+          "title": "渠道配置",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: channel/webhook",
+        "pass": true,
+        "detail": {
+          "page": "channel/webhook",
+          "title": "渠道配置",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: notification-rules",
+        "pass": true,
+        "detail": {
+          "page": "notification-rules",
+          "title": "提醒规则",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: float-settings",
+        "pass": true,
+        "detail": {
+          "page": "float-settings",
+          "title": "悬浮球",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: data-settings",
+        "pass": true,
+        "detail": {
+          "page": "data-settings",
+          "title": "运行与数据",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: diagnostics",
+        "pass": true,
+        "detail": {
+          "page": "diagnostics",
+          "title": "开发诊断",
+          "overflow": false,
+          "h": 321,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: issue/auth",
+        "pass": true,
+        "detail": {
+          "page": "issue/auth",
+          "title": "问题原因",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: issue/resource",
+        "pass": true,
+        "detail": {
+          "page": "issue/resource",
+          "title": "问题原因",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: issue/delivery",
+        "pass": true,
+        "detail": {
+          "page": "issue/delivery",
+          "title": "问题原因",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: issue/unknown",
+        "pass": true,
+        "detail": {
+          "page": "issue/unknown",
+          "title": "问题原因",
+          "overflow": false,
+          "h": 262,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: history/sample-result",
+        "pass": true,
+        "detail": {
+          "page": "history/sample-result",
+          "title": "运行记录",
+          "overflow": false,
+          "h": 321,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: delivery/sample-delivery",
+        "pass": true,
+        "detail": {
+          "page": "delivery/sample-delivery",
+          "title": "通知投递",
+          "overflow": false,
+          "h": 321,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: preview/soul-sort",
+        "pass": true,
+        "detail": {
+          "page": "preview/soul-sort",
+          "title": "御魂对象预览",
+          "overflow": false,
+          "h": 321,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: preview/soul-enhance",
+        "pass": true,
+        "detail": {
+          "page": "preview/soul-enhance",
+          "title": "御魂对象预览",
+          "overflow": false,
+          "h": 321,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "landscape: activity/event-auto",
+        "pass": true,
+        "detail": {
+          "page": "activity/event-auto",
+          "title": "活动规则与进度",
+          "overflow": false,
+          "h": 321,
+          "old": 0,
+          "choice": true
+        }
+      },
+      {
+        "name": "task row submits through queue engine",
+        "pass": true
+      },
+      {
+        "name": "running task row shows pause action",
+        "pass": true
+      },
+      {
+        "name": "direct request cannot duplicate current task",
+        "pass": true
+      },
+      {
+        "name": "task row pause holds entire queue",
+        "pass": true
+      },
+      {
+        "name": "paused task row continues through reconciliation",
+        "pass": true
+      },
+      {
+        "name": "plan row submits whole plan with sum priority",
+        "pass": true
+      },
+      {
+        "name": "running plan row shows pause action",
+        "pass": true
+      },
+      {
+        "name": "run projection has no separate mutable owner",
+        "pass": true
+      },
+      {
+        "name": "portrait: queued task shows badge and disabled button",
+        "pass": true
+      },
+      {
+        "name": "portrait: disabled task cannot enqueue again",
+        "pass": true
+      },
+      {
+        "name": "portrait: removal restores task add button and clears badge",
+        "pass": true
+      },
+      {
+        "name": "portrait: queued plan shows badge and disabled button",
+        "pass": true
+      },
+      {
+        "name": "portrait: disabled plan cannot enqueue again",
+        "pass": true
+      },
+      {
+        "name": "portrait: running plan pause preserves entity identity",
+        "pass": true
+      },
+      {
+        "name": "portrait: preempted plan is queued and disabled",
+        "pass": true
+      },
+      {
+        "name": "portrait: overlay queued task and plan are disabled",
+        "pass": true
+      },
+      {
+        "name": "landscape: queued task shows badge and disabled button",
+        "pass": true
+      },
+      {
+        "name": "landscape: disabled task cannot enqueue again",
+        "pass": true
+      },
+      {
+        "name": "landscape: removal restores task add button and clears badge",
+        "pass": true
+      },
+      {
+        "name": "landscape: queued plan shows badge and disabled button",
+        "pass": true
+      },
+      {
+        "name": "landscape: disabled plan cannot enqueue again",
+        "pass": true
+      },
+      {
+        "name": "landscape: running plan pause preserves entity identity",
+        "pass": true
+      },
+      {
+        "name": "landscape: preempted plan is queued and disabled",
+        "pass": true
+      },
+      {
+        "name": "landscape: overlay queued task and plan are disabled",
+        "pass": true
+      },
+      {
+        "name": "portrait: workbench queue visible with current task",
+        "pass": true,
+        "detail": {
+          "h": 211,
+          "scroll": 211,
+          "visible": 3,
+          "top": 617.28125,
+          "bottom": 828.0625,
+          "bodyBottom": 1043.28125
+        }
+      },
+      {
+        "name": "portrait: queue shows wait duration and labelled priority",
+        "pass": true
+      },
+      {
+        "name": "portrait: short horizontal drag does not remove",
+        "pass": true
+      },
+      {
+        "name": "portrait: real right swipe removes queued item",
+        "pass": true
+      },
+      {
+        "name": "portrait: swipe does not navigate into item",
+        "pass": true
+      },
+      {
+        "name": "portrait: removing waiting item preserves current",
+        "pass": true
+      },
+      {
+        "name": "portrait: swipe current removes then automatically continues",
+        "pass": true
+      },
+      {
+        "name": "landscape: workbench queue visible with current task",
+        "pass": true,
+        "detail": {
+          "h": 195,
+          "scroll": 195,
+          "visible": 3,
+          "top": 352.28125,
+          "bottom": 547.5625,
+          "bodyBottom": 611.28125
+        }
+      },
+      {
+        "name": "landscape: queue shows wait duration and labelled priority",
+        "pass": true
+      },
+      {
+        "name": "landscape: short horizontal drag does not remove",
+        "pass": true
+      },
+      {
+        "name": "landscape: real right swipe removes queued item",
+        "pass": true
+      },
+      {
+        "name": "landscape: swipe does not navigate into item",
+        "pass": true
+      },
+      {
+        "name": "landscape: removing waiting item preserves current",
+        "pass": true
+      },
+      {
+        "name": "landscape: swipe current removes then automatically continues",
+        "pass": true
+      },
+      {
+        "name": "stuck worker removal visibly revoking, not false success",
+        "pass": true
+      },
+      {
+        "name": "next item cannot input before dispatcher quiescence",
+        "pass": true
+      },
+      {
+        "name": "independent dispatcher confirmation dispatches next",
+        "pass": true
+      },
+      {
+        "name": "short press pauses entire queue",
+        "pass": true
+      },
+      {
+        "name": "high priority submission cannot bypass manual hold",
+        "pass": true
+      },
+      {
+        "name": "continue first waits for new observation",
+        "pass": true
+      },
+      {
+        "name": "after reconciliation scheduler selects highest queued item",
+        "pass": true
+      },
+      {
+        "name": "long press stops and keeps remaining queue held",
+        "pass": true
+      },
+      {
+        "name": "empty current still offers continue queue",
+        "pass": true
+      },
+      {
+        "name": "queue continue resumes highest remaining plan",
+        "pass": true
+      },
+      {
+        "name": "waiting reminder starts without guessed threshold",
+        "pass": true
+      },
+      {
+        "name": "no arbitrary reminder rule text input",
+        "pass": true
+      },
+      {
+        "name": "zero reminder duration rejected",
+        "pass": true
+      },
+      {
+        "name": "minute bounds enforced",
+        "pass": true
+      },
+      {
+        "name": "user duration saves exact threshold",
+        "pass": true
+      },
+      {
+        "name": "below threshold no waiting notification",
+        "pass": true
+      },
+      {
+        "name": "configured threshold emits wait event",
+        "pass": true
+      },
+      {
+        "name": "wait event projects only subscribed channel delivery",
+        "pass": true
+      },
+      {
+        "name": "notification does not cancel, boost or interrupt current",
+        "pass": true
+      },
+      {
+        "name": "same waiting event is not repeatedly projected",
+        "pass": true
+      },
+      {
+        "name": "wait reminder visible in notification records",
+        "pass": true
+      },
+      {
+        "name": "confirmed child failure continues plan at locked sum",
+        "pass": true
+      },
+      {
+        "name": "plan ends partial failure then dispatches next",
+        "pass": true
+      },
+      {
+        "name": "negative retention cannot be saved",
+        "pass": true
+      },
+      {
+        "name": "fractional retention cannot be saved",
+        "pass": true
+      },
+      {
+        "name": "valid retention remains saveable",
+        "pass": true
+      },
+      {
+        "name": "no runtime exceptions",
+        "pass": true,
+        "detail": []
+      }
+    ],
+    "metrics": [
+      {
+        "orientation": "portrait",
+        "h": 211,
+        "scroll": 211,
+        "visible": 3,
+        "top": 617.28125,
+        "bottom": 828.0625,
+        "bodyBottom": 1043.28125
+      },
+      {
+        "orientation": "landscape",
+        "h": 195,
+        "scroll": 195,
+        "visible": 3,
+        "top": 352.28125,
+        "bottom": 547.5625,
+        "bodyBottom": 611.28125
+      }
+    ]
+  },
+  "durationAndScroll": {
+    "checks": [
+      {
+        "name": "plan no freeform stop rule",
+        "ok": true
+      },
+      {
+        "name": "default round has no arbitrary limit",
+        "ok": true
+      },
+      {
+        "name": "duration uses numbers instead of clock",
+        "ok": true
+      },
+      {
+        "name": "invalid duration rejected: empty",
+        "ok": true
+      },
+      {
+        "name": "invalid duration rejected: zero",
+        "ok": true
+      },
+      {
+        "name": "invalid duration rejected: negative",
+        "ok": true
+      },
+      {
+        "name": "invalid duration rejected: fractional hour",
+        "ok": true
+      },
+      {
+        "name": "invalid duration rejected: minute range",
+        "ok": true
+      },
+      {
+        "name": "invalid duration rejected: fractional minute",
+        "ok": true
+      },
+      {
+        "name": "duration saved as structured minutes",
+        "ok": true
+      },
+      {
+        "name": "run locks structured duration",
+        "ok": true
+      },
+      {
+        "name": "removing limit saves null without changing current run",
+        "ok": true
+      },
+      {
+        "name": "nested plan multi-select keeps scroll",
+        "ok": true,
+        "detail": {
+          "oldTop": 128
+        }
+      },
+      {
+        "name": "second selection does not jump to top",
+        "ok": true
+      },
+      {
+        "name": "portrait non-scroll pane does not erase landscape position",
+        "ok": true
+      },
+      {
+        "name": "changing plan radio does not reset scrolled pane",
+        "ok": true
+      },
+      {
+        "name": "task favorite preserves list position",
+        "ok": true
+      },
+      {
+        "name": "landscape plans use two columns",
+        "ok": true,
+        "detail": "441px 441px"
+      },
+      {
+        "name": "portrait plans remain one column",
+        "ok": true
+      },
+      {
+        "name": "no runtime errors",
+        "ok": true
+      }
+    ],
+    "sourceSha256": {
+      "docs/prototype/app-v2.html": "d254f92510de3ccd78b10d1f628e67838b96ead2a8e36e481ca2e62d07309dda",
+      "docs/prototype/execution-simulator.js": "7e1bca6bf385ee529e15958555e2f22f1b6ab80632671165689ae3dd7376e859",
+      "docs/prototype/tests/execution-simulator.test.cjs": "c25ed8bd0c390f0239402e947dabfc63a46e954df538eb64ecd3d43a59c60f75"
+    },
+    "note": "Previously verified; not rerun for the entity deduplication and list button requirement change."
+  },
+  "screenshots": [
+    "docs/prototype/screens-v2/queue-home-landscape.png",
+    "docs/prototype/screens-v2/queue-home-portrait.png",
+    "docs/prototype/screens-v2/queue-notification-landscape.png",
+    "docs/prototype/screens-v2/queue-notification-portrait.png",
+    "docs/prototype/screens-v2/queue-overlay-landscape.png",
+    "docs/prototype/screens-v2/queue-overlay-portrait.png",
+    "docs/prototype/screens-v2/queue-paused-landscape.png",
+    "docs/prototype/screens-v2/queue-paused-portrait.png",
+    "docs/prototype/screens-v2/queue-plan-landscape.png",
+    "docs/prototype/screens-v2/queue-plan-portrait.png",
+    "docs/prototype/screens-v2/queue-plans-landscape.png",
+    "docs/prototype/screens-v2/queue-plans-portrait.png",
+    "docs/prototype/screens-v2/queue-removing-landscape.png",
+    "docs/prototype/screens-v2/queue-removing-portrait.png",
+    "docs/prototype/screens-v2/queue-tasks-landscape.png",
+    "docs/prototype/screens-v2/queue-tasks-portrait.png"
+  ],
+  "checks": {
+    "inlineJsSyntax": true,
+    "simulatorJsSyntax": true,
+    "localMarkdownLinks": true
+  },
+  "limitations": [
+    "Gesture thresholds are browser demo values, not Android defaults.",
+    "Wait demonstration covers first dispatch and emits once per execution item. Production repeat/pause accounting policies remain open.",
+    "Only known worker identities are validated; production IPC/dispatcher implementation and real observation freshness require separate verification."
+  ],
+  "listGestures": {
+    "checks": [
+      {
+        "name": "portrait task: real row short press pauses queue",
+        "pass": true
+      },
+      {
+        "name": "portrait task: row continue waits reconciliation",
+        "pass": true
+      },
+      {
+        "name": "portrait task: continues same current identity",
+        "pass": true
+      },
+      {
+        "name": "portrait task: row long press stops without trailing enqueue",
+        "pass": true
+      },
+      {
+        "name": "portrait plan: real row short press pauses queue",
+        "pass": true
+      },
+      {
+        "name": "portrait plan: row continue waits reconciliation",
+        "pass": true
+      },
+      {
+        "name": "portrait plan: continues same current identity",
+        "pass": true
+      },
+      {
+        "name": "portrait plan: row long press stops without trailing enqueue",
+        "pass": true
+      },
+      {
+        "name": "landscape task: real row short press pauses queue",
+        "pass": true
+      },
+      {
+        "name": "landscape task: row continue waits reconciliation",
+        "pass": true
+      },
+      {
+        "name": "landscape task: continues same current identity",
+        "pass": true
+      },
+      {
+        "name": "landscape task: row long press stops without trailing enqueue",
+        "pass": true
+      },
+      {
+        "name": "landscape plan: real row short press pauses queue",
+        "pass": true
+      },
+      {
+        "name": "landscape plan: row continue waits reconciliation",
+        "pass": true
+      },
+      {
+        "name": "landscape plan: continues same current identity",
+        "pass": true
+      },
+      {
+        "name": "landscape plan: row long press stops without trailing enqueue",
+        "pass": true
+      },
+      {
+        "name": "no browser runtime exceptions",
+        "pass": true
+      }
+    ]
+  },
+  "requirementChange": "One nonterminal execution item per kind+id. Active entity pause/resume, queued/preempted entity disabled with badge; terminal identity reusable."
+}

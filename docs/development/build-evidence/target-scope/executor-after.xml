@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.github.yysassist.core.execution.TaskExecutorTest" tests="23" skipped="0" failures="0" errors="0" timestamp="2026-11-16T03:08:04.178Z" hostname="class-1033.local" time="0.033">
+  <properties/>
+  <testcase name="caller mutation cannot alter queued snapshot or priority" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.011"/>
+  <testcase name="plan priority remains sum after completed member" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.006"/>
+  <testcase name="unknown blocks work and cannot be cleared by resume restart or removal" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.002"/>
+  <testcase name="accountless application uses an explicit anonymous context not a fake account" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.001"/>
+  <testcase name="same local task id in another target has its own live submission identity" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.0"/>
+  <testcase name="other account high priority cannot preempt and verified switch clears old live items" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.004"/>
+  <testcase name="pause during preemption preserves current task for restart" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.0"/>
+  <testcase name="late unknown result revokes new input and retains old evidence" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.0"/>
+  <testcase name="pause requires independent quiet and holds queued work" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.0"/>
+  <testcase name="continue skips completed steps restart only resets current task" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.0"/>
+  <testcase name="replayed old uncertainty cannot undo explicit reconciliation" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.0"/>
+  <testcase name="removing while user holds does not resume queue" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.001"/>
+  <testcase name="result facts retain original account version and display name after account change" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.0"/>
+  <testcase name="equal priority keeps FIFO and cannot preempt" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.0"/>
+  <testcase name="identity readiness can admit waiting work but never releases a user hold" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.0"/>
+  <testcase name="confirmed failure advances plan and emits partial result" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.001"/>
+  <testcase name="stop ends current but holds other work" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.0"/>
+  <testcase name="duplicate command is idempotent and live ref cannot repeat" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.0"/>
+  <testcase name="removing a hung current does not wait for worker and continues only after quiet" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.0"/>
+  <testcase name="invalid schema priority overflow and blank outcome rejected without admission" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.005"/>
+  <testcase name="cross-target context handoff cannot silently discard unfinished work" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.001"/>
+  <testcase name="strict higher priority revokes input before dispatch and low resumes unfinished step" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.0"/>
+  <testcase name="late revocation acknowledgment cannot discard an unknown result" classname="io.github.yysassist.core.execution.TaskExecutorTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

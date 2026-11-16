@@ -1,0 +1,41 @@
+{
+  "scope": "UX proposal for 3 key scenes; no production implementation or human usability study",
+  "sources": {
+    "after-observations.json": "e63e58d95012b6061a1175fb6daee52e7f00c311ead664cb1ecd9891a30004e4",
+    "edge-observations.json": "512e4faf6c15e14d72de147470aa93974845af0cde794d78e08ee5b74cd5733e",
+    "index.html": "a0e7d5b3dab0c52df34fb316f28467e64783b3c24bb3e6477ab8a450130759fa",
+    "before-observations.json": "83deaa47aea56a03ad2360d826d9ac55139860e39fbc81da4427ddad4df1d8af",
+    "review-notes.md": "ed7e770489a2cbb905b93293db55a61a77c8ebdbc201b7bb0aa958746b4747fa",
+    "app.css": "d573e132ed9260ace286d36f251dc754de8202bc831b15be728befffc4324c56",
+    "design-decisions.md": "eb5afc88ab4e99d9b0d900195a026452b93b0bc686ea657142c9f08dd7843ce9",
+    "walkthrough-observations.json": "ef8eabe6721404f8bad4cfb8829c176f159fd572acd1a3b8e763911825ca256c",
+    "ux-review.md": "f26c34d1e29a45b76e8bb2de23458420df7c9fec007601813312a74c6f02200a",
+    "app.html": "7b044ca296f990ef7b78cbb56cd052369560c0b6687de10b720533b44df27397",
+    "fixture-data.js": "bb76f5d9c160d0ddb41d1e746dadf4243c8eccb8f11fc42c7dc12ecc187ce0ff",
+    "ux-directions.md": "80b0003ca0b0c5e3498de21ed5b0ba879e0441fd2c9f9c464495f7679138aca6",
+    "app.js": "468a4bac23a1f2df8c58670ed3072f29df44863f0f0b5d9aeda0b923c882cd3d",
+    "layout-observations.md": "3e5e8508f977507c4e77b0f4942c00729ff106e192798406668257f178071537"
+  },
+  "screens": {
+    "screens/after-common-landscape.png": "70c5d808be26021e586aea50ad0b1ce3bba00dc4f19c36cf0548e6d87aa6619a",
+    "screens/after-common-portrait.png": "2ea9adeb2b1402a597da26dda3322ef87a6482a6c2bf78303cfa4cffcf3f639c",
+    "screens/after-detail-landscape.png": "892fe6a0a2e3171cc394a2da51a55397c9e3a44b0e38df7969237df55346e8de",
+    "screens/after-detail-portrait.png": "d628ee31ea123f3afb9987594aff1d38b6f7fec59e7c1e400d39c644b43b6061",
+    "screens/after-quick-landscape.png": "6077d723be84ed6817f57c7c8f279ddb63032dde9198e9bce776cd056a462c82",
+    "screens/after-quick-portrait.png": "1becd92b7573615e4b137614e30c44088c2ff331c77836d4ff1564591ac2d5fc",
+    "screens/after-tasks-landscape.png": "a0ebf71c85dbf0b5c82e0701a12377a341ff350d7d331a59e619222fdc9d4b08",
+    "screens/after-tasks-portrait.png": "89a711038b67aa518e1002bb1a28aa4fb1cbed3f334d92224e59761232841240",
+    "screens/after-workbench-landscape.png": "fe6df5901b359fcdbdac0caa3ef14a8bd3aca19a5a1b6df35457d7ada62ead3e",
+    "screens/after-workbench-portrait.png": "9eca7ef4dfc7d769d75d1238f88b269883fe52e618924b552ee5aaf8b4abcf85",
+    "screens/before-common-landscape.png": "09accb881bee644826504dc60ceed375445d0df9a8aae861f0c6cbf3adf5b00e",
+    "screens/before-common-portrait.png": "c8c54cba7655ed48c7270ac350c5f12c5abdbe275c611135d3a731ee9365e5a8",
+    "screens/before-detail-landscape.png": "e0b0af38d3618a20a2820121e9b43296ca785f76214bc5f667c0953002f017f5",
+    "screens/before-detail-portrait.png": "860aca22dc5c9e937821def089a21b17d838c44ae34c741b429cfb4f8f6879b3",
+    "screens/before-quick-landscape.png": "b6888cd57189e17c6a9b900039de55cb82460f1e6dc296bea2094fc6a48dd367",
+    "screens/before-quick-portrait.png": "850f6aeb3c1f9eed4fe46d63e15d126406bde4b7096530f6ee47b0182217ea4a",
+    "screens/before-tasks-landscape.png": "184aa07b6f6e602b21e007a4d02bba2927ad4cb574ca5cee8ea7635aa884291e",
+    "screens/before-tasks-portrait.png": "5be10e506fac499fed4add549acecfd6b1489dcdea5ceaa203f2790eb286e8dd",
+    "screens/before-workbench-landscape.png": "14a6f62e82039b1f40b83edff9668e77167d7aeac87f086c7ef04132c64105f0",
+    "screens/before-workbench-portrait.png": "7c8e3b5a406c0642be1d9b351ccd054779947c8806f8512f6fec36fa12c5a410"
+  }
+}

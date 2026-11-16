@@ -1,0 +1,80 @@
+{
+  "date": "2026-11-16",
+  "coreTests": [
+    {
+      "name": "io.github.yysassist.core.content.ConfigurationValidatorTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.yysassist.core.content.GitHubTaskSourceTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.yysassist.core.content.BundleCodecTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.yysassist.core.execution.TaskExecutorTest",
+      "tests": "23",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "androidTests": 14,
+  "supplementalVisualUiTests": 5,
+  "lint": "No issues found.",
+  "nativePublicSource": "full-app/task-update-native.json",
+  "sources": {
+    "app/src/main/AndroidManifest.xml": "2c43c2c4f2ef04a1d8e57c6c111a7ae2d101ef5209a1dc2aabf887f373e620b4",
+    "app/src/main/kotlin/io/github/yysassist/MainActivity.kt": "5421060e01cee891f6af006d7602197a0996dba84dd18932571b7f7b9c0f8407",
+    "app/src/main/kotlin/io/github/yysassist/TaskUpdates.kt": "31cdb34825eca39fdfded283a98474ae1de790129f7a5e8b8b7aa3a07fbbc035",
+    "app/src/main/kotlin/io/github/yysassist/AssistApplication.kt": "62c1f7fbd2c26d92e0849aed5d0a3e973216b4c9345b8ab908ca3584549afaa8",
+    "app/src/main/kotlin/io/github/yysassist/AppearancePreferences.kt": "b1e33fe012e223a381fc3e62af78407ce41cf036f369447f5b7778656991ac6e",
+    "app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt": "661363c16f0e9999b4dc211ab396bd9696307603b8213e670e7d64d557dc2625",
+    "app/src/main/kotlin/io/github/yysassist/ui/GlassControls.kt": "761814150c5f5ff3c2ad3888ac2314194c6a515343f5b92294841cba74210666",
+    "app/src/main/kotlin/io/github/yysassist/ui/AssistIcons.kt": "b929069e48aea35fe0e8edb7e7b5ca68f177a0be84223e4e34cce11ebc8fe049",
+    "app/src/main/kotlin/io/github/yysassist/ui/AssistTheme.kt": "d08ad7d2f6f85b14878318959480c2a08170427dc37310ebc6a7eff9d40b3284",
+    "app/src/main/kotlin/io/github/yysassist/ui/TaskVersionsPage.kt": "001bf39b1d1ac55c33df33523f9c8eb8b27400c83af457e23b292308b427f157",
+    "app/src/main/kotlin/io/github/yysassist/storage/TaskVersionLibrary.kt": "c1c21f03bef03404f7e8db5b457b051b95322da264d9a40b09fd01b49d9ba331",
+    "app/src/main/kotlin/io/github/yysassist/storage/AssistDatabase.kt": "60f2e7ad61fff65019f33d4d74d6e2dff3b14de126aaa5df205f60b20ab5f571",
+    "app/src/main/kotlin/io/github/yysassist/device/GameAccessibilityService.kt": "bee1b541cc9dfabff8456aac3be12e1e40b51cabe623a544817109a64ff7fa95",
+    "app/src/main/res/drawable/ic_launcher_foreground.xml": "6ad1f4d7fd76172a0d715dac020afdc6bd919f62853d17f1c0ca843a3cb047de",
+    "app/src/main/res/values/colors.xml": "d4bc03b7d3b52a7c142ecf31d6c2aa1be4bbeeaffa89c3a1ba7443c0b8c9cce7",
+    "app/src/main/res/values/styles.xml": "8f15ed84a9766e1a9d55607f866146a7e982ee5a0b5b869645cbdf4e72286d8d",
+    "app/src/main/res/values/strings.xml": "cb0ad47256b9275b84d16a53cf29476bff9a472cd931891a8ce4e7907179c545",
+    "app/src/main/res/xml/accessibility_service.xml": "598a86a984211d6eaceb7cc1060c8d4a10a3816343e355ad85d51cb3d481b10a",
+    "app/src/main/res/xml/backup_rules.xml": "865cae97840e81b9950d70457a05c5c1125a68364b0a83f44cd3daa030bc7e96",
+    "app/src/main/res/xml/data_extraction_rules.xml": "cb029b35db0e976c087100424e16e14a6256b46962398887520e51508c3b5842",
+    "app/src/main/res/mipmap-anydpi/ic_launcher.xml": "d6a9c9225b56729fa8c5c82c0ae404fa13e0994361dccc91d64909999b8b2d36",
+    "app/src/androidTest/kotlin/io/github/yysassist/TaskUpdatesIntegrationTest.kt": "18df34d2412105c78b31675252030999f9297fc9f5654d8db5f5098692252a8a",
+    "app/src/androidTest/kotlin/io/github/yysassist/ui/TaskVersionsPageTest.kt": "bcd51783cf5ff6fc5f14f2ca6b9b7a31a5ae1a3962af9bfa4764fa6645c5d7cf",
+    "app/src/androidTest/kotlin/io/github/yysassist/storage/TaskVersionLibraryTest.kt": "06bc5895074d66201a96ba389145250f43986ffa086efbc130381dc9b0ba8fe5",
+    "core/src/main/kotlin/io/github/yysassist/core/content/GitHubTaskSource.kt": "4979fc24f2ff1a4dc1a89fa08d142ac1964d308c65df86a488cc8e1d34fc1dc0",
+    "core/src/main/kotlin/io/github/yysassist/core/content/ConfigurationValidator.kt": "99cff9d23da53c39b7a06df9b1d6a638fdb1825c738916205e15cc0bbc647852",
+    "core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt": "14d7a2bb9946890381db6f101df0acdb35ea7ad24914e13980e4662e64a0a226",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/TaskExecutor.kt": "370dfdae486d375ab7f93b309987173564cc2d7e78254f6143fd354a57773bf0",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/ExecutionModels.kt": "4add1b688144f6eca7c33dddcab7444cc9f23bf39beeb95ea3ec48877eeeb47f",
+    "core/src/main/kotlin/io/github/yysassist/core/model/ExecutionContext.kt": "28bda0b7c71ee750a00ec9938a43120e4f07e6d5c2d6c82d5b30ab6b0b9b4562",
+    "core/src/test/kotlin/io/github/yysassist/core/content/GitHubTaskSourceTest.kt": "4ec41a0d1da848b1ef84d17d9aa8789450ce5bde3a578b38fb255c627ec8499f",
+    "core/src/test/kotlin/io/github/yysassist/core/content/ConfigurationValidatorTest.kt": "4385e39d0f54e24c998bfb328b5c93f13ec5315de688a39a6627c172c677eb90",
+    "core/src/test/kotlin/io/github/yysassist/core/content/BundleCodecTest.kt": "6f57a92559606556adacc9d39497f61fd5da6e0b53240079d666e9728d6dc038",
+    "core/src/test/kotlin/io/github/yysassist/core/execution/TaskExecutorTest.kt": "46dc08bd495a16db330884366a28da64327e086fc4230c47d7e5a5c50a1d36fb"
+  },
+  "artifacts": {
+    "app/build/outputs/apk/debug/app-debug.apk": "25ec0687bd9dabbe5577f59b25e224bc6dc9c1750f9e3305598107cb333fd775",
+    "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": "2ca909a04a9e8c448fc52c1a6a14fd68e883f8ac15bc7333dfde8472068ce80d"
+  },
+  "scope": "API36 isolated Android emulator. Local HTTP/HTTPS source tests, real SQLite, native component fixtures and actual application/public-source empty state. No phone game capture/input, no real Release publication/content download, no M2/M3 completion claim.",
+  "finalInstrumentation": "instrumentation.txt",
+  "allFinalApkTestsPassed": true
+}

@@ -1,0 +1,38 @@
+INSTRUMENTATION_STATUS: class=io.github.yysassist.ui.TaskVersionsPageTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+io.github.yysassist.ui.TaskVersionsPageTest:
+INSTRUMENTATION_STATUS: test=longVersionDoesNotSqueezeTheTaskCenterTitleAway
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.ui.TaskVersionsPageTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Assert failed: The component with Text + InputText + EditableText contains '任务中心' (ignoreCase: false) is not displayed!
+	at androidx.compose.ui.test.AssertionsKt.assertIsDisplayed(Assertions.kt:34)
+	at io.github.yysassist.ui.TaskVersionsPageTest.longVersionDoesNotSqueezeTheTaskCenterTitleAway(TaskVersionsPageTest.kt:85)
+
+INSTRUMENTATION_STATUS: stream=
+Error in longVersionDoesNotSqueezeTheTaskCenterTitleAway(io.github.yysassist.ui.TaskVersionsPageTest):
+java.lang.AssertionError: Assert failed: The component with Text + InputText + EditableText contains '任务中心' (ignoreCase: false) is not displayed!
+	at androidx.compose.ui.test.AssertionsKt.assertIsDisplayed(Assertions.kt:34)
+	at io.github.yysassist.ui.TaskVersionsPageTest.longVersionDoesNotSqueezeTheTaskCenterTitleAway(TaskVersionsPageTest.kt:85)
+
+INSTRUMENTATION_STATUS: test=longVersionDoesNotSqueezeTheTaskCenterTitleAway
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 1.238
+There was 1 failure:
+1) longVersionDoesNotSqueezeTheTaskCenterTitleAway(io.github.yysassist.ui.TaskVersionsPageTest)
+java.lang.AssertionError: Assert failed: The component with Text + InputText + EditableText contains '任务中心' (ignoreCase: false) is not displayed!
+	at androidx.compose.ui.test.AssertionsKt.assertIsDisplayed(Assertions.kt:34)
+	at io.github.yysassist.ui.TaskVersionsPageTest.longVersionDoesNotSqueezeTheTaskCenterTitleAway(TaskVersionsPageTest.kt:85)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

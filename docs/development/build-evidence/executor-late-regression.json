@@ -1,0 +1,15 @@
+{
+  "before": {
+    "sourceSha256": "8783cff6c572330041d7cc3295edb97fe518a774943cb0d162aecff99bdd44b6",
+    "tests": 2,
+    "failures": 2,
+    "evidence": "executor-late-before.xml"
+  },
+  "scope": "Core command/effect integration boundary with explicit step and device acknowledgments; not Android input proof",
+  "after": {
+    "sourceSha256": "370dfdae486d375ab7f93b309987173564cc2d7e78254f6143fd354a57773bf0",
+    "tests": 23,
+    "failures": 0,
+    "evidence": "target-scope/executor-after.xml"
+  }
+}

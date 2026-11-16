@@ -1,0 +1,17 @@
+{
+  "scope": "Room version repository only. API36 isolated Android emulator, actual generated DAO + on-disk SQLite; no production UI, transport, executor admission or process crash recovery validated.",
+  "instrumentationTests": 7,
+  "passed": true,
+  "sources": {
+    "app/src/main/kotlin/io/github/yysassist/storage/AssistDatabase.kt": "60f2e7ad61fff65019f33d4d74d6e2dff3b14de126aaa5df205f60b20ab5f571",
+    "app/src/main/kotlin/io/github/yysassist/storage/TaskVersionLibrary.kt": "6def6e926972787e6d7e4b436ecf5140ab9af84df0b65a42dae79194234d8717",
+    "app/schemas/io.github.yysassist.storage.AssistDatabase/1.json": "eb81cc6d04efe2121bf6db0e048befed65af3facfc891d498aaff538f2addd84"
+  },
+  "room": "2.8.5",
+  "ksp": "2.3.14",
+  "testedArtifacts": {
+    "app/build/outputs/apk/debug/app-debug.apk": "95111d821f07177d544c53c25ee49c9ba226f811ae9b344a5db4cb03c92824fd",
+    "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": "d4b2a8c2b65f464e1a42744600d11156ca59750c04884814379f97cafc80c817",
+    "app/src/androidTest/kotlin/io/github/yysassist/storage/TaskVersionLibraryTest.kt": "06bc5895074d66201a96ba389145250f43986ffa086efbc130381dc9b0ba8fe5"
+  }
+}

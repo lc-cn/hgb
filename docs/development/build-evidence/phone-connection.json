@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-16",
+  "device": {
+    "model": "SM-G9910",
+    "android": "15",
+    "api": 35,
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "armeabi"
+    ],
+    "adbAuthorization": "device"
+  },
+  "assistant": {
+    "package": "io.github.yysassist",
+    "install": "Success",
+    "launch": "Status ok / COLD",
+    "apkSha256": "95111d821f07177d544c53c25ee49c9ba226f811ae9b344a5db4cb03c92824fd"
+  },
+  "game": {
+    "package": "com.netease.onmyoji",
+    "version": "2.8.89",
+    "install": "Success",
+    "launch": "Status ok / COLD / ProtocolLauncher"
+  },
+  "scope": "Connection and installation/start only. No device serial stored. User handles agreements/download/login. No private-data reads, post-login capture, game input, rendering compatibility or game task completion validated."
+}

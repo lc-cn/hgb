@@ -1,0 +1,12 @@
+{
+  "syntheticOnly": true,
+  "taskCount": 40,
+  "stepsPerTask": 20,
+  "completedSteps": 100,
+  "configurationCharactersPerTask": 4096,
+  "initialBytes": 352817,
+  "afterBytes": 439280,
+  "initialEncodeNs": 42890500,
+  "afterEncodeNs": 2426750,
+  "scope": "Single un-warmed host-JVM measurement, not an Android latency or 24-hour result; no production threshold set."
+}

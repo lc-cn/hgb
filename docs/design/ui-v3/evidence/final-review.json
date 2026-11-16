@@ -1,0 +1,61 @@
+{
+  "checks": [
+    {
+      "name": "gallery has 216 records and rendered entries",
+      "pass": true
+    },
+    {
+      "name": "gallery filters work",
+      "pass": true
+    },
+    {
+      "name": "version enable does not expand row",
+      "pass": true
+    },
+    {
+      "name": "unresolved evidence keeps historical version protected",
+      "pass": true
+    },
+    {
+      "name": "version delete does not expand row",
+      "pass": true
+    },
+    {
+      "name": "removed task clears bound recovery projection",
+      "pass": true
+    },
+    {
+      "name": "overlay can resume held queue without current task",
+      "pass": true
+    },
+    {
+      "name": "next current task receives actual executor pause",
+      "pass": true
+    },
+    {
+      "name": "main prototype no remote resource requests",
+      "pass": true
+    },
+    {
+      "name": "invalid config displays its field error and remains unchanged",
+      "pass": true
+    },
+    {
+      "name": "other task has no inherited field error",
+      "pass": true
+    },
+    {
+      "name": "return to invalid task retains its error and value",
+      "pass": true
+    },
+    {
+      "name": "developer prototype no remote resource requests",
+      "pass": true
+    },
+    {
+      "name": "no runtime exceptions",
+      "pass": true,
+      "detail": []
+    }
+  ]
+}

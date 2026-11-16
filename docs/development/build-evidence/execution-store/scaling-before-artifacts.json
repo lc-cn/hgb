@@ -1,0 +1,5 @@
+{
+  "app/build/outputs/apk/debug/app-debug.apk": "b887938c2140a648c246946da1ba332c056e6f6aee64b6ca0af76a2513d80b67",
+  "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": "95f79c115205c67f0853f728b6fdb40ea9ea699bf748dc60c83c653c32087cff",
+  "core/src/main/kotlin/io/github/yysassist/core/execution/TaskExecutor.kt": "363b9fa10b8e260027a1e6b677374a8c79b7c510a2dfb54959a3d28f0b521572"
+}

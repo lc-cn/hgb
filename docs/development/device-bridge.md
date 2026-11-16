@@ -1,0 +1,38 @@
+# Android 截图与输入桥：首轮实现
+
+2026-11-16。当前为 M1 平台桥 PoC，仍未接入正式 TaskWorker／执行宿主，也未在真机执行游戏任务。
+
+## 职责与合同
+
+`GameAccessibilityService` 由用户在系统设置授权。元数据声明截图、手势及窗口访问；桥只读取活动窗口的包名，不遍历控件文本。普通截图检查由用户按钮触发，不自动截图或发送图像。
+
+`AndroidDeviceBridge` 在主线程拥有单一输入会话。工作器携带 Executor 的尝试票据，打开会话和每次发手势都检查票据许可。截图前后检查前台目标包、屏幕几何和连接代次；输入再次检查同一信息，禁止将旧方向或旧授权会话的坐标用于新画面。坐标来自观察结果，不内置游戏点击位置；当前桥不证明视觉内容仍新鲜，也不识别账号。前台核对和系统投递不是跨进程原子操作，业务结果仍需随后观察。后续宿主须在主线程统一发送控制命令和桥撤销，不能将一次许可查询当作跨线程输入锁。
+
+截图返回可读取 Bitmap 和观察标记；硬件包装及 HardwareBuffer 在平台回调内释放，可读取 Bitmap 由观察者关闭。资源直接通过可取消 continuation 交接，调用方未收到时负责释放的回调仍有效。默认不保存、不外发图像。
+
+输入只投递有限时长、无跨手势续接的单笔路径。平台拒绝、完成、取消和结果未确认分开表达。完成回调只表示手势投递完成，不能作为领取／购买／任务成功证据。
+
+暂停／移除时关闭该会话的新输入，保留独立于工作协程的在途手势记录，等待系统终态回调。没有用协程取消或超时冒充静默，也不发送额外点击来取消旧手势。当前策略是在途手势自然结束后交接，尚未实现即时系统级中断。服务丢失且没有终态回调时返回未确认，不能给 Executor 静默回执；业务核对和持久化仍由后续宿主负责。
+
+## 已验证范围与证据
+
+证据目录：`build-evidence/device-bridge/`。最终测试数量和 APK 摘要以 `verification.json` 与仪器日志为准。测试仅在隔离 API 36 ARM64 模拟器的自有触摸界面运行，不包含游戏账号。
+
+- 真实截图读取已知颜色像素，关闭 Bitmap；真实点击产生 ACTION_DOWN／ACTION_UP。
+- 800 ms 手势中请求暂停：拒绝后续输入，系统终态后才得到通道交接，Executor 在回执前保持“暂停中”。保存系统单调时钟时间线。
+- 取消工作协程后，原手势继续由平台记录持有；不能另开会话或假报静默。
+- 旋转、前台离开目标、撤权和重新授权均拒绝不匹配观察或输入。
+- 在途撤权实际取得 `Unconfirmed`；自有界面的 ACTION_CANCEL 也没有被用来冒充服务终态回执。
+- 新增会话交接取消回归：旧实现 `withContext(Main)` 已创建会话，但调用方调度恢复前取消，后续会话被占用。取得明确失败断言后，改为直接 continuation 交接并释放未交付的闲置会话，保留原断言验证。截图返回也移除同类外层交接边界；截图丢弃后的原生内存长期稳定性仍未测量。
+
+`am instrument` 会先强停目标 App，系统将原绑定服务列为 crashed。测试在进程已启动后，通过明确 opt-in 参数重新绑定，仅允许 ranchu 模拟器且不得修改其他服务。生产 App 没有此授权代码；真机仍需用户在系统界面授权。旧 UIAutomator dump 会抑制服务，桥测试使用不抑制服务的 UiAutomation 标记。10 项外观／路由检查单独运行；其 APK 摘要在 `native-ui/artifact.json`，不要当作后续桥修复 APK 的整机 UI 重跑。
+
+## 尚未验证
+
+目标真机的 App 截图和手势、独立进程卡死、输入宿主与版本引用／执行持久化贯通、三层悬浮、离线识别、业务结果核对、跨主题闭环、Windows 模拟器和 24 小时运行。当前基础动作注册表仍为空，桥能力尚未成为可下载任务的正式动作。
+
+## 一手合同核验
+
+- [Android AccessibilityService](https://developer.android.com/reference/android/accessibilityservice/AccessibilityService)：截图能力、手势权限、`dispatchGesture` 的 true／false 及其会取消正在进行的手势。
+- [GestureResultCallback](https://developer.android.com/reference/android/accessibilityservice/AccessibilityService.GestureResultCallback)：完成与取消分别回调，没有业务完成保证。
+- [kotlinx.coroutines 1.10.2 CancellableContinuation 源码](https://github.com/Kotlin/kotlinx.coroutines/blob/1.10.2/kotlinx-coroutines-core/common/src/CancellableContinuation.kt)：锁定版本的及时取消与资源交接合同；实际编译及设备回归也使用工程锁定的 1.10.2。

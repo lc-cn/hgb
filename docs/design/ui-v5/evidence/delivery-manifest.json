@@ -1,0 +1,612 @@
+{
+  "scope": "Local HTML design preview, no real Android/game/services",
+  "sources": {
+    "docs/design/ui-v5/app.css": "270c2a0518cce922d780a26e2f077a1808dd338d3d3d7dffeda74952e00a38fa",
+    "docs/design/ui-v5/app.html": "83861495fc59abbcd71b0653a93d66546e382efbe050598fbf90cd8082d2d584",
+    "docs/design/ui-v5/app.js": "4b52ac787cfdf5a24e74e4e4b425b4bc2e10ce2eeac1203ba50b2403dccefb2a",
+    "docs/design/ui-v5/appearance.js": "f83990fbef65dd159aac7ffc9be88eaf9b904df7a9fcefc75cf755d7f82c4241",
+    "docs/design/ui-v5/developer.css": "58faa94ae9d1df3c95ff520b71360ef7ffaf362ebc17def821f3ce78ea7867f2",
+    "docs/design/ui-v5/developer.html": "b5a2c59e7a33ffb1ab2672d1439456e7b7d81ad554a9fe10dfc7ad1d8fb0cf83",
+    "docs/design/ui-v5/developer.js": "d861b0f4e29c30d8eb00abc2ce07ab95ff5e53860dc79ea517a846a6c70005c9",
+    "docs/design/ui-v5/fixture-data.js": "bb76f5d9c160d0ddb41d1e746dadf4243c8eccb8f11fc42c7dc12ecc187ce0ff",
+    "docs/design/ui-v5/full-base.css": "6269a6c799ddff9d2f65167276996480780bfd5d38bf0bf446670cf8c5babd7d",
+    "docs/design/ui-v5/full-controls.css": "d71b3aa433b4e61e9b900625e1ef4af5e755e4ed12361703c613e596a6b6362f",
+    "docs/design/ui-v5/full.html": "0baa5049dfde0a29dc6dc6049c4663b6ec7fca95184cc6cde2fe089e3094975b",
+    "docs/design/ui-v5/index.html": "1c3580e185d6b3ee70c93c082434c366ea215baf537acffd0334413860de144e",
+    "docs/design/ui-v5/main-theme-notes.md": "1994980cf930b661de7bffe9d6f2e3af07a55aeb50b7add63c00d404c3056485",
+    "docs/design/ui-v5/material.css": "ee720788a877093d580ce1ef9ca6951607ce36b980a548be7919112b41304150",
+    "docs/design/ui-v5/review-criteria.md": "5f57cc4e8a4c1776002fc8c01df3bba992b0cef4d0eaa79e8c1db58384a1ff3e",
+    "docs/design/ui-v5/review-report.md": "fc19e1b1a661d8a3f4adbabb6e59f850907fc9398548e557121552d7b0cec2ce",
+    "docs/design/ui-v5/secondary-theme-notes.md": "9b9a97e32b42dc3e266c86b21b390472b9c16443048f0232e0bc148710f8483d",
+    "docs/design/ui-v5/theme-tokens.css": "814b1737e55e5c454cae6293608cd400e9a6eeabf5879bae6620661d5d4506cd",
+    "docs/design/README.md": "f86a5dcf00a112d7a40fda501a35a43de0df2faa9832a0b8fe49f6a885884bd8"
+  },
+  "screens": [
+    {
+      "scene": "home",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/home-light-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "3181a959ea863491bbc263a5feceef021acf8fa273a7ea7b6c3d1ed5e01a65d7"
+    },
+    {
+      "scene": "tasks",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/tasks-light-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "bc8aec75f5f7ce522829482f699fc339d0a691b49711dfa28c255bcc9a79a16a"
+    },
+    {
+      "scene": "config",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/config-light-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "fcd7bf6218c672e9a8765a4d5331aefc54ea4c933dd3d3a36040f19613e31efd"
+    },
+    {
+      "scene": "quick",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/quick-light-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "a048ede5c4738a9a49dc417ac62874fc7f152f463b8306668342eeb137cbae88"
+    },
+    {
+      "scene": "common",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/common-light-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "345c7d4b2760df0b30c9e36ae6e8de2f7553997bf52b6662d1eb92e5886c975a"
+    },
+    {
+      "scene": "settings",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/settings-light-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "b296a9cdc41fc4a9ff4167beee22bf1267c2ff88aa8baf3cbac6a2ec76f05893"
+    },
+    {
+      "scene": "plans",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/plans-light-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "e2f57ade0f82eb8c6e5db0d53e3f459b87241c69d4879ff828c92c0bd9084506"
+    },
+    {
+      "scene": "versions",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/versions-light-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "9bb17b0879755bb1e05e7033e09f5c2083430fbaeef1d7745352f6b90d67506b"
+    },
+    {
+      "scene": "history",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/history-light-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "5ce5438633e993331e5ed34fb74e11184446c95078e4441bc234ea9914a2da6a"
+    },
+    {
+      "scene": "model",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/model-light-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "783ed4d3f351461fa1789df1e5ac988074678a8fa158e9ddf8547d1b0961a60b"
+    },
+    {
+      "scene": "channels",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/channels-light-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "c89a7fd4ed4552eccaeb2fcd5fc78e4a248ffe5fecc364a3922490f7f7ae75fe"
+    },
+    {
+      "scene": "devtask",
+      "file": "developer.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/devtask-light-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "8cc79159dffc865df13b3b0143868a2893728eda52ab1313c4fe08fcdd15b00b"
+    },
+    {
+      "scene": "devdebug",
+      "file": "developer.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/devdebug-light-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "b701c0c0b8f36309d05ff6ca537bbc9cb7b0dd99e288ba703e7b1c1ab43fe309"
+    },
+    {
+      "scene": "devpublish",
+      "file": "developer.html",
+      "theme": "light",
+      "orientation": "portrait",
+      "path": "screen-captures/devpublish-light-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "e0ce3fbf46ed60f781ea06441c9fa3b7e80af5279dfcbc564ae6da7e7e1b5a70"
+    },
+    {
+      "scene": "home",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/home-light-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "7654a1c8d645a60476c17acd8c9be57bd552474189a6380b2b715ae1a80e36f4"
+    },
+    {
+      "scene": "tasks",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/tasks-light-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "7aa651d7787f7ec279160cc93f8b4cdc016bb25894840f13d05dbacf4edfa3b0"
+    },
+    {
+      "scene": "config",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/config-light-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "a8f6e1796d94e81bfa9b5b18ba26bdf3ea5c940f4c915350fe609b5dda537c4b"
+    },
+    {
+      "scene": "quick",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/quick-light-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "140ace7c96db46432b0e7c65a13927a195caa899886b822d4f5b9b29e3c59290"
+    },
+    {
+      "scene": "common",
+      "file": "app.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/common-light-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "0b4629e2853ba237a9f31411df529520c387b3eee70d1f105220abe84ace0765"
+    },
+    {
+      "scene": "settings",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/settings-light-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "8c6b2ad4ddce0762941024fa830e494f023fe39bc40392417ee92b90726bb9cc"
+    },
+    {
+      "scene": "plans",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/plans-light-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "48d82b07cd574e06299027579041d8e9bfb9afca3542e0987852938519a3f6f2"
+    },
+    {
+      "scene": "versions",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/versions-light-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "ebf9814f4dbfd5cfa44f5e26f87b6cdc6dba1310b982f9f60ae82c0e9c0f1b04"
+    },
+    {
+      "scene": "history",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/history-light-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "32d8e8efc525d57ab0bcbffc09eeb62bda3e42ee9c49ac41b7780ef9805d5bcb"
+    },
+    {
+      "scene": "model",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/model-light-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "854d9b3019c50a8943345d32e8b63735d80db1c1f8ec3d0b634be9afb1cd27cf"
+    },
+    {
+      "scene": "channels",
+      "file": "full.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/channels-light-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "fd3c8b78384cb7ad72f35a46ef617cf480f4e3056e59912dd85e334538d89478"
+    },
+    {
+      "scene": "devtask",
+      "file": "developer.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/devtask-light-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "ebc8db577673cb0bd4f48d0ef6703b689051d9ceb314d7175d5d7ec2c694f847"
+    },
+    {
+      "scene": "devdebug",
+      "file": "developer.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/devdebug-light-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "29dd20b970f9a9295d2eab1285a83711f96d6760f7562d32328f5e8740faf107"
+    },
+    {
+      "scene": "devpublish",
+      "file": "developer.html",
+      "theme": "light",
+      "orientation": "landscape",
+      "path": "screen-captures/devpublish-light-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "985c57fe3f2f8a580822784c43b2a54eda62f10e18d7aecd6c56d69b5fc4e3f6"
+    },
+    {
+      "scene": "home",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/home-dark-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "5161a63dbe664b1bf12c4d6f9640b81911b05e114010dc8198301da5ad187452"
+    },
+    {
+      "scene": "tasks",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/tasks-dark-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "8dde4c4fd1e272ca7ac9a578e789e51b2ba6011e0e50928dd009c351f31c2457"
+    },
+    {
+      "scene": "config",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/config-dark-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "adb32c38adcbfe59a918077aae707e53ae7c7c2385070fd67756770584e9d9fa"
+    },
+    {
+      "scene": "quick",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/quick-dark-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "119aca36ace1c6a4d2005daca828ee4b3ea1e9d1d1ef9213ddf86e0b9ef21ce3"
+    },
+    {
+      "scene": "common",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/common-dark-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "65ecd587320c6f0de198979249040bf0ad37edf55ec54b8f8a303bf7c618a1a2"
+    },
+    {
+      "scene": "settings",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/settings-dark-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "294a1c3de19372b6831a019f14dbee1ed4e82bd09e42a9cb7401314f83fa3e4c"
+    },
+    {
+      "scene": "plans",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/plans-dark-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "48d51ee09d3fbb91f223651df53b6948bcf5f48301fed47c6bd29dda2bd2d41b"
+    },
+    {
+      "scene": "versions",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/versions-dark-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "715e13b296b610de10e6f158912d50987b43b641fc4a909319119fd9cc98af85"
+    },
+    {
+      "scene": "history",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/history-dark-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "9ce4af575a5d95f79a5d7d6d470225c8520fc7dcbcc906163a6f2edd504abe3c"
+    },
+    {
+      "scene": "model",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/model-dark-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "1716a5659bc00a86216edf648bc19ae7344a200fbe819af79f3d4abb0e315246"
+    },
+    {
+      "scene": "channels",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/channels-dark-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "2d9affa5a6bbf17aa347c9d80eb8b8830adda61888fb209814e7c222141e8f82"
+    },
+    {
+      "scene": "devtask",
+      "file": "developer.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/devtask-dark-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "e812829ba258a482d608f5086afc81c0abb493055be0d834058e18dbc67cc047"
+    },
+    {
+      "scene": "devdebug",
+      "file": "developer.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/devdebug-dark-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "23b2fa1392674e9d198367e7288bdece8420aa8665b524b35eb16e02d9179cd8"
+    },
+    {
+      "scene": "devpublish",
+      "file": "developer.html",
+      "theme": "dark",
+      "orientation": "portrait",
+      "path": "screen-captures/devpublish-dark-portrait.png",
+      "width": 412,
+      "height": 860,
+      "sha256": "6696a8aac584a92f17ea4bebad5c1854d7c15ec21f728449af818863a9581b3e"
+    },
+    {
+      "scene": "home",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/home-dark-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "e5fa81e3860c4b6300a93fccb776274b968e85920edc6021e0364213e1223653"
+    },
+    {
+      "scene": "tasks",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/tasks-dark-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "b473ff2e2f1295d6bb24baed0b695ef123ecec4ab2fe43a0f97c41d1376698f6"
+    },
+    {
+      "scene": "config",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/config-dark-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "e5eb788551aa9b70fb8c3486b16f4347a4066de7e17085e529fc4b118b2bff57"
+    },
+    {
+      "scene": "quick",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/quick-dark-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "4b3a2916ed6aa99ad19b31ac22a1f58c577ef9321fbc54b11020102453a7c511"
+    },
+    {
+      "scene": "common",
+      "file": "app.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/common-dark-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "5e86563fb3b13005a933d27390fdfd071b25d5c20800381070a58b2fcd9d60a3"
+    },
+    {
+      "scene": "settings",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/settings-dark-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "7cea96ee7259a0017d64eaa809bd7dc78086404a0bd8090c910880046a84f4fa"
+    },
+    {
+      "scene": "plans",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/plans-dark-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "ac24b76bb0390e5d311d888224fbdda16ea4f7bc5b18213942739fa2723d2029"
+    },
+    {
+      "scene": "versions",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/versions-dark-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "cb5c0211409e54e8b86cfcb78dd649ca33760f8429144d9d20922476546c45c0"
+    },
+    {
+      "scene": "history",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/history-dark-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "9af841a36d386da4bab18f91df914a7abd5cf0e76645885288a6610a01a5e812"
+    },
+    {
+      "scene": "model",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/model-dark-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "2b2c552fc342bb8d35f009273210371ebd86fcbecd0263d8f32c4dc6ba1ed4dd"
+    },
+    {
+      "scene": "channels",
+      "file": "full.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/channels-dark-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "689cd10880befa9b9d4bd91262c35a71b319d7634ef99e137eb62e17da41b9de"
+    },
+    {
+      "scene": "devtask",
+      "file": "developer.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/devtask-dark-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "c7ceb386a73e784b33eaf9a75348801fe95b34d428ff63fc3b781a44049e0184"
+    },
+    {
+      "scene": "devdebug",
+      "file": "developer.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/devdebug-dark-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "65152cfb1451b929e40e40f5b824f04c98a85a8d3a972a8a78817a94c53b05d4"
+    },
+    {
+      "scene": "devpublish",
+      "file": "developer.html",
+      "theme": "dark",
+      "orientation": "landscape",
+      "path": "screen-captures/devpublish-dark-landscape.png",
+      "width": 900,
+      "height": 412,
+      "sha256": "29c7f29f2a03acaeeca3ebe74589cbafaf0a1dffe828a7dcef5533c983dab998"
+    }
+  ],
+  "links": {
+    "missing": []
+  },
+  "evidence": {
+    "composite-contrast.json": "65742ae015f375e258b9593f1e0fc1947a728547f4f21a99c787ac84bc87d01c",
+    "composite-samples.json": "bb9793883a9c5e587932e329a2e4234ab6add97203380190da7bca80063b0332",
+    "gallery.json": "11231d8548a9cc4116c4aa20cc61c6dfcb4fdfebf9cccf2d95b3937ef67f05b0",
+    "icon-colors.json": "f5a181ed9c7943190560281e45f60fd2baeefe6e973397e910334e1d5acfafbb",
+    "prior-version-check.json": "ee691f8df397a27b315f92b5028d45ccc7df906d199914fbe521bbcef9e38829",
+    "screens.json": "5953c126d9199c6a6f0d4733928cfaf3580195028acdd3c3f98646ae006188ea",
+    "skill-audit.json": "165d8185de4ee7050dee6ef1274b1366a1147a98abbdf4a8e15f3ab31b7d4192",
+    "skill-baseline.json": "165d8185de4ee7050dee6ef1274b1366a1147a98abbdf4a8e15f3ab31b7d4192",
+    "theme-journeys.json": "4f313e1439694e85f289d4954a8cdccfd6b39e394bb9793d72965fa7e3a81ab6"
+  },
+  "contrast": {
+    "samples": 118,
+    "failures": 0,
+    "minEnabledIcon": 3.27,
+    "minEnabledText": 6.76
+  },
+  "independentReview": "Theme URL and material cascade blockers closed; colorful icon disabled and event context findings closed by source review; final composites verified by root",
+  "limitations": [
+    "No native Android performance/permissions or real game/service verification",
+    "Forced unsupported CSS branch only tests cascade",
+    "Skill validator has limited HTML/CSS coverage; RTL warning retained"
+  ]
+}

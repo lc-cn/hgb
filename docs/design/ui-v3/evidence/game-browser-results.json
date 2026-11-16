@@ -1,0 +1,164 @@
+{
+  "checks": [
+    {
+      "name": "portrait: default capability is unverified and snapshot list empty",
+      "pass": true
+    },
+    {
+      "name": "portrait: unsupported capture cannot pretend success",
+      "pass": true
+    },
+    {
+      "name": "portrait: snapshots saved unverified and game stopped",
+      "pass": true
+    },
+    {
+      "name": "portrait: local snapshot alias can be edited",
+      "pass": true
+    },
+    {
+      "name": "portrait: restore waits for fresh login identity",
+      "pass": true
+    },
+    {
+      "name": "portrait: continue cannot bypass pending identity",
+      "pass": true
+    },
+    {
+      "name": "portrait: matching account confirmed without resuming queue",
+      "pass": true
+    },
+    {
+      "name": "portrait: switching holds old queue until account is confirmed",
+      "pass": true
+    },
+    {
+      "name": "portrait: mismatch keeps old queue and rollback evidence",
+      "pass": true
+    },
+    {
+      "name": "portrait: rollback retains old execution and remains held",
+      "pass": true
+    },
+    {
+      "name": "portrait: successful account change clears original queue",
+      "pass": true
+    },
+    {
+      "name": "portrait: history retains account-switch cancellation reason",
+      "pass": true
+    },
+    {
+      "name": "portrait: newly added task binds new identity",
+      "pass": true
+    },
+    {
+      "name": "portrait: new account task starts only after user continues",
+      "pass": true
+    },
+    {
+      "name": "portrait: unknown business result blocks cross-account restore",
+      "pass": true
+    },
+    {
+      "name": "portrait: current account launch never clears unknown result",
+      "pass": true
+    },
+    {
+      "name": "portrait: exports contain no login-state payload",
+      "pass": true
+    },
+    {
+      "name": "landscape: default capability is unverified and snapshot list empty",
+      "pass": true
+    },
+    {
+      "name": "landscape: unsupported capture cannot pretend success",
+      "pass": true
+    },
+    {
+      "name": "landscape: snapshots saved unverified and game stopped",
+      "pass": true
+    },
+    {
+      "name": "landscape: local snapshot alias can be edited",
+      "pass": true
+    },
+    {
+      "name": "landscape: restore waits for fresh login identity",
+      "pass": true
+    },
+    {
+      "name": "landscape: continue cannot bypass pending identity",
+      "pass": true
+    },
+    {
+      "name": "landscape: matching account confirmed without resuming queue",
+      "pass": true
+    },
+    {
+      "name": "landscape: switching holds old queue until account is confirmed",
+      "pass": true
+    },
+    {
+      "name": "landscape: mismatch keeps old queue and rollback evidence",
+      "pass": true
+    },
+    {
+      "name": "landscape: rollback retains old execution and remains held",
+      "pass": true
+    },
+    {
+      "name": "landscape: successful account change clears original queue",
+      "pass": true
+    },
+    {
+      "name": "landscape: history retains account-switch cancellation reason",
+      "pass": true
+    },
+    {
+      "name": "landscape: newly added task binds new identity",
+      "pass": true
+    },
+    {
+      "name": "landscape: new account task starts only after user continues",
+      "pass": true
+    },
+    {
+      "name": "landscape: unknown business result blocks cross-account restore",
+      "pass": true
+    },
+    {
+      "name": "landscape: current account launch never clears unknown result",
+      "pass": true
+    },
+    {
+      "name": "landscape: exports contain no login-state payload",
+      "pass": true
+    },
+    {
+      "name": "capture waits for old input quiescence",
+      "pass": true
+    },
+    {
+      "name": "quiescence callback permits capture but holds queue",
+      "pass": true
+    },
+    {
+      "name": "close stops simulated game and does not resume queue",
+      "pass": true
+    },
+    {
+      "name": "autostart only saves preference",
+      "pass": true
+    },
+    {
+      "name": "boot restores assistant pending authorization, not game or task",
+      "pass": true
+    },
+    {
+      "name": "no runtime exceptions",
+      "pass": true
+    }
+  ]
+}

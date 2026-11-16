@@ -1,0 +1,7 @@
+{
+  "installedApkSha256": "16a85877e7a63234026a7b1aa9cd6758c86a7f95a76692fab1393840e86cfba9",
+  "preference": "DARK",
+  "actualAppearance": "LIGHT_STATUS_BARS LIGHT_NAVIGATION_BARS",
+  "expectedDarkIcons": false,
+  "passes": false
+}

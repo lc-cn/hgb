@@ -1,0 +1,328 @@
+{
+  "records": [
+    {
+      "scene": "workbench",
+      "orientation": "portrait",
+      "path": "screens/after-workbench-portrait.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 412,
+          "height": 860
+        },
+        "firstTask": null,
+        "queueItems": [
+          {
+            "x": 13,
+            "y": 200.84375,
+            "width": 386,
+            "height": 80
+          },
+          {
+            "x": 13,
+            "y": 280.84375,
+            "width": 386,
+            "height": 80
+          },
+          {
+            "x": 13,
+            "y": 360.84375,
+            "width": 386,
+            "height": 80
+          }
+        ],
+        "current": {
+          "x": 1,
+          "y": 684,
+          "width": 410,
+          "height": 88
+        },
+        "panel": null,
+        "nav": {
+          "x": 1,
+          "y": 772,
+          "width": 410,
+          "height": 72
+        },
+        "text": "09:41\n⌁ ▰\n工作台\ndemo-server\n账号 A\n商店兑换结果未知\n核对结果\n待执行\n3\n1\n御魂副本\n等待 7 分钟 · 优先级 25\n2\n悬赏封印\n等待 7 分钟 · 优先级 10\n3\n结界挂卡\n等待 7 分钟 · 优先级 10\n下次计划\n每日物资托管\n每日 · 09:00\n周期商店计划\n周三、周六 · 20:00\n最近结果\n永久勾玉卡产出\n09:41 · 账号 A\n完成\n每日物资领取\n执行中每日物资托管 · 步骤 1 打开每日奖励\n移除\n工作台\n任务中心\n托管计划\n历史记录\n设置"
+      }
+    },
+    {
+      "scene": "tasks",
+      "orientation": "portrait",
+      "path": "screens/after-tasks-portrait.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 412,
+          "height": 860
+        },
+        "firstTask": {
+          "x": 13,
+          "y": 196,
+          "width": 386,
+          "height": 78
+        },
+        "queueItems": [],
+        "current": null,
+        "panel": null,
+        "nav": {
+          "x": 1,
+          "y": 772,
+          "width": 410,
+          "height": 72
+        },
+        "text": "09:41\n⌁ ▰\n任务中心\n2026.11.1\n日常与领取\n商店兑换\n副本与挑战\n御魂管理\n结界与阴阳寮\n限时活动\n全部\n每日\n每周\n每日物资领取\n每日 · 优先级 10\n入队\n每周物资领取\n每周 · 优先级 10\n入队\n永久勾玉卡产出\n每日 · 优先级 20\n入队\n花合战奖励\n每日 · 优先级 10\n入队\n悬赏封印\n每日 · 优先级 10\n队列中\n宠物照料\n每日 · 优先级 10\n入队\n工作台\n任务中心\n托管计划\n历史记录\n设置"
+      }
+    },
+    {
+      "scene": "detail",
+      "orientation": "portrait",
+      "path": "screens/after-detail-portrait.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 412,
+          "height": 860
+        },
+        "firstTask": null,
+        "queueItems": [],
+        "current": null,
+        "panel": null,
+        "nav": {
+          "x": 1,
+          "y": 772,
+          "width": 410,
+          "height": 72
+        },
+        "text": "09:41\n⌁ ▰\n每日物资领取\n保存\n\n仅领取所选物资，不购买额外权益\n\n优先级\n领取来源\n签到奖励\n每日物资\n花合战奖励\n执行步骤\n完整规则\n工作台\n任务中心\n托管计划\n历史记录\n设置"
+      }
+    },
+    {
+      "scene": "quick",
+      "orientation": "portrait",
+      "path": "screens/after-quick-portrait.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 412,
+          "height": 860
+        },
+        "firstTask": null,
+        "queueItems": [],
+        "current": {
+          "x": 116,
+          "y": 104,
+          "width": 270,
+          "height": 52
+        },
+        "panel": {
+          "x": 105,
+          "y": 95,
+          "width": 292,
+          "height": 162
+        },
+        "nav": null,
+        "text": "〈 庭院\n体力 120\n壹　贰　叁　肆　伍\n准备\n每日物资领取\n执行中 · 打开每日奖励\n常用\n兑换结果未知 · 核对结果"
+      }
+    },
+    {
+      "scene": "common",
+      "orientation": "portrait",
+      "path": "screens/after-common-portrait.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 412,
+          "height": 860
+        },
+        "firstTask": null,
+        "queueItems": [],
+        "current": {
+          "x": 116,
+          "y": 152,
+          "width": 270,
+          "height": 52
+        },
+        "panel": {
+          "x": 105,
+          "y": 95,
+          "width": 292,
+          "height": 367
+        },
+        "nav": null,
+        "text": "〈 庭院\n体力 120\n壹　贰　叁　肆　伍\n准备\n常用\n每日物资领取\n执行中 · 打开每日奖励\n永久勾玉卡产出\n周三商店兑换\n御魂副本\n队列中\n御魂强化\n周期商店计划"
+      }
+    },
+    {
+      "scene": "workbench",
+      "orientation": "landscape",
+      "path": "screens/after-workbench-landscape.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 900,
+          "height": 412
+        },
+        "firstTask": null,
+        "queueItems": [
+          {
+            "x": 91,
+            "y": 152.84375,
+            "width": 508,
+            "height": 62
+          },
+          {
+            "x": 91,
+            "y": 214.84375,
+            "width": 508,
+            "height": 62
+          },
+          {
+            "x": 91,
+            "y": 276.84375,
+            "width": 508,
+            "height": 62
+          }
+        ],
+        "current": {
+          "x": 79,
+          "y": 335,
+          "width": 820,
+          "height": 66
+        },
+        "panel": null,
+        "nav": {
+          "x": 1,
+          "y": 75,
+          "width": 78,
+          "height": 326
+        },
+        "text": "09:41\n⌁ ▰\n工作台\ndemo-server\n账号 A\n商店兑换结果未知\n核对结果\n待执行\n3\n1\n御魂副本\n等待 7 分钟 · 优先级 25\n2\n悬赏封印\n等待 7 分钟 · 优先级 10\n3\n结界挂卡\n等待 7 分钟 · 优先级 10\n下次计划\n每日物资托管\n每日 · 09:00\n周期商店计划\n周三、周六 · 20:00\n最近结果\n永久勾玉卡产出\n09:41 · 账号 A\n完成\n每日物资领取\n执行中每日物资托管 · 步骤 1 打开每日奖励\n移除\n工作台\n任务中心\n托管计划\n历史记录\n设置"
+      }
+    },
+    {
+      "scene": "tasks",
+      "orientation": "landscape",
+      "path": "screens/after-tasks-landscape.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 900,
+          "height": 412
+        },
+        "firstTask": {
+          "x": 91,
+          "y": 116,
+          "width": 392,
+          "height": 69
+        },
+        "queueItems": [],
+        "current": null,
+        "panel": null,
+        "nav": {
+          "x": 1,
+          "y": 75,
+          "width": 78,
+          "height": 326
+        },
+        "text": "09:41\n⌁ ▰\n任务中心\n全部\n每日\n每周\n2026.11.1\n日常与领取\n商店兑换\n副本与挑战\n御魂管理\n结界与阴阳寮\n限时活动\n每日物资领取\n每日 · 优先级 10\n入队\n每周物资领取\n每周 · 优先级 10\n入队\n永久勾玉卡产出\n每日 · 优先级 20\n入队\n花合战奖励\n每日 · 优先级 10\n入队\n悬赏封印\n每日 · 优先级 10\n队列中\n宠物照料\n每日 · 优先级 10\n入队\n工作台\n任务中心\n托管计划\n历史记录\n设置"
+      }
+    },
+    {
+      "scene": "detail",
+      "orientation": "landscape",
+      "path": "screens/after-detail-landscape.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 900,
+          "height": 412
+        },
+        "firstTask": {
+          "x": 91,
+          "y": 116,
+          "width": 319.390625,
+          "height": 69
+        },
+        "queueItems": [],
+        "current": null,
+        "panel": null,
+        "nav": {
+          "x": 1,
+          "y": 75,
+          "width": 78,
+          "height": 326
+        },
+        "text": "09:41\n⌁ ▰\n任务中心\n全部\n每日\n每周\n2026.11.1\n日常与领取\n商店兑换\n副本与挑战\n御魂管理\n结界与阴阳寮\n限时活动\n每日物资领取\n每日 · 优先级 10\n入队\n每周物资领取\n每周 · 优先级 10\n入队\n永久勾玉卡产出\n每日 · 优先级 20\n入队\n花合战奖励\n每日 · 优先级 10\n入队\n悬赏封印\n每日 · 优先级 10\n队列中\n宠物照料\n每日 · 优先级 10\n入队\n每日物资领取\n保存\n\n仅领取所选物资，不购买额外权益\n\n优先级\n领取来源\n签到奖励\n每日物资\n花合战奖励\n执行步骤\n完整规则\n工作台\n任务中心\n托管计划\n历史记录\n设置"
+      }
+    },
+    {
+      "scene": "quick",
+      "orientation": "landscape",
+      "path": "screens/after-quick-landscape.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 900,
+          "height": 412
+        },
+        "firstTask": null,
+        "queueItems": [],
+        "current": {
+          "x": 594,
+          "y": 46,
+          "width": 278,
+          "height": 48
+        },
+        "panel": {
+          "x": 583,
+          "y": 37,
+          "width": 300,
+          "height": 158
+        },
+        "nav": null,
+        "text": "〈 庭院\n体力 120\n壹　贰　叁　肆　伍\n准备\n每日物资领取\n执行中 · 打开每日奖励\n常用\n兑换结果未知 · 核对结果"
+      }
+    },
+    {
+      "scene": "common",
+      "orientation": "landscape",
+      "path": "screens/after-common-landscape.png",
+      "metrics": {
+        "device": {
+          "x": 0,
+          "y": 0,
+          "width": 900,
+          "height": 412
+        },
+        "firstTask": null,
+        "queueItems": [],
+        "current": {
+          "x": 464,
+          "y": 94,
+          "width": 408,
+          "height": 49
+        },
+        "panel": {
+          "x": 453,
+          "y": 37,
+          "width": 430,
+          "height": 266
+        },
+        "nav": null,
+        "text": "〈 庭院\n体力 120\n壹　贰　叁　肆　伍\n准备\n常用\n每日物资领取\n执行中 · 打开每日奖励\n永久勾玉卡产出\n周三商店兑换\n御魂副本\n队列中\n御魂强化\n周期商店计划"
+      }
+    }
+  ],
+  "errors": []
+}

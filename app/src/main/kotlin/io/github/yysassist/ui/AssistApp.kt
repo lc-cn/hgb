@@ -1,0 +1,393 @@
+package io.github.yysassist.ui
+
+import android.content.Intent
+import android.provider.Settings
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import io.github.yysassist.*
+import io.github.yysassist.core.execution.*
+import io.github.yysassist.core.model.Principal
+import io.github.yysassist.device.GameAccessibilityService
+import io.github.yysassist.device.ScreenshotCheck
+import io.github.yysassist.storage.ActiveTaskContent
+import io.github.yysassist.storage.TaskAddress
+import kotlinx.coroutines.launch
+import java.io.IOException
+import android.accessibilityservice.AccessibilityService
+
+private enum class Page(val title: String, val icon: ImageVector) {
+    HOME("工作台", AssistIcons.Home), TASKS("任务中心", AssistIcons.Tasks),
+    PLANS("托管计划", AssistIcons.Calendar), HISTORY("历史记录", AssistIcons.Bell),
+    SETTINGS("设置", AssistIcons.Settings),
+}
+
+@Composable
+fun AssistApp(application: AssistApplication) {
+    val appearance by application.appearance.state.collectAsState()
+    val executor by application.executor.state.collectAsState()
+    val versions by application.taskUpdates.catalog.collectAsState()
+    val pull by application.taskUpdates.pull.collectAsState()
+    val versionOperation by application.taskUpdates.operation.collectAsState()
+    val taskDrafts by application.taskEditor.drafts.collectAsState()
+    val mode = (appearance as? AppearanceState.Ready)?.mode ?: ThemeMode.SYSTEM
+    val scope = rememberCoroutineScope()
+    var selected by rememberSaveable { mutableStateOf(Page.HOME.name) }
+    var detail by rememberSaveable { mutableStateOf<String?>(null) }
+    var historyTab by rememberSaveable { mutableIntStateOf(0) }
+    var editTarget by rememberSaveable { mutableStateOf<String?>(null) }
+    var editTask by rememberSaveable { mutableStateOf<String?>(null) }
+    val address = editTarget?.let { target -> editTask?.let { TaskAddress(target, it) } }
+    val editor = address?.let { taskDrafts[it] } ?: TaskEditorState.Loading
+    LaunchedEffect(address) { address?.let { application.taskEditor.open(it) } }
+    val snackbar = remember { SnackbarHostState() }
+    LaunchedEffect(application.taskUpdates) { application.taskUpdates.messages.collect { snackbar.showSnackbar(it) } }
+    LaunchedEffect(application.taskEditor) { application.taskEditor.messages.collect { snackbar.showSnackbar(it) } }
+    val page = Page.valueOf(selected)
+    BackHandler(detail != null || page != Page.HOME) {
+        if (detail != null) detail = null else selected = Page.HOME.name
+    }
+    AssistTheme(mode) {
+        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+                val wide = maxWidth >= UiSpace.wide
+                Row(Modifier.fillMaxSize()) {
+                    if (wide && detail == null) MainNavigation(page, true) { selected = it.name }
+                    Column(Modifier.weight(1f).fillMaxHeight()) {
+                        AppHeader(if (detail == "任务配置") (editor as? TaskEditorState.Ready)?.snapshot?.task?.name ?: "任务设置" else detail ?: page.title,
+                            detail != null, { detail = null }) {
+                            if (page == Page.SETTINGS && detail == null) {
+                                Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+                                    ThemeMode.entries.forEach { item ->
+                                        GlassChoice(when (item) { ThemeMode.SYSTEM -> "系统"; ThemeMode.LIGHT -> "浅色"; ThemeMode.DARK -> "深色" },
+                                            item == mode, appearance is AppearanceState.Ready) {
+                                            scope.launch {
+                                                try { application.appearance.setTheme(item) }
+                                                catch (_: IOException) { snackbar.showSnackbar("主题设置保存失败") }
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if (detail == "任务配置" && (editor as? TaskEditorState.Ready)?.dirty == true) {
+                                Text("未保存", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                            } else if (detail == "任务更新") {
+                                TextButton(enabled = pull !is TaskPullState.Fetching, onClick = application.taskUpdates::pullLatest) {
+                                    Text(if (pull is TaskPullState.Fetching) "拉取中" else "拉取")
+                                }
+                            } else if (page == Page.TASKS && detail == null) {
+                                TaskVersionEntry(versions) { detail = "任务更新" }
+                            }
+                        }
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        Box(Modifier.weight(1f).fillMaxWidth()) {
+                            when (detail) {
+                                "运行环境" -> EnvironmentPage()
+                                "任务更新" -> TaskVersionsPage(versions, pull, versionOperation, application.taskUpdates::reloadCatalog,
+                                    application.taskUpdates::activate, application.taskUpdates::delete)
+                                "任务配置" -> TaskConfigurationPage(editor, wide, { address?.let { application.taskEditor.reload(it) } },
+                                    { field, value -> address?.let { application.taskEditor.change(it, field, value) } },
+                                    { address?.let { application.taskEditor.save(it) } })
+                                "运行与数据" -> EmptyContent("暂无运行数据", "执行结果会保留在历史记录中。")
+                                else -> when (page) {
+                                    Page.HOME -> Workbench(executor, wide)
+                                    Page.TASKS -> TaskCenter(versions, application.taskUpdates::reloadCatalog, { detail = "任务更新" }) {
+                                        editTarget = it.targetId; editTask = it.taskId; detail = "任务配置"
+                                    }
+                                    Page.PLANS -> EmptyContent("暂无计划", "取得任务并保存配置后，可组合执行计划。")
+                                    Page.HISTORY -> History(executor, wide, historyTab) { historyTab = it }
+                                    Page.SETTINGS -> SettingsPage(appearance, versions) { detail = it }
+                                }
+                            }
+                            SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
+                        }
+                        if (!wide && detail == null) MainNavigation(page, false) { selected = it.name }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun AppHeader(title: String, back: Boolean, onBack: () -> Unit, actions: @Composable RowScope.() -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = UiSpace.page),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+        if (back) IconButton(onClick = onBack) { Icon(AssistIcons.Back, "返回") }
+        Text(title, Modifier.weight(1f).semantics { heading() }, fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        actions()
+    }
+}
+
+@Composable
+private fun iconColor(page: Page, strong: Boolean = false): Color = with(if (strong) paletteOnStrong() else LocalAssistPalette.current) {
+    when (page) { Page.HOME -> blue; Page.TASKS -> violet; Page.PLANS -> orange; Page.HISTORY -> teal; Page.SETTINGS -> rose }
+}
+
+@Composable
+private fun MainNavigation(selected: Page, rail: Boolean, select: (Page) -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    @Composable fun glyph(page: Page) {
+        val color = iconColor(page, page == selected)
+        Icon(page.icon, null, Modifier.size(UiSpace.icon), tint = color.copy(alpha = .82f))
+    }
+    if (rail) {
+        NavigationRail(Modifier.width(UiSpace.rail).fillMaxHeight(), containerColor = colors.surfaceContainer,
+            windowInsets = WindowInsets(0, 0, 0, 0)) {
+            Page.entries.forEach { page ->
+                NavigationRailItem(selected == page, { select(page) }, icon = { glyph(page) },
+                    modifier = Modifier.clip(RoundedCornerShape(UiSpace.medium)).then(
+                        if (selected == page) Modifier.background(glassBrush(true)) else Modifier),
+                    label = { Text(page.title, style = MaterialTheme.typography.labelSmall, maxLines = 1) },
+                    colors = NavigationRailItemDefaults.colors(indicatorColor = Color.Transparent,
+                        selectedTextColor = colors.onPrimary, unselectedTextColor = colors.onSurfaceVariant))
+            }
+        }
+    } else {
+        NavigationBar(containerColor = colors.surfaceContainer, tonalElevation = 0.dp,
+            windowInsets = WindowInsets(0, 0, 0, 0)) {
+            Page.entries.forEach { page ->
+                NavigationBarItem(selected == page, { select(page) }, icon = { glyph(page) },
+                    modifier = Modifier.padding(UiSpace.tiny).clip(RoundedCornerShape(UiSpace.page)).then(
+                        if (selected == page) Modifier.background(glassBrush(true)) else Modifier),
+                    label = { Text(page.title, style = MaterialTheme.typography.labelSmall, maxLines = 1) },
+                    colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent,
+                        selectedTextColor = colors.onPrimary, unselectedTextColor = colors.onSurfaceVariant))
+            }
+        }
+    }
+}
+
+@Composable
+private fun Workbench(state: ExecutorSnapshot, wide: Boolean) {
+    Column(Modifier.fillMaxSize()) {
+        Row(Modifier.weight(1f).fillMaxWidth()) {
+            Column(Modifier.weight(if (wide) .65f else 1f)) {
+                SectionTitle("待执行", state.waiting.size.toString())
+                if (state.waiting.isEmpty()) EmptyContent("队列为空", "从任务或计划右侧加入队列。")
+                else LazyColumn { items(state.waiting, key = { it.runId }) { run ->
+                    ListItem(headlineContent = { Text(run.request.ref.id) },
+                        supportingContent = { Text("优先级 ${run.priority}") })
+                } }
+            }
+            if (wide) {
+                VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Column(Modifier.weight(.35f)) {
+                    SectionTitle("下次计划")
+                    Text("暂无计划", Modifier.padding(UiSpace.page), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    SectionTitle("最近结果")
+                    Text("暂无运行结果", Modifier.padding(UiSpace.page), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer).padding(UiSpace.page),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+            val phaseText = when (state.phase) {
+                ExecutorPhase.IDLE -> "待机"
+                ExecutorPhase.RUNNING -> "执行中"
+                ExecutorPhase.PAUSING -> "暂停中"
+                ExecutorPhase.PAUSED -> "已暂停"
+                ExecutorPhase.REMOVING -> "移除中"
+                ExecutorPhase.SWITCHING -> "交接中"
+                ExecutorPhase.BLOCKED_UNKNOWN -> "结果待核对"
+            }
+            val color = when (state.phase) {
+                ExecutorPhase.IDLE -> MaterialTheme.colorScheme.onSurfaceVariant
+                ExecutorPhase.RUNNING, ExecutorPhase.SWITCHING -> LocalAssistPalette.current.blue
+                else -> LocalAssistPalette.current.warning
+            }
+            Icon(if (state.manualHold) AssistIcons.Pause else AssistIcons.Circle, null, tint = color.copy(alpha = .82f))
+            Text(phaseText, fontWeight = FontWeight.Medium)
+            Spacer(Modifier.weight(1f))
+            Text(when (val principal = state.context?.principal) {
+                null -> "未识别账号"
+                Principal.Anonymous -> "无需账号"
+                is Principal.Account -> principal.id
+            },
+                color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+@Composable
+private fun TaskCenter(versions: VersionCatalogState, reload: () -> Unit, updates: () -> Unit, edit: (TaskAddress) -> Unit) {
+    when (versions) {
+        VersionCatalogState.Loading -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
+        is VersionCatalogState.Failure -> Column(Modifier.padding(UiSpace.page)) {
+            Text(versions.message, color = MaterialTheme.colorScheme.error)
+            TextButton(onClick = reload) { Text("重新读取") }
+        }
+        is VersionCatalogState.Ready -> when (val content = versions.catalog.activeContent) {
+            ActiveTaskContent.None -> Column(Modifier.fillMaxSize()) {
+                EmptyContent("暂无任务", "启用已取得的任务版本后，任务会出现在这里。")
+                TextButton(onClick = updates, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text("任务更新") }
+            }
+            is ActiveTaskContent.Invalid -> Column(Modifier.padding(UiSpace.page)) {
+                Text(content.message, color = MaterialTheme.colorScheme.error)
+                TextButton(onClick = updates) { Text("任务更新") }
+            }
+            is ActiveTaskContent.Available -> LazyColumn {
+                items(content.bundle.tasks, key = { kotlinx.serialization.json.JsonArray(listOf(kotlinx.serialization.json.JsonPrimitive(it.targetId), kotlinx.serialization.json.JsonPrimitive(it.id))).toString() }) { task ->
+                    val target = content.bundle.targets.single { it.id == task.targetId }
+                    ListItem(modifier = Modifier.clickable { edit(TaskAddress(task.targetId, task.id)) }, headlineContent = { Text(task.name) }, supportingContent = {
+                        Text("${target.name} · ${target.categories.single { it.id == task.category }.name}")
+                    })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsPage(appearance: AppearanceState, versions: VersionCatalogState, open: (String) -> Unit) {
+    val p = LocalAssistPalette.current
+    LazyColumn(Modifier.fillMaxSize()) {
+        if (appearance is AppearanceState.Failure) item {
+            Text(appearance.message, Modifier.padding(UiSpace.page), color = p.error)
+        }
+        item { SettingsRow("任务更新", when (versions) {
+            VersionCatalogState.Loading -> "读取中"
+            is VersionCatalogState.Failure -> "本地版本读取失败"
+            is VersionCatalogState.Ready -> versions.catalog.activeVersion?.let { "当前版本 $it" } ?: "暂无已启用任务版本"
+        }, AssistIcons.Cloud, p.blue) { open("任务更新") } }
+        item { SettingsRow("运行环境", "授权与运行条件", AssistIcons.Phone, p.orange) { open("运行环境") } }
+        item { SettingsRow("运行与数据", "执行记录", AssistIcons.Data, p.teal) { open("运行与数据") } }
+    }
+}
+
+@Composable
+private fun SettingsRow(title: String, subtitle: String, icon: ImageVector, color: Color, click: () -> Unit) {
+    TextButton(onClick = click, modifier = Modifier.fillMaxWidth().heightIn(min = UiSpace.row),
+        shape = RoundedCornerShape(0.dp), contentPadding = PaddingValues(horizontal = UiSpace.section, vertical = UiSpace.medium)) {
+        Box(Modifier.size(UiSpace.tile).clip(RoundedCornerShape(UiSpace.gap)).background(color.copy(alpha = .12f)), Alignment.Center) {
+            Icon(icon, null, Modifier.size(UiSpace.icon), tint = color.copy(alpha = .82f))
+        }
+        Column(Modifier.weight(1f).padding(horizontal = UiSpace.medium), verticalArrangement = Arrangement.spacedBy(UiSpace.tiny)) {
+            Text(title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge)
+            Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+        }
+        Icon(AssistIcons.Chevron, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    HorizontalDivider(Modifier.padding(start = 68.dp, end = UiSpace.section), color = MaterialTheme.colorScheme.outlineVariant)
+}
+
+@Composable
+private fun EnvironmentPage() {
+    val context = LocalContext.current
+    val service by GameAccessibilityService.connection.collectAsState()
+    var checking by remember { mutableStateOf(false) }
+    var result by remember { mutableStateOf<ScreenshotCheck?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(service) { checking = false; result = null; error = null }
+    Column(Modifier.padding(UiSpace.page), verticalArrangement = Arrangement.spacedBy(UiSpace.medium)) {
+        Text("无障碍服务", style = MaterialTheme.typography.titleMedium)
+        Text(if (service == null) "尚未授权" else "已授权", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        OutlinedButton(onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }) { Text("打开系统设置") }
+        OutlinedButton(enabled = service != null && !checking, onClick = {
+            val owner = service ?: return@OutlinedButton
+            checking = true; error = null; result = null
+            try {
+                owner.checkScreenshot { value ->
+                    // A late platform callback cannot write into an obsolete screen composition.
+                    scope.launch {
+                        if (GameAccessibilityService.connection.value === owner) result = value
+                        else error = "截图授权已变化，请重新检查"
+                        checking = false
+                    }
+                }
+            } catch (_: SecurityException) { checking = false; error = "截图授权不可用" }
+        }) { Text(if (checking) "检查中" else "检查截图") }
+        when (val value = result) {
+            is ScreenshotCheck.Success -> Text("已取得可读取画面 · ${value.width} × ${value.height}")
+            is ScreenshotCheck.PlatformFailure -> Text(when (value.code) {
+                AccessibilityService.ERROR_TAKE_SCREENSHOT_NO_ACCESSIBILITY_ACCESS -> "截图授权不可用，请重新检查系统设置"
+                AccessibilityService.ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT -> "截图请求过于频繁，请稍后再试"
+                AccessibilityService.ERROR_TAKE_SCREENSHOT_INVALID_DISPLAY -> "当前屏幕无法截图"
+                else -> "截图失败，请检查授权与当前画面"
+            }, color = MaterialTheme.colorScheme.error)
+            is ScreenshotCheck.DecodeFailure -> Text(value.reason, color = MaterialTheme.colorScheme.error)
+            null -> Unit
+        }
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+    }
+}
+
+@Composable
+private fun History(state: ExecutorSnapshot, wide: Boolean, tab: Int, select: (Int) -> Unit) {
+    val records = state.facts.filter { it.type in setOf("task-completed", "task-failed", "run-ended", "cancelled") }
+    @Composable fun content() {
+        if (tab == 0) EmptyContent("暂无通知记录")
+        else if (records.isEmpty()) EmptyContent("暂无运行记录")
+        else LazyColumn { items(records.withIndex().toList(), key = { it.index }) { (_, fact) ->
+            val result = when (fact.type) {
+                "task-completed" -> "任务完成"
+                "task-failed" -> "任务失败"
+                "cancelled" -> "已移除或停止"
+                else -> when (fact.detail) {
+                    "COMPLETED" -> "本轮完成"
+                    "PARTIAL_FAILURE" -> "本轮部分失败"
+                    "FAILED" -> "本轮失败"
+                    else -> "本轮结束"
+                }
+            }
+            ListItem(headlineContent = { Text(fact.taskName) },
+                supportingContent = { Text("$result · ${when (val principal = fact.context.principal) {
+                    Principal.Anonymous -> "无需账号"
+                    is Principal.Account -> principal.id
+                }}") })
+        } }
+    }
+    if (wide) Row(Modifier.fillMaxSize()) {
+        Column(Modifier.width(128.dp).padding(UiSpace.gap)) {
+            listOf("通知", "运行").forEachIndexed { index, label ->
+                TextButton(onClick = { select(index) }, Modifier.fillMaxWidth()) { Text(label) }
+            }
+        }
+        VerticalDivider()
+        Box(Modifier.weight(1f)) { content() }
+    } else Column {
+        PrimaryTabRow(selectedTabIndex = tab) {
+            listOf("通知", "运行").forEachIndexed { index, label -> Tab(selected = tab == index, onClick = { select(index) }, text = { Text(label) }) }
+        }
+        content()
+    }
+}
+
+@Composable
+private fun SectionTitle(text: String, trail: String = "") {
+    Row(Modifier.fillMaxWidth().padding(horizontal = UiSpace.page, vertical = UiSpace.medium)) {
+        Text(text, Modifier.weight(1f).semantics { heading() }, style = MaterialTheme.typography.titleSmall)
+        Text(trail, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
+private fun EmptyContent(title: String, description: String = "") {
+    Column(Modifier.fillMaxWidth().padding(horizontal = UiSpace.page, vertical = UiSpace.section),
+        verticalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+        if (description.isNotEmpty()) Text(description, style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}

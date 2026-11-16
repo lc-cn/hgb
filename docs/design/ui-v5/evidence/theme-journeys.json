@@ -1,0 +1,61 @@
+{
+  "journeys": [
+    {
+      "name": "设置右上角：默认系统、手动选择、刷新与回到系统",
+      "result": "observed",
+      "details": {
+        "default": "system",
+        "manualReload": "retained",
+        "osChange": "followed",
+        "separateAppearancePage": false
+      }
+    },
+    {
+      "name": "跨页：设置→新版工作台→设置保留主题",
+      "result": "observed",
+      "details": {
+        "main": "ui-v5/app.html",
+        "settings": "ui-v5/full.html#settings",
+        "effective": "dark"
+      }
+    },
+    {
+      "name": "URL导航所有权：页面更新保留外观回退参数",
+      "result": "observed",
+      "details": {
+        "queryParameters": "preserved"
+      }
+    },
+    {
+      "name": "主题切换保留任务草稿与执行展示",
+      "result": "observed",
+      "details": {
+        "draft": "retained",
+        "executionFixture": "unchanged"
+      }
+    },
+    {
+      "name": "主题切换不绕过开发者未知结果与权限保护",
+      "result": "observed",
+      "details": {
+        "unknown": "retained",
+        "protectedRoute": "blocked"
+      }
+    },
+    {
+      "name": "双主题横竖页巡查",
+      "result": "observed",
+      "details": {
+        "findings": []
+      }
+    },
+    {
+      "name": "无产品脚本运行异常",
+      "result": "observed",
+      "details": {
+        "runtimeErrors": []
+      }
+    }
+  ],
+  "layoutFindings": []
+}

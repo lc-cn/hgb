@@ -1,0 +1,16 @@
+{
+  "before": {
+    "sourceSha256": "66413d98c8e8cdf5f99903ab702a924050c23e98998bdf8d8beb5f0ed5fc196f",
+    "tests": 1,
+    "failures": 1,
+    "symptom": "Task center title is not displayed for a long version in the actual 320dp AppHeader",
+    "evidence": "title-before.txt"
+  },
+  "after": {
+    "sourceSha256": "001bf39b1d1ac55c33df33523f9c8eb8b27400c83af457e23b292308b427f157",
+    "tests": 1,
+    "failures": 0,
+    "evidence": "instrumentation.txt",
+    "visual": "component-fixtures/long-version-title.png"
+  }
+}

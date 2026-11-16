@@ -1,0 +1,160 @@
+{
+  "checks": [
+    {
+      "name": "portrait: account and actions share title row",
+      "pass": true
+    },
+    {
+      "name": "portrait: running account cannot open picker",
+      "pass": true
+    },
+    {
+      "name": "portrait: unsaved running account has save and stop icons",
+      "pass": true
+    },
+    {
+      "name": "portrait: header fits without overlap",
+      "pass": true
+    },
+    {
+      "name": "portrait: save discloses stop before changing game",
+      "pass": true
+    },
+    {
+      "name": "portrait: save captures once and stopped header offers start",
+      "pass": true
+    },
+    {
+      "name": "portrait: saved A plans retained",
+      "pass": true
+    },
+    {
+      "name": "portrait: B does not show A plans or results",
+      "pass": true
+    },
+    {
+      "name": "portrait: B plan list is empty",
+      "pass": true
+    },
+    {
+      "name": "portrait: B plan saves with immutable B owner",
+      "pass": true
+    },
+    {
+      "name": "portrait: A plans return and B plan stays stored separately",
+      "pass": true
+    },
+    {
+      "name": "portrait: stopped account opens anchored picker",
+      "pass": true
+    },
+    {
+      "name": "portrait: selection closes picker without pretending login succeeded",
+      "pass": true
+    },
+    {
+      "name": "portrait: launching locks switch and shows conditional pending status",
+      "pass": true
+    },
+    {
+      "name": "portrait: verified B changes isolated workspace",
+      "pass": true
+    },
+    {
+      "name": "portrait: saved running account no longer shows save icon",
+      "pass": true
+    },
+    {
+      "name": "portrait: settings has one low-frequency account entry",
+      "pass": true
+    },
+    {
+      "name": "portrait: settings no longer duplicates launch or account selection",
+      "pass": true
+    },
+    {
+      "name": "portrait: task steps can expand without preceding all editable fields",
+      "pass": true
+    },
+    {
+      "name": "landscape: account and actions share title row",
+      "pass": true
+    },
+    {
+      "name": "landscape: running account cannot open picker",
+      "pass": true
+    },
+    {
+      "name": "landscape: unsaved running account has save and stop icons",
+      "pass": true
+    },
+    {
+      "name": "landscape: header fits without overlap",
+      "pass": true
+    },
+    {
+      "name": "landscape: save discloses stop before changing game",
+      "pass": true
+    },
+    {
+      "name": "landscape: save captures once and stopped header offers start",
+      "pass": true
+    },
+    {
+      "name": "landscape: saved A plans retained",
+      "pass": true
+    },
+    {
+      "name": "landscape: B does not show A plans or results",
+      "pass": true
+    },
+    {
+      "name": "landscape: B plan list is empty",
+      "pass": true
+    },
+    {
+      "name": "landscape: B plan saves with immutable B owner",
+      "pass": true
+    },
+    {
+      "name": "landscape: A plans return and B plan stays stored separately",
+      "pass": true
+    },
+    {
+      "name": "landscape: stopped account opens anchored picker",
+      "pass": true
+    },
+    {
+      "name": "landscape: selection closes picker without pretending login succeeded",
+      "pass": true
+    },
+    {
+      "name": "landscape: launching locks switch and shows conditional pending status",
+      "pass": true
+    },
+    {
+      "name": "landscape: verified B changes isolated workspace",
+      "pass": true
+    },
+    {
+      "name": "landscape: saved running account no longer shows save icon",
+      "pass": true
+    },
+    {
+      "name": "landscape: settings has one low-frequency account entry",
+      "pass": true
+    },
+    {
+      "name": "landscape: settings no longer duplicates launch or account selection",
+      "pass": true
+    },
+    {
+      "name": "landscape: task steps can expand without preceding all editable fields",
+      "pass": true
+    },
+    {
+      "name": "no runtime exceptions",
+      "pass": true
+    }
+  ]
+}

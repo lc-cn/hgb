@@ -1,0 +1,777 @@
+{
+  "checkedAt": "2026-11-15T08:20:48.367Z",
+  "scope": "UI-only auth/debug/release fixtures",
+  "checks": [
+    {
+      "name": "direct initial protected URL lands in auth",
+      "pass": true
+    },
+    {
+      "name": "signedout blocks tasks",
+      "pass": true
+    },
+    {
+      "name": "signedout blocks task/jade-claim",
+      "pass": true
+    },
+    {
+      "name": "signedout blocks step/open-entry",
+      "pass": true
+    },
+    {
+      "name": "signedout blocks actions",
+      "pass": true
+    },
+    {
+      "name": "signedout blocks action/locate-entry",
+      "pass": true
+    },
+    {
+      "name": "signedout blocks schema",
+      "pass": true
+    },
+    {
+      "name": "signedout blocks field/retryLimit",
+      "pass": true
+    },
+    {
+      "name": "signedout blocks preview",
+      "pass": true
+    },
+    {
+      "name": "signedout blocks resources",
+      "pass": true
+    },
+    {
+      "name": "signedout blocks json",
+      "pass": true
+    },
+    {
+      "name": "signedout blocks debug",
+      "pass": true
+    },
+    {
+      "name": "signedout blocks publish",
+      "pass": true
+    },
+    {
+      "name": "signedout blocks diagnostics",
+      "pass": true
+    },
+    {
+      "name": "signedout private commands cannot mutate/create/run/publish",
+      "pass": true
+    },
+    {
+      "name": "pending blocks tasks",
+      "pass": true
+    },
+    {
+      "name": "pending blocks task/jade-claim",
+      "pass": true
+    },
+    {
+      "name": "pending blocks step/open-entry",
+      "pass": true
+    },
+    {
+      "name": "pending blocks actions",
+      "pass": true
+    },
+    {
+      "name": "pending blocks action/locate-entry",
+      "pass": true
+    },
+    {
+      "name": "pending blocks schema",
+      "pass": true
+    },
+    {
+      "name": "pending blocks field/retryLimit",
+      "pass": true
+    },
+    {
+      "name": "pending blocks preview",
+      "pass": true
+    },
+    {
+      "name": "pending blocks resources",
+      "pass": true
+    },
+    {
+      "name": "pending blocks json",
+      "pass": true
+    },
+    {
+      "name": "pending blocks debug",
+      "pass": true
+    },
+    {
+      "name": "pending blocks publish",
+      "pass": true
+    },
+    {
+      "name": "pending blocks diagnostics",
+      "pass": true
+    },
+    {
+      "name": "pending private commands cannot mutate/create/run/publish",
+      "pass": true
+    },
+    {
+      "name": "denied blocks tasks",
+      "pass": true
+    },
+    {
+      "name": "denied blocks task/jade-claim",
+      "pass": true
+    },
+    {
+      "name": "denied blocks step/open-entry",
+      "pass": true
+    },
+    {
+      "name": "denied blocks actions",
+      "pass": true
+    },
+    {
+      "name": "denied blocks action/locate-entry",
+      "pass": true
+    },
+    {
+      "name": "denied blocks schema",
+      "pass": true
+    },
+    {
+      "name": "denied blocks field/retryLimit",
+      "pass": true
+    },
+    {
+      "name": "denied blocks preview",
+      "pass": true
+    },
+    {
+      "name": "denied blocks resources",
+      "pass": true
+    },
+    {
+      "name": "denied blocks json",
+      "pass": true
+    },
+    {
+      "name": "denied blocks debug",
+      "pass": true
+    },
+    {
+      "name": "denied blocks publish",
+      "pass": true
+    },
+    {
+      "name": "denied blocks diagnostics",
+      "pass": true
+    },
+    {
+      "name": "denied private commands cannot mutate/create/run/publish",
+      "pass": true
+    },
+    {
+      "name": "unknown blocks tasks",
+      "pass": true
+    },
+    {
+      "name": "unknown blocks task/jade-claim",
+      "pass": true
+    },
+    {
+      "name": "unknown blocks step/open-entry",
+      "pass": true
+    },
+    {
+      "name": "unknown blocks actions",
+      "pass": true
+    },
+    {
+      "name": "unknown blocks action/locate-entry",
+      "pass": true
+    },
+    {
+      "name": "unknown blocks schema",
+      "pass": true
+    },
+    {
+      "name": "unknown blocks field/retryLimit",
+      "pass": true
+    },
+    {
+      "name": "unknown blocks preview",
+      "pass": true
+    },
+    {
+      "name": "unknown blocks resources",
+      "pass": true
+    },
+    {
+      "name": "unknown blocks json",
+      "pass": true
+    },
+    {
+      "name": "unknown blocks debug",
+      "pass": true
+    },
+    {
+      "name": "unknown blocks publish",
+      "pass": true
+    },
+    {
+      "name": "unknown blocks diagnostics",
+      "pass": true
+    },
+    {
+      "name": "unknown private commands cannot mutate/create/run/publish",
+      "pass": true
+    },
+    {
+      "name": "expired blocks tasks",
+      "pass": true
+    },
+    {
+      "name": "expired blocks task/jade-claim",
+      "pass": true
+    },
+    {
+      "name": "expired blocks step/open-entry",
+      "pass": true
+    },
+    {
+      "name": "expired blocks actions",
+      "pass": true
+    },
+    {
+      "name": "expired blocks action/locate-entry",
+      "pass": true
+    },
+    {
+      "name": "expired blocks schema",
+      "pass": true
+    },
+    {
+      "name": "expired blocks field/retryLimit",
+      "pass": true
+    },
+    {
+      "name": "expired blocks preview",
+      "pass": true
+    },
+    {
+      "name": "expired blocks resources",
+      "pass": true
+    },
+    {
+      "name": "expired blocks json",
+      "pass": true
+    },
+    {
+      "name": "expired blocks debug",
+      "pass": true
+    },
+    {
+      "name": "expired blocks publish",
+      "pass": true
+    },
+    {
+      "name": "expired blocks diagnostics",
+      "pass": true
+    },
+    {
+      "name": "expired private commands cannot mutate/create/run/publish",
+      "pass": true
+    },
+    {
+      "name": "own fork write does not grant target access",
+      "pass": true
+    },
+    {
+      "name": "login starts wait only",
+      "pass": true
+    },
+    {
+      "name": "prototype authorization button does not force grant",
+      "pass": true
+    },
+    {
+      "name": "portrait layout auth",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 752,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "portrait layout tasks",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 752,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "portrait layout task/jade-claim",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 752,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "portrait layout step/open-entry",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 752,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "portrait layout actions",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 752,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "portrait layout action/locate-entry",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 752,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "portrait layout schema",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 752,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "portrait layout field/retryLimit",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 752,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "portrait layout preview",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 752,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "portrait layout resources",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 752,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "portrait layout json",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 752,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "portrait layout debug",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 752,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "portrait layout publish",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 752,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "portrait layout diagnostics",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 752,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "landscape layout auth",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 319,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "landscape layout tasks",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 319,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "landscape layout task/jade-claim",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 319,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "landscape layout step/open-entry",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 319,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "landscape layout actions",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 319,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "landscape layout action/locate-entry",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 319,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "landscape layout schema",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 319,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "landscape layout field/retryLimit",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 319,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "landscape layout preview",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 319,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "landscape layout resources",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 319,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "landscape layout json",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 319,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "landscape layout debug",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 319,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "landscape layout publish",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 319,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "landscape layout diagnostics",
+      "pass": true,
+      "detail": {
+        "overflow": false,
+        "height": 319,
+        "empty": false,
+        "choices": true,
+        "select": 0
+      }
+    },
+    {
+      "name": "build task from App forms with action refs schema resources",
+      "pass": true
+    },
+    {
+      "name": "created task owns ordered steps and generated config references",
+      "pass": true
+    },
+    {
+      "name": "copy task preserves original and opens local editor",
+      "pass": true
+    },
+    {
+      "name": "field form generates schema without JSON editing",
+      "pass": true
+    },
+    {
+      "name": "generated user form contains new field",
+      "pass": true
+    },
+    {
+      "name": "JSON preview is read-only text",
+      "pass": true
+    },
+    {
+      "name": "out-of-range test config blocks debug preserving value",
+      "pass": true,
+      "detail": "idle"
+    },
+    {
+      "name": "preview values isolated between tasks",
+      "pass": true
+    },
+    {
+      "name": "preview validation errors isolated between tasks",
+      "pass": true
+    },
+    {
+      "name": "task debug advances ordered actions and completes step",
+      "pass": true
+    },
+    {
+      "name": "in-flight debug task snapshot does not change with editor",
+      "pass": true
+    },
+    {
+      "name": "continue re-enters unfinished step retaining completed steps",
+      "pass": true
+    },
+    {
+      "name": "restart resets only current task and keeps other definition",
+      "pass": true
+    },
+    {
+      "name": "debug leaves automatic queue held",
+      "pass": true
+    },
+    {
+      "name": "debug produces distinct unknown result",
+      "pass": true
+    },
+    {
+      "name": "unknown reset visibly disabled",
+      "pass": true
+    },
+    {
+      "name": "forged reset/run cannot erase unknown evidence",
+      "pass": true
+    },
+    {
+      "name": "reauthorization does not clear unresolved debug",
+      "pass": true
+    },
+    {
+      "name": "explicit check clears unknown into pause",
+      "pass": true
+    },
+    {
+      "name": "auth revoke invalidates late debug callback",
+      "pass": true
+    },
+    {
+      "name": "missing resource gives navigable validation error",
+      "pass": true
+    },
+    {
+      "name": "success upload captures full taskset",
+      "pass": true
+    },
+    {
+      "name": "success upload snapshot survives later draft edit",
+      "pass": true
+    },
+    {
+      "name": "success result distinct",
+      "pass": true,
+      "detail": "success"
+    },
+    {
+      "name": "success allows creating next release",
+      "pass": true
+    },
+    {
+      "name": "failed upload captures full taskset",
+      "pass": true
+    },
+    {
+      "name": "failed upload snapshot survives later draft edit",
+      "pass": true
+    },
+    {
+      "name": "failed result distinct",
+      "pass": true,
+      "detail": "failed"
+    },
+    {
+      "name": "confirmed failure keeps draft and offers retry",
+      "pass": true
+    },
+    {
+      "name": "unknown upload captures full taskset",
+      "pass": true
+    },
+    {
+      "name": "unknown upload snapshot survives later draft edit",
+      "pass": true
+    },
+    {
+      "name": "unknown result distinct",
+      "pass": true,
+      "detail": "unknown"
+    },
+    {
+      "name": "unknown release cannot blindly retry",
+      "pass": true
+    },
+    {
+      "name": "unknown offers remote status check UI",
+      "pass": true
+    },
+    {
+      "name": "expired upload captures full taskset",
+      "pass": true
+    },
+    {
+      "name": "expired upload snapshot survives later draft edit",
+      "pass": true
+    },
+    {
+      "name": "expired result distinct",
+      "pass": true,
+      "detail": "expired"
+    },
+    {
+      "name": "restored write permission permits known-unpublished attempt",
+      "pass": true,
+      "detail": "idle"
+    },
+    {
+      "name": "auth revoke prevents late publish success",
+      "pass": true
+    },
+    {
+      "name": "no runtime exceptions",
+      "pass": true,
+      "detail": []
+    }
+  ]
+}
