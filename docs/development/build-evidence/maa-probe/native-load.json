@@ -1,0 +1,8 @@
+{
+  "phase": "loaded",
+  "internetPermission": false,
+  "sdk": 36,
+  "abi": "arm64-v8a",
+  "version": "v5.16.1",
+  "loadMs": 10.5815
+}

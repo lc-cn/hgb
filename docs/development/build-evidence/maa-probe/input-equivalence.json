@@ -1,0 +1,23 @@
+{
+  "privateInputsIdenticalToPrior": true,
+  "privateInputDigests": {
+    "assets/private-samples/courtyard-reference.png": "c9014040bd408a2c5ed4a2d38108c59cbdb70cbca4f8583d255a6cfd32e1c7c1",
+    "assets/private-samples/labels.json": "963b959e635831aa0c6ddba1a6328448507a16b9709c48fc3bdcf26c75e41a50",
+    "assets/private-samples/shop-navigation.png": "1f07c4dcfe66793ec5d4994b000397eccdfe0e4f86c5a58ed091952ba6499cae",
+    "assets/private-samples/shop-products-reference.png": "c51f53d9f143ee978c1fc1ef2f101309b543194fa3d4e4edc7992fd016b2034c"
+  },
+  "synthetic": {
+    "light": {
+      "sha256": "bf036b0742f4ce015302ae55563f1292310e3527f91deb082ce5cf850da57e79",
+      "identicalPriorPng": true
+    },
+    "dark": {
+      "sha256": "a53ee148de94790f8d6bc179be98b6f3549a7b23826624d4c47ea73e6116814a",
+      "identicalPriorPng": true
+    },
+    "blank": {
+      "sha256": "a57b668c4a8f719a6c4aa575deca5fa42531337da206f75a967d7bcca71b2f16",
+      "identicalPriorPng": true
+    }
+  }
+}

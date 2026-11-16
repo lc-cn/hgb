@@ -1,0 +1,140 @@
+{
+  "schema": 1,
+  "version": "5.16.1",
+  "sourceCommit": "ea944bd7b75f649851dc4807295966b3676bc821",
+  "distribution": {
+    "name": "MAA-android-aarch64-v5.16.1.zip",
+    "url": "https://github.com/MaaXYZ/MaaFramework/releases/download/v5.16.1/MAA-android-aarch64-v5.16.1.zip",
+    "bytes": 55969896,
+    "sha256": "71e6f1a81e432d64cd62e780977c66d8307e230a0b6faebee252b0195f6a841c"
+  },
+  "distributionFiles": {
+    "bin/libMaaFramework.so": {
+      "destination": "jniLibs/arm64-v8a/libMaaFramework.so",
+      "bytes": 54787168,
+      "sha256": "def162a33b53371dea3b47400ae493eed9e0acc604221b0d61b75e56e011cb77"
+    },
+    "bin/libMaaUtils.so": {
+      "destination": "jniLibs/arm64-v8a/libMaaUtils.so",
+      "bytes": 13600296,
+      "sha256": "049dc9d818a1edcd30508a56a659cd2ca63d3638b4f13f24b0db1d58c73c5475"
+    },
+    "bin/libopencv_world4.so": {
+      "destination": "jniLibs/arm64-v8a/libopencv_world4.so",
+      "bytes": 30377505,
+      "sha256": "9e8c23c4717aaf86aef656d016d1e6e21cbad3fc56570142cadcddf430787653"
+    },
+    "bin/libonnxruntime.so": {
+      "destination": "jniLibs/arm64-v8a/libonnxruntime.so",
+      "bytes": 21726776,
+      "sha256": "a62ef27cc11fc7bcdd1266ee40b75225b3492197f27576ea638ed2827e8ea1f8"
+    },
+    "bin/libfastdeploy_ppocr.so": {
+      "destination": "jniLibs/arm64-v8a/libfastdeploy_ppocr.so",
+      "bytes": 6094657,
+      "sha256": "e8adfe1a25d5c70404b5a09a23d472c52b8f41f2f1cc87f3ebe6cc0d81e9a629"
+    },
+    "bin/libncnn.so": {
+      "destination": "jniLibs/arm64-v8a/libncnn.so",
+      "bytes": 5237033,
+      "sha256": "47280e5da866b5ad8d420f240826e4bf09d8a5425d4f4c0d3b14f1b13b75d8a1"
+    },
+    "bin/libc++_shared.so": {
+      "destination": "jniLibs/arm64-v8a/libc++_shared.so",
+      "bytes": 9290184,
+      "sha256": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352"
+    },
+    "include/MaaFramework/Global/MaaGlobal.h": {
+      "destination": "include/MaaFramework/Global/MaaGlobal.h",
+      "bytes": 982,
+      "sha256": "b29279cbb27cb06df4da6ec82ebd63a1322cee86fef0db6b12c4a9c782b0fcab"
+    },
+    "include/MaaFramework/Instance/MaaContext.h": {
+      "destination": "include/MaaFramework/Instance/MaaContext.h",
+      "bytes": 3257,
+      "sha256": "c326f347faea8b112f4e53cbcd1d4ef2e702360d6a2838471ed502b9bc855348"
+    },
+    "include/MaaFramework/Instance/MaaController.h": {
+      "destination": "include/MaaFramework/Instance/MaaController.h",
+      "bytes": 20260,
+      "sha256": "3d7719ceb547b3b39b3579a15bf8e637e294fcccf8100893f52dfd89f7fba4b5"
+    },
+    "include/MaaFramework/Instance/MaaCustomController.h": {
+      "destination": "include/MaaFramework/Instance/MaaCustomController.h",
+      "bytes": 2456,
+      "sha256": "54472bc9aa186e7284e1a90a74ccea10a074c4540d4a6abf097e13089b17fc24"
+    },
+    "include/MaaFramework/Instance/MaaResource.h": {
+      "destination": "include/MaaFramework/Instance/MaaResource.h",
+      "bytes": 4072,
+      "sha256": "e7f3c6a8028e02f864c65c7f72d8b788294e54f53331327e7127be17e6fc7207"
+    },
+    "include/MaaFramework/Instance/MaaTasker.h": {
+      "destination": "include/MaaFramework/Instance/MaaTasker.h",
+      "bytes": 5982,
+      "sha256": "8cda4138ec832e585920639cdc1b4015a1de48cc96c62c0269f88da2f1dcbcf8"
+    },
+    "include/MaaFramework/MaaAPI.h": {
+      "destination": "include/MaaFramework/MaaAPI.h",
+      "bytes": 685,
+      "sha256": "21ac64e5bee1c5e5021e08f04d0ae7111231135f6f2143a796fb010ec00fef3e"
+    },
+    "include/MaaFramework/MaaDef.h": {
+      "destination": "include/MaaFramework/MaaDef.h",
+      "bytes": 33117,
+      "sha256": "fb721a8f275573ca54f64ebe5cfa7f6147a6277e4ec0fdcd4b4771be7b6d3634"
+    },
+    "include/MaaFramework/MaaMsg.h": {
+      "destination": "include/MaaFramework/MaaMsg.h",
+      "bytes": 4843,
+      "sha256": "4f07ce5682d4d4e6ded29a6ac6b3c1b0326b8912d8b0613b5d6fb68d46d1bb1a"
+    },
+    "include/MaaFramework/MaaPort.h": {
+      "destination": "include/MaaFramework/MaaPort.h",
+      "bytes": 1647,
+      "sha256": "88215ebc239490eb3614251aee53a0a4f0a7f80010d4ea6453c06f9523d9830e"
+    },
+    "include/MaaFramework/Utility/MaaBuffer.h": {
+      "destination": "include/MaaFramework/Utility/MaaBuffer.h",
+      "bytes": 4578,
+      "sha256": "6b8073c5172d2ce39ae1f9ff9e351d4a8750f029f7a64570105944b9761712f5"
+    },
+    "include/MaaFramework/Utility/MaaUtility.h": {
+      "destination": "include/MaaFramework/Utility/MaaUtility.h",
+      "bytes": 372,
+      "sha256": "fcabf0a44e982888a4d1c8903629c61a5acc61852bb18b42c3ec4651043dcf74"
+    }
+  },
+  "models": {
+    "sourceCommit": "dabcd4681ac990dc4361de26416d986abd80e4aa",
+    "files": [
+      {
+        "path": "det.onnx",
+        "url": "https://raw.githubusercontent.com/MaaXYZ/MaaCommonAssets/dabcd4681ac990dc4361de26416d986abd80e4aa/OCR/ppocr_v6/small/det.onnx",
+        "bytes": 9893172,
+        "gitBlob": "1b6cd44fed65c3f8b8186c8baaee85198d15df35",
+        "sha256": "66c0f34caaf432553710fd9973a7134d8cf924db7109310c3d2562dcc39b209d"
+      },
+      {
+        "path": "rec.onnx",
+        "url": "https://raw.githubusercontent.com/MaaXYZ/MaaCommonAssets/dabcd4681ac990dc4361de26416d986abd80e4aa/OCR/ppocr_v6/small/rec.onnx",
+        "bytes": 21146753,
+        "gitBlob": "1acdeb6a697ef98fdacc0365f184bf601168838c",
+        "sha256": "7dcf6298d77d2a6eb44c1ebeed990826ca895a9c68d955a3eace00763d052949"
+      },
+      {
+        "path": "keys.txt",
+        "url": "https://raw.githubusercontent.com/MaaXYZ/MaaCommonAssets/dabcd4681ac990dc4361de26416d986abd80e4aa/OCR/ppocr_v6/small/keys.txt",
+        "bytes": 74947,
+        "gitBlob": "270082aa29aec1ff3ac74d0d575c90399216f74d",
+        "sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d"
+      }
+    ],
+    "scope": "Maa converted PP-OCRv6 small; different bytes/preprocessing from the official Paddle SDK candidate."
+  },
+  "license": {
+    "url": "https://raw.githubusercontent.com/MaaXYZ/MaaFramework/ea944bd7b75f649851dc4807295966b3676bc821/LICENSE.md",
+    "bytes": 7560,
+    "sha256": "446e755fae55ff034bbb21be44670b5f116c2b2667947e7036f2bfe6632539a8"
+  }
+}

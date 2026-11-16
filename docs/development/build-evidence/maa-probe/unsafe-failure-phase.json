@@ -1,0 +1,4 @@
+{
+  "phase": "recognizing",
+  "input": "Positive synthetic image, intentionally invalid ONNX files"
+}

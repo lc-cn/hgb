@@ -1,0 +1,50 @@
+[
+  {
+    "path": "lib/arm64-v8a/libMaaFramework.so",
+    "stored": true,
+    "dataOffset": 2752512,
+    "offsetAligned16KB": true
+  },
+  {
+    "path": "lib/arm64-v8a/libMaaUtils.so",
+    "stored": true,
+    "dataOffset": 57540608,
+    "offsetAligned16KB": true
+  },
+  {
+    "path": "lib/arm64-v8a/libc++_shared.so",
+    "stored": true,
+    "dataOffset": 71155712,
+    "offsetAligned16KB": true
+  },
+  {
+    "path": "lib/arm64-v8a/libfastdeploy_ppocr.so",
+    "stored": true,
+    "dataOffset": 80461824,
+    "offsetAligned16KB": true
+  },
+  {
+    "path": "lib/arm64-v8a/libncnn.so",
+    "stored": true,
+    "dataOffset": 86556672,
+    "offsetAligned16KB": true
+  },
+  {
+    "path": "lib/arm64-v8a/libonnxruntime.so",
+    "stored": true,
+    "dataOffset": 91799552,
+    "offsetAligned16KB": true
+  },
+  {
+    "path": "lib/arm64-v8a/libopencv_world4.so",
+    "stored": true,
+    "dataOffset": 113541120,
+    "offsetAligned16KB": true
+  },
+  {
+    "path": "lib/arm64-v8a/libyys_maa_probe.so",
+    "stored": true,
+    "dataOffset": 172654592,
+    "offsetAligned16KB": true
+  }
+]

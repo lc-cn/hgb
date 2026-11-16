@@ -1,0 +1,93 @@
+{
+  "date": "2026-11-16",
+  "baseCommit": "a98608e2274ca4a7c099db97e45f611fb5dc344f",
+  "environment": "Isolated emulator-5560 API36 ARM64 with 4096-byte pages; 16KB kernel, phone and Windows execution not tested.",
+  "healthyPrivateBatch": {
+    "passed": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "defaultBatch": {
+    "total": 6,
+    "passed": 5,
+    "skipped": 1,
+    "failed": 0,
+    "skipReason": "Explicit unsafe upstream corrupt-model experiment requires allowCorruptMaaModels=true."
+  },
+  "unsafeExperiment": {
+    "observed": "Native SIGABRT due to uncaught Ort::Exception in upstream background OCR model initialization",
+    "gatePassed": false,
+    "upstreamFixed": false,
+    "normalEntryRejectsChangedModel": true,
+    "nativeLibrariesIdenticalBeforeAndAfterGate": true
+  },
+  "productionIndependence": {
+    "allProbeInputsAbsentDuringAppBuild": true,
+    "productionApkSha256": "2d5fd814a62d28dd50173c65670b61ab085ff1486e2cdddcf4ab178a7b126550",
+    "matchesVerifiedFloatingBinary": true,
+    "previousVerifiedSha256": "2d5fd814a62d28dd50173c65670b61ab085ff1486e2cdddcf4ab178a7b126550"
+  },
+  "artifacts": {
+    "maaprobe/build/outputs/apk/debug/maaprobe-debug.apk": "5ee323df6d1f5542b66282853ad3b1f3606896fedc44e1d07415e8d917632c49",
+    "maaprobe/build/outputs/apk/androidTest/debug/maaprobe-debug-androidTest.apk": "d6b37b8c056630820315631b012340712dabd8f79868e2094552db86213a0024"
+  },
+  "sources": {
+    ".gitignore": "b869f28f2dea7631c83db662545ee3ea4de01f56ed2be74ada4afb145ab10805",
+    "gradle/verification-metadata.xml": "45d0aec894ccf12a5021519c8c6997f10e62c2bedb1bc568f9e47dfab472ad23",
+    "maaprobe/build.gradle.kts": "abebeb7c9667e2168690a9270e544b4eca937d0366f92e391fbf2bda43493a88",
+    "maaprobe/gradle.lockfile": "0a008a5a1dbe202458fe828a81107cbda0c294f6529e8c0c26007a0c921b1321",
+    "maaprobe/inputs.lock.json": "af95d2c0c2316e5e7bdc3c6bbf316e467b9953f6180cae5d6b6329acbbbe952a",
+    "maaprobe/src/androidTest/AndroidManifest.xml": "ba01685a2c495c59feb0e76d1c8ace39defdbf7209b68d188e691fb3c376ff25",
+    "maaprobe/src/androidTest/kotlin/io/github/yysassist/maaprobe/MaaComparisonTest.kt": "00988d050b067e586e689a8641f68b10947b732589e162ea7f14305f0ff8fc8f",
+    "maaprobe/src/androidTest/kotlin/io/github/yysassist/maaprobe/MaaFailureContractTest.kt": "43ddda7a6623e0d70bda4c36d14be3ba5579615a72b0ffa62c9502dc0970a6ca",
+    "maaprobe/src/androidTest/kotlin/io/github/yysassist/maaprobe/MaaNativeLoadTest.kt": "2056aa003d53b0ddfaf866b25991b88de962b24034ed10494d3ea59d07d65e9b",
+    "maaprobe/src/androidTest/kotlin/io/github/yysassist/maaprobe/MaaOcrTest.kt": "5899ce7c9c9fe4a7c5d1d84a03c11936de37f95ed92c42dd4206f3b8eb0a72a1",
+    "maaprobe/src/main/AndroidManifest.xml": "a29e472bc70d625b9a34016b435be25deec311213e73ffcd4f46f3752a61f506",
+    "maaprobe/src/main/cpp/CMakeLists.txt": "9d796d8606d80c6e505c986fbfd7e3e0a3fc58047fdfc3a7ab2b5de0c24d574e",
+    "maaprobe/src/main/cpp/MaaProbe.cpp": "2035bd807e09640a2e62b02fc1bd4cc239133d1e5f2c66d152ae2b35ae0685fb",
+    "maaprobe/src/main/kotlin/io/github/yysassist/maaprobe/MaaNative.kt": "29445431792be42f0f2b7e2814bc81d9ce37be3c9e5063a51c7c50290babc9ce",
+    "maaprobe/src/main/res/xml/backup_rules.xml": "865cae97840e81b9950d70457a05c5c1125a68364b0a83f44cd3daa030bc7e96",
+    "maaprobe/src/main/res/xml/data_extraction_rules.xml": "cb029b35db0e976c087100424e16e14a6256b46962398887520e51508c3b5842",
+    "settings.gradle.kts": "0ad364607f29fe49e7b5e895e5354b0c2db03e40f84c305cfbdb8fd97392331e",
+    "tools/qa/prepare_maa_probe.py": "142da779cd2186942a4120d557ce784dd629410f6477b8fa23f3d2f7094c63a8"
+  },
+  "lint": "No issues found.",
+  "cleanup": {
+    "probeDataCleared": true,
+    "privateAssetTestPackageUninstalled": true,
+    "phoneConnected": false
+  },
+  "core": {
+    "tests": 63,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "logNormalization": [
+    "Workspace absolute prefix replaced",
+    "Trailing whitespace trimmed",
+    "Native crash excerpt contains only this experiment signal, reason and stack frames"
+  ],
+  "evidence": {
+    "README.md": "12fa5cfa735c797b01107d2e412b057ee180167665ab34d872a95bbc9c47274d",
+    "android-tests.txt": "3a2e1496d14c59856a7bded65df2a1c7b6f2cd925c3471729331169e544dc593",
+    "apk-alignment.json": "472c70b6b6d4c58523bcf461474cbad14cba4726fb5bfc2c3ce1b272f922f367",
+    "before-guard-artifacts.json": "d5cc9d0acb053caeebe7f6d6ab16a47e75331d50ced62b9777517e82437b715d",
+    "build.txt": "48eb35777a59e544fd14729e7413803f5707d0b39aff2217b3304b7bfb4ab51e",
+    "comparison.json": "accabb83f97773308098a943efb32315100a9de2bec80c5a41ba19bcd87c04f0",
+    "default-comparison.json": "34d8547a9b6553e362086f405fd52e808821bde9b09947b932f624fcbea8e7f4",
+    "default-tests.txt": "84f39479c4332a0b8b133a3341f8cd195909764b2358e853035163b71320c11d",
+    "extra-native-rejected.txt": "1562e2fd8cb6b3ffede51ac1966b41199e98d45b13300aa8b55a94fb71a74aa3",
+    "filtered-summary.json": "79f927806d07deab6180bf337f71f880c2177b1dbd0a29de7af3dd1ede6afb2d",
+    "first-recognition.json": "40e7402e334943b07fe53669d549852eeb9fd46f415711316ddc7f9794c6ed98",
+    "input-equivalence.json": "59fed7530948cac420692892a835447cb8bf6362425db8dbb455e8420c3fdcc1",
+    "input-tamper-rejected.txt": "c108df852ed069883f2f94d375cc3129c8cd3ab668ef895e5404dee3428f10dc",
+    "inputs-restored.txt": "2d339ef366c832da0aac133d1f8f8bf5164d9acc1c7257e2b6481ef0b833ef19",
+    "native-load.json": "45bb31740c0bfa31411c78c92f00d77a7403c8c93492f0f69c6b085ed37e116d",
+    "packaged-elf.json": "7baa4173fa4fe2b77a7a46412c7d3539fcb770b6c75c8b062acd653d5ef4782b",
+    "production-without-probe-inputs.txt": "40a413d86ca4f949b8a88b9bdf77d0a1b8d9a6065f4c12413dad37a8f196da38",
+    "unsafe-crash-excerpt.txt": "140f08fbb22ea6738d654f6ea9a832b8bbca01842adac0af03983bdc44fbc80f",
+    "unsafe-failure-phase.json": "eea37f0f26dee72db3b8e7a017c470ef37d2c317cd6c1b49f07aefc5971997a8",
+    "unsafe-failure-tests.txt": "0640b6ade30659a515fe8cd8e28755ff8581d016af0cabd3f1ae978881197feb"
+  }
+}

@@ -1,0 +1,86 @@
+[
+  {
+    "path": "lib/arm64-v8a/libMaaFramework.so",
+    "bytes": 54787168,
+    "sha256": "def162a33b53371dea3b47400ae493eed9e0acc604221b0d61b75e56e011cb77",
+    "loadAlignments": [
+      16384,
+      16384,
+      16384
+    ]
+  },
+  {
+    "path": "lib/arm64-v8a/libMaaUtils.so",
+    "bytes": 13600296,
+    "sha256": "049dc9d818a1edcd30508a56a659cd2ca63d3638b4f13f24b0db1d58c73c5475",
+    "loadAlignments": [
+      16384,
+      16384,
+      16384
+    ]
+  },
+  {
+    "path": "lib/arm64-v8a/libc++_shared.so",
+    "bytes": 9290184,
+    "sha256": "0c52cfab2df0d957d8b346a2bdc5ae8d71feca2591924d77e1cd724d5bf74352",
+    "loadAlignments": [
+      16384,
+      16384,
+      16384
+    ]
+  },
+  {
+    "path": "lib/arm64-v8a/libfastdeploy_ppocr.so",
+    "bytes": 6094657,
+    "sha256": "e8adfe1a25d5c70404b5a09a23d472c52b8f41f2f1cc87f3ebe6cc0d81e9a629",
+    "loadAlignments": [
+      16384,
+      16384,
+      16384,
+      65536
+    ]
+  },
+  {
+    "path": "lib/arm64-v8a/libncnn.so",
+    "bytes": 5237033,
+    "sha256": "47280e5da866b5ad8d420f240826e4bf09d8a5425d4f4c0d3b14f1b13b75d8a1",
+    "loadAlignments": [
+      16384,
+      16384,
+      16384,
+      65536
+    ]
+  },
+  {
+    "path": "lib/arm64-v8a/libonnxruntime.so",
+    "bytes": 21726776,
+    "sha256": "a62ef27cc11fc7bcdd1266ee40b75225b3492197f27576ea638ed2827e8ea1f8",
+    "loadAlignments": [
+      16384,
+      16384,
+      16384
+    ]
+  },
+  {
+    "path": "lib/arm64-v8a/libopencv_world4.so",
+    "bytes": 30377505,
+    "sha256": "9e8c23c4717aaf86aef656d016d1e6e21cbad3fc56570142cadcddf430787653",
+    "loadAlignments": [
+      16384,
+      16384,
+      16384,
+      65536
+    ]
+  },
+  {
+    "path": "lib/arm64-v8a/libyys_maa_probe.so",
+    "bytes": 1902376,
+    "sha256": "a2fbe12820182fa40f975d03301d82462336c9822ec49f3f30cf59a377196c1c",
+    "loadAlignments": [
+      16384,
+      16384,
+      16384,
+      16384
+    ]
+  }
+]

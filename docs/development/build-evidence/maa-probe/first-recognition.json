@@ -1,0 +1,53 @@
+{
+  "positive": {
+    "taskStatus": 3000,
+    "hit": true,
+    "controllerBound": false,
+    "detail": {
+      "all": [
+        {
+          "box": [
+            35,
+            28,
+            208,
+            84
+          ],
+          "score": 0.999753,
+          "text": "领取物资"
+        }
+      ],
+      "best": {
+        "box": [
+          35,
+          28,
+          208,
+          84
+        ],
+        "score": 0.999753,
+        "text": "领取物资"
+      },
+      "filtered": [
+        {
+          "box": [
+            35,
+            28,
+            208,
+            84
+          ],
+          "score": 0.999753,
+          "text": "领取物资"
+        }
+      ]
+    }
+  },
+  "blank": {
+    "taskStatus": 3000,
+    "hit": false,
+    "controllerBound": false,
+    "detail": {
+      "all": [],
+      "best": null,
+      "filtered": []
+    }
+  }
+}

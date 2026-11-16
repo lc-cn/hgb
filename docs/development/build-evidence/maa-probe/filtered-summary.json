@@ -1,0 +1,23 @@
+[
+  {
+    "sample": "shop-navigation",
+    "nativeAllCount": 5,
+    "nativeFilteredCount": 5,
+    "filteredLocatedExpectedCount": 4,
+    "expectedCount": 4
+  },
+  {
+    "sample": "courtyard-actions",
+    "nativeAllCount": 11,
+    "nativeFilteredCount": 10,
+    "filteredLocatedExpectedCount": 4,
+    "expectedCount": 4
+  },
+  {
+    "sample": "shop-products",
+    "nativeAllCount": 8,
+    "nativeFilteredCount": 8,
+    "filteredLocatedExpectedCount": 8,
+    "expectedCount": 8
+  }
+]

@@ -1,0 +1,1340 @@
+{
+  "runId": "9eb08782-fe38-4d00-96e5-06d3e4d671cd",
+  "sdk": 36,
+  "abi": "arm64-v8a",
+  "internetPermission": false,
+  "models": {
+    "sourceCommit": "dabcd4681ac990dc4361de26416d986abd80e4aa",
+    "files": [
+      {
+        "path": "det.onnx",
+        "url": "https:\/\/raw.githubusercontent.com\/MaaXYZ\/MaaCommonAssets\/dabcd4681ac990dc4361de26416d986abd80e4aa\/OCR\/ppocr_v6\/small\/det.onnx",
+        "bytes": 9893172,
+        "gitBlob": "1b6cd44fed65c3f8b8186c8baaee85198d15df35",
+        "sha256": "66c0f34caaf432553710fd9973a7134d8cf924db7109310c3d2562dcc39b209d"
+      },
+      {
+        "path": "rec.onnx",
+        "url": "https:\/\/raw.githubusercontent.com\/MaaXYZ\/MaaCommonAssets\/dabcd4681ac990dc4361de26416d986abd80e4aa\/OCR\/ppocr_v6\/small\/rec.onnx",
+        "bytes": 21146753,
+        "gitBlob": "1acdeb6a697ef98fdacc0365f184bf601168838c",
+        "sha256": "7dcf6298d77d2a6eb44c1ebeed990826ca895a9c68d955a3eace00763d052949"
+      },
+      {
+        "path": "keys.txt",
+        "url": "https:\/\/raw.githubusercontent.com\/MaaXYZ\/MaaCommonAssets\/dabcd4681ac990dc4361de26416d986abd80e4aa\/OCR\/ppocr_v6\/small\/keys.txt",
+        "bytes": 74947,
+        "gitBlob": "270082aa29aec1ff3ac74d0d575c90399216f74d",
+        "sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d"
+      }
+    ],
+    "scope": "Maa converted PP-OCRv6 small; different bytes\/preprocessing from the official Paddle SDK candidate."
+  },
+  "engine": "MaaFramework-5.16.1-ONNX-CPU-converted-v6-small",
+  "phase": "finished",
+  "scope": "Same synthetic\/private region protocol; converted weights and native preprocessing differ. Transport success\/no-hit does not establish inference health or game business outcomes.",
+  "resourceRegistrationMs": 13.037375,
+  "runs": [
+    {
+      "sample": "light",
+      "privateImage": false,
+      "repetition": 0,
+      "elapsedMs": 157.752208,
+      "labels": [
+        {
+          "expected": "领取物资",
+          "exact": true,
+          "bestIoU": 0.5507760643959045,
+          "locatedExact": true,
+          "locatedIoU": 0.5507760643959045
+        },
+        {
+          "expected": "永久勾玉卡",
+          "exact": true,
+          "bestIoU": 0.5193406939506531,
+          "locatedExact": true,
+          "locatedIoU": 0.5193406939506531
+        },
+        {
+          "expected": "次数 3",
+          "exact": true,
+          "bestIoU": 0.45155489444732666,
+          "locatedExact": true,
+          "locatedIoU": 0.45155489444732666
+        },
+        {
+          "expected": "100\/120",
+          "exact": true,
+          "bestIoU": 0.45003700256347656,
+          "locatedExact": true,
+          "locatedIoU": 0.45003700256347656
+        }
+      ],
+      "readingCount": 4,
+      "native": {
+        "taskStatus": 3000,
+        "hit": true,
+        "controllerBound": false,
+        "detail": {
+          "all": [
+            {
+              "box": [
+                33,
+                125,
+                256,
+                82
+              ],
+              "score": 0.999574,
+              "text": "永久勾玉卡"
+            },
+            {
+              "box": [
+                34,
+                220,
+                157,
+                85
+              ],
+              "score": 0.99966,
+              "text": "次数3"
+            },
+            {
+              "box": [
+                36,
+                34,
+                205,
+                77
+              ],
+              "score": 0.999622,
+              "text": "领取物资"
+            },
+            {
+              "box": [
+                39,
+                321,
+                193,
+                77
+              ],
+              "score": 0.999988,
+              "text": "100\/120"
+            }
+          ],
+          "best": {
+            "box": [
+              33,
+              125,
+              256,
+              82
+            ],
+            "score": 0.999574,
+            "text": "永久勾玉卡"
+          },
+          "filtered": [
+            {
+              "box": [
+                33,
+                125,
+                256,
+                82
+              ],
+              "score": 0.999574,
+              "text": "永久勾玉卡"
+            },
+            {
+              "box": [
+                34,
+                220,
+                157,
+                85
+              ],
+              "score": 0.99966,
+              "text": "次数3"
+            },
+            {
+              "box": [
+                36,
+                34,
+                205,
+                77
+              ],
+              "score": 0.999622,
+              "text": "领取物资"
+            },
+            {
+              "box": [
+                39,
+                321,
+                193,
+                77
+              ],
+              "score": 0.999988,
+              "text": "100\/120"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "sample": "light",
+      "privateImage": false,
+      "repetition": 1,
+      "elapsedMs": 151.704209,
+      "labels": [
+        {
+          "expected": "领取物资",
+          "exact": true,
+          "bestIoU": 0.5507760643959045,
+          "locatedExact": true,
+          "locatedIoU": 0.5507760643959045
+        },
+        {
+          "expected": "永久勾玉卡",
+          "exact": true,
+          "bestIoU": 0.5193406939506531,
+          "locatedExact": true,
+          "locatedIoU": 0.5193406939506531
+        },
+        {
+          "expected": "次数 3",
+          "exact": true,
+          "bestIoU": 0.45155489444732666,
+          "locatedExact": true,
+          "locatedIoU": 0.45155489444732666
+        },
+        {
+          "expected": "100\/120",
+          "exact": true,
+          "bestIoU": 0.45003700256347656,
+          "locatedExact": true,
+          "locatedIoU": 0.45003700256347656
+        }
+      ],
+      "readingCount": 4,
+      "native": {
+        "taskStatus": 3000,
+        "hit": true,
+        "controllerBound": false,
+        "detail": {
+          "all": [
+            {
+              "box": [
+                33,
+                125,
+                256,
+                82
+              ],
+              "score": 0.999574,
+              "text": "永久勾玉卡"
+            },
+            {
+              "box": [
+                34,
+                220,
+                157,
+                85
+              ],
+              "score": 0.99966,
+              "text": "次数3"
+            },
+            {
+              "box": [
+                36,
+                34,
+                205,
+                77
+              ],
+              "score": 0.999622,
+              "text": "领取物资"
+            },
+            {
+              "box": [
+                39,
+                321,
+                193,
+                77
+              ],
+              "score": 0.999988,
+              "text": "100\/120"
+            }
+          ],
+          "best": {
+            "box": [
+              33,
+              125,
+              256,
+              82
+            ],
+            "score": 0.999574,
+            "text": "永久勾玉卡"
+          },
+          "filtered": [
+            {
+              "box": [
+                33,
+                125,
+                256,
+                82
+              ],
+              "score": 0.999574,
+              "text": "永久勾玉卡"
+            },
+            {
+              "box": [
+                34,
+                220,
+                157,
+                85
+              ],
+              "score": 0.99966,
+              "text": "次数3"
+            },
+            {
+              "box": [
+                36,
+                34,
+                205,
+                77
+              ],
+              "score": 0.999622,
+              "text": "领取物资"
+            },
+            {
+              "box": [
+                39,
+                321,
+                193,
+                77
+              ],
+              "score": 0.999988,
+              "text": "100\/120"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "sample": "light",
+      "privateImage": false,
+      "repetition": 2,
+      "elapsedMs": 169.252542,
+      "labels": [
+        {
+          "expected": "领取物资",
+          "exact": true,
+          "bestIoU": 0.5507760643959045,
+          "locatedExact": true,
+          "locatedIoU": 0.5507760643959045
+        },
+        {
+          "expected": "永久勾玉卡",
+          "exact": true,
+          "bestIoU": 0.5193406939506531,
+          "locatedExact": true,
+          "locatedIoU": 0.5193406939506531
+        },
+        {
+          "expected": "次数 3",
+          "exact": true,
+          "bestIoU": 0.45155489444732666,
+          "locatedExact": true,
+          "locatedIoU": 0.45155489444732666
+        },
+        {
+          "expected": "100\/120",
+          "exact": true,
+          "bestIoU": 0.45003700256347656,
+          "locatedExact": true,
+          "locatedIoU": 0.45003700256347656
+        }
+      ],
+      "readingCount": 4,
+      "native": {
+        "taskStatus": 3000,
+        "hit": true,
+        "controllerBound": false,
+        "detail": {
+          "all": [
+            {
+              "box": [
+                33,
+                125,
+                256,
+                82
+              ],
+              "score": 0.999574,
+              "text": "永久勾玉卡"
+            },
+            {
+              "box": [
+                34,
+                220,
+                157,
+                85
+              ],
+              "score": 0.99966,
+              "text": "次数3"
+            },
+            {
+              "box": [
+                36,
+                34,
+                205,
+                77
+              ],
+              "score": 0.999622,
+              "text": "领取物资"
+            },
+            {
+              "box": [
+                39,
+                321,
+                193,
+                77
+              ],
+              "score": 0.999988,
+              "text": "100\/120"
+            }
+          ],
+          "best": {
+            "box": [
+              33,
+              125,
+              256,
+              82
+            ],
+            "score": 0.999574,
+            "text": "永久勾玉卡"
+          },
+          "filtered": [
+            {
+              "box": [
+                33,
+                125,
+                256,
+                82
+              ],
+              "score": 0.999574,
+              "text": "永久勾玉卡"
+            },
+            {
+              "box": [
+                34,
+                220,
+                157,
+                85
+              ],
+              "score": 0.99966,
+              "text": "次数3"
+            },
+            {
+              "box": [
+                36,
+                34,
+                205,
+                77
+              ],
+              "score": 0.999622,
+              "text": "领取物资"
+            },
+            {
+              "box": [
+                39,
+                321,
+                193,
+                77
+              ],
+              "score": 0.999988,
+              "text": "100\/120"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "sample": "dark",
+      "privateImage": false,
+      "repetition": 0,
+      "elapsedMs": 92.714292,
+      "labels": [
+        {
+          "expected": "领取物资",
+          "exact": true,
+          "bestIoU": 0.5759141445159912,
+          "locatedExact": true,
+          "locatedIoU": 0.5759141445159912
+        },
+        {
+          "expected": "永久勾玉卡",
+          "exact": true,
+          "bestIoU": 0.5302529335021973,
+          "locatedExact": true,
+          "locatedIoU": 0.5302529335021973
+        },
+        {
+          "expected": "次数 3",
+          "exact": true,
+          "bestIoU": 0.4595089256763458,
+          "locatedExact": true,
+          "locatedIoU": 0.4595089256763458
+        },
+        {
+          "expected": "100\/120",
+          "exact": true,
+          "bestIoU": 0.5074740052223206,
+          "locatedExact": true,
+          "locatedIoU": 0.5074740052223206
+        }
+      ],
+      "readingCount": 4,
+      "native": {
+        "taskStatus": 3000,
+        "hit": true,
+        "controllerBound": false,
+        "detail": {
+          "all": [
+            {
+              "box": [
+                33,
+                127,
+                257,
+                80
+              ],
+              "score": 0.999843,
+              "text": "永久勾玉卡"
+            },
+            {
+              "box": [
+                33,
+                220,
+                158,
+                83
+              ],
+              "score": 0.999325,
+              "text": "次数3"
+            },
+            {
+              "box": [
+                38,
+                35,
+                204,
+                74
+              ],
+              "score": 0.99927,
+              "text": "领取物资"
+            },
+            {
+              "box": [
+                39,
+                324,
+                191,
+                69
+              ],
+              "score": 0.99999,
+              "text": "100\/120"
+            }
+          ],
+          "best": {
+            "box": [
+              33,
+              127,
+              257,
+              80
+            ],
+            "score": 0.999843,
+            "text": "永久勾玉卡"
+          },
+          "filtered": [
+            {
+              "box": [
+                33,
+                127,
+                257,
+                80
+              ],
+              "score": 0.999843,
+              "text": "永久勾玉卡"
+            },
+            {
+              "box": [
+                33,
+                220,
+                158,
+                83
+              ],
+              "score": 0.999325,
+              "text": "次数3"
+            },
+            {
+              "box": [
+                38,
+                35,
+                204,
+                74
+              ],
+              "score": 0.99927,
+              "text": "领取物资"
+            },
+            {
+              "box": [
+                39,
+                324,
+                191,
+                69
+              ],
+              "score": 0.99999,
+              "text": "100\/120"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "sample": "dark",
+      "privateImage": false,
+      "repetition": 1,
+      "elapsedMs": 84.51925,
+      "labels": [
+        {
+          "expected": "领取物资",
+          "exact": true,
+          "bestIoU": 0.5759141445159912,
+          "locatedExact": true,
+          "locatedIoU": 0.5759141445159912
+        },
+        {
+          "expected": "永久勾玉卡",
+          "exact": true,
+          "bestIoU": 0.5302529335021973,
+          "locatedExact": true,
+          "locatedIoU": 0.5302529335021973
+        },
+        {
+          "expected": "次数 3",
+          "exact": true,
+          "bestIoU": 0.4595089256763458,
+          "locatedExact": true,
+          "locatedIoU": 0.4595089256763458
+        },
+        {
+          "expected": "100\/120",
+          "exact": true,
+          "bestIoU": 0.5074740052223206,
+          "locatedExact": true,
+          "locatedIoU": 0.5074740052223206
+        }
+      ],
+      "readingCount": 4,
+      "native": {
+        "taskStatus": 3000,
+        "hit": true,
+        "controllerBound": false,
+        "detail": {
+          "all": [
+            {
+              "box": [
+                33,
+                127,
+                257,
+                80
+              ],
+              "score": 0.999843,
+              "text": "永久勾玉卡"
+            },
+            {
+              "box": [
+                33,
+                220,
+                158,
+                83
+              ],
+              "score": 0.999325,
+              "text": "次数3"
+            },
+            {
+              "box": [
+                38,
+                35,
+                204,
+                74
+              ],
+              "score": 0.99927,
+              "text": "领取物资"
+            },
+            {
+              "box": [
+                39,
+                324,
+                191,
+                69
+              ],
+              "score": 0.99999,
+              "text": "100\/120"
+            }
+          ],
+          "best": {
+            "box": [
+              33,
+              127,
+              257,
+              80
+            ],
+            "score": 0.999843,
+            "text": "永久勾玉卡"
+          },
+          "filtered": [
+            {
+              "box": [
+                33,
+                127,
+                257,
+                80
+              ],
+              "score": 0.999843,
+              "text": "永久勾玉卡"
+            },
+            {
+              "box": [
+                33,
+                220,
+                158,
+                83
+              ],
+              "score": 0.999325,
+              "text": "次数3"
+            },
+            {
+              "box": [
+                38,
+                35,
+                204,
+                74
+              ],
+              "score": 0.99927,
+              "text": "领取物资"
+            },
+            {
+              "box": [
+                39,
+                324,
+                191,
+                69
+              ],
+              "score": 0.99999,
+              "text": "100\/120"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "sample": "dark",
+      "privateImage": false,
+      "repetition": 2,
+      "elapsedMs": 134.692334,
+      "labels": [
+        {
+          "expected": "领取物资",
+          "exact": true,
+          "bestIoU": 0.5759141445159912,
+          "locatedExact": true,
+          "locatedIoU": 0.5759141445159912
+        },
+        {
+          "expected": "永久勾玉卡",
+          "exact": true,
+          "bestIoU": 0.5302529335021973,
+          "locatedExact": true,
+          "locatedIoU": 0.5302529335021973
+        },
+        {
+          "expected": "次数 3",
+          "exact": true,
+          "bestIoU": 0.4595089256763458,
+          "locatedExact": true,
+          "locatedIoU": 0.4595089256763458
+        },
+        {
+          "expected": "100\/120",
+          "exact": true,
+          "bestIoU": 0.5074740052223206,
+          "locatedExact": true,
+          "locatedIoU": 0.5074740052223206
+        }
+      ],
+      "readingCount": 4,
+      "native": {
+        "taskStatus": 3000,
+        "hit": true,
+        "controllerBound": false,
+        "detail": {
+          "all": [
+            {
+              "box": [
+                33,
+                127,
+                257,
+                80
+              ],
+              "score": 0.999843,
+              "text": "永久勾玉卡"
+            },
+            {
+              "box": [
+                33,
+                220,
+                158,
+                83
+              ],
+              "score": 0.999325,
+              "text": "次数3"
+            },
+            {
+              "box": [
+                38,
+                35,
+                204,
+                74
+              ],
+              "score": 0.99927,
+              "text": "领取物资"
+            },
+            {
+              "box": [
+                39,
+                324,
+                191,
+                69
+              ],
+              "score": 0.99999,
+              "text": "100\/120"
+            }
+          ],
+          "best": {
+            "box": [
+              33,
+              127,
+              257,
+              80
+            ],
+            "score": 0.999843,
+            "text": "永久勾玉卡"
+          },
+          "filtered": [
+            {
+              "box": [
+                33,
+                127,
+                257,
+                80
+              ],
+              "score": 0.999843,
+              "text": "永久勾玉卡"
+            },
+            {
+              "box": [
+                33,
+                220,
+                158,
+                83
+              ],
+              "score": 0.999325,
+              "text": "次数3"
+            },
+            {
+              "box": [
+                38,
+                35,
+                204,
+                74
+              ],
+              "score": 0.99927,
+              "text": "领取物资"
+            },
+            {
+              "box": [
+                39,
+                324,
+                191,
+                69
+              ],
+              "score": 0.99999,
+              "text": "100\/120"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "sample": "blank",
+      "privateImage": false,
+      "repetition": 0,
+      "elapsedMs": 71.6925,
+      "labels": [],
+      "readingCount": 0,
+      "native": {
+        "taskStatus": 3000,
+        "hit": false,
+        "controllerBound": false,
+        "detail": {
+          "all": [],
+          "best": null,
+          "filtered": []
+        }
+      }
+    },
+    {
+      "sample": "blank",
+      "privateImage": false,
+      "repetition": 1,
+      "elapsedMs": 68.275625,
+      "labels": [],
+      "readingCount": 0,
+      "native": {
+        "taskStatus": 3000,
+        "hit": false,
+        "controllerBound": false,
+        "detail": {
+          "all": [],
+          "best": null,
+          "filtered": []
+        }
+      }
+    },
+    {
+      "sample": "blank",
+      "privateImage": false,
+      "repetition": 2,
+      "elapsedMs": 62.22475,
+      "labels": [],
+      "readingCount": 0,
+      "native": {
+        "taskStatus": 3000,
+        "hit": false,
+        "controllerBound": false,
+        "detail": {
+          "all": [],
+          "best": null,
+          "filtered": []
+        }
+      }
+    },
+    {
+      "sample": "shop-navigation",
+      "privateImage": true,
+      "repetition": 0,
+      "elapsedMs": 127.123167,
+      "labels": [
+        {
+          "expected": "皮肤屋",
+          "exact": true,
+          "bestIoU": 0.6635345220565796,
+          "locatedExact": true,
+          "locatedIoU": 0.6635345220565796
+        },
+        {
+          "expected": "杂货铺",
+          "exact": true,
+          "bestIoU": 0.6937924027442932,
+          "locatedExact": true,
+          "locatedIoU": 0.6937924027442932
+        },
+        {
+          "expected": "魂玉屋",
+          "exact": true,
+          "bestIoU": 0.5703839063644409,
+          "locatedExact": true,
+          "locatedIoU": 0.5703839063644409
+        },
+        {
+          "expected": "礼包屋",
+          "exact": true,
+          "bestIoU": 0.637627124786377,
+          "locatedExact": true,
+          "locatedIoU": 0.637627124786377
+        }
+      ],
+      "readingCount": 5
+    },
+    {
+      "sample": "shop-navigation",
+      "privateImage": true,
+      "repetition": 1,
+      "elapsedMs": 71.476417,
+      "labels": [
+        {
+          "expected": "皮肤屋",
+          "exact": true,
+          "bestIoU": 0.6635345220565796,
+          "locatedExact": true,
+          "locatedIoU": 0.6635345220565796
+        },
+        {
+          "expected": "杂货铺",
+          "exact": true,
+          "bestIoU": 0.6937924027442932,
+          "locatedExact": true,
+          "locatedIoU": 0.6937924027442932
+        },
+        {
+          "expected": "魂玉屋",
+          "exact": true,
+          "bestIoU": 0.5703839063644409,
+          "locatedExact": true,
+          "locatedIoU": 0.5703839063644409
+        },
+        {
+          "expected": "礼包屋",
+          "exact": true,
+          "bestIoU": 0.637627124786377,
+          "locatedExact": true,
+          "locatedIoU": 0.637627124786377
+        }
+      ],
+      "readingCount": 5
+    },
+    {
+      "sample": "shop-navigation",
+      "privateImage": true,
+      "repetition": 2,
+      "elapsedMs": 68.155583,
+      "labels": [
+        {
+          "expected": "皮肤屋",
+          "exact": true,
+          "bestIoU": 0.6635345220565796,
+          "locatedExact": true,
+          "locatedIoU": 0.6635345220565796
+        },
+        {
+          "expected": "杂货铺",
+          "exact": true,
+          "bestIoU": 0.6937924027442932,
+          "locatedExact": true,
+          "locatedIoU": 0.6937924027442932
+        },
+        {
+          "expected": "魂玉屋",
+          "exact": true,
+          "bestIoU": 0.5703839063644409,
+          "locatedExact": true,
+          "locatedIoU": 0.5703839063644409
+        },
+        {
+          "expected": "礼包屋",
+          "exact": true,
+          "bestIoU": 0.637627124786377,
+          "locatedExact": true,
+          "locatedIoU": 0.637627124786377
+        }
+      ],
+      "readingCount": 5
+    },
+    {
+      "sample": "courtyard-actions",
+      "privateImage": true,
+      "repetition": 0,
+      "elapsedMs": 135.723334,
+      "labels": [
+        {
+          "expected": "图鉴",
+          "exact": true,
+          "bestIoU": 0.625,
+          "locatedExact": true,
+          "locatedIoU": 0.625
+        },
+        {
+          "expected": "纳物库",
+          "exact": true,
+          "bestIoU": 0.6551059484481812,
+          "locatedExact": true,
+          "locatedIoU": 0.6551059484481812
+        },
+        {
+          "expected": "商店",
+          "exact": true,
+          "bestIoU": 0.5763770341873169,
+          "locatedExact": true,
+          "locatedIoU": 0.5763770341873169
+        },
+        {
+          "expected": "好友",
+          "exact": true,
+          "bestIoU": 0.3868269622325897,
+          "locatedExact": true,
+          "locatedIoU": 0.3868269622325897
+        }
+      ],
+      "readingCount": 11
+    },
+    {
+      "sample": "courtyard-actions",
+      "privateImage": true,
+      "repetition": 1,
+      "elapsedMs": 118.522875,
+      "labels": [
+        {
+          "expected": "图鉴",
+          "exact": true,
+          "bestIoU": 0.625,
+          "locatedExact": true,
+          "locatedIoU": 0.625
+        },
+        {
+          "expected": "纳物库",
+          "exact": true,
+          "bestIoU": 0.6551059484481812,
+          "locatedExact": true,
+          "locatedIoU": 0.6551059484481812
+        },
+        {
+          "expected": "商店",
+          "exact": true,
+          "bestIoU": 0.5763770341873169,
+          "locatedExact": true,
+          "locatedIoU": 0.5763770341873169
+        },
+        {
+          "expected": "好友",
+          "exact": true,
+          "bestIoU": 0.3868269622325897,
+          "locatedExact": true,
+          "locatedIoU": 0.3868269622325897
+        }
+      ],
+      "readingCount": 11
+    },
+    {
+      "sample": "courtyard-actions",
+      "privateImage": true,
+      "repetition": 2,
+      "elapsedMs": 118.753708,
+      "labels": [
+        {
+          "expected": "图鉴",
+          "exact": true,
+          "bestIoU": 0.625,
+          "locatedExact": true,
+          "locatedIoU": 0.625
+        },
+        {
+          "expected": "纳物库",
+          "exact": true,
+          "bestIoU": 0.6551059484481812,
+          "locatedExact": true,
+          "locatedIoU": 0.6551059484481812
+        },
+        {
+          "expected": "商店",
+          "exact": true,
+          "bestIoU": 0.5763770341873169,
+          "locatedExact": true,
+          "locatedIoU": 0.5763770341873169
+        },
+        {
+          "expected": "好友",
+          "exact": true,
+          "bestIoU": 0.3868269622325897,
+          "locatedExact": true,
+          "locatedIoU": 0.3868269622325897
+        }
+      ],
+      "readingCount": 11
+    },
+    {
+      "sample": "shop-products",
+      "privateImage": true,
+      "repetition": 0,
+      "elapsedMs": 116.15725,
+      "labels": [
+        {
+          "expected": "限定鬼王礼",
+          "exact": true,
+          "bestIoU": 0.9447205066680908,
+          "locatedExact": true,
+          "locatedIoU": 0.9447205066680908
+        },
+        {
+          "expected": "福气赏礼券",
+          "exact": true,
+          "bestIoU": 0.8437110185623169,
+          "locatedExact": true,
+          "locatedIoU": 0.8437110185623169
+        },
+        {
+          "expected": "枫叶积分×1000",
+          "exact": true,
+          "bestIoU": 0.9350046515464783,
+          "locatedExact": true,
+          "locatedIoU": 0.9350046515464783
+        },
+        {
+          "expected": "胧车燃料",
+          "exact": true,
+          "bestIoU": 0.6363899111747742,
+          "locatedExact": true,
+          "locatedIoU": 0.6363899111747742
+        },
+        {
+          "expected": "30",
+          "exact": true,
+          "bestIoU": 0.578125,
+          "locatedExact": true,
+          "locatedIoU": 0.578125
+        },
+        {
+          "expected": "60",
+          "exact": true,
+          "bestIoU": 0.6085526347160339,
+          "locatedExact": true,
+          "locatedIoU": 0.6085526347160339
+        },
+        {
+          "expected": "10",
+          "exact": true,
+          "bestIoU": 0.5555116534233093,
+          "locatedExact": true,
+          "locatedIoU": 0.5555116534233093
+        },
+        {
+          "expected": "30",
+          "exact": true,
+          "bestIoU": 0.5487288236618042,
+          "locatedExact": true,
+          "locatedIoU": 0.5487288236618042
+        }
+      ],
+      "readingCount": 8
+    },
+    {
+      "sample": "shop-products",
+      "privateImage": true,
+      "repetition": 1,
+      "elapsedMs": 108.036375,
+      "labels": [
+        {
+          "expected": "限定鬼王礼",
+          "exact": true,
+          "bestIoU": 0.9447205066680908,
+          "locatedExact": true,
+          "locatedIoU": 0.9447205066680908
+        },
+        {
+          "expected": "福气赏礼券",
+          "exact": true,
+          "bestIoU": 0.8437110185623169,
+          "locatedExact": true,
+          "locatedIoU": 0.8437110185623169
+        },
+        {
+          "expected": "枫叶积分×1000",
+          "exact": true,
+          "bestIoU": 0.9350046515464783,
+          "locatedExact": true,
+          "locatedIoU": 0.9350046515464783
+        },
+        {
+          "expected": "胧车燃料",
+          "exact": true,
+          "bestIoU": 0.6363899111747742,
+          "locatedExact": true,
+          "locatedIoU": 0.6363899111747742
+        },
+        {
+          "expected": "30",
+          "exact": true,
+          "bestIoU": 0.578125,
+          "locatedExact": true,
+          "locatedIoU": 0.578125
+        },
+        {
+          "expected": "60",
+          "exact": true,
+          "bestIoU": 0.6085526347160339,
+          "locatedExact": true,
+          "locatedIoU": 0.6085526347160339
+        },
+        {
+          "expected": "10",
+          "exact": true,
+          "bestIoU": 0.5555116534233093,
+          "locatedExact": true,
+          "locatedIoU": 0.5555116534233093
+        },
+        {
+          "expected": "30",
+          "exact": true,
+          "bestIoU": 0.5487288236618042,
+          "locatedExact": true,
+          "locatedIoU": 0.5487288236618042
+        }
+      ],
+      "readingCount": 8
+    },
+    {
+      "sample": "shop-products",
+      "privateImage": true,
+      "repetition": 2,
+      "elapsedMs": 107.965208,
+      "labels": [
+        {
+          "expected": "限定鬼王礼",
+          "exact": true,
+          "bestIoU": 0.9447205066680908,
+          "locatedExact": true,
+          "locatedIoU": 0.9447205066680908
+        },
+        {
+          "expected": "福气赏礼券",
+          "exact": true,
+          "bestIoU": 0.8437110185623169,
+          "locatedExact": true,
+          "locatedIoU": 0.8437110185623169
+        },
+        {
+          "expected": "枫叶积分×1000",
+          "exact": true,
+          "bestIoU": 0.9350046515464783,
+          "locatedExact": true,
+          "locatedIoU": 0.9350046515464783
+        },
+        {
+          "expected": "胧车燃料",
+          "exact": true,
+          "bestIoU": 0.6363899111747742,
+          "locatedExact": true,
+          "locatedIoU": 0.6363899111747742
+        },
+        {
+          "expected": "30",
+          "exact": true,
+          "bestIoU": 0.578125,
+          "locatedExact": true,
+          "locatedIoU": 0.578125
+        },
+        {
+          "expected": "60",
+          "exact": true,
+          "bestIoU": 0.6085526347160339,
+          "locatedExact": true,
+          "locatedIoU": 0.6085526347160339
+        },
+        {
+          "expected": "10",
+          "exact": true,
+          "bestIoU": 0.5555116534233093,
+          "locatedExact": true,
+          "locatedIoU": 0.5555116534233093
+        },
+        {
+          "expected": "30",
+          "exact": true,
+          "bestIoU": 0.5487288236618042,
+          "locatedExact": true,
+          "locatedIoU": 0.5487288236618042
+        }
+      ],
+      "readingCount": 8
+    }
+  ],
+  "processPssAfterKiB": 356094,
+  "success": true
+}

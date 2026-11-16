@@ -1,0 +1,100 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.4.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build
+Calculating task graph as configuration cache cannot be reused because file 'maaprobe/build.gradle.kts' has changed.
+> Task :maaprobe:generateDebugAssets UP-TO-DATE
+> Task :maaprobe:generateDebugAndroidTestAssets UP-TO-DATE
+> Task :maaprobe:verifyMaaInputs
+> Task :maaprobe:preBuild
+> Task :maaprobe:preDebugBuild
+> Task :maaprobe:preDebugUnitTestBuild
+> Task :maaprobe:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :maaprobe:generateDebugGlobalSynthetics UP-TO-DATE
+> Task :maaprobe:processDebugNavigationResources UP-TO-DATE
+> Task :maaprobe:mapDebugSourceSetPaths UP-TO-DATE
+> Task :maaprobe:desugarDebugFileDependencies UP-TO-DATE
+> Task :maaprobe:checkDebugDuplicateClasses UP-TO-DATE
+> Task :maaprobe:checkDebugAarMetadata UP-TO-DATE
+> Task :maaprobe:javaPreCompileDebug UP-TO-DATE
+> Task :maaprobe:generateDebugResources UP-TO-DATE
+> Task :maaprobe:extractDeepLinksDebug UP-TO-DATE
+> Task :maaprobe:compileDebugNavigationResources UP-TO-DATE
+> Task :maaprobe:mergeDebugAssets UP-TO-DATE
+> Task :maaprobe:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :maaprobe:mergeLibDexDebug UP-TO-DATE
+> Task :maaprobe:validateSigningDebug UP-TO-DATE
+> Task :maaprobe:compressDebugAssets UP-TO-DATE
+> Task :maaprobe:mergeDebugResources UP-TO-DATE
+> Task :maaprobe:preDebugAndroidTestBuild SKIPPED
+> Task :maaprobe:packageDebugResources UP-TO-DATE
+> Task :maaprobe:processDebugMainManifest UP-TO-DATE
+> Task :maaprobe:writeDebugAppMetadata UP-TO-DATE
+> Task :maaprobe:mergeDebugJniLibFolders UP-TO-DATE
+> Task :maaprobe:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :maaprobe:extractProguardFiles UP-TO-DATE
+> Task :maaprobe:processDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :maaprobe:processDebugManifest UP-TO-DATE
+> Task :maaprobe:generateDebugAndroidTestResources UP-TO-DATE
+> Task :maaprobe:javaPreCompileDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:parseDebugLocalResources UP-TO-DATE
+> Task :maaprobe:generateDebugAndroidTestGlobalSynthetics UP-TO-DATE
+> Task :maaprobe:processDebugManifestForPackage UP-TO-DATE
+> Task :maaprobe:desugarDebugAndroidTestFileDependencies UP-TO-DATE
+> Task :maaprobe:packageDebugAndroidTestResources UP-TO-DATE
+> Task :maaprobe:generateDebugRFile UP-TO-DATE
+> Task :maaprobe:mapDebugAndroidTestSourceSetPaths UP-TO-DATE
+> Task :maaprobe:parseDebugAndroidTestLocalResources UP-TO-DATE
+> Task :maaprobe:compileDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :maaprobe:generateDebugAndroidTestRFile UP-TO-DATE
+> Task :maaprobe:mergeDebugAndroidTestJniLibFolders UP-TO-DATE
+> Task :maaprobe:processDebugResources UP-TO-DATE
+> Task :maaprobe:validateSigningDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:writeDebugAndroidTestSigningConfigVersions UP-TO-DATE
+> Task :maaprobe:checkDebugAndroidTestAarMetadata UP-TO-DATE
+> Task :maaprobe:mergeDebugAndroidTestAssets UP-TO-DATE
+> Task :maaprobe:generateDebugBuildConfig
+> Task :maaprobe:mergeDebugAndroidTestResources UP-TO-DATE
+> Task :maaprobe:checkDebugAndroidTestDuplicateClasses UP-TO-DATE
+> Task :maaprobe:processDebugAndroidTestManifest UP-TO-DATE
+> Task :maaprobe:mergeExtDexDebug UP-TO-DATE
+> Task :maaprobe:compressDebugAndroidTestAssets UP-TO-DATE
+> Task :maaprobe:generateDebugAndroidTestBuildConfig
+> Task :maaprobe:mergeLibDexDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:processDebugAndroidTestResources UP-TO-DATE
+> Task :maaprobe:mergeExtDexDebugAndroidTest UP-TO-DATE
+> Task :maaprobe:configureCMakeDebug[arm64-v8a]
+> Task :maaprobe:buildCMakeDebug[arm64-v8a]
+> Task :maaprobe:mergeDebugNativeLibs UP-TO-DATE
+> Task :maaprobe:stripDebugDebugSymbols UP-TO-DATE
+> Task :maaprobe:mergeDebugAndroidTestNativeLibs NO-SOURCE
+> Task :maaprobe:stripDebugAndroidTestDebugSymbols NO-SOURCE
+> Task :maaprobe:compileDebugKotlin
+> Task :maaprobe:processDebugJavaRes UP-TO-DATE
+> Task :maaprobe:mergeDebugJavaResource UP-TO-DATE
+> Task :maaprobe:compileDebugJavaWithJavac
+> Task :maaprobe:bundleDebugClassesToCompileJar
+> Task :maaprobe:generateDebugLintReportModel
+> Task :maaprobe:generateDebugUnitTestLintModel
+> Task :maaprobe:generateDebugAndroidTestLintModel
+> Task :maaprobe:dexBuilderDebug
+> Task :maaprobe:mergeProjectDexDebug
+> Task :maaprobe:packageDebug
+> Task :maaprobe:assembleDebug
+> Task :maaprobe:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :maaprobe:lintAnalyzeDebugUnitTest
+> Task :maaprobe:compileDebugAndroidTestKotlin
+> Task :maaprobe:processDebugAndroidTestJavaRes UP-TO-DATE
+> Task :maaprobe:mergeDebugAndroidTestJavaResource UP-TO-DATE
+> Task :maaprobe:compileDebugAndroidTestJavaWithJavac
+> Task :maaprobe:dexBuilderDebugAndroidTest
+> Task :maaprobe:mergeProjectDexDebugAndroidTest
+> Task :maaprobe:packageDebugAndroidTest
+> Task :maaprobe:assembleDebugAndroidTest
+> Task :maaprobe:createDebugAndroidTestApkListingFileRedirect UP-TO-DATE
+> Task :maaprobe:lintAnalyzeDebug
+> Task :maaprobe:lintAnalyzeDebugAndroidTest
+> Task :maaprobe:lintReportDebug
+> Task :maaprobe:lintDebug
+
+BUILD SUCCESSFUL in 15s
+82 actionable tasks: 24 executed, 58 up-to-date
+Configuration cache entry stored.
