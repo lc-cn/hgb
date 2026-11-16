@@ -1,0 +1,24 @@
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_076a64fd0094ae 83-84
+docs/research/offline-vision-integration-contracts.md
+  s_b0f0af2da7f631::t_14824d6acba6f1 29-30,32-45
+  s_b0f0af2da7f631::t_4107b650281dd5 1-28,46-70,72-86
+  s_b0f0af2da7f631::t_cd6fafe6ebaef3 71
+  s_b0f0af2da7f631::t_076a64fd0094ae 31,87-90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "66d50b2dc33ec410f36a756ab69eac5e99d90260",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
