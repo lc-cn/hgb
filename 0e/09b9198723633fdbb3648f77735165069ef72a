@@ -1,0 +1,56 @@
+docs/development/build-evidence/device-runtime/pause-before-artifacts.json
+  s_b0f0af2da7f631::t_bb08ad197b66e2 1-6
+app/src/main/kotlin/io/github/yysassist/storage/ExecutionStateStore.kt
+  s_b0f0af2da7f631::t_e0367d821f831f 48-49
+docs/development/build-evidence/device-runtime/corrupt-identity-before-artifacts.json
+  s_b0f0af2da7f631::t_9510cc3c4b1c73 1-7
+docs/development/build-evidence/device-runtime/README.md
+  s_b0f0af2da7f631::t_48308d96137a92 1-9
+docs/development/build-evidence/device-runtime/pause-before.txt
+  s_b0f0af2da7f631::t_bb08ad197b66e2 1-80
+app/src/androidTest/kotlin/io/github/yysassist/ExecutionRuntimeTest.kt
+  s_b0f0af2da7f631::t_67f4fb07231ccb 166-179
+  s_b0f0af2da7f631::t_1a5f553536f291 131-165
+docs/development/device-bridge.md
+  s_b0f0af2da7f631::t_a282282812ce7b 39-46
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_aeefc4d52a9f09 77-81
+  s_b0f0af2da7f631::t_48308d96137a92 82
+app/src/main/kotlin/io/github/yysassist/ExecutionRuntime.kt
+  s_b0f0af2da7f631::t_454f6c5a6b292e 66-67,89,214-215,219-223,235,240-242,321
+docs/development/build-evidence/device-runtime/build.txt
+  s_b0f0af2da7f631::t_bd930fc56a8824 1-108
+docs/development/execution-persistence.md
+  s_b0f0af2da7f631::t_a282282812ce7b 52-57
+  s_b0f0af2da7f631::t_aeefc4d52a9f09 58-59
+docs/development/build-evidence/device-runtime/verification.json
+  s_b0f0af2da7f631::t_bd930fc56a8824 1-77,85
+  s_b0f0af2da7f631::t_48308d96137a92 78-84
+core/src/main/kotlin/io/github/yysassist/core/execution/ExecutorCommand.kt
+  s_b0f0af2da7f631::t_454f6c5a6b292e 42-43
+app/src/androidTest/kotlin/io/github/yysassist/device/DeviceRuntimeIntegrationTest.kt
+  s_b0f0af2da7f631::t_fb0daccc397632 93-121
+  s_b0f0af2da7f631::t_843aa1af6b9608 1-92,122-149
+docs/development/build-evidence/device-runtime/android-tests.txt
+  s_b0f0af2da7f631::t_48308d96137a92 1-928
+docs/development/build-evidence/device-runtime/targeted-tests.txt
+  s_b0f0af2da7f631::t_bd930fc56a8824 1-178
+docs/development/build-evidence/device-runtime/corrupt-identity-before.txt
+  s_b0f0af2da7f631::t_9510cc3c4b1c73 1-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0e09b9198723633fdbb3648f77735165069ef72a",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
