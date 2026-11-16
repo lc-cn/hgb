@@ -1,0 +1,81 @@
+visionprobe/models.lock.json
+  s_b0f0af2da7f631::t_350ba5bb5d7183 1-63
+tools/qa/prepare_vision_models.py
+  s_b0f0af2da7f631::t_5d54bf47686731 1,3,11,13-18,20-21,23,26,33-37,40-42,45-47,49,52-54
+docs/development/build-evidence/vision-model-comparison/verification.json
+  s_b0f0af2da7f631::t_04804657f46eb0 1-63,97-98
+  s_b0f0af2da7f631::t_c152a9a1fbd7e6 64-96
+docs/development/build-evidence/vision-model-comparison/small-build.txt
+  s_b0f0af2da7f631::t_04804657f46eb0 1,3-99
+  s_b0f0af2da7f631::t_c152a9a1fbd7e6 2
+visionprobe/src/androidTest/kotlin/io/github/yysassist/visionprobe/OfflineVisionProbeTest.kt
+  s_b0f0af2da7f631::t_fa51180cce6466 99-107,173-174,176
+  s_b0f0af2da7f631::t_b97bba6d58c7a4 57-76,175,180
+  s_b0f0af2da7f631::t_17dc9e91d79475 88,120,127
+docs/development/build-evidence/vision-model-comparison/production-without-models.txt
+  s_b0f0af2da7f631::t_04804657f46eb0 1,3-73
+  s_b0f0af2da7f631::t_c152a9a1fbd7e6 2
+docs/development/build-evidence/vision-model-comparison/small-tests.txt
+  s_b0f0af2da7f631::t_04804657f46eb0 1-37
+docs/development/build-evidence/vision-model-comparison/tiny-build.txt
+  s_b0f0af2da7f631::t_c152a9a1fbd7e6 2
+  s_b0f0af2da7f631::t_04804657f46eb0 1,3-96
+visionprobe/README.md
+  s_b0f0af2da7f631::t_6c6efc0f6abcd5 34
+  s_b0f0af2da7f631::t_e1d1a44d59e938 3,12-19,36,42
+  s_b0f0af2da7f631::t_41232a762a59c1 35
+docs/development/offline-vision-probe.md
+  s_b0f0af2da7f631::t_e1d1a44d59e938 5-6
+docs/development/README.md
+  s_b0f0af2da7f631::t_e1d1a44d59e938 25
+docs/development/build-evidence/vision-model-comparison/model-guard-restored.txt
+  s_b0f0af2da7f631::t_04804657f46eb0 1,3-8
+  s_b0f0af2da7f631::t_c152a9a1fbd7e6 2
+docs/development/build-evidence/vision-model-comparison/config-cache-before.txt
+  s_b0f0af2da7f631::t_c152a9a1fbd7e6 2
+  s_b0f0af2da7f631::t_04804657f46eb0 1,3-118
+docs/development/build-evidence/vision-model-comparison/wrong-provenance-rejected.txt
+  s_b0f0af2da7f631::t_04804657f46eb0 1,3-20
+  s_b0f0af2da7f631::t_c152a9a1fbd7e6 2
+docs/development/vision-model-comparison.md
+  s_b0f0af2da7f631::t_c3257a9317886c 1-42
+docs/development/build-evidence/vision-model-comparison/small-results.json
+  s_b0f0af2da7f631::t_04804657f46eb0 1-2436
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_6c6efc0f6abcd5 98-103
+docs/development/build-evidence/vision-model-comparison/config-cache-fixed.txt
+  s_b0f0af2da7f631::t_04804657f46eb0 1,3-99
+  s_b0f0af2da7f631::t_c152a9a1fbd7e6 2
+visionprobe/build.gradle.kts
+  s_b0f0af2da7f631::t_17dc9e91d79475 2,5-8,21,29,40-41,43-47,49-50,52
+  s_b0f0af2da7f631::t_9ffe2eecb3ff93 30-31,33-34,37-39,42
+docs/development/build-evidence/vision-model-comparison/tiny-results.json
+  s_b0f0af2da7f631::t_04804657f46eb0 1-2436
+docs/development/build-evidence/vision-model-comparison/model-tamper-rejected.txt
+  s_b0f0af2da7f631::t_c152a9a1fbd7e6 2
+  s_b0f0af2da7f631::t_04804657f46eb0 1,3-20
+docs/development/build-evidence/vision-model-comparison/tiny-tests.txt
+  s_b0f0af2da7f631::t_04804657f46eb0 1-37
+docs/development/build-evidence/vision-model-comparison/default-private-off-results.json
+  s_b0f0af2da7f631::t_c152a9a1fbd7e6 1-1602
+docs/development/build-evidence/vision-model-comparison/default-private-off-tests.txt
+  s_b0f0af2da7f631::t_c152a9a1fbd7e6 1-37
+docs/development/build-evidence/vision-model-comparison/README.md
+  s_b0f0af2da7f631::t_c152a9a1fbd7e6 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a98608e2274ca4a7c099db97e45f611fb5dc344f",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
