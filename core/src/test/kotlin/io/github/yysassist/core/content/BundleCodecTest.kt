@@ -76,4 +76,21 @@ class BundleCodecTest {
         assertTrue(required.copy(identityPolicy = IdentityPolicy.OPTIONAL).acceptsContext(anonymous))
         assertFalse(required.acceptsContext(signedIn.copy(targetId = "another-app")))
     }
+
+    @Test fun `resources are versioned data with exact identities lengths and no paths or URLs`() {
+        val resource = TaskResource("ocr.det", "det.onnx", 10, "a".repeat(64))
+        val bundle = valid().copy(resources = listOf(resource))
+        assertEquals(BundleReadResult.Valid(bundle), codec.read(codec.write(bundle)))
+        for (bad in listOf(resource.copy(id = ""), resource.copy(bytes = 0), resource.copy(bytes = -1),
+            resource.copy(sha256 = "SHA1"), resource.copy(assetName = "task-bundle.json"),
+            resource.copy(assetName = "../det.onnx"), resource.copy(assetName = "https://other/model"),
+            resource.copy(assetName = "/sdcard/file"))) {
+            assertTrue(bad.toString(), codec.validate(bundle.copy(resources = listOf(bad))).isNotEmpty())
+        }
+        assertTrue(codec.validate(bundle.copy(resources = listOf(resource, resource.copy(assetName = "other.onnx")))).isNotEmpty())
+        assertTrue(codec.validate(bundle.copy(resources = listOf(resource, resource.copy(id = "alias", bytes = 11, assetName = "other.onnx")))).isNotEmpty())
+        assertTrue(codec.validate(bundle.copy(resources = listOf(resource, resource.copy(id = "other")))).isNotEmpty())
+        // Aliases may share identical content, including across targets, without a second physical blob.
+        assertTrue(codec.validate(bundle.copy(resources = listOf(resource, resource.copy(id = "alias", assetName = "alias.onnx")))).isEmpty())
+    }
 }

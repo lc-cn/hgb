@@ -5,7 +5,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import android.content.Context
 
-/** Full immutable JSON is committed with its catalog row; resource blobs will use the same version lock. */
+/** Immutable JSON includes resource identities; verified blobs are published before this ready marker. */
 @Entity(tableName = "task_versions")
 data class TaskVersionEntity(
     @PrimaryKey val version: String,
@@ -62,6 +62,9 @@ interface TaskConfigurationDao {
 
 @Dao
 interface TaskVersionDao {
+    @Query("SELECT * FROM task_versions WHERE cached = 1")
+    suspend fun cachedVersions(): List<TaskVersionEntity>
+
     @Query("SELECT version, digest, updatedAt, changelog, (SELECT COUNT(*) FROM task_version_references r WHERE r.version = v.version) AS referenceCount FROM task_versions v WHERE cached = 1 ORDER BY installedAt DESC, rowid DESC")
     suspend fun versions(): List<TaskVersionRow>
 

@@ -1,0 +1,11 @@
+{
+  "app": {
+    "sha256": "d6cf118afc989afb7144a51c9212fe45ef3c80992223d5b974935f216002d21c",
+    "bytes": 35580603
+  },
+  "test": {
+    "sha256": "b4131b9fb2a7fa99497b492f45958095d5151bfecee13485fe4ce82a84412743",
+    "bytes": 4053910
+  },
+  "librarySha256": "a13033d3cf741d49de130003e64e4398299ac493da487a18ba0f5d5a127de8f1"
+}

@@ -1,0 +1,34 @@
+--- first-draft/TaskVersionLibrary.kt
++++ final/TaskVersionLibrary.kt
+@@ -7,0 +8,4 @@
++import kotlinx.coroutines.NonCancellable
++import kotlinx.coroutines.currentCoroutineContext
++import kotlinx.coroutines.ensureActive
++import kotlinx.coroutines.withContext
+@@ -147,5 +151,21 @@
+-    suspend fun acquireResources(version: String): TaskResourceLease = database.withTransaction {
+-        when (val content = checked(dao.version(version), checkFiles = false)) {
+-            is Checked.Rejected -> throw InvalidLocalTaskVersion(content.reason.message)
+-            is Checked.Valid -> (resourceFiles ?: throw InvalidTaskResources("资源存储未配置"))
+-                .acquire(version, content.digest, content.bundle.resources)
++    suspend fun acquireResources(version: String): TaskResourceLease {
++        val caller = currentCoroutineContext()
++        caller.ensureActive()
++        var acquired: TaskResourceLease? = null
++        try {
++            // Bracket creation through delivery: do not abandon a queued Room operation on cancellation.
++            // A lease created on the DB thread stays ours until the caller can actually receive it.
++            withContext(NonCancellable) {
++                database.withTransaction {
++                    acquired = when (val content = checked(dao.version(version), checkFiles = false)) {
++                        is Checked.Rejected -> throw InvalidLocalTaskVersion(content.reason.message)
++                        is Checked.Valid -> (resourceFiles ?: throw InvalidTaskResources("资源存储未配置"))
++                            .acquire(version, content.digest, content.bundle.resources)
++                    }
++                }
++            }
++            caller.ensureActive()
++            return checkNotNull(acquired)
++        } catch (failure: Throwable) {
++            acquired?.close()
++            throw failure

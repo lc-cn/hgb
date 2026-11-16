@@ -1,0 +1,10 @@
+{
+  "io.github.yysassist": {
+    "sha256": "e1d712fbeccad34991e7225f05c2c31cc52e53bcfa86e2cb368389d128ce9dcd",
+    "matchesBuiltArtifact": true
+  },
+  "io.github.yysassist.test": {
+    "sha256": "b4131b9fb2a7fa99497b492f45958095d5151bfecee13485fe4ce82a84412743",
+    "matchesBuiltArtifact": true
+  }
+}

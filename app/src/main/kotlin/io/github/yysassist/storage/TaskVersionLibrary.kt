@@ -4,7 +4,14 @@ import androidx.room.withTransaction
 import io.github.yysassist.core.content.BundleCodec
 import io.github.yysassist.core.content.BundleReadResult
 import io.github.yysassist.core.content.TaskBundle
-import kotlinx.coroutines.flow.map
+import io.github.yysassist.core.content.TaskResource
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
+import java.io.OutputStream
 import java.security.MessageDigest
 
 sealed interface ActiveTaskContent {
@@ -38,11 +45,12 @@ enum class VersionReferenceReason { QUEUED, RUNNING, PAUSED, UNRESOLVED }
 class TaskVersionLibrary(
     private val database: AssistDatabase,
     private val codec: BundleCodec,
+    private val resourceFiles: TaskResourceFiles? = null,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private val dao = database.taskVersions()
-    val catalog = database.invalidationTracker.createFlow("task_versions", "task_version_selection", "task_version_references")
-        .map { snapshot() }
+    val catalog = combine(database.invalidationTracker.createFlow("task_versions", "task_version_selection", "task_version_references"),
+        resourceFiles?.changes ?: flowOf(0L)) { _, _ -> snapshot() }
 
     suspend fun snapshot(): TaskVersionCatalog = database.withTransaction {
         val selection = dao.selection()
@@ -52,10 +60,12 @@ class TaskVersionLibrary(
                 is Checked.Rejected -> ActiveTaskContent.Invalid(content.reason.message)
             }
         } ?: ActiveTaskContent.None
-        TaskVersionCatalog(dao.versions(), selection?.activeVersion, selection?.latestVersion, active)
+        val rows = dao.versions().map { it.copy(referenceCount = Math.addExact(it.referenceCount, resourceFiles?.leaseCount(it.version) ?: 0)) }
+        TaskVersionCatalog(rows, selection?.activeVersion, selection?.latestVersion, active)
     }
 
-    suspend fun install(text: String, expectedVersion: String, expectedSha256: String): VersionChange {
+    suspend fun install(text: String, expectedVersion: String, expectedSha256: String,
+        fetchResource: (suspend (TaskResource, OutputStream) -> Unit)? = null): VersionChange {
         val digest = sha256(text)
         if (expectedVersion.isBlank() || !expectedSha256.matches(Regex("[0-9a-f]{64}")) || digest != expectedSha256)
             return reject(VersionRejection.INVALID_CONTENT, "任务内容摘要或版本身份不匹配")
@@ -64,22 +74,35 @@ class TaskVersionLibrary(
             return reject(VersionRejection.INVALID_CONTENT, (parsed as BundleReadResult.Invalid).issues.joinToString("；") { it.reason })
         if (parsed.bundle.version != expectedVersion)
             return reject(VersionRejection.INVALID_CONTENT, "任务版本与获取的版本不一致")
-        return database.withTransaction {
-            val existing = dao.version(expectedVersion)
-            if (existing != null) {
-                when {
-                    existing.digest != digest -> reject(VersionRejection.IMMUTABLE_CONFLICT, "同一版本的内容发生变化，请发布新版本")
-                    !existing.cached -> {
-                        check(dao.restoreContents(expectedVersion, text, clock()) == 1)
-                        VersionChange.Applied
-                    }
-                    sha256(existing.json) != existing.digest -> reject(VersionRejection.INVALID_CONTENT, "本地版本内容损坏")
-                    else -> VersionChange.Unchanged
+        database.withTransaction { existingInstall(dao.version(expectedVersion), digest) }?.let { return it }
+        if (parsed.bundle.resources.isNotEmpty() && (resourceFiles == null || fetchResource == null))
+            return reject(VersionRejection.INVALID_CONTENT, "任务资源尚未完整获取")
+        return try {
+            val prepared = if (parsed.bundle.resources.isEmpty()) null else resourceFiles!!.prepare(parsed.bundle.resources, fetchResource!!)
+            prepared.use {
+                database.withTransaction {
+                    val existing = dao.version(expectedVersion)
+                    existingInstall(existing, digest)?.let { return@withTransaction it }
+                    // Publish all verified immutable files before the only durable ready marker (cached JSON).
+                    // If DB commit fails, leave orphan files; do not guess that it rolled back and delete them.
+                    if (prepared != null) resourceFiles!!.publish(prepared)
+                    if (existing != null) check(dao.restoreContents(expectedVersion, text, clock()) == 1)
+                    else dao.insertVersion(TaskVersionEntity(expectedVersion, digest, text, parsed.bundle.updatedAt, parsed.bundle.changelog, clock()))
+                    VersionChange.Applied
                 }
-            } else {
-                dao.insertVersion(TaskVersionEntity(expectedVersion, digest, text, parsed.bundle.updatedAt, parsed.bundle.changelog, clock()))
-                VersionChange.Applied
             }
+        } catch (invalid: InvalidTaskResources) {
+            reject(VersionRejection.INVALID_CONTENT, invalid.message ?: "任务资源校验失败")
+        }
+    }
+
+    private fun existingInstall(existing: TaskVersionEntity?, digest: String): VersionChange? {
+        if (existing == null) return null
+        if (existing.digest != digest) return reject(VersionRejection.IMMUTABLE_CONFLICT, "同一版本的内容发生变化，请发布新版本")
+        if (!existing.cached) return null
+        return when (val content = checked(existing, hashResources = true)) {
+            is Checked.Rejected -> content.reason
+            is Checked.Valid -> VersionChange.Unchanged
         }
     }
 
@@ -96,17 +119,57 @@ class TaskVersionLibrary(
     suspend fun activate(version: String): VersionChange = database.withTransaction {
         val selection = dao.selection() ?: TaskVersionSelection()
         if (selection.activeVersion == version) return@withTransaction VersionChange.Unchanged
-        if (dao.referenceCount() != 0) return@withTransaction reject(VersionRejection.IN_USE, "执行结束后再切换任务版本")
-        val content = checked(dao.version(version))
+        if (dao.referenceCount() != 0 || resourceFiles?.hasLeases() == true)
+            return@withTransaction reject(VersionRejection.IN_USE, "执行结束后再切换任务版本")
+        val content = checked(dao.version(version), hashResources = true)
         if (content is Checked.Rejected) return@withTransaction content.reason
         dao.saveSelection(selection.copy(activeVersion = version))
         VersionChange.Applied
     }
 
-    suspend fun delete(version: String): VersionChange = database.withTransaction {
-        if (dao.selection()?.activeVersion == version) return@withTransaction reject(VersionRejection.ACTIVE, "当前启用版本需保留")
-        if (dao.referenceCount(version) != 0) return@withTransaction reject(VersionRejection.IN_USE, "执行或未决结果仍依赖此版本")
-        if (dao.evictContents(version) == 0) reject(VersionRejection.MISSING, "本地任务版本不存在") else VersionChange.Applied
+    suspend fun delete(version: String): VersionChange {
+        val result = database.withTransaction {
+            if (dao.selection()?.activeVersion == version) return@withTransaction reject(VersionRejection.ACTIVE, "当前启用版本需保留")
+            if (dao.referenceCount(version) != 0 || (resourceFiles?.leaseCount(version) ?: 0) != 0)
+                return@withTransaction reject(VersionRejection.IN_USE, "执行或未决结果仍依赖此版本")
+            if (dao.evictContents(version) == 0) reject(VersionRejection.MISSING, "本地任务版本不存在") else VersionChange.Applied
+        }
+        if (result == VersionChange.Applied && resourceFiles != null) database.withTransaction {
+            // A separate transaction follows confirmed eviction. Cleanup never precedes a possibly rolled-back delete.
+            val retained = dao.cachedVersions().flatMap { row ->
+                when (val content = checked(row, checkFiles = false)) {
+                    is Checked.Valid -> content.bundle.resources.map { it.sha256 }
+                    is Checked.Rejected -> throw InvalidLocalTaskVersion(content.reason.message)
+                }
+            }.toSet()
+            resourceFiles.collectUnused(retained)
+        }
+        return result
+    }
+
+    /** Resource lifetime is independent of a queue entry; close only after the last native use is quiet. */
+    suspend fun acquireResources(version: String): TaskResourceLease {
+        val caller = currentCoroutineContext()
+        caller.ensureActive()
+        var acquired: TaskResourceLease? = null
+        try {
+            // Bracket creation through delivery: do not abandon a queued Room operation on cancellation.
+            // A lease created on the DB thread stays ours until the caller can actually receive it.
+            withContext(NonCancellable) {
+                database.withTransaction {
+                    acquired = when (val content = checked(dao.version(version), checkFiles = false)) {
+                        is Checked.Rejected -> throw InvalidLocalTaskVersion(content.reason.message)
+                        is Checked.Valid -> (resourceFiles ?: throw InvalidTaskResources("资源存储未配置"))
+                            .acquire(version, content.digest, content.bundle.resources)
+                    }
+                }
+            }
+            caller.ensureActive()
+            return checkNotNull(acquired)
+        } catch (failure: Throwable) {
+            acquired?.close()
+            throw failure
+        }
     }
 
     /** Evidence can arrive after completed content was evicted. Retain identity without resurrecting its payload. */
@@ -166,7 +229,7 @@ class TaskVersionLibrary(
         val previous = dao.reference(owner)
         if (previous != null && previous.version != version)
             return PinVersionResult.Rejected(reject(VersionRejection.OWNER_CONFLICT, "同一执行身份已绑定另一版本"))
-        return when (val content = checked(dao.version(version))) {
+        return when (val content = checked(dao.version(version), hashResources = true)) {
             is Checked.Rejected -> PinVersionResult.Rejected(content.reason)
             is Checked.Valid -> {
                 dao.saveReference(TaskVersionReference(owner, version, reason))
@@ -179,12 +242,19 @@ class TaskVersionLibrary(
         data class Valid(val bundle: TaskBundle, val digest: String) : Checked
         data class Rejected(val reason: VersionChange.Rejected) : Checked
     }
-    private fun checked(row: TaskVersionEntity?): Checked {
+    private fun checked(row: TaskVersionEntity?, checkFiles: Boolean = true, hashResources: Boolean = false): Checked {
         if (row == null || !row.cached) return Checked.Rejected(reject(VersionRejection.MISSING, "本地任务版本不存在"))
         if (sha256(row.json) != row.digest) return Checked.Rejected(reject(VersionRejection.INVALID_CONTENT, "本地版本内容损坏"))
         val parsed = codec.read(row.json)
         if (parsed !is BundleReadResult.Valid || parsed.bundle.version != row.version)
             return Checked.Rejected(reject(VersionRejection.INVALID_CONTENT, "本地版本与当前容器不兼容或身份不一致"))
+        if (checkFiles && parsed.bundle.resources.isNotEmpty()) {
+            if (resourceFiles == null) return Checked.Rejected(reject(VersionRejection.INVALID_CONTENT, "任务资源不可用"))
+            try { resourceFiles.check(parsed.bundle.resources, hashResources) }
+            catch (invalid: InvalidTaskResources) {
+                return Checked.Rejected(reject(VersionRejection.INVALID_CONTENT, invalid.message ?: "任务资源不可用"))
+            }
+        }
         return Checked.Valid(parsed.bundle, row.digest)
     }
 

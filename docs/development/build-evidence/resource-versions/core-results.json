@@ -1,0 +1,141 @@
+[
+  {
+    "class": "io.github.yysassist.core.content.BundleCodecTest",
+    "tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "cases": [
+      "duplicate task step and field identities are rejected",
+      "resources are versioned data with exact identities lengths and no paths or URLs",
+      "unknown capability version field or malformed content never loads partially",
+      "action arguments are checked by registered apk contract",
+      "task contents round trip and catalog is external data",
+      "target definitions own categories and task identity namespaces",
+      "range requires bounds and does not invent defaults",
+      "unknown identity anonymous identity and required account are distinct"
+    ]
+  },
+  {
+    "class": "io.github.yysassist.core.content.ConfigurationDraftTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "cases": [
+      "sliderQuantizationNeverUsesFloatAsTheSavedAmount",
+      "numericEditingDoesNotLoseTheDecimalSeparatorOrLargeInteger",
+      "decimalStepsAndNonGridUpperBoundsHaveOnlyExactSelectableValues"
+    ]
+  },
+  {
+    "class": "io.github.yysassist.core.content.ConfigurationValidatorTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "cases": [
+      "large exact budget is checked without binary floating point coercion",
+      "choice group enforces allowed identities and multi selection semantics",
+      "step validation never rounds a precise count into a different allowed value",
+      "date range and time keep calendar meaning without guessing timezone",
+      "required values are never automatically defaulted or removed"
+    ]
+  },
+  {
+    "class": "io.github.yysassist.core.content.GitHubTaskSourceTest",
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "cases": [
+      "failedEmptyCatalogConfirmationRemainsAnHttpFailure",
+      "canonicalLatestAndAssetDownloadUseHeadersAndVerifyBytes",
+      "cancelledRequestReleasesTheActualHttpCall",
+      "emptyReleaseCatalogRequiresSuccessfulRepositoryAndListReads",
+      "missingTaskAssetDigestAndMalformedResponsesAreNotInstallable",
+      "resourcesUseSameReleaseAssetMetadataAndStreamValidatedBytes",
+      "inaccessibleRepositoryIsNotAnEmptyReleaseCatalog",
+      "truncatedOrChangedAssetNeverReturnsPartialContent",
+      "cancellationWaitsForAStillWritingResponseBeforeReturningToTheStagingOwner",
+      "changedOversizedOrMissingResourceNeverReportsACompleteDownload"
+    ]
+  },
+  {
+    "class": "io.github.yysassist.core.execution.BuiltInStepWorkFactoryTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "cases": [
+      "screenIndependentAdmissionRequiresTheWholeKnownProgramAndMatchingVersion",
+      "contractRejectsUnknownInputsAndUnsupportedActionsNeverQualifyForSafeRecovery",
+      "waitIsARealCancellableDurationAndRevocationHasNoDeviceInputToDrain"
+    ]
+  },
+  {
+    "class": "io.github.yysassist.core.execution.ExecutorPersistenceTest",
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "cases": [
+      "corruptionAndUnknownFormatsAreErrorsInsteadOfAnEmptyExecutor",
+      "aFailedStoreCanDiscardAPreparedCommandWithoutPublishingItsPause",
+      "completingStepsDoesNotReplicateTheWholePlanForEachAttempt",
+      "activeAndQueuedProgressAndCommandReceiptsRoundTripWithoutGeneratingEffects",
+      "reconciledAttemptEvidenceSurvivesAndRejectsAReplayOfOldUncertainty",
+      "preparingCannotChangeTheObservableExecutorOrIssueAnotherAttempt",
+      "theEarlierFormatRetainsPendingInputAndUncertaintyWhenUpgraded",
+      "unknownEvidenceAndAnEndRequestSurviveTheRoundTripAndBlockRestart",
+      "pauseHandoffAndObservedOutcomeRemainDistinctUntilQuietIsAcknowledged",
+      "aForeignOrStalePreparedCommandCannotOverwriteNewerState"
+    ]
+  },
+  {
+    "class": "io.github.yysassist.core.execution.ExecutorRecoveryTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "cases": [
+      "recoveryCannotReleaseAnExistingManualHold",
+      "missingInputProofPersistsUncertaintyAndCannotBeRemovedOrRestarted",
+      "safeReentryKeepsCompletedStepsAndChangesTheAttemptIdentity",
+      "staleRowControlsCannotPauseStopOrRestartAnotherRun",
+      "resultAndQuiescenceAreOnePreparedTransitionDuringPause"
+    ]
+  },
+  {
+    "class": "io.github.yysassist.core.execution.TaskExecutorTest",
+    "tests": 23,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "cases": [
+      "caller mutation cannot alter queued snapshot or priority",
+      "plan priority remains sum after completed member",
+      "unknown blocks work and cannot be cleared by resume restart or removal",
+      "accountless application uses an explicit anonymous context not a fake account",
+      "same local task id in another target has its own live submission identity",
+      "other account high priority cannot preempt and verified switch clears old live items",
+      "pause during preemption preserves current task for restart",
+      "late unknown result revokes new input and retains old evidence",
+      "pause requires independent quiet and holds queued work",
+      "continue skips completed steps restart only resets current task",
+      "replayed old uncertainty cannot undo explicit reconciliation",
+      "removing while user holds does not resume queue",
+      "result facts retain original account version and display name after account change",
+      "equal priority keeps FIFO and cannot preempt",
+      "identity readiness can admit waiting work but never releases a user hold",
+      "confirmed failure advances plan and emits partial result",
+      "stop ends current but holds other work",
+      "duplicate command is idempotent and live ref cannot repeat",
+      "removing a hung current does not wait for worker and continues only after quiet",
+      "invalid schema priority overflow and blank outcome rejected without admission",
+      "cross-target context handoff cannot silently discard unfinished work",
+      "strict higher priority revokes input before dispatch and low resumes unfinished step",
+      "late revocation acknowledgment cannot discard an unknown result"
+    ]
+  }
+]

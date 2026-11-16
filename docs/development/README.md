@@ -27,6 +27,7 @@
 | [Android 平台桥](device-bridge.md) | 截图／输入所有权、撤权与取消回归及平台 PoC 边界 |
 | [原生悬浮控制](floating-controls.md) | 三层窗口、常用与同一执行器、显示偏好、截图／输入排除及真实设备测试边界 |
 | [首版任务分发](task-distribution.md) | 当前已实现的 Release 读取／附件校验／本地版本页，及未完成的资源与运行联动边界 |
+| [版本资源](versioned-resources.md) | 同一 Release 资源清单、流式暂存／完整提交、共享删除与 native 使用期租约；尚未接入识别工作器 |
 
 旧资料保留，不批量删除或搬家：
 

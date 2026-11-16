@@ -19,7 +19,11 @@ data class TaskBundle(
     val changelog: String,
     val tasks: List<TaskDefinition>,
     val targets: List<TargetProfile>,
+    val resources: List<TaskResource> = emptyList(),
 )
+/** Data attachments from the same Release, never executable capabilities or arbitrary URLs. */
+@Serializable
+data class TaskResource(val id: String, val assetName: String, val bytes: Long, val sha256: String)
 @Serializable
 enum class IdentityPolicy { NONE, OPTIONAL, REQUIRED }
 @Serializable
@@ -106,6 +110,17 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
         if (bundle.version.isBlank()) issue("version", "缺少任务版本")
         if (bundle.updatedAt.isBlank()) issue("updatedAt", "缺少更新时间")
         if (bundle.tasks.isEmpty()) issue("tasks", "任务集为空")
+        if (bundle.resources.map { it.id }.distinct().size != bundle.resources.size) issue("resources", "资源身份重复")
+        if (bundle.resources.map { it.assetName }.distinct().size != bundle.resources.size) issue("resources", "资源附件名称重复")
+        bundle.resources.forEach { resource ->
+            val location = "resource/${resource.id}"
+            if (resource.id.isBlank()) issue(location, "缺少资源身份")
+            if (!resource.assetName.matches(Regex("[A-Za-z0-9][A-Za-z0-9._-]*")) || resource.assetName == "task-bundle.json")
+                issue(location, "资源必须引用独立的 Release 附件名称")
+            if (resource.bytes <= 0 || !resource.sha256.matches(Regex("[0-9a-f]{64}"))) issue(location, "资源缺少有效长度或 SHA-256")
+        }
+        if (bundle.resources.groupBy { it.sha256 }.values.any { resources -> resources.map { it.bytes }.distinct().size != 1 })
+            issue("resources", "相同摘要的资源长度不一致")
         if (bundle.targets.isEmpty()) issue("targets", "缺少目标应用")
         if (bundle.targets.map { it.id }.distinct().size != bundle.targets.size) issue("targets", "目标应用身份重复")
         bundle.targets.forEach { target ->

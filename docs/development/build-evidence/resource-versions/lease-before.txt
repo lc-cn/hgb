@@ -1,0 +1,73 @@
+Performing Streamed Install
+Success
+INSTRUMENTATION_STATUS: class=io.github.yysassist.storage.TaskResourceIntegrationTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+io.github.yysassist.storage.TaskResourceIntegrationTest:
+INSTRUMENTATION_STATUS: test=cancellationBeforeLeaseDeliveryReleasesTheUndeliveredFileUse
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.storage.TaskResourceIntegrationTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Undelivered lease must not keep a version permanently in use expected:<0> but was:<1>
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotEquals(Assert.java:835)
+	at org.junit.Assert.assertEquals(Assert.java:120)
+	at io.github.yysassist.storage.TaskResourceIntegrationTest$cancellationBeforeLeaseDeliveryReleasesTheUndeliveredFileUse$1.invokeSuspend(TaskResourceIntegrationTest.kt:274)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.storage.TaskResourceIntegrationTest.cancellationBeforeLeaseDeliveryReleasesTheUndeliveredFileUse(TaskResourceIntegrationTest.kt:243)
+
+INSTRUMENTATION_STATUS: stream=
+Error in cancellationBeforeLeaseDeliveryReleasesTheUndeliveredFileUse(io.github.yysassist.storage.TaskResourceIntegrationTest):
+java.lang.AssertionError: Undelivered lease must not keep a version permanently in use expected:<0> but was:<1>
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotEquals(Assert.java:835)
+	at org.junit.Assert.assertEquals(Assert.java:120)
+	at io.github.yysassist.storage.TaskResourceIntegrationTest$cancellationBeforeLeaseDeliveryReleasesTheUndeliveredFileUse$1.invokeSuspend(TaskResourceIntegrationTest.kt:274)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.storage.TaskResourceIntegrationTest.cancellationBeforeLeaseDeliveryReleasesTheUndeliveredFileUse(TaskResourceIntegrationTest.kt:243)
+
+INSTRUMENTATION_STATUS: test=cancellationBeforeLeaseDeliveryReleasesTheUndeliveredFileUse
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 0.088
+There was 1 failure:
+1) cancellationBeforeLeaseDeliveryReleasesTheUndeliveredFileUse(io.github.yysassist.storage.TaskResourceIntegrationTest)
+java.lang.AssertionError: Undelivered lease must not keep a version permanently in use expected:<0> but was:<1>
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotEquals(Assert.java:835)
+	at org.junit.Assert.assertEquals(Assert.java:120)
+	at io.github.yysassist.storage.TaskResourceIntegrationTest$cancellationBeforeLeaseDeliveryReleasesTheUndeliveredFileUse$1.invokeSuspend(TaskResourceIntegrationTest.kt:274)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.storage.TaskResourceIntegrationTest.cancellationBeforeLeaseDeliveryReleasesTheUndeliveredFileUse(TaskResourceIntegrationTest.kt:243)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

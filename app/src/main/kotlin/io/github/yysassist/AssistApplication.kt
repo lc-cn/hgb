@@ -10,6 +10,8 @@ import io.github.yysassist.core.content.GitHubTaskSource
 import io.github.yysassist.core.content.TaskRepository
 import io.github.yysassist.storage.AssistDatabase
 import io.github.yysassist.storage.TaskVersionLibrary
+import io.github.yysassist.storage.TaskResourceFiles
+import java.io.File
 import io.github.yysassist.storage.TaskConfigurationRepository
 import io.github.yysassist.storage.TaskAdmissionRepository
 import io.github.yysassist.storage.ExecutionStateStore
@@ -47,7 +49,7 @@ class AssistApplication : Application() {
         floating = FloatingPreferences(this, scope)
         val database = AssistDatabase.open(this)
         val workers = BuiltInStepWorkFactory()
-        val library = TaskVersionLibrary(database, BundleCodec(workers.contracts))
+        val library = TaskVersionLibrary(database, BundleCodec(workers.contracts), TaskResourceFiles(File(noBackupFilesDir, "task-resources")))
         executor = ExecutionRuntime(ExecutionStateStore(database, library), library,
             TaskAdmissionRepository(database, library), workers, scope)
         configurations = TaskConfigurationRepository(database, library)

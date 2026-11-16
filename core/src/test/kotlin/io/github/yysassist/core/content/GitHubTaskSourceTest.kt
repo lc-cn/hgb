@@ -11,6 +11,11 @@ import org.junit.Before
 import org.junit.Test
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
+import java.io.ByteArrayOutputStream
+import java.io.OutputStream
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 class GitHubTaskSourceTest {
     private lateinit var server: MockWebServer
@@ -78,5 +83,65 @@ class GitHubTaskSourceTest {
         request.cancelAndJoin()
         withTimeout(2_000) { while (client.dispatcher.runningCallsCount() != 0) delay(10) }
         assertEquals(0, client.dispatcher.runningCallsCount())
+    }
+
+    private fun withResource(content: String = "model") = RemoteTaskVersion("v-test", 42, 1, "a".repeat(64),
+        listOf(RemoteReleaseAsset(43, "det.onnx", "uploaded", content.toByteArray().size.toLong(), "sha256:${hash(content)}")))
+    private fun resource(content: String = "model") = TaskResource("det", "det.onnx", content.toByteArray().size.toLong(), hash(content))
+
+    @Test fun resourcesUseSameReleaseAssetMetadataAndStreamValidatedBytes() = runBlocking {
+        val sink = ByteArrayOutputStream()
+        server.enqueue(MockResponse().setResponseCode(302).setHeader("Location", server.url("/download")))
+        server.enqueue(MockResponse().setBody("model"))
+        source.downloadResource(withResource(), resource(), sink)
+        assertEquals("model", sink.toString("UTF-8"))
+        assertEquals("/repos/test-owner/test-repo/releases/assets/43", server.takeRequest().path)
+        assertEquals("/download", server.takeRequest().path)
+        for (assets in listOf(emptyList(), withResource().assets + withResource().assets,
+            withResource().assets.map { it.copy(digest = "sha256:${"b".repeat(64)}") },
+            withResource().assets.map { it.copy(bytes = 8) }, withResource().assets.map { it.copy(state = "new") })) {
+            failure(TaskSourceProblem.INVALID_RESPONSE) { source.downloadResource(withResource().copy(assets = assets), resource(), sink) }
+        }
+        assertEquals(2, server.requestCount) // Invalid metadata never makes a guessed URL request.
+    }
+
+    @Test fun changedOversizedOrMissingResourceNeverReportsACompleteDownload(): Unit = runBlocking {
+        for (body in listOf("wrong", "model extra", "mod")) {
+            server.enqueue(MockResponse().setBody(body))
+            val sink = ByteArrayOutputStream()
+            failure(TaskSourceProblem.INVALID_CONTENT) { source.downloadResource(withResource(), resource(), sink) }
+            assertTrue(sink.size() <= resource().bytes)
+        }
+        server.enqueue(MockResponse().setResponseCode(404))
+        assertEquals(404, failure(TaskSourceProblem.HTTP) { source.downloadResource(withResource(), resource(), ByteArrayOutputStream()) }.httpCode)
+        server.enqueue(MockResponse().setBody("model").setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY))
+        failure(TaskSourceProblem.NETWORK) { source.downloadResource(withResource(), resource(), ByteArrayOutputStream()) }
+    }
+
+    @Test fun cancellationWaitsForAStillWritingResponseBeforeReturningToTheStagingOwner() = runBlocking {
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val returned = AtomicBoolean(false)
+        val calls = AtomicInteger()
+        val sink = object : OutputStream() {
+            override fun write(value: Int) = error("bulk writes expected")
+            override fun write(bytes: ByteArray, offset: Int, length: Int) {
+                assertFalse("Callback used sink after cancellation returned", returned.get())
+                calls.incrementAndGet(); entered.countDown()
+                check(release.await(5, TimeUnit.SECONDS))
+            }
+        }
+        server.enqueue(MockResponse().setBody("model"))
+        val job = launch(Dispatchers.Default) {
+            try { source.downloadResource(withResource(), resource(), sink) } finally { returned.set(true) }
+        }
+        try {
+            withContext(Dispatchers.IO) { assertTrue(entered.await(5, TimeUnit.SECONDS)) }
+            job.cancel()
+            yield()
+            assertFalse(returned.get())
+        } finally { release.countDown(); job.cancelAndJoin() }
+        assertTrue(returned.get()); assertEquals(1, calls.get())
+        withTimeout(2_000) { while (client.dispatcher.runningCallsCount() != 0) delay(10) }
     }
 }

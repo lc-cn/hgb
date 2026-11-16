@@ -53,7 +53,9 @@ class TaskUpdates(private val library: TaskVersionLibrary, private val source: G
                     // null here means verified remote absence, not a network or authorization error.
                     library.observeLatest(remote?.version)
                     if (remote == null) TaskPullState.Finished("暂无已发布的任务版本")
-                    else when (val result = library.install(source.download(remote), remote.version, remote.sha256)) {
+                    else when (val result = library.install(source.download(remote), remote.version, remote.sha256) { resource, sink ->
+                        source.downloadResource(remote, resource, sink)
+                    }) {
                         VersionChange.Applied -> TaskPullState.Finished("已取得 ${remote.version}")
                         VersionChange.Unchanged -> TaskPullState.Finished("${remote.version} 已在本地")
                         is VersionChange.Rejected -> TaskPullState.Failure(result.message)

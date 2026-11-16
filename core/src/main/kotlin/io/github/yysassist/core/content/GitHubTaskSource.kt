@@ -1,6 +1,10 @@
 package io.github.yysassist.core.content
 
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.Call
@@ -9,6 +13,7 @@ import okhttp3.HttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
+import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.charset.CodingErrorAction
 import java.security.MessageDigest
@@ -19,7 +24,9 @@ data class TaskRepository(val owner: String, val name: String) {
     init { require(owner.matches(Regex("[A-Za-z0-9-]+")) && name.matches(Regex("[A-Za-z0-9_.-]+"))) }
     val fullName: String get() = "$owner/$name"
 }
-data class RemoteTaskVersion(val version: String, val assetId: Long, val bytes: Long, val sha256: String)
+data class RemoteReleaseAsset(val id: Long, val name: String, val state: String, val bytes: Long, val digest: String?)
+data class RemoteTaskVersion(val version: String, val assetId: Long, val bytes: Long, val sha256: String,
+    val assets: List<RemoteReleaseAsset> = emptyList())
 enum class TaskSourceProblem { NETWORK, HTTP, REPOSITORY_UNAVAILABLE, INVALID_RESPONSE, INVALID_CONTENT }
 class TaskSourceException(val problem: TaskSourceProblem, message: String, val httpCode: Int? = null, cause: Throwable? = null) :
     IOException(message, cause)
@@ -61,7 +68,8 @@ class GitHubTaskSource(
         if (asset.id <= 0 || asset.size <= 0 || asset.state != "uploaded" ||
             asset.digest?.startsWith("sha256:") != true || digest?.matches(Regex("[0-9a-f]{64}")) != true)
             invalidResponse("远端任务文件缺少有效摘要或尚未上传完成")
-        return RemoteTaskVersion(release.tag_name, asset.id, asset.size, digest)
+        return RemoteTaskVersion(release.tag_name, asset.id, asset.size, digest,
+            release.assets.map { RemoteReleaseAsset(it.id, it.name, it.state, it.size, it.digest) })
     }
 
     suspend fun download(version: RemoteTaskVersion): String {
@@ -78,12 +86,55 @@ class GitHubTaskSource(
         }
     }
 
+    /** Streams data into caller-owned staging. Cancellation waits for the callback to stop using the sink. */
+    suspend fun downloadResource(version: RemoteTaskVersion, resource: TaskResource, sink: OutputStream) {
+        val asset = version.assets.filter { it.name == resource.assetName }.singleOrNull()
+            ?: invalidResponse("远端版本缺少唯一的资源附件：${resource.assetName}")
+        if (asset.id <= 0 || asset.state != "uploaded" || asset.bytes != resource.bytes ||
+            asset.digest != "sha256:${resource.sha256}") invalidResponse("资源附件与任务清单不一致：${resource.assetName}")
+        val call = calls.newCall(request("releases/assets/${asset.id}", accept = "application/octet-stream"))
+        val completed = CompletableDeferred<Result<Unit>>()
+        call.enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                completed.complete(Result.failure(TaskSourceException(TaskSourceProblem.NETWORK, "资源下载连接失败", cause = e)))
+            }
+            override fun onResponse(call: Call, response: Response) {
+                completed.complete(runCatching {
+                    response.use {
+                        if (it.code != 200) throw TaskSourceException(TaskSourceProblem.HTTP, "资源下载失败（HTTP ${it.code}）", it.code)
+                        val hash = MessageDigest.getInstance("SHA-256")
+                        var count = 0L
+                        it.body.byteStream().use { input ->
+                            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                            while (true) {
+                                val read = try { input.read(buffer) }
+                                catch (failure: IOException) {
+                                    throw TaskSourceException(TaskSourceProblem.NETWORK, "资源响应未完整读取", cause = failure)
+                                }
+                                if (read == -1) break
+                                if (read.toLong() > resource.bytes - count)
+                                    throw TaskSourceException(TaskSourceProblem.INVALID_CONTENT, "资源超过清单声明长度")
+                                sink.write(buffer, 0, read)
+                                hash.update(buffer, 0, read); count += read
+                            }
+                        }
+                        val digest = hash.digest().joinToString("") { byte -> "%02x".format(byte) }
+                        if (count != resource.bytes || digest != resource.sha256)
+                            throw TaskSourceException(TaskSourceProblem.INVALID_CONTENT, "资源内容不完整或摘要不匹配")
+                    }
+                })
+            }
+        })
+        try { completed.await().getOrThrow() }
+        catch (cancelled: CancellationException) { call.cancel(); throw cancelled }
+        finally {
+            // OkHttp cancel requests interruption; it does not itself prove a response callback is quiet.
+            withContext(NonCancellable) { completed.await() }
+        }
+    }
+
     private suspend fun get(path: String, query: Pair<String, String>? = null, accept: String = "application/vnd.github+json"): Payload {
-        val url = apiBase.newBuilder().addPathSegments("repos/${repository.owner}/${repository.name}")
-        if (path.isNotEmpty()) url.addPathSegments(path)
-        query?.let { url.addQueryParameter(it.first, it.second) }
-        val request = Request.Builder().url(url.build()).header("Accept", accept)
-            .header("X-GitHub-Api-Version", "2022-11-28").header("User-Agent", "YysAssist-Android").get().build()
+        val request = request(path, query, accept)
         return suspendCancellableCoroutine { continuation ->
             val call = calls.newCall(request)
             continuation.invokeOnCancellation { call.cancel() }
@@ -103,6 +154,13 @@ class GitHubTaskSource(
                 }
             })
         }
+    }
+    private fun request(path: String, query: Pair<String, String>? = null, accept: String): Request {
+        val url = apiBase.newBuilder().addPathSegments("repos/${repository.owner}/${repository.name}")
+        if (path.isNotEmpty()) url.addPathSegments(path)
+        query?.let { url.addQueryParameter(it.first, it.second) }
+        return Request.Builder().url(url.build()).header("Accept", accept)
+            .header("X-GitHub-Api-Version", "2022-11-28").header("User-Agent", "YysAssist-Android").get().build()
     }
     private inline fun <reified T> decode(bytes: ByteArray): T = try { json.decodeFromString<T>(bytes.toString(Charsets.UTF_8)) }
         catch (error: IllegalArgumentException) { throw TaskSourceException(TaskSourceProblem.INVALID_RESPONSE, "任务源返回了无法识别的数据", cause = error) }

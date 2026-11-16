@@ -18,6 +18,7 @@ import org.junit.Assert.*
 import org.junit.runner.RunWith
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+import java.io.File
 
 /** Local HTTPS + the real source/controller + real SQLite; no publishing or game actions. */
 @RunWith(AndroidJUnit4::class)
@@ -29,6 +30,7 @@ class TaskUpdatesIntegrationTest {
     private lateinit var updates: TaskUpdates
     private lateinit var scope: CoroutineScope
     private lateinit var name: String
+    private lateinit var resources: File
     @Before fun setup() {
         val certificate = HeldCertificate.Builder().commonName("localhost").addSubjectAlternativeName("localhost").build()
         val serverTls = HandshakeCertificates.Builder().heldCertificate(certificate).build()
@@ -39,7 +41,8 @@ class TaskUpdatesIntegrationTest {
         name = "updates-integration-${UUID.randomUUID()}.db"
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         database = Room.databaseBuilder(context, AssistDatabase::class.java, name).build()
-        library = TaskVersionLibrary(database, BundleCodec(listOf(CapabilityContract("test.observe", 1) { null })))
+        resources = File(context.noBackupFilesDir, name)
+        library = TaskVersionLibrary(database, BundleCodec(listOf(CapabilityContract("test.observe", 1) { null })), TaskResourceFiles(resources))
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
         updates = TaskUpdates(library, GitHubTaskSource(TaskRepository("test", "tasks"), server.url("/"), client), scope)
     }
@@ -47,6 +50,7 @@ class TaskUpdatesIntegrationTest {
         scope.cancel(); scope.coroutineContext[Job]!!.join()
         database.close()
         InstrumentationRegistry.getInstrumentation().targetContext.deleteDatabase(name)
+        assertTrue(resources.deleteRecursively())
         server.shutdown(); client.connectionPool.evictAll(); client.dispatcher.executorService.shutdown()
     }
     private fun content(version: String) = """{
@@ -99,5 +103,31 @@ class TaskUpdatesIntegrationTest {
         assertEquals("one", library.snapshot().activeVersion)
         assertEquals("one", library.activeCatalog()!!.version)
         assertEquals(1, library.snapshot().versions.size)
+    }
+
+    @Test fun sameReleaseResourcesReachTheVersionLeaseAndBadDownloadsNeverRegisterANewVersion() = runBlocking {
+        fun enqueueResources(version: String, model: String) {
+            val expected = "fixture-model"
+            val digest = TaskVersionLibrary.sha256(expected)
+            val body = content(version).replace("\"targets\":", "\"resources\":[{\"id\":\"det\",\"assetName\":\"det.onnx\",\"bytes\":${expected.length},\"sha256\":\"$digest\"}],\"targets\":")
+            server.enqueue(MockResponse().setBody("""{"tag_name":"$version","draft":false,"prerelease":false,"assets":[
+              {"id":42,"name":"task-bundle.json","state":"uploaded","size":${body.toByteArray().size},"digest":"sha256:${TaskVersionLibrary.sha256(body)}"},
+              {"id":43,"name":"det.onnx","state":"uploaded","size":${expected.length},"digest":"sha256:$digest"}]}"""))
+            server.enqueue(MockResponse().setBody(body))
+            server.enqueue(MockResponse().setBody(model))
+        }
+        enqueueResources("one", "fixture-model"); updates.pullLatest(); finished()
+        assertNull(library.snapshot().activeVersion)
+        updates.activate("one"); active("one")
+        library.acquireResources("one").use { assertEquals("fixture-model", it.file("det").readText()) }
+        assertEquals("/repos/test/tasks/releases/latest", server.takeRequest().path)
+        assertEquals("/repos/test/tasks/releases/assets/42", server.takeRequest().path)
+        assertEquals("/repos/test/tasks/releases/assets/43", server.takeRequest().path)
+        enqueueResources("two", "wrong-content"); updates.pullLatest()
+        withTimeout(10_000) { updates.pull.filterIsInstance<TaskPullState.Failure>().first() }
+        assertNull(database.taskVersions().version("two"))
+        assertEquals("one", library.activeCatalog()!!.version)
+        assertEquals("two", library.snapshot().latestVersion) // Remote pointer known, incomplete local version not ready.
+        assertTrue(File(resources, "staging").listFiles()!!.isEmpty())
     }
 }
