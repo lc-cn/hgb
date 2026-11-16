@@ -54,6 +54,26 @@ class OfflineVisionProbeTest {
         val area = intersection.width() * intersection.height()
         return area / (a.width() * a.height() + b.width() * b.height() - area)
     }
+    private fun locatedMatches(labels: List<Label>, readings: List<Reading>): Map<Int, Float> {
+        data class Match(val label: Int, val reading: Int, val overlap: Float)
+        val pairs = labels.flatMapIndexed { index, label -> readings.mapIndexedNotNull { readingIndex, reading ->
+            val overlap = iou(rect(reading.points), label.bounds)
+            if (normalized(reading.text) == normalized(label.text) && overlap > 0) Match(index, readingIndex, overlap) else null
+        } }.sortedWith(compareByDescending<Match> { it.overlap }.thenBy { it.label }.thenBy { it.reading })
+        val located = mutableMapOf<Int, Float>(); val usedReadings = mutableSetOf<Int>()
+        pairs.forEach { if (it.label !in located && usedReadings.add(it.reading)) located[it.label] = it.overlap }
+        return located
+    }
+    @Test fun repeatedPricesRequireDistinctOverlappingReadings() {
+        val labels = listOf(Label("30", RectF(0f, 0f, 20f, 20f)), Label("30", RectF(100f, 0f, 120f, 20f)))
+        fun reading(x: Float) = Reading("30", listOf(PointF(x, 0f), PointF(x + 20f, 0f), PointF(x + 20f, 20f), PointF(x, 20f)))
+        assertEquals(setOf(0), locatedMatches(labels, listOf(reading(0f))).keys)
+        assertEquals(setOf(0, 1), locatedMatches(labels, listOf(reading(0f), reading(100f))).keys)
+        assertTrue(locatedMatches(labels, listOf(reading(200f))).isEmpty())
+        // Even one oversized box overlapping both labels is only one located occurrence.
+        val spanning = Reading("30", listOf(PointF(0f, 0f), PointF(120f, 0f), PointF(120f, 20f), PointF(0f, 20f)))
+        assertEquals(1, locatedMatches(labels, listOf(spanning)).size)
+    }
     private fun readingJson(reading: Reading) = JSONObject().apply {
         put("text", reading.text)
         put("points", JSONArray(reading.points.map { JSONArray(listOf(it.x.toDouble(), it.y.toDouble())) }))
@@ -65,6 +85,7 @@ class OfflineVisionProbeTest {
                 context.packageManager.checkPermission(Manifest.permission.INTERNET, app))
         }
         val folder = context.filesDir.resolve("vision-probe").also { it.mkdirs() }
+        val models = JSONObject(context.assets.open("models-manifest.json").bufferedReader().use { it.readText() })
         val privateDetails = JSONArray()
         val debugPrivate = InstrumentationRegistry.getArguments().getString("privateVisionDetails") == "true"
         folder.resolve("private-details.json").delete()
@@ -75,7 +96,15 @@ class OfflineVisionProbeTest {
             repeat(list.length()) { index ->
                 val entry = list.getJSONObject(index); val file = entry.getString("file")
                 require(file.matches(Regex("[a-z0-9-]+\\.png")))
-                val bitmap = assets.open("private-samples/$file").use { checkNotNull(BitmapFactory.decodeStream(it)) }
+                val original = assets.open("private-samples/$file").use { checkNotNull(BitmapFactory.decodeStream(it)) }
+                val region = entry.optJSONArray("region")
+                val bitmap = if (region == null) original else try {
+                    require(region.length() == 4)
+                    val left = region.getInt(0); val top = region.getInt(1); val right = region.getInt(2); val bottom = region.getInt(3)
+                    require(left >= 0 && top >= 0 && right > left && bottom > top && right <= original.width && bottom <= original.height)
+                    Bitmap.createBitmap(original, left, top, right - left, bottom - top)
+                } catch (error: Exception) { original.recycle(); throw error }
+                if (bitmap !== original) original.recycle()
                 val labels = entry.getJSONArray("labels")
                 samples += Sample(entry.getString("name"), bitmap, (0 until labels.length()).map { i ->
                     val label = labels.getJSONObject(i); val b = label.getJSONArray("bounds")
@@ -88,14 +117,14 @@ class OfflineVisionProbeTest {
             put("runId", UUID.randomUUID().toString()); put("startedAtEpochMs", System.currentTimeMillis())
             put("sdk", Build.VERSION.SDK_INT); put("abi", Build.SUPPORTED_ABIS.first()); put("hardware", Build.HARDWARE)
             put("internetPermission", false)
-            put("models", JSONObject(context.assets.open("models-manifest.json").bufferedReader().use { it.readText() }))
+            put("models", models)
             put("scope", "Synthetic rendered labels and optional explicitly opted-in private local crops. Crops do not prove game eligibility, business completion or held-out-theme support. Exact text/IoU are observations, not a production acceptance threshold. Create timing excludes process/provider startup; memory is a process point measurement, not an isolated engine peak.")
         }
         val engines = JSONArray(); report.put("engines", engines)
         folder.resolve("results.json").writeText(report.toString(2))
         val failures = mutableListOf<String>()
         val factories: List<Pair<String, suspend () -> Engine>> = listOf(
-            "paddle-v6-tiny" to {
+            "paddle-${models.getString("variant")}" to {
                 check(OpenCVUtils.init(context)) { "OpenCV native load failed" }
                 val paddle = PaddleOCR.create(context)
                 object : Engine {
@@ -141,10 +170,14 @@ class OfflineVisionProbeTest {
                             it.x.isFinite() && it.y.isFinite() && it.x >= 0 && it.y >= 0 && it.x <= sample.image.width && it.y <= sample.image.height } })
                         if (sample.labels.isNotEmpty()) assertTrue("Positive sample yielded no text: $name", readings.isNotEmpty())
                         else assertTrue("Blank image produced text: $name", readings.isEmpty())
-                        val metrics = sample.labels.map { label ->
+                        // Match distinct occurrences by overlapping geometry. Repeated prices cannot
+                        // all count as located merely because one identical number appears elsewhere.
+                        val located = locatedMatches(sample.labels, readings)
+                        val metrics = sample.labels.mapIndexed { index, label ->
                             val exact = readings.filter { normalized(it.text) == normalized(label.text) }
                             JSONObject().put("expected", label.text).put("exact", exact.isNotEmpty())
                                 .put("bestIoU", exact.maxOfOrNull { iou(rect(it.points), label.bounds) }?.toDouble() ?: 0.0)
+                                .put("locatedExact", index in located).put("locatedIoU", located[index]?.toDouble() ?: 0.0)
                         }
                         val run = JSONObject().put("sample", sample.name).put("privateImage", sample.privateImage)
                             .put("repetition", repetition).put("elapsedMs", elapsed).put("labels", JSONArray(metrics))

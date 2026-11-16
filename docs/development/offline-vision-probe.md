@@ -2,6 +2,8 @@
 
 2026-11-16。两个候选已在无 INTERNET 权限的独立 APK 中完成本地识别；**尚未选定生产后端，也没有接入游戏执行器**。商店菜单出现真实漏检／错字，当前结果不足以直接驱动游戏定位。证据在 [vision-probe](build-evidence/vision-probe/)，复现步骤在 [探针说明](../../visionprobe/README.md)。
 
+后续已完成相同 SDK 的 tiny／small 配对实验，并补庭院入口、商品及价格局部，见[模型对照](vision-model-comparison.md)。本文保留首轮原始基线；新的局部与重复不算留出主题，未因此冻结生产后端。
+
 ## 实测边界
 
 隔离 API36 ARM64 AVD，实际页大小 4096。独立 applicationId `io.github.yysassist.visionprobe`，不包含无障碍服务、执行器、启动入口或游戏操作。合并后的 target／test Manifest 与设备权限均检查没有 INTERNET；这证明本次 App 不具备直接网络权限和候选能在该条件下识别，不作为 SDK 全部跨进程通信或生产代理合规的证明。ML Kit 的指标行为仍按[一手合同研究](../research/offline-vision-integration-contracts.md)处理。

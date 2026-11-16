@@ -1,0 +1,98 @@
+{
+  "date": "2026-11-16",
+  "environment": "Isolated emulator-5560 Android API36 ARM64, 4096 byte pages; no game/device input.",
+  "variants": {
+    "tiny": {
+      "artifacts": {
+        "probe.apk": "904ee48e6bdb7b6f8eb396668fa0470c747448ca197bb1f8c995d3fe1cddaab7",
+        "probe-test.apk": "f64855363930356c9493ebbd3d6dd55a9c662a178f1710df68f1395e45e7b575"
+      },
+      "runId": "d5283fb1-a1e0-4620-95b5-d5f49dc8c68f",
+      "packagedModelBytesMatchLockAndMeasuredManifest": true,
+      "privateInputDigests": {
+        "assets/private-samples/shop-navigation.png": "1f07c4dcfe66793ec5d4994b000397eccdfe0e4f86c5a58ed091952ba6499cae",
+        "assets/private-samples/courtyard-reference.png": "c9014040bd408a2c5ed4a2d38108c59cbdb70cbca4f8583d255a6cfd32e1c7c1",
+        "assets/private-samples/labels.json": "963b959e635831aa0c6ddba1a6328448507a16b9709c48fc3bdcf26c75e41a50",
+        "assets/private-samples/shop-products-reference.png": "c51f53d9f143ee978c1fc1ef2f101309b543194fa3d4e4edc7992fd016b2034c"
+      },
+      "tests": {
+        "passed": 2,
+        "failures": 0
+      },
+      "modelFilesBytes": 6298800
+    },
+    "small": {
+      "artifacts": {
+        "probe.apk": "97010b221d10c95d5c02cb1bac48aec7c7482e24633801e22bbe28ef36d28c04",
+        "probe-test.apk": "f64855363930356c9493ebbd3d6dd55a9c662a178f1710df68f1395e45e7b575"
+      },
+      "runId": "9e2471e3-97a1-4e7e-ba27-47a9814ccf1c",
+      "packagedModelBytesMatchLockAndMeasuredManifest": true,
+      "privateInputDigests": {
+        "assets/private-samples/shop-navigation.png": "1f07c4dcfe66793ec5d4994b000397eccdfe0e4f86c5a58ed091952ba6499cae",
+        "assets/private-samples/courtyard-reference.png": "c9014040bd408a2c5ed4a2d38108c59cbdb70cbca4f8583d255a6cfd32e1c7c1",
+        "assets/private-samples/labels.json": "963b959e635831aa0c6ddba1a6328448507a16b9709c48fc3bdcf26c75e41a50",
+        "assets/private-samples/shop-products-reference.png": "c51f53d9f143ee978c1fc1ef2f101309b543194fa3d4e4edc7992fd016b2034c"
+      },
+      "tests": {
+        "passed": 2,
+        "failures": 0
+      },
+      "modelFilesBytes": 31190469
+    }
+  },
+  "sources": {
+    "tools/qa/prepare_vision_models.py": "111efd7bbf8e819b46ac89cf332decd94e21d98f32b3d23411a974c7c2368ae1",
+    "visionprobe/models.lock.json": "a899a25d7aaab10aa63ba3ed471a8c7ce08eee920f638320f69796f26689cdcc",
+    "visionprobe/build.gradle.kts": "9e72a55ececee24bd42705bf0fbcfd1582f9b75e0b08e079f93595ac6fe768a4",
+    "visionprobe/src/androidTest/kotlin/io/github/yysassist/visionprobe/OfflineVisionProbeTest.kt": "9de0e28d51564ada89369a9dc1df6533be198c6b213f7d6e88f324a15cd85621",
+    "visionprobe/src/main/AndroidManifest.xml": "4bddbc5d122948bcae00633ffb3f07de9d5f40b1651500baf4e8608858bb7773",
+    "visionprobe/src/androidTest/AndroidManifest.xml": "ba01685a2c495c59feb0e76d1c8ace39defdbf7209b68d188e691fb3c376ff25"
+  },
+  "byteIdenticalPrivateTestInputs": true,
+  "byteIdenticalTestApk": true,
+  "productionIndependence": {
+    "allProbeModelFoldersAbsentDuringBuild": true,
+    "productionApkSha256": "2d5fd814a62d28dd50173c65670b61ab085ff1486e2cdddcf4ab178a7b126550",
+    "matchesFloatingMilestoneBinary": true,
+    "previousVerifiedSha256": "2d5fd814a62d28dd50173c65670b61ab085ff1486e2cdddcf4ab178a7b126550"
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 4,
+    "scope": "Unchanged experimental OpenCV 4.11 16KB alignment and upstream UseKtx warning; not suppressed."
+  },
+  "defaultPrivateOff": {
+    "passed": 2,
+    "onlySynthetic": true,
+    "privateDetailsAbsent": true
+  },
+  "cleanup": {
+    "probeDataCleared": true,
+    "privateAssetTestApkUninstalled": true,
+    "realDeviceConnected": false
+  },
+  "core": {
+    "tests": 63,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "evidence": {
+    "README.md": "f0eeb37d62eb9fc9791a2a5a6da106ad5dbf86b28a336622a82e8cdb12baac62",
+    "config-cache-before.txt": "0bb12aeeded230c040b6714c771a54ed3395936d6f115048cefdaea0c06c2a75",
+    "config-cache-fixed.txt": "8a2d50e26d7f179c1d5a9a3142f14a097259ce63fb47552afe94c437fcd07e4b",
+    "default-private-off-results.json": "c21df7a65136c31a35bf00159dbc01a91113796797e2265c26657291c23b26ae",
+    "default-private-off-tests.txt": "dfb93e71d9c36085fdc77490ad38994bc849d7801bbecdb54abdaaf9f1920325",
+    "model-guard-restored.txt": "279eabdee81c66147c80e90a9e26a2070a5ec773ec8d83614395360745ef761f",
+    "model-tamper-rejected.txt": "111b032ff441606472be12f1ee062586be2e9a2974cc00e23b3b38696031d40d",
+    "production-without-models.txt": "98e6c7564c4e0737473e84f24e4026f007b5957378ca552765c841d1c0b225b7",
+    "small-build.txt": "7fbd4fa6b8479a8a546c5987f46ebe55b21862c7073be8882457c5fd1bf3dcd9",
+    "small-results.json": "eb78518119d01a8e84097d83be787eb865e3fbcb9421ae98d6f9dcd85543e5a9",
+    "small-tests.txt": "972ead8ecdf83f8c4445a68e69443dc033af8886f2fa5404d206f4d3abce7b56",
+    "tiny-build.txt": "b60e357c77b216f894673667d753af2449b12d5123f4472daeb61eb80b544dda",
+    "tiny-results.json": "07641118831c1b9983fbcbe2013e28c02034f97855e43ce26d1a2f1bcc69c2bf",
+    "tiny-tests.txt": "2341308fb0f3677bd7e9bd7b67aca0db460925443784093128fec4359b6916e7",
+    "wrong-provenance-rejected.txt": "5db49f42e36e4849f5f9154d38c185a58890215b57fd78bc3211da478285e25b"
+  }
+}

@@ -1,0 +1,118 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.4.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build
+Calculating task graph as configuration cache cannot be reused because file 'visionprobe/build.gradle.kts' has changed.
+> Task :visionprobe:verifyVisionModels
+> Task :visionprobe:preBuild
+> Task :visionprobe:preDebugBuild
+> Task :visionprobe:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :visionprobe:generateDebugResources UP-TO-DATE
+> Task :visionprobe:packageDebugResources UP-TO-DATE
+> Task :visionprobe:processDebugNavigationResources UP-TO-DATE
+> Task :visionprobe:parseDebugLocalResources UP-TO-DATE
+> Task :visionprobe:generateDebugRFile UP-TO-DATE
+> Task :visionprobe:compileDebugKotlin UP-TO-DATE
+> Task :visionprobe:javaPreCompileDebug UP-TO-DATE
+> Task :visionprobe:compileDebugJavaWithJavac NO-SOURCE
+> Task :visionprobe:generateDebugAssets UP-TO-DATE
+> Task :visionprobe:mergeDebugAssets
+> Task :visionprobe:generateDebugGlobalSynthetics UP-TO-DATE
+> Task :visionprobe:processDebugJavaRes UP-TO-DATE
+> Task :visionprobe:mergeDebugJavaResource UP-TO-DATE
+> Task :visionprobe:checkDebugDuplicateClasses UP-TO-DATE
+> Task :visionprobe:desugarDebugFileDependencies UP-TO-DATE
+> Task :visionprobe:mergeExtDexDebug UP-TO-DATE
+> Task :visionprobe:mergeLibDexDebug UP-TO-DATE
+> Task :visionprobe:checkDebugAarMetadata UP-TO-DATE
+> Task :visionprobe:mapDebugSourceSetPaths UP-TO-DATE
+> Task :visionprobe:compileDebugNavigationResources UP-TO-DATE
+> Task :visionprobe:mergeDebugResources UP-TO-DATE
+> Task :visionprobe:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :visionprobe:extractDeepLinksDebug UP-TO-DATE
+> Task :visionprobe:processDebugMainManifest UP-TO-DATE
+> Task :visionprobe:processDebugManifest UP-TO-DATE
+> Task :visionprobe:processDebugManifestForPackage UP-TO-DATE
+> Task :visionprobe:processDebugResources UP-TO-DATE
+> Task :visionprobe:dexBuilderDebug UP-TO-DATE
+> Task :visionprobe:mergeProjectDexDebug UP-TO-DATE
+> Task :visionprobe:mergeDebugJniLibFolders UP-TO-DATE
+> Task :visionprobe:mergeDebugNativeLibs UP-TO-DATE
+> Task :visionprobe:stripDebugDebugSymbols UP-TO-DATE
+> Task :visionprobe:validateSigningDebug UP-TO-DATE
+> Task :visionprobe:writeDebugAppMetadata UP-TO-DATE
+> Task :visionprobe:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :visionprobe:bundleDebugClassesToCompileJar UP-TO-DATE
+> Task :visionprobe:preDebugAndroidTestBuild SKIPPED
+> Task :visionprobe:generateDebugAndroidTestResources UP-TO-DATE
+> Task :visionprobe:packageDebugAndroidTestResources UP-TO-DATE
+> Task :visionprobe:processDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :visionprobe:parseDebugAndroidTestLocalResources UP-TO-DATE
+> Task :visionprobe:generateDebugAndroidTestRFile UP-TO-DATE
+> Task :visionprobe:javaPreCompileDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:generateDebugAndroidTestAssets UP-TO-DATE
+> Task :visionprobe:mergeDebugAndroidTestAssets UP-TO-DATE
+> Task :visionprobe:compressDebugAndroidTestAssets UP-TO-DATE
+> Task :visionprobe:generateDebugAndroidTestGlobalSynthetics UP-TO-DATE
+> Task :visionprobe:checkDebugAndroidTestDuplicateClasses UP-TO-DATE
+> Task :visionprobe:desugarDebugAndroidTestFileDependencies UP-TO-DATE
+> Task :visionprobe:mergeExtDexDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:mergeLibDexDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:checkDebugAndroidTestAarMetadata UP-TO-DATE
+> Task :visionprobe:mapDebugAndroidTestSourceSetPaths UP-TO-DATE
+> Task :visionprobe:compileDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :visionprobe:mergeDebugAndroidTestResources UP-TO-DATE
+> Task :visionprobe:processDebugAndroidTestManifest UP-TO-DATE
+> Task :visionprobe:processDebugAndroidTestResources UP-TO-DATE
+> Task :visionprobe:mergeDebugAndroidTestJniLibFolders UP-TO-DATE
+> Task :visionprobe:mergeDebugAndroidTestNativeLibs NO-SOURCE
+> Task :visionprobe:stripDebugAndroidTestDebugSymbols NO-SOURCE
+> Task :visionprobe:validateSigningDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:writeDebugAndroidTestSigningConfigVersions UP-TO-DATE
+> Task :visionprobe:generateDebugAndroidTestLintModel
+> Task :visionprobe:extractProguardFiles UP-TO-DATE
+> Task :visionprobe:generateDebugLintReportModel
+> Task :visionprobe:preDebugUnitTestBuild
+> Task :visionprobe:generateDebugUnitTestLintModel
+> Task :visionprobe:compressDebugAssets
+> Task :visionprobe:packageDebug
+> Task :visionprobe:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :visionprobe:assembleDebug
+> Task :visionprobe:lintAnalyzeDebugUnitTest
+> Task :visionprobe:compileDebugAndroidTestKotlin
+> Task :visionprobe:compileDebugAndroidTestJavaWithJavac NO-SOURCE
+> Task :visionprobe:processDebugAndroidTestJavaRes UP-TO-DATE
+> Task :visionprobe:mergeDebugAndroidTestJavaResource UP-TO-DATE
+> Task :visionprobe:lintAnalyzeDebugAndroidTest
+> Task :visionprobe:dexBuilderDebugAndroidTest
+> Task :visionprobe:mergeProjectDexDebugAndroidTest
+> Task :visionprobe:packageDebugAndroidTest
+> Task :visionprobe:createDebugAndroidTestApkListingFileRedirect UP-TO-DATE
+> Task :visionprobe:assembleDebugAndroidTest
+> Task :visionprobe:lintAnalyzeDebug
+
+> Task :visionprobe:lintReportDebug
+Wrote HTML report to file:///Users/liuchunlang/yys-assit/visionprobe/build/reports/lint-results-debug.html
+
+> Task :visionprobe:lintDebug
+
+[Incubating] Problems report is available at: file:///Users/liuchunlang/yys-assit/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Configuration cache problems found in this build.
+
+1 problem was found storing the configuration cache.
+- Task `:visionprobe:verifyVisionModels` of type `org.gradle.api.DefaultTask`: cannot serialize Gradle script object references as these are not supported with the configuration cache.
+  See https://docs.gradle.org/9.4.1/userguide/configuration_cache_requirements.html#config_cache:requirements:disallowed_types
+
+See the complete report at file:///Users/liuchunlang/yys-assit/build/reports/configuration-cache/8xzejw25llykq8h7zxu3ygusv/ciprinehhsumae2eonb5xyx6y/configuration-cache-report.html
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 13s
+76 actionable tasks: 16 executed, 60 up-to-date
+Configuration cache entry discarded with 1 problem.

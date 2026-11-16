@@ -1,0 +1,99 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.4.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build
+Calculating task graph as configuration cache cannot be reused because file 'visionprobe/build.gradle.kts' has changed.
+> Task :visionprobe:generateDebugAssets UP-TO-DATE
+> Task :visionprobe:generateDebugAndroidTestAssets UP-TO-DATE
+> Task :visionprobe:verifyVisionModels
+> Task :visionprobe:preBuild
+> Task :visionprobe:preDebugBuild
+> Task :visionprobe:preDebugUnitTestBuild
+> Task :visionprobe:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :visionprobe:mapDebugSourceSetPaths UP-TO-DATE
+> Task :visionprobe:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :visionprobe:generateDebugGlobalSynthetics UP-TO-DATE
+> Task :visionprobe:generateDebugResources UP-TO-DATE
+> Task :visionprobe:javaPreCompileDebug UP-TO-DATE
+> Task :visionprobe:desugarDebugFileDependencies UP-TO-DATE
+> Task :visionprobe:extractDeepLinksDebug UP-TO-DATE
+> Task :visionprobe:validateSigningDebug UP-TO-DATE
+> Task :visionprobe:writeDebugAppMetadata UP-TO-DATE
+> Task :visionprobe:preDebugAndroidTestBuild SKIPPED
+> Task :visionprobe:mergeDebugJniLibFolders UP-TO-DATE
+> Task :visionprobe:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :visionprobe:packageDebugResources UP-TO-DATE
+> Task :visionprobe:generateDebugAndroidTestResources UP-TO-DATE
+> Task :visionprobe:javaPreCompileDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:processDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :visionprobe:generateDebugAndroidTestGlobalSynthetics UP-TO-DATE
+> Task :visionprobe:packageDebugAndroidTestResources UP-TO-DATE
+> Task :visionprobe:parseDebugAndroidTestLocalResources UP-TO-DATE
+> Task :visionprobe:generateDebugAndroidTestRFile UP-TO-DATE
+> Task :visionprobe:desugarDebugAndroidTestFileDependencies UP-TO-DATE
+> Task :visionprobe:mergeDebugAndroidTestAssets UP-TO-DATE
+> Task :visionprobe:compressDebugAndroidTestAssets UP-TO-DATE
+> Task :visionprobe:mapDebugAndroidTestSourceSetPaths UP-TO-DATE
+> Task :visionprobe:compileDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :visionprobe:mergeDebugAndroidTestResources UP-TO-DATE
+> Task :visionprobe:checkDebugAndroidTestDuplicateClasses UP-TO-DATE
+> Task :visionprobe:checkDebugAndroidTestAarMetadata UP-TO-DATE
+> Task :visionprobe:mergeDebugResources UP-TO-DATE
+> Task :visionprobe:mergeDebugAndroidTestJniLibFolders UP-TO-DATE
+> Task :visionprobe:mergeLibDexDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:checkDebugAarMetadata UP-TO-DATE
+> Task :visionprobe:validateSigningDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:writeDebugAndroidTestSigningConfigVersions UP-TO-DATE
+> Task :visionprobe:extractProguardFiles UP-TO-DATE
+> Task :visionprobe:processDebugAndroidTestManifest UP-TO-DATE
+> Task :visionprobe:mergeDebugAssets UP-TO-DATE
+> Task :visionprobe:mergeDebugNativeLibs UP-TO-DATE
+> Task :visionprobe:compressDebugAssets UP-TO-DATE
+> Task :visionprobe:stripDebugDebugSymbols UP-TO-DATE
+> Task :visionprobe:mergeDebugAndroidTestNativeLibs NO-SOURCE
+> Task :visionprobe:stripDebugAndroidTestDebugSymbols NO-SOURCE
+> Task :visionprobe:processDebugMainManifest UP-TO-DATE
+> Task :visionprobe:mergeExtDexDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:processDebugNavigationResources UP-TO-DATE
+> Task :visionprobe:processDebugManifest UP-TO-DATE
+> Task :visionprobe:checkDebugDuplicateClasses UP-TO-DATE
+> Task :visionprobe:compileDebugNavigationResources UP-TO-DATE
+> Task :visionprobe:parseDebugLocalResources UP-TO-DATE
+> Task :visionprobe:processDebugManifestForPackage UP-TO-DATE
+> Task :visionprobe:mergeLibDexDebug UP-TO-DATE
+> Task :visionprobe:generateDebugRFile UP-TO-DATE
+> Task :visionprobe:mergeExtDexDebug UP-TO-DATE
+> Task :visionprobe:processDebugAndroidTestResources UP-TO-DATE
+> Task :visionprobe:processDebugResources UP-TO-DATE
+> Task :visionprobe:compileDebugKotlin UP-TO-DATE
+> Task :visionprobe:compileDebugJavaWithJavac NO-SOURCE
+> Task :visionprobe:processDebugJavaRes UP-TO-DATE
+> Task :visionprobe:bundleDebugClassesToCompileJar UP-TO-DATE
+> Task :visionprobe:dexBuilderDebug UP-TO-DATE
+> Task :visionprobe:mergeProjectDexDebug UP-TO-DATE
+> Task :visionprobe:mergeDebugJavaResource UP-TO-DATE
+> Task :visionprobe:compileDebugAndroidTestKotlin UP-TO-DATE
+> Task :visionprobe:compileDebugAndroidTestJavaWithJavac NO-SOURCE
+> Task :visionprobe:processDebugAndroidTestJavaRes UP-TO-DATE
+> Task :visionprobe:packageDebug UP-TO-DATE
+> Task :visionprobe:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :visionprobe:assembleDebug UP-TO-DATE
+> Task :visionprobe:dexBuilderDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:mergeProjectDexDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:mergeDebugAndroidTestJavaResource UP-TO-DATE
+> Task :visionprobe:packageDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:createDebugAndroidTestApkListingFileRedirect UP-TO-DATE
+> Task :visionprobe:assembleDebugAndroidTest UP-TO-DATE
+> Task :visionprobe:generateDebugLintReportModel
+> Task :visionprobe:generateDebugUnitTestLintModel
+> Task :visionprobe:generateDebugAndroidTestLintModel
+> Task :visionprobe:lintAnalyzeDebugUnitTest
+> Task :visionprobe:lintAnalyzeDebugAndroidTest
+> Task :visionprobe:lintAnalyzeDebug
+
+> Task :visionprobe:lintReportDebug
+Wrote HTML report to file:///Users/liuchunlang/yys-assit/visionprobe/build/reports/lint-results-debug.html
+
+> Task :visionprobe:lintDebug
+
+BUILD SUCCESSFUL in 13s
+76 actionable tasks: 9 executed, 67 up-to-date
+Configuration cache entry stored.
