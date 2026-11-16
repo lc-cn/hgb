@@ -1,0 +1,89 @@
+app/src/main/kotlin/io/github/yysassist/ui/AssistIcons.kt
+  s_b0f0af2da7f631::t_7483064305b376 21
+docs/development/build-evidence/runtime-host/process-recovery.json
+  s_b0f0af2da7f631::t_122822a7f432c5 1-9
+app/src/androidTest/kotlin/io/github/yysassist/ExecutionRuntimeTest.kt
+  s_b0f0af2da7f631::t_831d38e205dd73 171-186
+core/src/test/kotlin/io/github/yysassist/core/execution/ExecutorRecoveryTest.kt
+  s_b0f0af2da7f631::t_fad30e7810e889 48-59
+app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_b0f0af2da7f631::t_7483064305b376 4,11-12,24-25,38-41
+app/src/main/kotlin/io/github/yysassist/ui/ExecutionControls.kt
+  s_b0f0af2da7f631::t_fad30e7810e889 27,40,43,48,53-60,112,114-115,128-129,161,165-167
+  s_b0f0af2da7f631::t_7483064305b376 1-18,22-24,29-31,35-36,38,41-42,44-47,49-52,63-64,66-82,88-89,91-111,113,120,122,126-127,135,139-141,144-160,164,168-177
+  s_b0f0af2da7f631::t_71a33cbde6fab1 20-21,65,83-87,90,142-143,162-163
+  s_b0f0af2da7f631::t_a0dc7435ecdc78 19,116-119
+  s_b0f0af2da7f631::t_290fb90e592303 25-26,28,32-34,37,39,61-62,123-125,130-134,136-138
+  s_b0f0af2da7f631::t_70fba0b6b1bb80 121
+docs/development/README.md
+  s_b0f0af2da7f631::t_528f31f3953dc3 23
+docs/development/build-evidence/runtime-host/binding-before-artifacts.json
+  s_b0f0af2da7f631::t_17aaef17b7b968 1-5
+docs/development/build-evidence/runtime-host/verification.json
+  s_b0f0af2da7f631::t_4ec132743384ef 143-158
+  s_b0f0af2da7f631::t_650f460131cab1 1-142,159
+app/src/main/kotlin/io/github/yysassist/ExecutionRuntime.kt
+  s_b0f0af2da7f631::t_fad30e7810e889 46,255,259,262-263,269
+  s_b0f0af2da7f631::t_71a33cbde6fab1 199-203
+docs/development/device-bridge.md
+  s_b0f0af2da7f631::t_528f31f3953dc3 32
+core/src/main/kotlin/io/github/yysassist/core/execution/TaskExecutor.kt
+  s_b0f0af2da7f631::t_290fb90e592303 98-100
+core/src/main/kotlin/io/github/yysassist/core/execution/ExecutorCommand.kt
+  s_b0f0af2da7f631::t_290fb90e592303 10-12
+core/src/test/kotlin/io/github/yysassist/core/execution/BuiltInStepWorkFactoryTest.kt
+  s_b0f0af2da7f631::t_831d38e205dd73 1-41
+docs/development/task-distribution.md
+  s_b0f0af2da7f631::t_528f31f3953dc3 9,19,25,31
+docs/development/build-evidence/runtime-host/android-tests.txt
+  s_b0f0af2da7f631::t_650f460131cab1 1-871
+app/src/androidTest/kotlin/io/github/yysassist/ui/ExecutionControlsTest.kt
+  s_b0f0af2da7f631::t_66eac0d03df605 108,110
+  s_b0f0af2da7f631::t_cdfb6d12f4ee28 1-12,14-100,102-107,109,111-125
+  s_b0f0af2da7f631::t_71a33cbde6fab1 13,101
+docs/development/build-evidence/runtime-host/native-ui/artifact.json
+  s_b0f0af2da7f631::t_4ec132743384ef 1-7
+docs/development/build-evidence/runtime-host/targeted-tests.txt
+  s_b0f0af2da7f631::t_650f460131cab1 1-206
+docs/development/execution-persistence.md
+  s_b0f0af2da7f631::t_528f31f3953dc3 3,9,43-51
+docs/development/build-evidence/runtime-host/build.txt
+  s_b0f0af2da7f631::t_650f460131cab1 1-108
+docs/development/build-evidence/runtime-host/process-verify.txt
+  s_b0f0af2da7f631::t_650f460131cab1 1-23
+docs/development/build-evidence/runtime-host/README.md
+  s_b0f0af2da7f631::t_39057cc1e95b76 1-12
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_39057cc1e95b76 20,71-75
+  s_b0f0af2da7f631::t_4ec132743384ef 76
+  s_b0f0af2da7f631::t_528f31f3953dc3 9,15,27,57,59,63,66,68,70
+docs/development/build-evidence/runtime-host/process-seed.txt
+  s_b0f0af2da7f631::t_650f460131cab1 1-23
+app/src/androidTest/kotlin/io/github/yysassist/RuntimeProcessRecoveryTest.kt
+  s_b0f0af2da7f631::t_cdfb6d12f4ee28 1-84
+app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt
+  s_b0f0af2da7f631::t_71a33cbde6fab1 223-224
+  s_b0f0af2da7f631::t_fad30e7810e889 116
+  s_b0f0af2da7f631::t_a0dc7435ecdc78 49,67,114-115,117,119-120,124,128-134,198,200,219-220,222,225-227,236
+  s_b0f0af2da7f631::t_290fb90e592303 118,121-123,199,221,228-235
+docs/development/build-evidence/runtime-host/binding-before.txt
+  s_b0f0af2da7f631::t_e872a99864d8d9 1-89
+docs/development/build-evidence/runtime-host/native-ui/native-smoke.json
+  s_b0f0af2da7f631::t_67c485192742ff 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8df9b9ca07f0777cb357f7ea96df41ea8a1e0e25",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
