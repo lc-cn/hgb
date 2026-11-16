@@ -1,0 +1,162 @@
+docs/development/build-evidence/vision-integration/test-summary.json
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-191
+maaprobe/src/androidTest/kotlin/io/github/yysassist/maaprobe/MaaProcessBoundaryTest.kt
+  s_b0f0af2da7f631::t_e8256324f33f08 3-4,56
+  s_b0f0af2da7f631::t_527509fe6884ea 8,90
+build.gradle.kts
+  s_b0f0af2da7f631::t_da5508ded24828 3
+vision/src/main/cpp/CMakeLists.txt
+  s_b0f0af2da7f631::t_e8256324f33f08 1-9
+app/src/main/kotlin/io/github/yysassist/vision/VersionedTextObserver.kt
+  s_b0f0af2da7f631::t_2b760411e03c77 30
+  s_b0f0af2da7f631::t_315ec01c63c04e 1-20,24-29,31-49,53-84
+  s_b0f0af2da7f631::t_56dcd3709207ae 21-23,50-52
+docs/development/README.md
+  s_b0f0af2da7f631::t_a352eb089d38ff 27
+docs/development/build-evidence/vision-integration/probe-process-tests.txt
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-112
+vision/src/main/kotlin/io/github/yysassist/vision/maa/MaaObservationService.kt
+  s_b0f0af2da7f631::t_e8256324f33f08 1-61,63-98,100-110,112,114-115,117-120,123-125
+  s_b0f0af2da7f631::t_527509fe6884ea 62,99,111,113,116,121-122
+docs/development/build-evidence/vision-integration/app-child-crash-excerpt.txt
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-3
+docs/development/build-evidence/vision-integration/app-default-tests.txt
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-1540
+docs/development/versioned-text-observation.md
+  s_b0f0af2da7f631::t_29cb2bf8f86892 1-57
+tools/qa/prepare_maa_inputs.py
+  s_b0f0af2da7f631::t_7b649206e975ec 1-62
+maaprobe/src/androidTest/kotlin/io/github/yysassist/maaprobe/MaaNativeLoadTest.kt
+  s_b0f0af2da7f631::t_e8256324f33f08 3-4
+vision/src/main/cpp/MaaOcr.cpp
+  s_b0f0af2da7f631::t_e8256324f33f08 1-135
+docs/development/build-evidence/vision-integration/installed-default-test.json
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-5
+docs/development/build-evidence/vision-integration/probe-process-boundary.json
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-110
+docs/development/maa-process-boundary.md
+  s_b0f0af2da7f631::t_a352eb089d38ff 3-4
+settings.gradle.kts
+  s_b0f0af2da7f631::t_da5508ded24828 9
+docs/development/build-evidence/vision-integration/release-manifest.xml
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-141
+docs/development/build-evidence/vision-integration/release-boundary.json
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-32
+app/src/main/kotlin/io/github/yysassist/storage/TaskResourceFiles.kt
+  s_b0f0af2da7f631::t_315ec01c63c04e 29,37-40,151
+gradle/libs.versions.toml
+  s_b0f0af2da7f631::t_da5508ded24828 50
+docs/development/build-evidence/vision-integration/lint.txt
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-3
+vision/src/main/AndroidManifest.xml
+  s_b0f0af2da7f631::t_da5508ded24828 1-7
+docs/development/build-evidence/vision-integration/README.md
+  s_b0f0af2da7f631::t_4af642e0c818b1 1-17
+vision/src/main/kotlin/io/github/yysassist/vision/maa/MaaProcessProtocol.kt
+  s_b0f0af2da7f631::t_e8256324f33f08 1-34
+vision/src/main/kotlin/io/github/yysassist/vision/maa/MaaProcessCall.kt
+  s_b0f0af2da7f631::t_315ec01c63c04e 39,218-220
+  s_b0f0af2da7f631::t_e8256324f33f08 1-18,20-23,25-38,40-114,116-118,120-208,210-212,214-217,221-224
+  s_b0f0af2da7f631::t_527509fe6884ea 19,24,115,119,209,213
+docs/development/build-evidence/vision-integration/release-build.txt
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-123
+app/src/androidTest/kotlin/io/github/yysassist/vision/RecognitionApplicationProcessTest.kt
+  s_b0f0af2da7f631::t_7a774e4b1196f8 30
+  s_b0f0af2da7f631::t_a75b6c6126efdd 1-29,31-42
+docs/development/build-evidence/vision-integration/model-free-build.txt
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-160
+maaprobe/README.md
+  s_b0f0af2da7f631::t_a352eb089d38ff 3,5,8,32
+docs/development/build-evidence/vision-integration/build.txt
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-211
+maaprobe/src/androidTest/kotlin/io/github/yysassist/maaprobe/MaaOcr.kt
+  s_b0f0af2da7f631::t_e8256324f33f08 1-32
+app/src/main/kotlin/io/github/yysassist/vision/MaaTextBackend.kt
+  s_b0f0af2da7f631::t_56dcd3709207ae 15-16,52,56-60
+  s_b0f0af2da7f631::t_2b760411e03c77 26,33,40-45
+  s_b0f0af2da7f631::t_315ec01c63c04e 1-14,17-25,27-32,34-39,46-51,53-55,61-101
+docs/development/build-evidence/vision-integration/verification.json
+  s_b0f0af2da7f631::t_ff1ae51206e2c1 37
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-36,38-51
+maaprobe/src/main/AndroidManifest.xml
+  s_b0f0af2da7f631::t_da5508ded24828 6
+app/src/androidTest/kotlin/io/github/yysassist/vision/TextObserverLifecycleTest.kt
+  s_b0f0af2da7f631::t_8fdcbd7efdd536 1-30,32-38,43-130
+  s_b0f0af2da7f631::t_53f9de2847e1a8 31
+  s_b0f0af2da7f631::t_3aae213aeb2e7d 39-42
+docs/development/build-evidence/vision-integration/app-packaging.json
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-212
+app/src/debug/AndroidManifest.xml
+  s_b0f0af2da7f631::t_a75b6c6126efdd 1-6
+docs/development/build-evidence/vision-integration/cleanup.json
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-20
+docs/development/build-evidence/vision-integration/debug-manifest.xml
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-156
+docs/development/versioned-resources.md
+  s_b0f0af2da7f631::t_a352eb089d38ff 25,29,43
+app/src/androidTest/kotlin/io/github/yysassist/vision/VersionedMaaIntegrationTest.kt
+  s_b0f0af2da7f631::t_53f9de2847e1a8 1-101
+vision/consumer-rules.pro
+  s_b0f0af2da7f631::t_da5508ded24828 1-2
+docs/development/build-evidence/vision-integration/app-ocr-tests.txt
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-152
+vision/build.gradle.kts
+  s_b0f0af2da7f631::t_da5508ded24828 1-19,25-53
+  s_b0f0af2da7f631::t_89987eec4e51b9 20-24
+docs/development/build-evidence/vision-integration/startup-before.txt
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-44
+app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_b0f0af2da7f631::t_ad4057ffef3653 52-54
+  s_b0f0af2da7f631::t_315ec01c63c04e 18-19,48-49,60
+app/src/debug/kotlin/io/github/yysassist/vision/ApplicationStartupProbeService.kt
+  s_b0f0af2da7f631::t_a75b6c6126efdd 1-24
+docs/development/build-evidence/vision-integration/build-artifacts.json
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-27
+docs/development/build-evidence/vision-integration/probe-default-tests.txt
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-211
+maaprobe/src/androidTest/kotlin/io/github/yysassist/maaprobe/MaaFailureContractTest.kt
+  s_b0f0af2da7f631::t_e8256324f33f08 3-4
+vision/src/main/kotlin/io/github/yysassist/vision/maa/MaaNative.kt
+  s_b0f0af2da7f631::t_e8256324f33f08 1-12
+app/src/main/kotlin/io/github/yysassist/vision/TextObservation.kt
+  s_b0f0af2da7f631::t_315ec01c63c04e 1-6,8-10,13
+  s_b0f0af2da7f631::t_56dcd3709207ae 11-12
+  s_b0f0af2da7f631::t_2b760411e03c77 7
+docs/development/build-evidence/vision-integration/installed-artifacts.json
+  s_b0f0af2da7f631::t_b8b1eb9737b7a2 1-27
+vision/src/debug/kotlin/io/github/yysassist/vision/maa/MaaProbeAccess.kt
+  s_b0f0af2da7f631::t_e8256324f33f08 1-10
+maaprobe/build.gradle.kts
+  s_b0f0af2da7f631::t_a75b6c6126efdd 46
+  s_b0f0af2da7f631::t_da5508ded24828 5-6,43,54
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_4af642e0c818b1 126-135
+gradle/verification-metadata.xml
+  s_b0f0af2da7f631::t_eabefb26305f38 1481-1485
+app/build.gradle.kts
+  s_b0f0af2da7f631::t_da5508ded24828 51
+  s_b0f0af2da7f631::t_53f9de2847e1a8 27-38,40-41,45-46,48
+  s_b0f0af2da7f631::t_bb3ce6710f63a4 42-44,47
+  s_b0f0af2da7f631::t_56dcd3709207ae 1-2,39
+app/src/androidTest/kotlin/io/github/yysassist/vision/MaaTextDecoderTest.kt
+  s_b0f0af2da7f631::t_3aae213aeb2e7d 16
+  s_b0f0af2da7f631::t_8fdcbd7efdd536 1-15,17-26
+vision/gradle.lockfile
+  s_b0f0af2da7f631::t_eddfdd6c4a5d93 1-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "75ac105932d7de26214b644317f8f880ff476376",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
