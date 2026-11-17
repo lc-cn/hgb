@@ -1,0 +1,104 @@
+app/src/androidTest/kotlin/io/github/yysassist/ExecutionRuntimeTest.kt
+  s_b0f0af2da7f631::t_bea83a4dc08e51 197-206
+docs/development/build-evidence/screen-input/README.md
+  s_b0f0af2da7f631::t_12630bc6bab50b 1-13
+app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationRuntimeTest.kt
+  s_b0f0af2da7f631::t_8f135a17dced33 17
+  s_b0f0af2da7f631::t_99ca7354f58cfc 51-53,65-68,73,111-115,117-126,144-146,148-149,151,153-154
+  s_b0f0af2da7f631::t_31319190d1848a 432-466
+  s_b0f0af2da7f631::t_b7eb46fba891e9 328-345,366-431
+  s_b0f0af2da7f631::t_2b15f6ce19ef99 139,142
+  s_b0f0af2da7f631::t_e330cd0af61d5e 54-61,64,69-72,346-365
+app/src/androidTest/kotlin/io/github/yysassist/device/AndroidDeviceBridgeTest.kt
+  s_b0f0af2da7f631::t_99ca7354f58cfc 136-153
+docs/development/build-evidence/screen-input/cleanup.json
+  s_b0f0af2da7f631::t_459862c8550d1c 1-6
+docs/development/build-evidence/screen-input/android-full-tests.txt
+  s_b0f0af2da7f631::t_fbbe4b78d8f806 1-2062
+docs/development/build-evidence/screen-input/process-result.json
+  s_b0f0af2da7f631::t_fbbe4b78d8f806 1
+docs/development/build-evidence/screen-input/core-build.txt
+  s_b0f0af2da7f631::t_fbbe4b78d8f806 1-158
+docs/development/build-evidence/screen-input/retained-proof-before.txt
+  s_b0f0af2da7f631::t_fbbe4b78d8f806 1-50
+docs/development/build-evidence/screen-input/build.txt
+  s_b0f0af2da7f631::t_fbbe4b78d8f806 1-158
+core/src/main/kotlin/io/github/yysassist/core/execution/StepWorker.kt
+  s_b0f0af2da7f631::t_016a06cda6bde5 26-27,37,62,68,79,91,124-127,132-134
+  s_b0f0af2da7f631::t_8f8e6ab6b726da 90,94-96,100
+  s_b0f0af2da7f631::t_a1eaf6a945993c 20-21,135
+app/src/main/kotlin/io/github/yysassist/device/AndroidDeviceBridge.kt
+  s_b0f0af2da7f631::t_ba03d507f655cf 57-62,64-66,69,197,271-290,306,317-321,334
+  s_b0f0af2da7f631::t_fdf4fd04c18319 63,67-68,76,213
+app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationContractTest.kt
+  s_b0f0af2da7f631::t_2b15f6ce19ef99 13,15,18
+  s_b0f0af2da7f631::t_b7eb46fba891e9 60-94
+app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt
+  s_b0f0af2da7f631::t_6d046ccd72d6c9 80-82,84-86,231,255-257
+  s_b0f0af2da7f631::t_99ca7354f58cfc 29
+  s_b0f0af2da7f631::t_b398e8c99e392d 3-4,9,14-15,19-24,28,30-31,34-47,51-79,87-90,112-142,144-179,181-182,184-190,194-197,199-212,214-215,218-219,221-230,232-254,258-265
+  s_b0f0af2da7f631::t_e330cd0af61d5e 48-50
+  s_b0f0af2da7f631::t_fdf4fd04c18319 83,220
+docs/development/observation-actions.md
+  s_b0f0af2da7f631::t_7becadce05551e 5-6
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_7e9141c5e79e1d 164-173
+docs/development/build-evidence/screen-input/process-verify.txt
+  s_b0f0af2da7f631::t_fbbe4b78d8f806 1-23
+docs/development/build-evidence/screen-input/settlement-after.txt
+  s_b0f0af2da7f631::t_fbbe4b78d8f806 1-38
+docs/development/build-evidence/screen-input/retained-proof-before-artifacts.json
+  s_b0f0af2da7f631::t_fbbe4b78d8f806 1-6
+docs/development/build-evidence/screen-input/high-priority-before.txt
+  s_b0f0af2da7f631::t_fbbe4b78d8f806 1-77
+docs/development/build-evidence/screen-input/test-summary.json
+  s_b0f0af2da7f631::t_fbbe4b78d8f806 1-200
+core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt
+  s_b0f0af2da7f631::t_0069be52855d03 99,196
+docs/development/README.md
+  s_b0f0af2da7f631::t_7becadce05551e 30
+docs/development/build-evidence/screen-input/installed-artifacts.json
+  s_b0f0af2da7f631::t_fbbe4b78d8f806 1-25
+core/src/test/kotlin/io/github/yysassist/core/execution/ReadOnlyActionInterpreterTest.kt
+  s_b0f0af2da7f631::t_99ca7354f58cfc 106-119,121-149
+  s_b0f0af2da7f631::t_8f8e6ab6b726da 22,29,36-37,54,60,68-69,81,96
+  s_b0f0af2da7f631::t_a1eaf6a945993c 120
+docs/development/build-evidence/screen-input/verification.json
+  s_b0f0af2da7f631::t_fbbe4b78d8f806 1-33
+docs/development/build-evidence/screen-input/high-priority-before-artifacts.json
+  s_b0f0af2da7f631::t_fbbe4b78d8f806 1-6
+docs/development/execution-persistence.md
+  s_b0f0af2da7f631::t_7becadce05551e 3,75
+  s_b0f0af2da7f631::t_21c61b8955c2de 73
+app/src/main/kotlin/io/github/yysassist/ExecutionRuntime.kt
+  s_b0f0af2da7f631::t_a1eaf6a945993c 209-213,217
+docs/development/screen-input-actions.md
+  s_b0f0af2da7f631::t_7becadce05551e 1-47
+  s_b0f0af2da7f631::t_5d8b0759d93a78 48
+docs/development/device-bridge.md
+  s_b0f0af2da7f631::t_9d56a26d89b076 52
+  s_b0f0af2da7f631::t_748996a747dfa6 3
+app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_b0f0af2da7f631::t_aa3bc6ce47d20f 59-60
+  s_b0f0af2da7f631::t_2b15f6ce19ef99 20
+docs/development/build-evidence/screen-input/process-seed.txt
+  s_b0f0af2da7f631::t_fbbe4b78d8f806 1-23
+core/src/main/kotlin/io/github/yysassist/core/execution/ActionProvider.kt
+  s_b0f0af2da7f631::t_0069be52855d03 6-7,10,12-15,17-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b057db785fdb1089958be29ef7e196cdc55e99f4",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
