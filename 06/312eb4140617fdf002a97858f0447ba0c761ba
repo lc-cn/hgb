@@ -1,0 +1,27 @@
+docs/development/build-evidence/free-daily-claim/README.md
+  s_b0f0af2da7f631::t_66ac2b17df7c7a 1-43
+docs/development/build-evidence/free-daily-claim/verification.json
+  s_b0f0af2da7f631::t_3071972d0fbb3e 1-788
+docs/development/build-evidence/free-daily-claim/ocr-test.txt
+  s_b0f0af2da7f631::t_3071972d0fbb3e 1-23
+docs/development/game-validation.md
+  s_b0f0af2da7f631::t_66ac2b17df7c7a 68-73
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_66ac2b17df7c7a 250-257
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "06312eb4140617fdf002a97858f0447ba0c761ba",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
