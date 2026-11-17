@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import io.github.yysassist.core.model.ExecutionContext
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 
@@ -13,6 +15,7 @@ import kotlinx.serialization.json.*
  * cancelling an effect is NOT evidence that device input stopped. Only inputQuiescent acknowledges it.
  * This first core is in-memory; durable transactions/recovery are a separate storage integration.
  */
+@OptIn(ExperimentalSerializationApi::class)
 class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: () -> Long = System::currentTimeMillis) {
     @Serializable
     private enum class Handoff { PAUSE, STOP, REMOVE, PREEMPT, UNKNOWN }
@@ -21,7 +24,8 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
     @Serializable
     private data class Receipt(val request: ExecutionRequest, val result: EnqueueResult)
     @Serializable
-    private data class AttemptRecord(val attempt: StepAttempt, val reconciliation: StepOutcome? = null)
+    private data class AttemptRecord(val attempt: StepAttempt, val reconciliation: StepOutcome? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val deviceActions: List<DeviceActionRecord> = emptyList())
     @Serializable
     private data class StoredState(
         val format: Int,
@@ -36,7 +40,8 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
     @Serializable
     private data class StoredPosition(val runId: Long, val taskIndex: Int, val stepIndex: Int, val failedTaskIds: List<String>)
     @Serializable
-    private data class StoredAttempt(val ticket: AttemptTicket, val position: StoredPosition, val reconciliation: StepOutcome?)
+    private data class StoredAttempt(val ticket: AttemptTicket, val position: StoredPosition, val reconciliation: StepOutcome?,
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val deviceActions: List<DeviceActionRecord> = emptyList())
     @Serializable
     private data class StoredUncertainty(val ticket: AttemptTicket, val reason: String)
     @Serializable
@@ -106,6 +111,12 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
                 draft.inputQuiescent(command.ticket, command.quietOutcome)
             is ExecutorCommand.RecoverNoInput -> draft.recoverNoInput(command.ticket, command.cause)
             is ExecutorCommand.InputUnconfirmed -> draft.inputUnconfirmed(command.ticket, command.reason)
+            is ExecutorCommand.RecordDeviceAction -> {
+                reply = ExecutorReply.DeviceActionRecorded(draft.recordDeviceAction(command.intent)); emptyList()
+            }
+            is ExecutorCommand.RecordDeviceActionReceipt -> {
+                reply = ExecutorReply.DeviceActionRecorded(draft.recordDeviceActionReceipt(command.ticket, command.invocationId, command.receipt)); emptyList()
+            }
             is ExecutorCommand.ResolveUnknown -> draft.resolveUnknown(command.ticket, command.outcome)
             is ExecutorCommand.VerifyContext -> {
                 reply = ExecutorReply.ContextChanged(draft.setVerifiedContext(command.context)); emptyList()
@@ -140,7 +151,7 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
         return storedJson.encodeToString(PackedState(2, value.context, value.manualHold, definitions.values.toList(),
             value.current?.let(::position), value.waiting.map(::position), value.active?.ticket, value.pending,
             value.observedDuringHandoff, value.endAfterResolution, value.serial, value.generation,
-            value.attempts.map { StoredAttempt(it.attempt.ticket, position(it.attempt.run), it.reconciliation) },
+            value.attempts.map { StoredAttempt(it.attempt.ticket, position(it.attempt.run), it.reconciliation, it.deviceActions) },
             value.receipts, value.unknowns.map { StoredUncertainty(it.attempt.ticket, it.reason) }, value.facts))
     }
 
@@ -153,7 +164,7 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
             return RunProgress(definition.runId, definition.sequence, definition.request, definition.priority,
                 position.taskIndex, position.stepIndex, position.failedTaskIds)
         }
-        val records = value.attempts.map { AttemptRecord(StepAttempt(it.ticket, expand(it.position)), it.reconciliation) }
+        val records = value.attempts.map { AttemptRecord(StepAttempt(it.ticket, expand(it.position)), it.reconciliation, it.deviceActions) }
         val byTicket = records.associateBy { it.attempt.ticket }
         fun attempt(ticket: AttemptTicket) = byTicket[ticket]?.attempt ?: throw IllegalArgumentException("执行尝试缺失")
         val current = value.current?.let(::expand)
@@ -206,6 +217,12 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
             it.reason.isNotBlank() && storedAttempts[it.attempt.ticket]?.attempt == it.attempt
         }) { "未决证据身份不符" }
         value.attempts.mapNotNull { it.reconciliation }.forEach { requireOutcome(it); require(it !is StepOutcome.Unknown) }
+        val actions = value.attempts.flatMap { record ->
+            require(record.deviceActions.all { it.intent.ticket == record.attempt.ticket && it.intent.isValid() &&
+                (it.receipt == null || it.receipt.evidence.isNotBlank()) }) { "输入记录与执行尝试不符" }
+            record.deviceActions
+        }
+        require(actions.map { it.intent.id }.distinct().size == actions.size) { "输入调用身份重复" }
         value.observedDuringHandoff?.let(::requireOutcome)
         require(value.receipts.keys.none(String::isBlank)) { "命令身份无效" }
     }
@@ -382,8 +399,43 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
         active?.ticket == ticket && pending == null && !manualHold && unknowns.isEmpty()
 
     @Synchronized
+    fun mayHaveDeliveredInput(ticket: AttemptTicket): Boolean = attempts[ticket]?.deviceActions.orEmpty()
+        .any { it.receipt?.delivery != DeviceActionDelivery.NOT_SENT }
+
+    /** Admission is recorded by the same owner/transaction as execution state, never by telemetry. */
+    @Synchronized
+    private fun recordDeviceAction(intent: DeviceActionIntent): DeviceActionWriteResult {
+        if (!intent.isValid()) return DeviceActionWriteResult.Rejected("动作调用身份或观察依据无效")
+        val existing = attempts.values.flatMap { it.deviceActions }.find { it.intent.id == intent.id }
+        if (existing != null) return if (existing.intent == intent) DeviceActionWriteResult.AlreadyRecorded
+            else DeviceActionWriteResult.Rejected("同一动作调用身份的内容发生变化")
+        if (!permitsInput(intent.ticket)) return DeviceActionWriteResult.Rejected("原步骤尝试已不能接收新输入")
+        val record = attempts[intent.ticket] ?: return DeviceActionWriteResult.Rejected("执行尝试不存在")
+        attempts[intent.ticket] = record.copy(deviceActions = record.deviceActions + DeviceActionRecord(intent, clock()))
+        publish()
+        return DeviceActionWriteResult.Recorded
+    }
+
+    /** Late platform evidence belongs to the old invocation; it cannot advance a newer attempt. */
+    @Synchronized
+    private fun recordDeviceActionReceipt(ticket: AttemptTicket, id: String, receipt: DeviceActionReceipt): DeviceActionWriteResult {
+        if (id.isBlank() || receipt.evidence.isBlank()) return DeviceActionWriteResult.Rejected("动作回执身份或证据缺失")
+        val attempt = attempts[ticket] ?: return DeviceActionWriteResult.Rejected("执行尝试不存在")
+        val index = attempt.deviceActions.indexOfFirst { it.intent.id == id }
+        if (index < 0) return DeviceActionWriteResult.Rejected("动作回执没有对应意图")
+        val record = attempt.deviceActions[index]
+        if (record.receipt != null) return if (record.receipt == receipt) DeviceActionWriteResult.AlreadyRecorded
+            else DeviceActionWriteResult.Rejected("动作回执与已记录证据冲突")
+        val records = attempt.deviceActions.toMutableList().also { it[index] = record.copy(receipt = receipt) }
+        attempts[ticket] = attempt.copy(deviceActions = records)
+        publish()
+        return DeviceActionWriteResult.Recorded
+    }
+
+    @Synchronized
     private fun recoverNoInput(ticket: AttemptTicket, cause: NoInputRecoveryCause): List<ExecutorEffect> {
         if (active?.ticket != ticket) return emptyList()
+        require(!mayHaveDeliveredInput(ticket)) { "已记录的输入不能作为无输入步骤自动重入" }
         if (pending != null) return inputQuiescent(ticket, StepOutcome.Interrupted)
         return change { effects ->
             active = null
@@ -534,5 +586,6 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
         },
         manualHold, current, waiting.sortedWith(compareByDescending<RunProgress> { it.priority }.thenBy { it.sequence }),
         active?.ticket, unknowns.values.toList(), facts.toList(),
+        attempts.values.flatMap { it.deviceActions },
     )
 }

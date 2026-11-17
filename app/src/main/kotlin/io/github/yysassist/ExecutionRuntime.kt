@@ -131,7 +131,7 @@ class ExecutionRuntime(
             val attempt = StepAttempt(ticket, snapshot.current!!)
             val safe = try {
                 val bundle = withContext(Dispatchers.IO) { library.readVersion(attempt.run.request.packageVersion) }
-                factory.restartHasNoDeviceInput(attempt, bundle)
+                factory.restartHasNoDeviceInput(attempt, bundle) && !engine!!.mayHaveDeliveredInput(ticket)
             } catch (_: InvalidLocalTaskVersion) { false }
             if (safe) {
                 val transition = change(ExecutorCommand.RecoverNoInput(ticket), dispatch = false)
@@ -210,7 +210,8 @@ class ExecutionRuntime(
                                 // A rejected admission/transition may leave the old attempt active.
                                 // Re-entry requires the APK's no-input proof AND independent quiet.
                                 val binding = checkNotNull(record)
-                                val safe = try { factory.restartHasNoDeviceInput(binding.attempt, binding.bundle) }
+                                val safe = try { factory.restartHasNoDeviceInput(binding.attempt, binding.bundle) &&
+                                    engine?.mayHaveDeliveredInput(message.ticket) == false }
                                 catch (_: Exception) { false }
                                 if (safe) ExecutorCommand.RecoverNoInput(message.ticket, NoInputRecoveryCause.STEP_INTERRUPTION)
                                 else ExecutorCommand.StepSettled(message.ticket, StepOutcome.Unknown("步骤中断后的重入条件未确认"), observation.outcome)
@@ -234,8 +235,12 @@ class ExecutionRuntime(
     private suspend fun completeCommand(command: ExecutorCommand, reply: CompletableDeferred<RuntimeCommandResult>) {
         try {
             val changed = change(command)
-            val rejected = (changed.reply as? ExecutorReply.Enqueued)?.result as? EnqueueResult.Rejected
-            if (rejected == null) reply.complete(RuntimeCommandResult.Applied(changed.reply)) else reject(reply, rejected.reason)
+            val rejected = when (val result = changed.reply) {
+                is ExecutorReply.Enqueued -> (result.result as? EnqueueResult.Rejected)?.reason
+                is ExecutorReply.DeviceActionRecorded -> (result.result as? DeviceActionWriteResult.Rejected)?.reason
+                else -> null
+            }
+            if (rejected == null) reply.complete(RuntimeCommandResult.Applied(changed.reply)) else reject(reply, rejected)
         }
         catch (rejected: ExecutionStateRejected) { reject(reply, rejected.message ?: "提交未通过") }
     }

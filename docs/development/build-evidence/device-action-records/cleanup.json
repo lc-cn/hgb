@@ -1,0 +1,7 @@
+{
+  "date": "2026-11-17",
+  "emulatorTestPackageRemovalExecuted": false,
+  "reason": "Automatic approval review failed with Bad Request before the cleanup command started; no retry or alternate removal path used",
+  "mainApplicationOrGameDataCleanupExecuted": false,
+  "phoneAccessibilityLastConfirmedEnabled": true
+}

@@ -20,6 +20,8 @@ sealed interface ExecutorCommand {
     /** Supplied only when the APK runner proves the old step cannot have issued device input. */
     data class RecoverNoInput(val ticket: AttemptTicket, val cause: NoInputRecoveryCause = NoInputRecoveryCause.PROCESS_RESTART) : ExecutorCommand
     data class InputUnconfirmed(val ticket: AttemptTicket, val reason: String) : ExecutorCommand
+    data class RecordDeviceAction(val intent: DeviceActionIntent) : ExecutorCommand
+    data class RecordDeviceActionReceipt(val ticket: AttemptTicket, val invocationId: String, val receipt: DeviceActionReceipt) : ExecutorCommand
     data class ResolveUnknown(val ticket: AttemptTicket, val outcome: StepOutcome) : ExecutorCommand
     data class VerifyContext(val context: ExecutionContext) : ExecutorCommand
     data object ReadinessChanged : ExecutorCommand
@@ -28,6 +30,7 @@ sealed interface ExecutorReply {
     data object Applied : ExecutorReply
     data class Enqueued(val result: EnqueueResult) : ExecutorReply
     data class ContextChanged(val result: ContextChangeResult) : ExecutorReply
+    data class DeviceActionRecorded(val result: DeviceActionWriteResult) : ExecutorReply
 }
 
 /** No work is dispatched while preparing. The host persists this state before committing it. */

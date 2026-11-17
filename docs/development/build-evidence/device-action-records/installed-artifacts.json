@@ -1,0 +1,18 @@
+{
+  "emulator": {
+    "io.github.yysassist": {
+      "sha256": "9be46745102f90f155adbab731fd45d30280d9658799779bc55ff5943e6fcacb",
+      "installedMatches": true
+    },
+    "io.github.yysassist.test": {
+      "sha256": "b9f1b3b95a980fe3c9580823468b3de32bc845f577544c2f327c5d3ca3e7a91d",
+      "installedMatches": true
+    }
+  },
+  "phone": {
+    "io.github.yysassist": {
+      "sha256": "9be46745102f90f155adbab731fd45d30280d9658799779bc55ff5943e6fcacb",
+      "installedMatches": true
+    }
+  }
+}

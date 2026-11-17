@@ -84,6 +84,7 @@ data class ExecutorSnapshot(
     val activeTicket: AttemptTicket?,
     val unresolved: List<UnresolvedResult>,
     val facts: List<ExecutionFact>,
+    val deviceActions: List<DeviceActionRecord> = emptyList(),
 )
 @Serializable
 sealed interface ExecutorEffect {

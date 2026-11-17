@@ -52,6 +52,83 @@ class ExecutionRuntimeTest {
     private suspend fun wait(runtime: ExecutionRuntime, test: (ExecutorSnapshot) -> Boolean) =
         withTimeout(5_000) { runtime.state.first(test) }
     private suspend fun add(runtime: ExecutionRuntime, id: String) = runtime.enqueueTask(TaskAddress("fixture", id)).await()
+    private fun inputIntent(runtime: ExecutionRuntime) = DeviceActionIntent("fixture-input-call", runtime.state.value.activeTicket!!,
+        "fixture-input", "fixture.tap", 1, "fixture-observation")
+    private fun actionWrite(result: RuntimeCommandResult): DeviceActionWriteResult =
+        ((result as RuntimeCommandResult.Applied).reply as ExecutorReply.DeviceActionRecorded).result
+
+    @Test fun deviceActionCannotBeAcknowledgedBeforeItsStateTransactionCommits(): Unit = runBlocking {
+        val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val persistence = object : ExecutionPersistence {
+            override suspend fun load() = store.load()
+            override suspend fun persist(expectedRevision: Long, prepared: PreparedExecutorTransition): Long {
+                if (prepared.snapshot.deviceActions.isNotEmpty()) { entered.complete(Unit); release.await() }
+                return store.persist(expectedRevision, prepared)
+            }
+        }
+        val host = runtime(persistence = persistence); add(host, "one")
+        val call = inputIntent(host)
+        val response = async { host.submit(ExecutorCommand.RecordDeviceAction(call)).await() }
+        try {
+            withTimeout(5_000) { entered.await() }
+            assertFalse(response.isCompleted)
+            assertTrue(host.state.value.deviceActions.isEmpty())
+            assertTrue(store.load().decode().state.value.deviceActions.isEmpty())
+            release.complete(Unit)
+            assertEquals(DeviceActionWriteResult.Recorded, withTimeout(5_000) { actionWrite(response.await()) })
+            assertEquals(call, store.load().decode().state.value.deviceActions.single().intent)
+            assertEquals(DeviceActionWriteResult.AlreadyRecorded, actionWrite(host.submit(ExecutorCommand.RecordDeviceAction(call)).await()))
+            assertEquals(call.ticket, host.state.value.activeTicket)
+        } finally { release.complete(Unit) }
+    }
+
+    @Test fun aFailedDeviceActionWriteCannotGrantAdmissionAndClosesInput(): Unit = runBlocking {
+        val persistence = object : ExecutionPersistence {
+            override suspend fun load() = store.load()
+            override suspend fun persist(expectedRevision: Long, prepared: PreparedExecutorTransition): Long {
+                if (prepared.snapshot.deviceActions.isNotEmpty()) throw java.io.IOException("fixture storage failure")
+                return store.persist(expectedRevision, prepared)
+            }
+        }
+        val host = runtime(persistence = persistence); add(host, "one"); val call = inputIntent(host)
+        assertTrue(host.submit(ExecutorCommand.RecordDeviceAction(call)).await() is RuntimeCommandResult.Unconfirmed)
+        assertTrue(host.status.value is RuntimeStatus.Failure)
+        assertFalse(host.permitsInput(call.ticket)); assertTrue(store.load().decode().state.value.deviceActions.isEmpty())
+    }
+
+    @Test fun lostDeviceActionCommitAcknowledgementIsReadBackAndDuplicateIsNeverANewInvocation(): Unit = runBlocking {
+        val writes = AtomicInteger()
+        val persistence = object : ExecutionPersistence {
+            override suspend fun load() = store.load()
+            override suspend fun persist(expectedRevision: Long, prepared: PreparedExecutorTransition): Long {
+                val revision = store.persist(expectedRevision, prepared)
+                if (prepared.snapshot.deviceActions.isNotEmpty()) {
+                    writes.incrementAndGet(); throw java.io.IOException("fixture acknowledgement lost after commit")
+                }
+                return revision
+            }
+        }
+        val host = runtime(persistence = persistence); add(host, "one"); val call = inputIntent(host)
+        assertEquals(DeviceActionWriteResult.Recorded, actionWrite(host.submit(ExecutorCommand.RecordDeviceAction(call)).await()))
+        assertEquals(DeviceActionWriteResult.AlreadyRecorded, actionWrite(host.submit(ExecutorCommand.RecordDeviceAction(call)).await()))
+        assertEquals(1, writes.get()); assertEquals(1, host.state.value.deviceActions.size)
+        assertEquals(RuntimeStatus.Ready, host.status.value)
+        assertTrue(host.submit(ExecutorCommand.RecordDeviceAction(call.copy(capability = "changed"))).await() is RuntimeCommandResult.Rejected)
+        assertEquals(call, store.load().decode().state.value.deviceActions.single().intent)
+    }
+
+    @Test fun reopeningWithARecordedInputCannotUseTheNoInputFactoryProofToReplay(): Unit = runBlocking {
+        val host = runtime(); add(host, "one"); val call = inputIntent(host)
+        assertEquals(DeviceActionWriteResult.Recorded, actionWrite(host.submit(ExecutorCommand.RecordDeviceAction(call)).await()))
+        scopes.last().let { it.cancel(); it.coroutineContext[Job]!!.join() }
+        val count = AtomicInteger()
+        val reloaded = runtime(counting(count, { awaitCancellation() }))
+        assertTrue(reloaded.status.value is RuntimeStatus.RecoveryBlocked)
+        assertEquals(0, count.get()); assertFalse(reloaded.permitsInput(call.ticket))
+        assertEquals(call, reloaded.state.value.deviceActions.single().intent)
+        assertEquals(call.ticket, reloaded.state.value.unresolved.single().attempt.ticket)
+        assertEquals(1, library.snapshot().versions.single().referenceCount)
+    }
     @Test fun candidateAssessmentIsReadOnlyAndDoesNotConflateReadErrorsWithAnUnavailableTask() = runBlocking {
         val runtime = runtime()
         val address = TaskAddress("fixture", "one")

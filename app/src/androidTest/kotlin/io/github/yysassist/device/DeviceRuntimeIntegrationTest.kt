@@ -146,4 +146,81 @@ class DeviceRuntimeIntegrationTest {
         withTimeout(5_000) { runtime.state.first { it.phase == ExecutorPhase.PAUSED } }
         assertTrue(store.load().decode().state.value.manualHold)
     }
+
+    @Test fun realInputWaitsForDurableIntentAndItsPlatformReceiptCannotCompleteBusinessWork(): Unit = runBlocking {
+        val intentEntered = CompletableDeferred<Unit>(); val observed = CompletableDeferred<GestureResult>()
+        lateinit var runtime: ExecutionRuntime
+        val factory = object : StepWorkFactory {
+            override val contracts = listOf(CapabilityContract("fixture.tap", 1) { if (it.isEmpty()) null else "No fixture arguments" })
+            override fun restartHasNoDeviceInput(attempt: StepAttempt, bundle: TaskBundle) = false
+            override fun create(attempt: StepAttempt, bundle: TaskBundle) = object : StepWork {
+                private var session: AndroidDeviceBridge.InputSession? = null
+                @Volatile private var attempted = false
+                @Volatile private var result: GestureResult? = null
+                override suspend fun execute(): StepOutcome {
+                    val capture = bridge.capture(context.packageName); check(capture is FrameResult.Ready)
+                    capture.frame.use { frame ->
+                        session = checkNotNull(bridge.openInput(attempt.ticket, runtime::permitsInput))
+                        val intent = DeviceActionIntent("fixture-real-tap", attempt.ticket, "tap", "fixture.tap", 1,
+                            "frame:${frame.stamp.timestamp}")
+                        val admission = runtime.submit(ExecutorCommand.RecordDeviceAction(intent)).await()
+                        check(((admission as RuntimeCommandResult.Applied).reply as ExecutorReply.DeviceActionRecorded).result == DeviceActionWriteResult.Recorded)
+                        attempted = true
+                        result = session!!.gesture(frame.stamp, listOf(ScreenPoint(frame.bitmap.width / 2f, frame.bitmap.height / 2f)), 80)
+                        val delivery = when (result) {
+                            GestureResult.Completed -> DeviceActionDelivery.COMPLETED
+                            GestureResult.Cancelled -> DeviceActionDelivery.CANCELLED
+                            is GestureResult.Rejected -> DeviceActionDelivery.NOT_SENT
+                            else -> DeviceActionDelivery.UNCONFIRMED
+                        }
+                        val receipt = runtime.submit(ExecutorCommand.RecordDeviceActionReceipt(attempt.ticket, intent.id,
+                            DeviceActionReceipt(delivery, "自有画面的实际平台回执"))).await()
+                        check(((receipt as RuntimeCommandResult.Applied).reply as ExecutorReply.DeviceActionRecorded).result == DeviceActionWriteResult.Recorded)
+                        observed.complete(result!!)
+                    }
+                    awaitCancellation()
+                }
+                override suspend fun revoke(): InputStopObservation = when (session?.revoke()) {
+                    InputDrain.Unconfirmed -> InputStopObservation.Unconfirmed("平台输入未确认静默")
+                    else -> InputStopObservation.Quiet(if (!attempted || result is GestureResult.Rejected)
+                        StepOutcome.Interrupted else StepOutcome.Unknown("平台回调不能证明业务结果"))
+                }
+            }
+        }
+        val codec = BundleCodec(factory.contracts)
+        val library = TaskVersionLibrary(database!!, codec)
+        val task = TaskDefinition("tap", "fixture", "自有点击夹具", "tools", 1, steps = listOf(
+            StepDefinition("tap", "自有点击", listOf(ActionDefinition("tap", "fixture.tap", 1, JsonObject(emptyMap()))))))
+        val target = TargetProfile("fixture", "自有画面", listOf(context.packageName), IdentityPolicy.NONE, listOf(TaskCategory("tools", "工具")))
+        val bundle = TaskBundle(1, "intent-qa", "2026-11-17T00:00:00Z", "独立测试", listOf(task), listOf(target))
+        val content = codec.write(bundle)
+        library.install(content, bundle.version, TaskVersionLibrary.sha256(content)); library.activate(bundle.version)
+        val store = ExecutionStateStore(database!!, library)
+        val gated = object : ExecutionPersistence {
+            override suspend fun load() = store.load()
+            override suspend fun persist(expectedRevision: Long, prepared: PreparedExecutorTransition): Long {
+                if (prepared.snapshot.deviceActions.any { it.receipt == null }) {
+                    intentEntered.complete(Unit); releaseStore.await()
+                }
+                return store.persist(expectedRevision, prepared)
+            }
+        }
+        runtime = ExecutionRuntime(gated, library, TaskAdmissionRepository(database!!, library), factory, scope!!)
+        withTimeout(5_000) { runtime.status.first { it == RuntimeStatus.Ready } }
+        try {
+            runtime.enqueueTask(TaskAddress("fixture", "tap")).await()
+            withTimeout(5_000) { intentEntered.await() }
+            assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
+            assertFalse(observed.isCompleted); assertTrue(store.load().decode().state.value.deviceActions.isEmpty())
+            releaseStore.complete(Unit)
+            assertEquals(GestureResult.Completed, withTimeout(5_000) { observed.await() })
+            assertEquals(1, withContext(Dispatchers.Main) { surface.downs })
+            assertFalse(runtime.state.value.facts.any { it.type == "task-completed" || it.type == "step-completed" })
+            assertEquals(DeviceActionDelivery.COMPLETED, store.load().decode().state.value.deviceActions.single().receipt!!.delivery)
+            runtime.submit(ExecutorCommand.Pause).await()
+            val unresolved = withTimeout(5_000) { runtime.state.first { it.phase == ExecutorPhase.BLOCKED_UNKNOWN } }
+            assertTrue(unresolved.manualHold); assertEquals(1, unresolved.unresolved.size)
+            assertEquals(1, library.snapshot().versions.single().referenceCount)
+        } finally { releaseStore.complete(Unit) }
+    }
 }

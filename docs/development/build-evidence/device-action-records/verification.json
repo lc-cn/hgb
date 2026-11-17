@@ -1,0 +1,44 @@
+{
+  "date": "2026-11-17",
+  "baseCommit": "fd96faad5d610538350a5ef3fb048ffdb2297624",
+  "sourceSha256": {
+    "core/src/main/kotlin/io/github/yysassist/core/execution/DeviceActionRecord.kt": "86da6c9d5df61b7d966270bf655d2c99f2dc6e125b0131eb550d3f929fe2d74a",
+    "core/src/test/kotlin/io/github/yysassist/core/execution/DeviceActionRecordTest.kt": "14b4fb9489e440adbdde64f3a9d4e0019bd15d6ffc15e88855d0ae7d5dc59cd4",
+    "app/src/androidTest/kotlin/io/github/yysassist/ExecutionRuntimeTest.kt": "326ef7a5039ed4086cacdfcd55f35f17914d1cd9cd87cea4ceecbd6a40205560",
+    "app/src/androidTest/kotlin/io/github/yysassist/device/DeviceRuntimeIntegrationTest.kt": "24deb02f9d1b437d6b171a9e66d395d7868ea64ebfe13855575f4036d5a477ee",
+    "app/src/main/kotlin/io/github/yysassist/ExecutionRuntime.kt": "f4168fec3f83652e401d91863bb106af9036462b5c690fa1b62781d8c4463af9",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/ExecutionModels.kt": "31e495e84c38802ce0bcad5a35dac3f0c3b2ff0f290c9b3d8c041aad06cd2800",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/ExecutorCommand.kt": "5dd88fd3656c3dbfedcdf8cbcff31d9fe460128de79d27d2cca04ae6c26c7a1f",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/TaskExecutor.kt": "ac18eab85c0f8024a0451c3dba003e375865062b9b0f0040ed99068a7d360891"
+  },
+  "kind": "New approved input-journal capability, not a reported regression; no claim of running these new API tests against old source",
+  "limitations": [
+    "No production JSON gesture registered in this checkpoint",
+    "Recorded observations are references, not proof of account/geometry/freshness",
+    "Storage faults are controlled injections, not actual disk failures",
+    "Recorded-input recovery uses host scope reconstruction, not actual Android process termination during game input",
+    "Actual force-stop cases cover the existing no-input runner",
+    "No Release, CI, game claim, held-out theme or 24-hour test"
+  ],
+  "app": {
+    "sha256": "9be46745102f90f155adbab731fd45d30280d9658799779bc55ff5943e6fcacb",
+    "assets": [
+      "assets/PublicSuffixDatabase.list",
+      "assets/maa-license/LICENSE.md"
+    ]
+  },
+  "test": {
+    "sha256": "b9f1b3b95a980fe3c9580823468b3de32bc845f577544c2f327c5d3ca3e7a91d",
+    "assets": [
+      "assets/io.github.yysassist.storage.AssistDatabase/1.json",
+      "assets/io.github.yysassist.storage.AssistDatabase/2.json",
+      "assets/io.github.yysassist.storage.AssistDatabase/3.json",
+      "assets/io.github.yysassist.storage.AssistDatabase/4.json",
+      "assets/maa-license/LICENSE.md",
+      "assets/maa-model/det.onnx",
+      "assets/maa-model/keys.txt",
+      "assets/maa-model/rec.onnx",
+      "assets/model-manifest.json"
+    ]
+  }
+}
