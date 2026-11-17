@@ -1,0 +1,162 @@
+{
+  "status": "proposal-not-loadable-by-current-app",
+  "purpose": "Only a control-flow contract fixture; not a game task, no business defaults or Release.",
+  "step": {
+    "id": "inspect-and-collect",
+    "name": "核对资格并处理本次物资",
+    "program": [
+      {
+        "type": "action",
+        "action": {
+          "id": "observe",
+          "capability": "screen.readText",
+          "contractVersion": 1,
+          "inputs": {
+            "packageName": "sample.fixture",
+            "detector": "det",
+            "recognizer": "rec",
+            "dictionary": "keys"
+          }
+        }
+      },
+      {
+        "type": "action",
+        "action": {
+          "id": "classify",
+          "capability": "screen.classifyText",
+          "contractVersion": 1,
+          "inputs": {
+            "states": [
+              {
+                "id": "ready",
+                "text": "夹具：本次可领取",
+                "minimumConfidence": 0.8
+              },
+              {
+                "id": "done",
+                "text": "夹具：本次已领取",
+                "minimumConfidence": 0.8
+              }
+            ]
+          },
+          "bindings": {
+            "observation": {
+              "type": "output",
+              "actionId": "observe",
+              "field": "observation"
+            }
+          }
+        }
+      },
+      {
+        "type": "branch",
+        "value": {
+          "type": "output",
+          "actionId": "classify",
+          "field": "state"
+        },
+        "cases": [
+          {
+            "equals": "ready",
+            "program": [
+              {
+                "type": "action",
+                "action": {
+                  "id": "locate",
+                  "capability": "screen.locateText",
+                  "contractVersion": 1,
+                  "inputs": {
+                    "text": "夹具：领取",
+                    "minimumConfidence": 0.8
+                  },
+                  "bindings": {
+                    "observation": {
+                      "type": "output",
+                      "actionId": "observe",
+                      "field": "observation"
+                    }
+                  }
+                }
+              },
+              {
+                "type": "action",
+                "action": {
+                  "id": "collect",
+                  "capability": "screen.tap",
+                  "contractVersion": 1,
+                  "inputs": {
+                    "durationMs": 80
+                  },
+                  "bindings": {
+                    "target": {
+                      "type": "output",
+                      "actionId": "locate",
+                      "field": "target"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "equals": "done",
+            "program": []
+          }
+        ]
+      },
+      {
+        "type": "action",
+        "action": {
+          "id": "after",
+          "capability": "screen.readText",
+          "contractVersion": 1,
+          "inputs": {
+            "packageName": "sample.fixture",
+            "detector": "det",
+            "recognizer": "rec",
+            "dictionary": "keys"
+          }
+        }
+      },
+      {
+        "type": "action",
+        "action": {
+          "id": "verify",
+          "capability": "screen.expectText",
+          "contractVersion": 1,
+          "inputs": {
+            "text": "夹具：本次已领取",
+            "minimumConfidence": 0.8
+          },
+          "bindings": {
+            "observation": {
+              "type": "output",
+              "actionId": "after",
+              "field": "observation"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "repeatShape": {
+    "type": "repeat",
+    "count": {
+      "type": "configuration",
+      "fieldId": "count"
+    },
+    "program": [
+      {
+        "type": "action",
+        "action": {
+          "id": "wait",
+          "capability": "control.wait",
+          "contractVersion": 1,
+          "inputs": {
+            "durationMs": 0
+          }
+        }
+      }
+    ]
+  }
+}
