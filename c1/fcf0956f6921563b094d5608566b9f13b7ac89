@@ -1,0 +1,27 @@
+docs/development/build-evidence/game-readonly-sampling/README.md
+  s_b0f0af2da7f631::t_389cffe683e93e 1-33
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_389cffe683e93e 236-241
+docs/development/game-validation.md
+  s_b0f0af2da7f631::t_389cffe683e93e 60-67
+docs/development/build-evidence/game-readonly-sampling/ocr-test.txt
+  s_b0f0af2da7f631::t_e27cfe51b2898c 1-23
+docs/development/build-evidence/game-readonly-sampling/verification.json
+  s_b0f0af2da7f631::t_e27cfe51b2898c 1-188
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c1fcf0956f6921563b094d5608566b9f13b7ac89",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
