@@ -1,0 +1,120 @@
+core/src/main/kotlin/io/github/yysassist/core/execution/ExecutorCommand.kt
+  s_b0f0af2da7f631::t_58aabe33a7c402 5-6,21
+app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationRuntimeTest.kt
+  s_b0f0af2da7f631::t_41f64a4cc60fe7 1-6,9-16,18-19,21-30,32-45,47-55,58-62,64-66,69-88,92,94-95,97-114,117-123,140-171,289-290
+  s_b0f0af2da7f631::t_1b02e95a6d95e5 46,56-57,63,67-68
+  s_b0f0af2da7f631::t_84c63cc23d01cc 7-8,20,31,96,115-116,172-178,181-194,196-249
+  s_b0f0af2da7f631::t_3ae91782822508 179-180,195
+  s_b0f0af2da7f631::t_96aed6977a3d1b 17,89-91,93,124-139,250-288
+docs/development/build-evidence/observation-actions/build.txt
+  s_b0f0af2da7f631::t_952a324d47f8cc 1-159
+docs/development/build-evidence/observation-actions/android-full-tests.txt
+  s_b0f0af2da7f631::t_952a324d47f8cc 1-1782
+core/src/test/kotlin/io/github/yysassist/core/execution/ReadOnlyActionInterpreterTest.kt
+  s_b0f0af2da7f631::t_ade5a7f6f1dfad 1-57,64-106
+  s_b0f0af2da7f631::t_b7ae450c941466 58-63
+docs/development/build-evidence/observation-actions/process-result.json
+  s_b0f0af2da7f631::t_952a324d47f8cc 1
+docs/development/build-evidence/observation-actions/cleanup.json
+  s_b0f0af2da7f631::t_ab2acb81853a2a 1-8
+docs/development/build-evidence/observation-actions/native-control-before.txt
+  s_b0f0af2da7f631::t_952a324d47f8cc 1-204
+app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_b0f0af2da7f631::t_73b28048865dda 20,59
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_fcfd8c47b5c2bd 147,149,151,153
+  s_b0f0af2da7f631::t_281f25ece3d04a 146,148,150,152
+core/src/main/kotlin/io/github/yysassist/core/execution/ReadOnlyActionProvider.kt
+  s_b0f0af2da7f631::t_96aed6977a3d1b 6
+  s_b0f0af2da7f631::t_b7ae450c941466 16
+  s_b0f0af2da7f631::t_4646a7de97d311 1-5,7-15,17-20
+app/src/main/kotlin/io/github/yysassist/actions/TextObservationActions.kt
+  s_b0f0af2da7f631::t_73b28048865dda 1-16,18-24,46-59,65-76,78-80,82-83,85-86,94-95,97,103,107-114,119-121,124-129
+  s_b0f0af2da7f631::t_96aed6977a3d1b 17,77,84
+  s_b0f0af2da7f631::t_b04ed90dd85252 60-64
+  s_b0f0af2da7f631::t_b7ae450c941466 81,87-90,96,98-99,102,118
+  s_b0f0af2da7f631::t_5b40206ac0220c 25-45,91-93,100-101,104-106,115-117,122-123
+docs/development/build-evidence/observation-actions/installed-artifacts.json
+  s_b0f0af2da7f631::t_952a324d47f8cc 1-51,54
+  s_b0f0af2da7f631::t_81d0ca1555ec78 52-53
+docs/development/build-evidence/observation-actions/pause-fence-intermediate.txt
+  s_b0f0af2da7f631::t_952a324d47f8cc 1-50
+docs/development/build-evidence/observation-actions/verification.json
+  s_b0f0af2da7f631::t_952a324d47f8cc 1-43
+core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt
+  s_b0f0af2da7f631::t_4646a7de97d311 93,98,101,191,195-197
+  s_b0f0af2da7f631::t_b04ed90dd85252 99-100
+docs/development/build-evidence/observation-actions/test-summary.json
+  s_b0f0af2da7f631::t_952a324d47f8cc 1-219
+app/src/main/kotlin/io/github/yysassist/ExecutionRuntime.kt
+  s_b0f0af2da7f631::t_d6c5c8d28e762f 212-213
+  s_b0f0af2da7f631::t_58aabe33a7c402 54-55,192-195,208-211,214-220,341
+app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationContractTest.kt
+  s_b0f0af2da7f631::t_ade5a7f6f1dfad 1-47,60
+  s_b0f0af2da7f631::t_41f64a4cc60fe7 48-59
+docs/development/build-evidence/observation-actions/android-boundary-tests.txt
+  s_b0f0af2da7f631::t_952a324d47f8cc 1-445
+core/src/test/kotlin/io/github/yysassist/core/execution/BuiltInStepWorkFactoryTest.kt
+  s_b0f0af2da7f631::t_73b28048865dda 77-78
+docs/development/build-evidence/observation-actions/android-native-tests.txt
+  s_b0f0af2da7f631::t_952a324d47f8cc 1-164
+docs/development/observation-actions.md
+  s_b0f0af2da7f631::t_281f25ece3d04a 2,4-37,39-41,48-52
+  s_b0f0af2da7f631::t_fcfd8c47b5c2bd 1,3,38,42-47
+docs/development/README.md
+  s_b0f0af2da7f631::t_fcfd8c47b5c2bd 29
+docs/development/build-evidence/observation-actions/process-seed.txt
+  s_b0f0af2da7f631::t_952a324d47f8cc 1-23
+docs/development/build-evidence/observation-actions/process-verify.txt
+  s_b0f0af2da7f631::t_952a324d47f8cc 1-23
+docs/development/build-evidence/observation-actions/pause-fence-after.txt
+  s_b0f0af2da7f631::t_952a324d47f8cc 1-23
+app/src/androidTest/kotlin/io/github/yysassist/device/AndroidDeviceBridgeTest.kt
+  s_b0f0af2da7f631::t_f3f4569e86fb94 125-135
+app/src/main/kotlin/io/github/yysassist/vision/TextObservation.kt
+  s_b0f0af2da7f631::t_b7ae450c941466 10
+app/src/main/kotlin/io/github/yysassist/vision/VersionedTextObserver.kt
+  s_b0f0af2da7f631::t_b7ae450c941466 15-17,37-38
+core/src/main/kotlin/io/github/yysassist/core/content/ActionBindings.kt
+  s_b0f0af2da7f631::t_b04ed90dd85252 35-42,44,58,93-103
+app/src/androidTest/kotlin/io/github/yysassist/vision/TextObserverLifecycleTest.kt
+  s_b0f0af2da7f631::t_cf001bff20d5ca 138,140-143,146,150-153
+  s_b0f0af2da7f631::t_011ec6155a0da8 6,21,132-137,139,144-145,147-149
+  s_b0f0af2da7f631::t_957e90e998ce70 154
+core/src/main/kotlin/io/github/yysassist/core/execution/TaskExecutor.kt
+  s_b0f0af2da7f631::t_58aabe33a7c402 107,385,390
+app/src/androidTest/kotlin/io/github/yysassist/ExecutionRuntimeTest.kt
+  s_b0f0af2da7f631::t_58aabe33a7c402 94-104,106-120
+  s_b0f0af2da7f631::t_8f7475bd031f3f 121-169
+  s_b0f0af2da7f631::t_cf001bff20d5ca 105
+docs/development/build-evidence/observation-actions/pause-fence-before.txt
+  s_b0f0af2da7f631::t_952a324d47f8cc 1-80
+docs/development/build-evidence/observation-actions/README.md
+  s_b0f0af2da7f631::t_156ee3940dd250 12
+  s_b0f0af2da7f631::t_fcfd8c47b5c2bd 1-11
+core/src/main/kotlin/io/github/yysassist/core/execution/StepWorker.kt
+  s_b0f0af2da7f631::t_b7ae450c941466 90
+  s_b0f0af2da7f631::t_4646a7de97d311 4,24-25,35-36,51-54,61-64,66-68,70-71,73-89,91-117,119-121
+  s_b0f0af2da7f631::t_73b28048865dda 69,72
+app/src/main/kotlin/io/github/yysassist/device/AndroidDeviceBridge.kt
+  s_b0f0af2da7f631::t_96aed6977a3d1b 40-44,63,88,91
+  s_b0f0af2da7f631::t_f3f4569e86fb94 9,20-22,64-73,98,100-108,111,145-155,157,178,181
+  s_b0f0af2da7f631::t_73b28048865dda 90,92-97,109
+  s_b0f0af2da7f631::t_6bfabab68057dc 110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fd96faad5d610538350a5ef3fb048ffdb2297624",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
