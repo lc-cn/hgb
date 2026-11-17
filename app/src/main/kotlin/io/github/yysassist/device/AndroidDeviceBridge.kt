@@ -9,6 +9,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.Display
 import android.view.WindowManager
+import android.view.accessibility.AccessibilityWindowInfo
 import io.github.yysassist.core.execution.AttemptTicket
 import java.io.Closeable
 import kotlinx.coroutines.CompletableDeferred
@@ -33,6 +34,7 @@ internal class ScreenFrame(val bitmap: Bitmap, val stamp: FrameStamp) : Closeabl
     override fun close() { bitmap.recycle() }
 }
 internal enum class DeviceRejection { DISCONNECTED, WRONG_FOREGROUND, SCREEN_CHANGED, NOT_OWNER, BUSY, INVALID_GESTURE, PLATFORM_REJECTED, DECODE_FAILED }
+internal enum class DeviceAvailability { READY, DISCONNECTED, WRONG_FOREGROUND, DISPLAY_UNAVAILABLE, UNCONFIRMED }
 internal sealed interface FrameResult {
     data class Ready(val frame: ScreenFrame) : FrameResult
     data class Unavailable(val reason: DeviceRejection, val platformCode: Int? = null) : FrameResult
@@ -100,6 +102,32 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
 
     override suspend fun capture(expectedPackage: String): FrameResult = captureScreen(expectedPackage)
     suspend fun checkScreen(): FrameResult = captureScreen(null)
+    /** Query app focus, not the last touched overlay. Potential remote node lookup stays off Main. */
+    suspend fun availability(expectedPackages: Set<String>): DeviceAvailability {
+        val epoch = withContext(Dispatchers.Main.immediate) { connection.takeIf { connected } }
+            ?: return DeviceAvailability.DISCONNECTED
+        val focusedPackage = withContext(Dispatchers.IO) { focusedApplicationPackage() }
+        return withContext(Dispatchers.Main.immediate) {
+            val display = service.getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY)
+            when {
+                !connected || connection !== epoch -> DeviceAvailability.DISCONNECTED
+                display == null -> DeviceAvailability.UNCONFIRMED
+                display.state != Display.STATE_ON -> DeviceAvailability.DISPLAY_UNAVAILABLE
+                focusedPackage == null -> DeviceAvailability.UNCONFIRMED
+                focusedPackage !in expectedPackages -> DeviceAvailability.WRONG_FOREGROUND
+                else -> DeviceAvailability.READY
+            }
+        }
+    }
+    @Suppress("DEPRECATION") // Return owned window/node instances on older supported Android versions.
+    private fun focusedApplicationPackage(): String? {
+        val windows = try { service.windows } catch (_: SecurityException) { return null }
+        try {
+            val focused = windows.singleOrNull { it.type == AccessibilityWindowInfo.TYPE_APPLICATION && it.isFocused } ?: return null
+            val root = try { focused.root } catch (_: SecurityException) { return null } ?: return null
+            return try { root.packageName?.toString() } finally { root.recycle() }
+        } finally { windows.forEach { it.recycle() } }
+    }
     /** Revalidate ownership/geometry, not the continued presence of pixels seen in the old image. */
     override suspend fun validateObservation(stamp: FrameStamp): DeviceRejection? = withContext(Dispatchers.Main.immediate) {
         when {

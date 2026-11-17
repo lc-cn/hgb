@@ -96,6 +96,21 @@ class AndroidDeviceBridgeTest {
         assertTrue(result.toString(), result is FrameResult.Ready)
         return (result as FrameResult.Ready).frame
     }
+    @Test fun availabilityUsesFocusedApplicationAndDetectsDisplayPowerWithoutTakingAScreenshot(): Unit = runBlocking {
+        val packages = setOf(instrumentation.targetContext.packageName)
+        withTimeout(5_000) { while (service.bridge.availability(packages) != DeviceAvailability.READY) delay(20) }
+        assertEquals(DeviceAvailability.WRONG_FOREGROUND, service.bridge.availability(setOf("fixture.other.app")))
+        val before = GameAccessibilityService.sceneRevision.value
+        try {
+            shell("input keyevent KEYCODE_SLEEP")
+            withTimeout(5_000) { while (service.bridge.availability(packages) != DeviceAvailability.DISPLAY_UNAVAILABLE) delay(20) }
+            withTimeout(5_000) { GameAccessibilityService.sceneRevision.first { it > before } }
+        } finally {
+            shell("input keyevent KEYCODE_WAKEUP"); shell("wm dismiss-keyguard")
+        }
+        withTimeout(5_000) { while (service.bridge.availability(packages) != DeviceAvailability.READY) delay(20) }
+        assertTrue(surface.touches.isEmpty())
+    }
     private suspend fun input(): AndroidDeviceBridge.InputSession =
         service.bridge.openInput(ticket, executor::permitsInput)!!.also { session = it }
     private suspend fun center(): ScreenPoint = withContext(Dispatchers.Main) {

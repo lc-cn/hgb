@@ -2,6 +2,7 @@ package io.github.yysassist.actions
 
 import android.app.UiAutomation
 import android.content.pm.ActivityInfo
+import android.content.Intent
 import android.graphics.*
 import android.os.Build
 import android.os.ParcelFileDescriptor
@@ -174,7 +175,8 @@ class TextObservationRuntimeTest {
                 }
             }
         }
-        runtime = ExecutionRuntime(store, library, TaskAdmissionRepository(database!!, library), watched, runScope)
+        runtime = ExecutionRuntime(store, library, TaskAdmissionRepository(database!!, library), watched, runScope,
+            startReadiness = DeviceExecutionReadiness(factory.contracts))
         withTimeout(5_000) { runtime.status.first { it == RuntimeStatus.Ready } }
     }
     @Test fun actualScreenAndVersionModelsProduceAVerifiedRuntimeResultWithoutInput(): Unit = runBlocking {
@@ -186,6 +188,40 @@ class TextObservationRuntimeTest {
         assertEquals(0, library.snapshot().versions.single().referenceCount)
         assertEquals(0, withContext(Dispatchers.Main) { surface.touches })
         assertTrue(ExecutionStateStore(database!!, library).load().decode().state.value.facts.any { it.type == "task-completed" })
+    }
+    @Test fun aDisconnectedDeviceBeforeExecutionWaitsWithoutInventingBusinessUncertaintyAndRunsAfterConnection(): Unit = runBlocking {
+        val workFinished = CompletableDeferred<StepOutcome>()
+        prepare("领取物资", onWorkFinished = { workFinished.complete(it) })
+        val component = "${context.packageName}/${GameAccessibilityService::class.java.name}"
+        shell("settings delete secure enabled_accessibility_services")
+        withTimeout(10_000) { GameAccessibilityService.connection.first { it == null } }
+        assertTrue(runtime.enqueueTask(address).await() is RuntimeCommandResult.Applied)
+        val waiting = withTimeout(10_000) { combine(runtime.state, runtime.status) { state, status -> state to status }
+            .first { (state, status) -> state.unresolved.isNotEmpty() || status.toString().contains("无障碍") } }
+        assertTrue(waiting.toString(), waiting.first.unresolved.isEmpty())
+        assertNotNull(waiting.first.current); assertFalse(workFinished.isCompleted)
+        assertTrue(waiting.first.deviceActions.isEmpty()); assertEquals(1, library.snapshot().versions.single().referenceCount)
+        shell("settings put secure enabled_accessibility_services $component"); shell("settings put secure accessibility_enabled 1")
+        withTimeout(10_000) { GameAccessibilityService.connection.filterNotNull().first() }
+        val done = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        assertTrue(done.toString(), done.unresolved.isEmpty()); assertNull(done.current)
+        assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
+        assertEquals(0, library.snapshot().versions.single().referenceCount)
+    }
+    @Test fun anOffscreenTaskWaitsAndFocusReturningRechecksWithoutLaunchingOrTouchingTheTarget(): Unit = runBlocking {
+        val workFinished = CompletableDeferred<StepOutcome>()
+        prepare("领取物资", onWorkFinished = { workFinished.complete(it) })
+        val bridge = GameAccessibilityService.connection.value!!.bridge
+        shell("input keyevent KEYCODE_HOME")
+        withTimeout(10_000) { while (bridge.availability(setOf(context.packageName)) != DeviceAvailability.WRONG_FOREGROUND) delay(30) }
+        runtime.enqueueTask(address).await()
+        withTimeout(10_000) { runtime.status.first { it is RuntimeStatus.Waiting } }
+        assertFalse(workFinished.isCompleted); assertTrue(runtime.state.value.unresolved.isEmpty())
+        context.startActivity(Intent(context, ComponentActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
+        val done = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        assertTrue(done.toString(), done.unresolved.isEmpty()); assertNull(done.current)
+        assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
+        assertEquals(0, library.snapshot().versions.single().referenceCount)
     }
     @Test fun absentTextIsUnknownRatherThanAnInventedSuccessOrConfirmedBusinessFailure(): Unit = runBlocking {
         prepare("此文字不在测试画面")

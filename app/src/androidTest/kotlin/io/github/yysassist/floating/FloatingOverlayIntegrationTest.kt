@@ -306,8 +306,11 @@ class FloatingOverlayIntegrationTest {
         assertTrue(runtime.state.value.manualHold)
         preferences.setVisible(true); waitFor { window!!.isShowing }
         click("继续：等待一"); click("继续", false)
-        // The original unfinished step remains blocked by the deliberately unverified readiness port.
-        waitFor { runtime.status.value is RuntimeStatus.RecoveryBlocked }
+        // This port rejects prerequisites before work starts; it has produced no business unknown.
+        waitFor { runtime.status.value is RuntimeStatus.Waiting }
+        assertTrue(runtime.state.value.unresolved.isEmpty())
+        node("等待核对当前目标与账号", false)
+        screenshot("waiting-light-portrait")
         assertNotEquals(ticket, runtime.state.value.activeTicket)
     }
     @Test fun returnAndConfigurationIntentsPreserveNavigationAndNeverSubmitWork(): Unit = runBlocking {

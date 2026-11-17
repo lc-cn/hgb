@@ -8,6 +8,8 @@ import io.github.yysassist.core.model.*
 import io.github.yysassist.storage.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.*
 import org.junit.*
 import org.junit.Assert.*
@@ -43,9 +45,10 @@ class ExecutionRuntimeTest {
         database.close(); context.deleteDatabase(name)
     }
     private suspend fun runtime(port: StepWorkFactory = factory, persistence: ExecutionPersistence = store,
-        readiness: ExecutionContextReadiness = ExecutionContextReadiness { _, _ -> true }): ExecutionRuntime {
+        readiness: ExecutionContextReadiness = ExecutionContextReadiness { _, _ -> true },
+        startReadiness: ExecutionStartReadiness = ExecutionStartReadiness { _, _ -> StepStartCondition.Ready }): ExecutionRuntime {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate).also { scopes += it }
-        return ExecutionRuntime(persistence, library, TaskAdmissionRepository(database, library), port, scope, readiness).also {
+        return ExecutionRuntime(persistence, library, TaskAdmissionRepository(database, library), port, scope, readiness, startReadiness).also {
             withTimeout(5_000) { it.status.first { value -> value !is RuntimeStatus.Loading } }
         }
     }
@@ -56,6 +59,94 @@ class ExecutionRuntimeTest {
         "fixture-input", "fixture.tap", 1, "fixture-observation")
     private fun actionWrite(result: RuntimeCommandResult): DeviceActionWriteResult =
         ((result as RuntimeCommandResult.Applied).reply as ExecutorReply.DeviceActionRecorded).result
+
+    private class StartGate : ExecutionStartReadiness {
+        val condition = MutableStateFlow<StepStartCondition>(StepStartCondition.Waiting("等待目标应用回到前台"))
+        override val changes = condition.map { Unit }
+        override suspend fun check(attempt: StepAttempt, bundle: TaskBundle) = condition.value
+    }
+    @Test fun waitingBeforeWorkerCreationRetainsTheQueueAndStartsOnceAfterAReadinessEvent(): Unit = runBlocking {
+        val gate = StartGate(); val created = AtomicInteger()
+        val port = object : StepWorkFactory by factory {
+            override fun create(attempt: StepAttempt, bundle: TaskBundle): StepWork {
+                created.incrementAndGet(); return factory.create(attempt, bundle)
+            }
+        }
+        val host = runtime(port, startReadiness = gate)
+        assertTrue(add(host, "one") is RuntimeCommandResult.Applied)
+        withTimeout(5_000) { host.status.first { it is RuntimeStatus.Waiting } }
+        assertEquals(0, created.get()); assertTrue(host.state.value.unresolved.isEmpty())
+        val ticket = host.state.value.activeTicket!!
+        assertFalse(host.permitsInput(ticket)); assertEquals(1, library.snapshot().versions.single().referenceCount)
+        gate.condition.value = StepStartCondition.Ready
+        withTimeout(5_000) { while (created.get() == 0 || host.status.value != RuntimeStatus.Ready) delay(5) }
+        host.readinessChanged(); delay(50)
+        assertEquals(1, created.get()); assertEquals(ticket, host.state.value.activeTicket)
+    }
+    @Test fun pausingAWaitingTaskKeepsTheQueueHeldWhenTheDeviceBecomesReady(): Unit = runBlocking {
+        val gate = StartGate(); val count = AtomicInteger()
+        val host = runtime(counting(count, { awaitCancellation() }), startReadiness = gate)
+        add(host, "one"); add(host, "two")
+        withTimeout(5_000) { host.status.first { it is RuntimeStatus.Waiting } }
+        host.submit(ExecutorCommand.Pause).await(); wait(host) { it.phase == ExecutorPhase.PAUSED }
+        gate.condition.value = StepStartCondition.Ready; delay(100)
+        assertEquals(0, count.get()); assertTrue(host.state.value.manualHold)
+        assertEquals(listOf("two"), host.state.value.waiting.map { it.task.id })
+        assertEquals(RuntimeStatus.Ready, host.status.value)
+        host.submit(ExecutorCommand.Resume(ResumeMode.CONTINUE)).await()
+        withTimeout(5_000) { while (count.get() != 1) delay(5) }
+        assertEquals("one", host.state.value.current!!.task.id)
+    }
+    @Test fun removingAWaitingCurrentItemStartsTheNextWithoutRevivingTheRemovedItem(): Unit = runBlocking {
+        val gate = StartGate(); val count = AtomicInteger()
+        val readiness = object : ExecutionStartReadiness {
+            override val changes = gate.changes
+            override suspend fun check(attempt: StepAttempt, bundle: TaskBundle) =
+                if (attempt.run.task.id == "one") gate.condition.value else StepStartCondition.Ready
+        }
+        val host = runtime(counting(count, { awaitCancellation() }), startReadiness = readiness)
+        add(host, "one"); add(host, "two")
+        withTimeout(5_000) { host.status.first { it is RuntimeStatus.Waiting } }
+        host.submit(ExecutorCommand.Remove(host.state.value.current!!.runId)).await()
+        wait(host) { it.current?.task?.id == "two" && it.phase == ExecutorPhase.RUNNING }
+        withTimeout(5_000) { while (count.get() != 1) delay(5) }
+        gate.condition.value = StepStartCondition.Ready; delay(100)
+        assertEquals(1, count.get()); assertFalse(host.state.value.manualHold)
+        assertTrue(host.state.value.unresolved.isEmpty())
+        assertEquals(1, library.snapshot().versions.single().referenceCount)
+    }
+    @Test fun aReadinessLookupExceptionDoesNotBecomeBusinessFailureOrUnknownAndCanBeRechecked(): Unit = runBlocking {
+        val available = MutableStateFlow(false); val count = AtomicInteger()
+        val readiness = object : ExecutionStartReadiness {
+            override val changes = available.map { Unit }
+            override suspend fun check(attempt: StepAttempt, bundle: TaskBundle): StepStartCondition {
+                if (!available.value) throw java.io.IOException("fixture lookup failed")
+                return StepStartCondition.Ready
+            }
+        }
+        val host = runtime(counting(count, { awaitCancellation() }), startReadiness = readiness)
+        add(host, "one")
+        withTimeout(5_000) { host.status.first { it is RuntimeStatus.Waiting } }
+        assertTrue((host.status.value as RuntimeStatus.Waiting).message.contains("暂无法确认"))
+        assertEquals(0, count.get()); assertTrue(host.state.value.unresolved.isEmpty())
+        assertFalse(host.state.value.facts.any { it.type == "task-failed" || it.type == "task-completed" })
+        available.value = true
+        withTimeout(5_000) { while (count.get() != 1) delay(5) }
+    }
+    @Test fun aKnownWorkerConstructionFailureAfterWaitingDoesNotLeaveAStaleWaitingLabel(): Unit = runBlocking {
+        val gate = StartGate()
+        val port = object : StepWorkFactory by factory {
+            override fun create(attempt: StepAttempt, bundle: TaskBundle): StepWork = error("fixture construction failure")
+        }
+        val host = runtime(port, startReadiness = gate)
+        add(host, "one")
+        withTimeout(5_000) { host.status.first { it is RuntimeStatus.Waiting } }
+        gate.condition.value = StepStartCondition.Ready
+        wait(host) { it.current == null && it.facts.any { fact -> fact.type == "task-failed" } }
+        assertEquals(RuntimeStatus.Ready, host.status.value)
+        assertEquals(0, library.snapshot().versions.single().referenceCount)
+        assertTrue(host.state.value.unresolved.isEmpty())
+    }
 
     @Test fun deviceActionCannotBeAcknowledgedBeforeItsStateTransactionCommits(): Unit = runBlocking {
         val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
@@ -128,6 +219,9 @@ class ExecutionRuntimeTest {
         assertEquals(call, reloaded.state.value.deviceActions.single().intent)
         assertEquals(call.ticket, reloaded.state.value.unresolved.single().attempt.ticket)
         assertEquals(1, library.snapshot().versions.single().referenceCount)
+        reloaded.readinessChanged(); delay(100)
+        assertTrue("A device event cannot clear an actual unresolved result", reloaded.status.value is RuntimeStatus.RecoveryBlocked)
+        assertEquals(call.ticket, reloaded.state.value.unresolved.single().attempt.ticket)
     }
     @Test fun candidateAssessmentIsReadOnlyAndDoesNotConflateReadErrorsWithAnUnavailableTask() = runBlocking {
         val runtime = runtime()
@@ -372,8 +466,14 @@ class ExecutionRuntimeTest {
         val first = runtime(); add(first, "one"); wait(first) { it.phase == ExecutorPhase.RUNNING }
         val ticket = first.state.value.activeTicket!!
         scopes.first().cancel(); scopes.first().coroutineContext[Job]!!.join()
-        val recovered = runtime()
+        val gate = StartGate()
+        val recovered = runtime(startReadiness = gate)
+        withTimeout(5_000) { recovered.status.first { it is RuntimeStatus.Waiting } }
+        assertTrue(recovered.state.value.unresolved.isEmpty())
+        assertEquals(1, library.snapshot().versions.single().referenceCount)
         assertNotEquals(ticket, wait(recovered) { it.phase == ExecutorPhase.RUNNING }.activeTicket)
+        gate.condition.value = StepStartCondition.Ready
+        withTimeout(5_000) { recovered.status.first { it == RuntimeStatus.Ready } }
         recovered.submit(ExecutorCommand.Pause).await(); wait(recovered) { it.phase == ExecutorPhase.PAUSED }
         scopes.last().cancel(); scopes.last().coroutineContext[Job]!!.join()
         val held = runtime()
@@ -419,7 +519,8 @@ class ExecutionRuntimeTest {
             runtime.submit(ExecutorCommand.Enqueue("fixture", ExecutionRequest(SubmissionRef(SubmissionKind.TASK, task.id), identity, "v1",
                 listOf(TaskSnapshot(task.id, task.name, task.priority, listOf("wait")))))).await()
             entered.await(); runtime.readinessChanged()
-            withTimeout(5_000) { runtime.status.first { it is RuntimeStatus.RecoveryBlocked } }
+            // An unverified pre-start condition is waiting, not a result from executed work.
+            withTimeout(5_000) { runtime.status.first { it is RuntimeStatus.Waiting } }
             release.complete(Unit); delay(50)
             assertEquals("An old successful check must not revive a superseded attempt binding", 0, started.get())
         } finally { release.complete(Unit) }

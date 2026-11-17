@@ -3,6 +3,10 @@ package io.github.yysassist.device
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.content.res.Configuration
+import android.hardware.display.DisplayManager
+import android.os.Handler
+import android.os.Looper
+import android.view.Display
 import io.github.yysassist.AssistApplication
 import io.github.yysassist.floating.FloatingOverlayWindow
 import android.view.accessibility.AccessibilityEvent
@@ -14,6 +18,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 sealed interface ScreenshotCheck {
     data class Success(val width: Int, val height: Int) : ScreenshotCheck
@@ -26,31 +31,54 @@ class GameAccessibilityService : AccessibilityService() {
     companion object {
         private val mutableConnection = MutableStateFlow<GameAccessibilityService?>(null)
         val connection = mutableConnection.asStateFlow()
+        private val mutableSceneRevision = MutableStateFlow(0L)
+        internal val sceneRevision = mutableSceneRevision.asStateFlow()
     }
     internal val bridge = AndroidDeviceBridge(this)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     internal var floating: FloatingOverlayWindow? = null
         private set
+    private var displayManager: DisplayManager? = null
+    private var displayState: Int? = null
+    private val displayListener = object : DisplayManager.DisplayListener {
+        override fun onDisplayAdded(displayId: Int) { if (displayId == Display.DEFAULT_DISPLAY) sceneChanged() }
+        override fun onDisplayRemoved(displayId: Int) { if (displayId == Display.DEFAULT_DISPLAY) sceneChanged() }
+        override fun onDisplayChanged(displayId: Int) {
+            if (displayId != Display.DEFAULT_DISPLAY) return
+            val state = displayManager?.getDisplay(displayId)?.state
+            if (state != displayState) { displayState = state; sceneChanged() }
+        }
+    }
+    private fun sceneChanged() { if (mutableConnection.value === this) mutableSceneRevision.update { it + 1 } }
+    private fun stopDisplayObservation() { displayManager?.unregisterDisplayListener(displayListener); displayManager = null; displayState = null }
     override fun onServiceConnected() {
         bridge.connected()
         floating?.close()
         floating = FloatingOverlayWindow(this, application as AssistApplication)
         bridge.obstruction = floating
+        stopDisplayObservation()
+        displayManager = getSystemService(DisplayManager::class.java).also {
+            displayState = it.getDisplay(Display.DEFAULT_DISPLAY)?.state
+            it.registerDisplayListener(displayListener, Handler(Looper.getMainLooper()))
+        }
         mutableConnection.value = this
     }
-    override fun onConfigurationChanged(newConfig: Configuration) { super.onConfigurationChanged(newConfig); floating?.configurationChanged(newConfig) }
+    override fun onConfigurationChanged(newConfig: Configuration) { super.onConfigurationChanged(newConfig); floating?.configurationChanged(newConfig); sceneChanged() }
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) (application as AssistApplication).executor.readinessChanged()
+        if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
+            (event?.eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED && event.windowChanges and AccessibilityEvent.WINDOWS_CHANGE_FOCUSED != 0)) sceneChanged()
     }
     override fun onInterrupt() = Unit
     override fun onUnbind(intent: Intent?): Boolean {
         bridge.disconnected()
+        stopDisplayObservation()
         floating?.close(); floating = null; bridge.obstruction = null
         if (mutableConnection.value === this) mutableConnection.value = null
         return super.onUnbind(intent)
     }
     override fun onDestroy() {
         bridge.disconnected()
+        stopDisplayObservation()
         floating?.close(); floating = null; bridge.obstruction = null
         if (mutableConnection.value === this) mutableConnection.value = null
         scope.cancel()

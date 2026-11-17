@@ -110,9 +110,10 @@ internal fun ExecutionWorkbench(state: ExecutorSnapshot, status: RuntimeStatus, 
         }
         Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer).padding(UiSpace.medium),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
-            val phase = when (status) { is RuntimeStatus.RecoveryBlocked -> "等待核对"; is RuntimeStatus.Failure -> "存储异常"; else -> phaseLabel(state.phase) }
+            val phase = when (status) { is RuntimeStatus.Waiting -> "等待中"; is RuntimeStatus.RecoveryBlocked -> "等待核对"; is RuntimeStatus.Failure -> "存储异常"; else -> phaseLabel(state.phase) }
             Text(phase, Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite }, fontWeight = FontWeight.Medium,
                 color = if (status is RuntimeStatus.RecoveryBlocked) LocalAssistPalette.current.warning
+                    else if (status is RuntimeStatus.Waiting) MaterialTheme.colorScheme.onSurfaceVariant
                     else if (state.phase == ExecutorPhase.RUNNING) LocalAssistPalette.current.blue else MaterialTheme.colorScheme.onSurfaceVariant)
             Text(when (val principal = state.context?.principal) {
                 null -> "未识别账号"; Principal.Anonymous -> "无需账号"; is Principal.Account -> principal.id
@@ -122,7 +123,7 @@ internal fun ExecutionWorkbench(state: ExecutorSnapshot, status: RuntimeStatus, 
                 onClick = { state.current?.let { chooseResumeFor = it.runId } ?: resume(null, ResumeMode.CONTINUE) }) {
                 Icon(AssistIcons.Play, "继续队列", tint = LocalAssistPalette.current.teal.copy(alpha = .82f))
             } else key(state.current?.runId) {
-                RunActionButton("队列", true, false, usable && (state.current != null || state.waiting.isNotEmpty()), {}, pause, stop)
+                RunActionButton("队列", true, false, usable && (state.current != null || state.waiting.isNotEmpty()), {}, pause, stop, currentStateLabel = phase)
             }
         }
     }
@@ -159,12 +160,13 @@ private fun QueueRow(run: RunProgress, current: Boolean, state: ExecutorSnapshot
         }) {
         ListItem(headlineContent = { Text(if (run.request.ref.kind == SubmissionKind.PLAN) run.request.ref.id else run.task.name,
             maxLines = 1, overflow = TextOverflow.Ellipsis) }, supportingContent = {
-            Text(if (current) (if (run.request.ref.kind == SubmissionKind.PLAN) "${run.task.name} · " else "") +
+            Text(if (current && status is RuntimeStatus.Waiting) status.message else if (current) (if (run.request.ref.kind == SubmissionKind.PLAN) "${run.task.name} · " else "") +
                 "第 ${run.stepIndex + 1}/${run.task.stepIds.size} 步" else "优先级 ${run.priority}" + (time?.let { " · $it 入队" } ?: ""),
-                maxLines = 1, overflow = TextOverflow.Ellipsis)
+                maxLines = if (current && status is RuntimeStatus.Waiting) 2 else 1, overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.semantics { if (current && status is RuntimeStatus.Waiting) liveRegion = LiveRegionMode.Polite })
         }, trailingContent = {
             Text(if (!current) "队列中" else when (status) {
-                is RuntimeStatus.RecoveryBlocked -> "等待核对"; is RuntimeStatus.Failure -> "状态未确认"; else -> phaseLabel(state.phase)
+                is RuntimeStatus.Waiting -> "等待中"; is RuntimeStatus.RecoveryBlocked -> "等待核对"; is RuntimeStatus.Failure -> "状态未确认"; else -> phaseLabel(state.phase)
             }, style = MaterialTheme.typography.labelSmall,
                 color = if (current) LocalAssistPalette.current.blue else MaterialTheme.colorScheme.onSurfaceVariant)
         })

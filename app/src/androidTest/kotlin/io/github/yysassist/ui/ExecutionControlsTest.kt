@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
@@ -21,6 +22,8 @@ import io.github.yysassist.storage.*
 import io.github.yysassist.floating.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.*
 import org.junit.*
 import org.junit.Assert.*
@@ -34,6 +37,7 @@ class ExecutionControlsTest {
     private lateinit var library: TaskVersionLibrary
     private lateinit var scope: CoroutineScope
     private lateinit var name: String
+    private val startCondition = MutableStateFlow<StepStartCondition>(StepStartCondition.Ready)
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
     @Before fun open(): Unit = runBlocking {
         name = "controls-${UUID.randomUUID()}.db"; database = AssistDatabase.open(context, name)
@@ -45,7 +49,11 @@ class ExecutionControlsTest {
         }, listOf(TargetProfile("fixture", "测试应用", listOf(context.packageName), IdentityPolicy.NONE, listOf(TaskCategory("tools", "工具")))))
         val text = codec.write(bundle); library.install(text, "v1", TaskVersionLibrary.sha256(text)); library.activate("v1")
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-        runtime = ExecutionRuntime(ExecutionStateStore(database, library), library, TaskAdmissionRepository(database, library), factory, scope)
+        runtime = ExecutionRuntime(ExecutionStateStore(database, library), library, TaskAdmissionRepository(database, library), factory, scope,
+            startReadiness = object : ExecutionStartReadiness {
+                override val changes = startCondition.map { Unit }
+                override suspend fun check(attempt: StepAttempt, bundle: TaskBundle) = startCondition.value
+            })
         withTimeout(5_000) { runtime.status.first { it == RuntimeStatus.Ready } }
     }
     @After fun close(): Unit = runBlocking { scope.cancel(); scope.coroutineContext[Job]!!.join(); database.close(); context.deleteDatabase(name) }
@@ -80,6 +88,26 @@ class ExecutionControlsTest {
         val file = context.filesDir.resolve("qa/execution-controls/$name.png"); file.parentFile!!.mkdirs()
         file.outputStream().use { compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
+    private fun waitingControls(wide: Boolean) {
+        startCondition.value = StepStartCondition.Waiting("等待目标应用回到前台")
+        show(wide)
+        compose.onNodeWithContentDescription("加入队列：等待一").performClick()
+        compose.waitUntil(5_000) { runtime.status.value is RuntimeStatus.Waiting }
+        compose.onNodeWithContentDescription("暂停：等待一")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "等待中"))
+        compose.onNodeWithText("工作台").performClick()
+        compose.onNodeWithText("等待目标应用回到前台").assertIsDisplayed()
+        compose.onNodeWithContentDescription("暂停：队列").assertIsEnabled()
+        screenshot(if (wide) "waiting-landscape-dark" else "waiting-portrait-light")
+        compose.onNodeWithContentDescription("暂停：队列").performClick()
+        wait { it.phase == ExecutorPhase.PAUSED }
+        startCondition.value = StepStartCondition.Ready
+        compose.onNodeWithContentDescription("继续队列").assertIsDisplayed()
+        compose.onNodeWithText("等待目标应用回到前台").assertDoesNotExist()
+        assertTrue(runtime.state.value.manualHold)
+    }
+    @Test fun waitingIsVisibleAndCanBePausedInPortrait() = waitingControls(false)
+    @Test fun waitingIsVisibleAndCanBePausedInLandscape() = waitingControls(true)
     @Test fun queuedRowsDisableEnqueueAndPausedRowsOfferTheTwoRealRecoveryModes() {
         show(); addBoth()
         compose.onNodeWithContentDescription("加入队列：等待二").assertIsNotEnabled()

@@ -1,0 +1,7 @@
+{
+  "total": 155,
+  "passed": 153,
+  "skipped": 2,
+  "failures": 0,
+  "scope": "Dedicated API36 arm64 emulator; actual device fixtures and SQLite; process phases separately recorded."
+}

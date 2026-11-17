@@ -43,7 +43,7 @@ internal fun FloatingSurface(layer: FloatingLayer, state: ExecutorSnapshot, stat
     enqueue: (TaskAddress) -> Unit, pause: (Long?) -> Unit, stop: (Long) -> Unit, resume: (Long?, ResumeMode) -> Unit,
     openApp: (TaskAddress?) -> Unit, ballMotion: ((MotionEvent) -> Boolean)? = null, maxWidth: Dp = FloatingUi.wideCommonWidth, feedback: String? = null) {
     val palette = LocalAssistPalette.current
-    val phase = when (status) { RuntimeStatus.Loading -> "读取中"; is RuntimeStatus.Failure -> "存储异常"; is RuntimeStatus.RecoveryBlocked -> "等待核对"; else -> phaseLabel(state.phase) }
+    val phase = when (status) { RuntimeStatus.Loading -> "读取中"; is RuntimeStatus.Waiting -> "等待中"; is RuntimeStatus.Failure -> "存储异常"; is RuntimeStatus.RecoveryBlocked -> "等待核对"; else -> phaseLabel(state.phase) }
     if (layer == FloatingLayer.BALL) {
         val tap = { changeLayer(FloatingLayer.QUICK) }
         @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
@@ -95,7 +95,10 @@ internal fun FloatingSurface(layer: FloatingLayer, state: ExecutorSnapshot, stat
             OutlinedButton({ recoveryFor = null; resume(recovery, ResumeMode.CONTINUE) }, Modifier.weight(1f)) { Text("继续") }
             OutlinedButton({ recoveryFor = null; resume(recovery, ResumeMode.RESTART_CURRENT_TASK) }, Modifier.weight(1f)) { Text("重新开始") }
         }
-        val issue = when (status) { is RuntimeStatus.Failure -> status.message; is RuntimeStatus.RecoveryBlocked -> status.message; else -> state.unresolved.firstOrNull()?.reason ?: feedback }
+        if (status is RuntimeStatus.Waiting) Text(status.message, maxLines = 2, overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+        val issue = when (status) { is RuntimeStatus.Waiting -> null; is RuntimeStatus.Failure -> status.message; is RuntimeStatus.RecoveryBlocked -> status.message; else -> state.unresolved.firstOrNull()?.reason ?: feedback }
         issue?.let { TextButton(onClick = { openApp(null) }) {
             Text(it, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall, color = palette.error)
         } }

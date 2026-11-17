@@ -18,6 +18,7 @@ import io.github.yysassist.storage.ExecutionStateStore
 import io.github.yysassist.vision.VersionedTextObserver
 import io.github.yysassist.vision.MaaTextBackend
 import io.github.yysassist.actions.ScreenActions
+import io.github.yysassist.device.DeviceExecutionReadiness
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import java.net.Proxy
@@ -61,7 +62,8 @@ class AssistApplication : Application() {
         val library = TaskVersionLibrary(database, BundleCodec(workers.contracts), TaskResourceFiles(File(noBackupFilesDir, "task-resources")))
         textObserver = VersionedTextObserver(library, MaaTextBackend(this))
         executor = ExecutionRuntime(ExecutionStateStore(database, library), library,
-            TaskAdmissionRepository(database, library), workers, scope)
+            TaskAdmissionRepository(database, library), workers, scope,
+            startReadiness = DeviceExecutionReadiness(workers.contracts))
         configurations = TaskConfigurationRepository(database, library)
         taskEditor = TaskConfigurationEditor(configurations, scope)
         val client = OkHttpClient.Builder().proxy(Proxy.NO_PROXY).followSslRedirects(false)

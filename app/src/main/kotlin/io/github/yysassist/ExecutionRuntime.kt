@@ -12,6 +12,7 @@ import java.util.UUID
 sealed interface RuntimeStatus {
     data object Loading : RuntimeStatus
     data object Ready : RuntimeStatus
+    data class Waiting(val message: String) : RuntimeStatus
     data class RecoveryBlocked(val message: String) : RuntimeStatus
     data class Failure(val message: String) : RuntimeStatus
 }
@@ -38,13 +39,14 @@ class ExecutionRuntime(
     private val contextReadiness: ExecutionContextReadiness = ExecutionContextReadiness { target, requested ->
         target.identityPolicy == IdentityPolicy.NONE && requested.principal == Principal.Anonymous && target.acceptsContext(requested)
     },
+    private val startReadiness: ExecutionStartReadiness = ExecutionStartReadiness { _, _ -> StepStartCondition.Ready },
 ) {
     private sealed interface Message {
         data class Command(val command: ExecutorCommand, val reply: CompletableDeferred<RuntimeCommandResult>) : Message
         data class AddTask(val address: TaskAddress, val commandId: String, val reply: CompletableDeferred<RuntimeCommandResult>) : Message
         data class Admission(val candidate: TaskAdmissionDraft?, val context: ExecutionContext?, val commandId: String,
             val reply: CompletableDeferred<RuntimeCommandResult>, val failure: String?) : Message
-        data class Bound(val ticket: AttemptTicket, val binding: Job, val bundle: TaskBundle?, val verified: Boolean,
+        data class Bound(val ticket: AttemptTicket, val binding: Job, val bundle: TaskBundle?, val condition: StepStartCondition,
             val failure: String?, val storageUnavailable: Boolean = false) : Message
         data class Finished(val ticket: AttemptTicket, val outcome: StepOutcome) : Message
         data class Drained(val ticket: AttemptTicket, val observation: InputStopObservation) : Message
@@ -72,6 +74,7 @@ class ExecutionRuntime(
     @Volatile private var inputPermit: AttemptTicket? = null
 
     init {
+        scope.launch { startReadiness.changes.collect { readinessChanged() } }
         scope.launch {
             try { boot() }
             catch (cancelled: CancellationException) { throw cancelled }
@@ -228,7 +231,6 @@ class ExecutionRuntime(
             }
             Message.Readiness -> {
                 if (restoredInput == null) {
-                    mutableStatus.value = RuntimeStatus.Ready
                     pendingStarts.values.toList().forEach(::prepareBinding)
                     change(ExecutorCommand.ReadinessChanged)
                 }
@@ -296,6 +298,7 @@ class ExecutionRuntime(
                 when {
                     pending != null -> {
                         pending.binding?.cancel()
+                        if (status.value is RuntimeStatus.Waiting) mutableStatus.value = RuntimeStatus.Ready
                         commands.trySend(Message.Drained(effect.ticket, InputStopObservation.Quiet(StepOutcome.Interrupted)))
                     }
                     record != null -> drain(effect.ticket, record)
@@ -311,11 +314,16 @@ class ExecutionRuntime(
             val message = try {
                 val bundle = library.readVersion(start.attempt.run.request.packageVersion)
                 val target = bundle.targets.single { it.id == start.attempt.run.request.context.targetId }
-                Message.Bound(start.attempt.ticket, binding, bundle, contextReadiness.verified(target, start.attempt.run.request.context), null)
+                val condition = try {
+                    if (!contextReadiness.verified(target, start.attempt.run.request.context)) StepStartCondition.Waiting("等待核对当前目标与账号")
+                    else startReadiness.check(start.attempt, bundle)
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) { StepStartCondition.Unconfirmed("运行条件暂无法确认，请检查目标应用与授权") }
+                Message.Bound(start.attempt.ticket, binding, bundle, condition, null)
             }
             catch (cancelled: CancellationException) { throw cancelled }
-            catch (invalid: InvalidLocalTaskVersion) { Message.Bound(start.attempt.ticket, binding, null, false, invalid.message) }
-            catch (_: Exception) { Message.Bound(start.attempt.ticket, binding, null, false, "运行条件读取失败，原记录保留", storageUnavailable = true) }
+            catch (invalid: InvalidLocalTaskVersion) { Message.Bound(start.attempt.ticket, binding, null, StepStartCondition.Unconfirmed("任务版本不可用"), invalid.message) }
+            catch (_: Exception) { Message.Bound(start.attempt.ticket, binding, null, StepStartCondition.Unconfirmed("任务版本读取失败"), "任务版本读取失败，原记录保留", storageUnavailable = true) }
             commands.send(message)
         }
     }
@@ -327,13 +335,16 @@ class ExecutionRuntime(
         val bundle = message.bundle
         if (bundle == null) {
             pendingStarts.remove(message.ticket)
+            mutableStatus.value = RuntimeStatus.Ready
             change(ExecutorCommand.StepFinished(message.ticket, StepOutcome.Failed(message.failure ?: "任务版本不可用")))
             return
         }
-        if (!message.verified) {
-            mutableStatus.value = RuntimeStatus.RecoveryBlocked("等待核对当前目标与账号")
-            return
+        when (val condition = message.condition) {
+            is StepStartCondition.Waiting -> { mutableStatus.value = RuntimeStatus.Waiting(condition.message); return }
+            is StepStartCondition.Unconfirmed -> { mutableStatus.value = RuntimeStatus.Waiting(condition.message); return }
+            StepStartCondition.Ready -> Unit
         }
+        mutableStatus.value = RuntimeStatus.Ready
         val work = try { factory.create(pending.attempt, bundle) }
         catch (_: Exception) {
             pendingStarts.remove(message.ticket)
@@ -341,7 +352,6 @@ class ExecutionRuntime(
             return
         }
         pendingStarts.remove(message.ticket)
-        mutableStatus.value = RuntimeStatus.Ready
         val job = scope.launch(Dispatchers.Default, start = CoroutineStart.LAZY) {
             try { commands.send(Message.Finished(message.ticket, work.execute())) }
             catch (cancelled: CancellationException) { throw cancelled }

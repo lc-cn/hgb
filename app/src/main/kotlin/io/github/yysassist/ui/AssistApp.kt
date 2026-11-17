@@ -234,7 +234,7 @@ internal fun TaskCenter(versions: VersionCatalogState, executor: ExecutorSnapsho
                             Icon(AssistIcons.Star, if (selected) "取消常用：${task.name}" else "设为常用：${task.name}",
                                 tint = (if (selected) LocalAssistPalette.current.gold else MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = .82f))
                         }
-                        if (queued || current) Text(if (queued) "队列中" else phaseLabel(executor.phase), style = MaterialTheme.typography.labelSmall,
+                        if (queued || current) Text(if (queued) "队列中" else if (status is RuntimeStatus.Waiting) "等待中" else phaseLabel(executor.phase), style = MaterialTheme.typography.labelSmall,
                             color = if (queued) MaterialTheme.colorScheme.onSurfaceVariant else LocalAssistPalette.current.blue)
                         key(currentId) {
                             RunActionButton(task.name, current, queued,
@@ -242,7 +242,8 @@ internal fun TaskCenter(versions: VersionCatalogState, executor: ExecutorSnapsho
                                     (!current || executor.phase in setOf(ExecutorPhase.RUNNING, ExecutorPhase.PAUSED)),
                                 { enqueue(TaskAddress(task.targetId, task.id)) }, { currentId?.let(pause) }, { currentId?.let(stop) },
                                 paused = current && executor.phase == ExecutorPhase.PAUSED,
-                                resume = { mode -> currentId?.let { resume(it, mode) } })
+                                resume = { mode -> currentId?.let { resume(it, mode) } },
+                                currentStateLabel = if (current && status is RuntimeStatus.Waiting) "等待中" else null)
                         }
                     } })
                 }

@@ -1,0 +1,7 @@
+{
+  "app/build/outputs/apk/debug/app-debug.apk": "75d087f53e677474d1d8b8107e2dbbf535f1b6f431bd1d5fd049f96590ecf71b",
+  "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": "fd6494e0b1bef799aa3a7e2c0216207dd0ebf346b476390aae444f4305254a20",
+  "app/src/main/kotlin/io/github/yysassist/ExecutionRuntime.kt": "bec10c56edea4acf4a5123c1f3c23493741f476ed22f1863d86f4a9bd644061b",
+  "app/src/main/kotlin/io/github/yysassist/AssistApplication.kt": "0c942788bf744e58f406a20dcd0ab58c5b3126af4deac5a94a4c6dbd1b214393",
+  "app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationRuntimeTest.kt": "5d9d6dae5a2ae72b28b35d03e09a35e36bd2360f0994c3d9cdd34cb5d3e5222b"
+}
