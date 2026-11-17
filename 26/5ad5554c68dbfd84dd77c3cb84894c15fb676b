@@ -1,0 +1,90 @@
+app/src/main/res/xml/accessibility_service.xml
+  s_b0f0af2da7f631::t_bf6ab74b15a8e4 3-4
+docs/development/README.md
+  s_b0f0af2da7f631::t_c2df9fa66f076c 31
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_27d64a5fe32116 174-183
+docs/development/execution-readiness.md
+  s_b0f0af2da7f631::t_74ca572fe4c0d4 1-31
+app/src/main/kotlin/io/github/yysassist/device/DeviceExecutionReadiness.kt
+  s_b0f0af2da7f631::t_bf6ab74b15a8e4 1-33
+docs/development/build-evidence/start-readiness/before-build.txt
+  s_b0f0af2da7f631::t_00a39cc83a00cb 1-99
+app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationRuntimeTest.kt
+  s_b0f0af2da7f631::t_121909fc5bb143 178-179
+  s_b0f0af2da7f631::t_217daf800835ae 192-205,221-224
+  s_b0f0af2da7f631::t_4b10be9e250bbf 5,206-220,225
+app/src/main/kotlin/io/github/yysassist/ExecutionRuntime.kt
+  s_b0f0af2da7f631::t_7d538afea6159c 338,347
+  s_b0f0af2da7f631::t_4c11783a55b627 15,42,49,77,301,317-322,325-326,342-345
+app/src/main/kotlin/io/github/yysassist/device/AndroidDeviceBridge.kt
+  s_b0f0af2da7f631::t_bf6ab74b15a8e4 12,37,105-130
+app/src/main/kotlin/io/github/yysassist/ui/ExecutionControls.kt
+  s_b0f0af2da7f631::t_7d74970a06b66d 113,116,126,163,165-166,169
+docs/development/build-evidence/start-readiness/installed-artifacts.json
+  s_b0f0af2da7f631::t_00a39cc83a00cb 1-10
+docs/development/build-evidence/start-readiness/first-candidate-tests.txt
+  s_b0f0af2da7f631::t_00a39cc83a00cb 1-2233
+docs/development/build-evidence/start-readiness/test-summary.json
+  s_b0f0af2da7f631::t_00a39cc83a00cb 1-7
+app/src/androidTest/kotlin/io/github/yysassist/ExecutionRuntimeTest.kt
+  s_b0f0af2da7f631::t_7d74970a06b66d 522-523
+  s_b0f0af2da7f631::t_6e5cf3156df700 469-473,475-476
+  s_b0f0af2da7f631::t_423bf23163d37f 136-149
+  s_b0f0af2da7f631::t_3734d5d694219c 11-12,48-49,51,63-135,150,222-224
+app/src/androidTest/kotlin/io/github/yysassist/device/DeviceExecutionReadinessTest.kt
+  s_b0f0af2da7f631::t_68fe21071158d4 1-52
+docs/development/build-evidence/start-readiness/process-result.json
+  s_b0f0af2da7f631::t_ac351e19f978fa 1
+docs/development/build-evidence/start-readiness/verification.json
+  s_b0f0af2da7f631::t_00a39cc83a00cb 1-27
+docs/development/build-evidence/start-readiness/process-seed.txt
+  s_b0f0af2da7f631::t_ac351e19f978fa 1-23
+docs/development/build-evidence/start-readiness/README.md
+  s_b0f0af2da7f631::t_47f4a106ef95c0 1-16
+app/src/androidTest/kotlin/io/github/yysassist/floating/FloatingOverlayIntegrationTest.kt
+  s_b0f0af2da7f631::t_1949a791a28b42 309-313
+app/src/androidTest/kotlin/io/github/yysassist/device/AndroidDeviceBridgeTest.kt
+  s_b0f0af2da7f631::t_1df638ab4ec7df 99-113
+docs/development/build-evidence/start-readiness/ui-validation.txt
+  s_b0f0af2da7f631::t_00a39cc83a00cb 1-18
+docs/development/build-evidence/start-readiness/android-full-tests.txt
+  s_b0f0af2da7f631::t_00a39cc83a00cb 1-2231
+docs/development/build-evidence/start-readiness/process-verify.txt
+  s_b0f0af2da7f631::t_ac351e19f978fa 1-23
+app/src/main/kotlin/io/github/yysassist/floating/FloatingSurface.kt
+  s_b0f0af2da7f631::t_7d74970a06b66d 46,98-101
+app/src/main/kotlin/io/github/yysassist/ExecutionStartReadiness.kt
+  s_b0f0af2da7f631::t_bf6ab74b15a8e4 1-18
+app/src/androidTest/kotlin/io/github/yysassist/ui/ExecutionControlsTest.kt
+  s_b0f0af2da7f631::t_b1dab3605ef32d 14,25-26,40,52-56,91-110
+app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_b0f0af2da7f631::t_bf6ab74b15a8e4 21,65-66
+docs/development/build-evidence/start-readiness/before-artifacts.json
+  s_b0f0af2da7f631::t_00a39cc83a00cb 1-7
+app/src/main/kotlin/io/github/yysassist/device/GameAccessibilityService.kt
+  s_b0f0af2da7f631::t_bf6ab74b15a8e4 6-9,21,34-35,41-53,59-63,66,68-69,74,81
+app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt
+  s_b0f0af2da7f631::t_3d2efdaef13e4c 245-246
+  s_b0f0af2da7f631::t_7d74970a06b66d 237
+docs/development/build-evidence/start-readiness/build.txt
+  s_b0f0af2da7f631::t_00a39cc83a00cb 1-158
+docs/development/build-evidence/start-readiness/disconnected-before.txt
+  s_b0f0af2da7f631::t_00a39cc83a00cb 1-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "265ad5554c68dbfd84dd77c3cb84894c15fb676b",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
