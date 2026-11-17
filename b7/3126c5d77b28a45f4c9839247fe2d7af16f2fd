@@ -1,0 +1,73 @@
+docs/development/github-app-registration.md
+  s_b0f0af2da7f631::t_a1e2e371cefc23 9
+  s_b0f0af2da7f631::t_ccb5eb4eccd1ca 1-2,4-8,10-13,15-46,48-52
+  s_b0f0af2da7f631::t_359d873f84aaa7 14,47
+  s_b0f0af2da7f631::t_526981ed93e928 3,53
+core/src/test/kotlin/io/github/yysassist/core/auth/GitHubDeviceAuthorizationTest.kt
+  s_b0f0af2da7f631::t_78121f8003f546 132-138
+  s_b0f0af2da7f631::t_d301085307f09d 94,101
+  s_b0f0af2da7f631::t_00b4f9001372ee 1-93,95-100,102-131,139
+core/src/main/kotlin/io/github/yysassist/core/content/GitHubTaskSource.kt
+  s_b0f0af2da7f631::t_e903b134ed5757 20,35,40,160,164,166
+docs/development/build-evidence/github-auth-protocol/android-https-tests.txt
+  s_b0f0af2da7f631::t_469fdc2244a96d 1-65
+app/src/androidTest/kotlin/io/github/yysassist/TaskUpdatesIntegrationTest.kt
+  s_b0f0af2da7f631::t_526981ed93e928 22-23,36,50,110-133
+  s_b0f0af2da7f631::t_2c88d279956d29 134
+core/src/main/kotlin/io/github/yysassist/core/auth/GitHubDeviceAuthorization.kt
+  s_b0f0af2da7f631::t_e903b134ed5757 1-9,11-15,17-49,55-76,78-99,109-110,120-144
+  s_b0f0af2da7f631::t_6d556f6c187029 10,111-119
+  s_b0f0af2da7f631::t_d301085307f09d 16
+  s_b0f0af2da7f631::t_00b4f9001372ee 50-54,77,100-108
+docs/development/build-evidence/github-auth-protocol/auth.GitHubDeviceAuthorizationTest.xml
+  s_b0f0af2da7f631::t_469fdc2244a96d 1-16
+config/github-app-registration.json
+  s_b0f0af2da7f631::t_359d873f84aaa7 12
+  s_b0f0af2da7f631::t_526981ed93e928 3-9,40
+  s_b0f0af2da7f631::t_ccb5eb4eccd1ca 1-2,10-11,13-39,41-43
+docs/development/README.md
+  s_b0f0af2da7f631::t_a5cf69834dde83 32,114
+docs/development/build-evidence/github-auth-protocol/README.md
+  s_b0f0af2da7f631::t_5075b95228cca7 1-12
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_a5cf69834dde83 184-191
+docs/development/build-evidence/github-auth-protocol/post-replay-before.xml
+  s_b0f0af2da7f631::t_469fdc2244a96d 1-71
+docs/development/github-device-authorization.md
+  s_b0f0af2da7f631::t_359d873f84aaa7 1-27
+docs/development/build-evidence/github-auth-protocol/post-replay-before.txt
+  s_b0f0af2da7f631::t_469fdc2244a96d 1-36
+docs/development/build-evidence/github-auth-protocol/content.GitHubTaskSourceTest.xml
+  s_b0f0af2da7f631::t_469fdc2244a96d 1-19
+docs/development/build-evidence/github-auth-protocol/post-replay-before-artifacts.json
+  s_b0f0af2da7f631::t_469fdc2244a96d 1-4
+docs/development/build-evidence/github-auth-protocol/verification.json
+  s_b0f0af2da7f631::t_469fdc2244a96d 1-17
+docs/development/build-evidence/github-auth-protocol/build.txt
+  s_b0f0af2da7f631::t_469fdc2244a96d 1-163
+docs/development/task-distribution.md
+  s_b0f0af2da7f631::t_a5cf69834dde83 9,20,28
+  s_b0f0af2da7f631::t_b2d1ad0cad66ed 29
+core/src/test/kotlin/io/github/yysassist/core/content/GitHubTaskSourceTest.kt
+  s_b0f0af2da7f631::t_7d5cb4c4550385 19,51-85
+docs/development/build-evidence/github-auth-protocol/installed-artifacts.json
+  s_b0f0af2da7f631::t_469fdc2244a96d 1-10
+docs/development/build-evidence/github-auth-protocol/test-summary.json
+  s_b0f0af2da7f631::t_469fdc2244a96d 1-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b73126c5d77b28a45f4c9839247fe2d7af16f2fd",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
