@@ -1,0 +1,86 @@
+[
+  {
+    "name": "io.github.yysassist.core.auth.GitHubDeviceAuthorizationTest",
+    "tests": 11,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "name": "io.github.yysassist.core.content.ActionBindingContractTest",
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "name": "io.github.yysassist.core.content.BundleCodecTest",
+    "tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "name": "io.github.yysassist.core.content.ConfigurationDraftTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "name": "io.github.yysassist.core.content.ConfigurationValidatorTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "name": "io.github.yysassist.core.content.GitHubTaskSourceTest",
+    "tests": 15,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "name": "io.github.yysassist.core.execution.BuiltInStepWorkFactoryTest",
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "name": "io.github.yysassist.core.execution.DeviceActionRecordTest",
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "name": "io.github.yysassist.core.execution.ExecutorPersistenceTest",
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "name": "io.github.yysassist.core.execution.ExecutorRecoveryTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "name": "io.github.yysassist.core.execution.ReadOnlyActionInterpreterTest",
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "name": "io.github.yysassist.core.execution.TaskExecutorTest",
+    "tests": 23,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+]

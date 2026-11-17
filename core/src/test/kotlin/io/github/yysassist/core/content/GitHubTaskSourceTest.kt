@@ -17,6 +17,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import io.github.yysassist.core.auth.GitHubToken
+import io.github.yysassist.core.auth.GitHubAuthorization
 
 class GitHubTaskSourceTest {
     private lateinit var server: MockWebServer
@@ -82,6 +83,38 @@ class GitHubTaskSourceTest {
         assertEquals(401, failure(TaskSourceProblem.HTTP) { authenticated.latest() }.httpCode)
         assertEquals(1, server.requestCount)
         assertFalse(GitHubToken("fixture_access").toString().contains("fixture_access"))
+    }
+    @Test fun a401InvalidatesOnlyTheActualCredentialForJsonAndResourceWithoutReplayingEitherGet(): Unit = runBlocking {
+        val used = GitHubToken("fixture_access"); val rejected = mutableListOf<GitHubToken>()
+        val provider = object : GitHubAuthorization {
+            override suspend fun token() = used
+            override suspend fun rejected(token: GitHubToken) { rejected += token }
+        }
+        val authenticated = GitHubTaskSource(TaskRepository("test-owner", "test-repo"), server.url("/"), client, provider)
+        server.enqueue(MockResponse().setResponseCode(401))
+        failure(TaskSourceProblem.HTTP) { authenticated.latest() }
+        server.enqueue(MockResponse().setResponseCode(401))
+        failure(TaskSourceProblem.HTTP) { authenticated.downloadResource(withResource(), resource(), ByteArrayOutputStream()) }
+        assertEquals(2, server.requestCount); assertEquals(2, rejected.size)
+        assertTrue(rejected.all { it === used })
+    }
+    @Test fun aRedirectTargets401CannotInvalidateTheGitHubApiCredential(): Unit = runBlocking {
+        MockWebServer().use { other ->
+            other.start(); var rejected = 0
+            val provider = object : GitHubAuthorization {
+                override suspend fun token() = GitHubToken("fixture_access")
+                override suspend fun rejected(token: GitHubToken) { rejected++ }
+            }
+            val authenticated = GitHubTaskSource(TaskRepository("test-owner", "test-repo"), server.url("/"), client, provider)
+            repeat(2) {
+                server.enqueue(MockResponse().setResponseCode(302).setHeader("Location", other.url("/signed-download")))
+                other.enqueue(MockResponse().setResponseCode(401))
+            }
+            assertEquals(401, failure(TaskSourceProblem.HTTP) { authenticated.latest() }.httpCode)
+            assertEquals(401, failure(TaskSourceProblem.HTTP) { authenticated.downloadResource(withResource(), resource(), ByteArrayOutputStream()) }.httpCode)
+            assertEquals("An external download failure is not a GitHub credential rejection", 0, rejected)
+            assertEquals(2, server.requestCount); assertEquals(2, other.requestCount)
+        }
     }
     @Test fun inaccessibleRepositoryIsNotAnEmptyReleaseCatalog(): Unit = runBlocking {
         server.enqueue(MockResponse().setResponseCode(404)); server.enqueue(MockResponse().setResponseCode(404))

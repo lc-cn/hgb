@@ -6,7 +6,7 @@
 
 `Application` 创建唯一 `TaskUpdates` 和本地版本库，启动时发起一次拉取。Activity 重建、导航和方向改变只订阅状态，不重复发起启动拉取。手动拉取复用同一路径，并发拉取合并；下载期间仍可查看和管理已有本地版本。所有变更继续由版本库事务核对，UI 禁用状态不是引用保护的唯一依据。
 
-指定源为 `lc-cn/yys-helper`，首次联调时公开，用户现已将其设为私有。源适配器已支持注入客户端令牌，但正式 App 仍未接入私有仓库会话授权，不能将未授权的 404 当作无发布；开发机 GitHub 凭据不会写进 App。初次公开联调的记录如下。读取 GitHub 明确的 `/releases/latest`，不按版本字符串排序；当时仓库可访问、公开 Release 列表为空；此结论不延伸到当前私有状态。latest 的 404 会先核对仓库访问与发布列表；不可访问、查询失败、无正式发布及矛盾响应分开处理，不把错误当空目录。只有成功取得的明确指针或经核对的缺失结果更新本地 latest；网络失败保留此前信息。
+指定源为 `lc-cn/yys-helper`，首次联调时公开，用户现已将其设为私有。正式 App 已接入自己的 GitHub 会话，用户完成设备码授权后实际确认该私有仓库可访问、当前无已发布的任务版本；不能将未授权的 404 当作无发布，开发机 GitHub 凭据不会写进 App。初次公开联调的记录如下。读取 GitHub 明确的 `/releases/latest`，不按版本字符串排序；当时仓库可访问、公开 Release 列表为空；此结论不延伸到当前私有状态。latest 的 404 会先核对仓库访问与发布列表；不可访问、查询失败、无正式发布及矛盾响应分开处理，不把错误当空目录。只有成功取得的明确指针或经核对的缺失结果更新本地 latest；网络失败保留此前信息。
 
 ## 首版附件合同
 
@@ -25,7 +25,7 @@
 
 截至本次开发，早期公开远端只验证了仓库访问与没有发布，当前私有源读取仍待客户端授权；没有创建或修改 Release，也没有真实任务附件可下载。核心测试在本地 HTTP 服务器检验协议与取消；Android 集成测试使用测试证书的本地 HTTPS、真实文件和 SQLite；32MiB 合成资源验证流式落盘／摘要／重开／删除，未测网络慢速下载和内存峰值。UI 测试使用版本行夹具，不能代替正式云任务或游戏结果。长期运行和 Windows 设备兼容仍未验证。
 
-2026-11-17 补充：用户已提供 GitHub App 的公开 Client ID 并报告安装到指定仓库。设备码和可选任务源鉴权已用本地 HTTP／Android HTTPS 验证；正式 App 会话、令牌存储、续期与仓库权限仍待接入，不以本地模拟响应替代真实登录。见[授权协议](github-device-authorization.md)。
+2026-11-17 补充：正式 App 已连接应用级 [GitHub 会话](github-session.md)，令牌通过 Keystore 加密私有保存。用户真实授权后私有源读取已成功，升级重开保留登录；原启动一次拉取和手动拉取语义不变，登录本身不追加拉取／启用。API origin 的 401 只拒绝原凭据句柄，不重放当前请求、不清版本；其他下载站点的 401 不改变 GitHub 登录状态。非空私有附件与开发者写权限仍待验证。协议的本地 HTTP／Android HTTPS 证据见[授权协议](github-device-authorization.md)。
 
 核对来源：[GitHub Releases API](https://docs.github.com/en/rest/releases/releases)、[Release assets API](https://docs.github.com/en/rest/releases/assets)、[GitHub 附件摘要说明](https://github.blog/changelog/2025-06-03-releases-now-expose-digests-for-release-assets/)。依赖通过官方 Maven 下载并锁定；API header 使用已实际读取成功的 `2022-11-28` 合同版本。
 

@@ -1,0 +1,10 @@
+{
+  "main": {
+    "sha256": "c85e5e072b1dd7a3942cdca560eebb4dcfad3d59a519ecf32f7b295d48a51a8c",
+    "matchesBuild": true
+  },
+  "test": {
+    "removedAfterTests": true,
+    "sha256": "85e1b3b5584f33dcd4654cd8c47128beca8d1f18c58e3ab0f98e3855a1ee3eea"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-17",
+  "surface": "Dedicated Android API36 emulator; formal app, not CLI credentials",
+  "userConsentCompleted": true,
+  "nativeConnectedAccountObserved": true,
+  "repository": "lc-cn/yys-helper",
+  "privateRepositoryRead": "accessible; no published task version, confirmed by repository metadata and release listing in production source path",
+  "afterApkUpdateAndRestart": {
+    "loginRetained": true,
+    "manualPrivateSourceRead": "same confirmed empty result"
+  },
+  "credentialsExported": false,
+  "realSessionFileExported": false,
+  "realAuthorizationScreenshotsCommitted": false,
+  "releasePublished": false,
+  "limitations": [
+    "No nonempty private task attachment exists yet",
+    "Actual token expiry/rotation not exercised against GitHub",
+    "Developer write permission and publication not exercised",
+    "No game actions in this checkpoint"
+  ],
+  "afterFinalQaNativeAccountRetained": true
+}

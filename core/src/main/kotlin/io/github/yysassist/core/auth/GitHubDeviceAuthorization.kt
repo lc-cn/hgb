@@ -16,6 +16,11 @@ class GitHubToken(val value: String) {
     init { require(value.isNotEmpty() && value.all { it.code in 33..126 }) { "Invalid GitHub credential" } }
     override fun toString() = "GitHubToken(<redacted>)"
 }
+fun interface GitHubAuthorization {
+    suspend fun token(): GitHubToken?
+    /** An observed 401 concerns this exact credential, never a later login. No replay is implied. */
+    suspend fun rejected(token: GitHubToken) = Unit
+}
 class GitHubUserTokens(val accessToken: GitHubToken, val expiresInSeconds: Long?,
     val refreshToken: GitHubToken?, val refreshExpiresInSeconds: Long?) {
     override fun toString() = "GitHubUserTokens(<redacted>)"
@@ -23,7 +28,7 @@ class GitHubUserTokens(val accessToken: GitHubToken, val expiresInSeconds: Long?
 class GitHubDevicePrompt(val userCode: String, val verificationUri: HttpUrl, val expiresInSeconds: Long) {
     override fun toString() = "GitHubDevicePrompt(<redacted>)"
 }
-enum class GitHubAuthProblem { NETWORK, HTTP, INVALID_RESPONSE, CONFIGURATION, DENIED, EXPIRED }
+enum class GitHubAuthProblem { NETWORK, HTTP, INVALID_RESPONSE, CONFIGURATION, DENIED, EXPIRED, STORAGE }
 /** No remote response body or decoding exception is retained: either can contain credentials. */
 class GitHubAuthException(val problem: GitHubAuthProblem, message: String, val httpCode: Int? = null) : IOException(message)
 
@@ -45,7 +50,7 @@ class GitHubDeviceAuthorization(
         val access_token: String? = null, val token_type: String? = null, val expires_in: Long? = null,
         val refresh_token: String? = null, val refresh_token_expires_in: Long? = null)
 
-    suspend fun authorize(showPrompt: suspend (GitHubDevicePrompt) -> Unit): GitHubUserTokens {
+    suspend fun authorize(beforeTokenRequest: () -> Unit = {}, showPrompt: suspend (GitHubDevicePrompt) -> Unit): GitHubUserTokens {
         val requestedAt = elapsedMillis()
         val challengeText = post("login/device/code", mapOf("client_id" to clientId))
         val challengeError = decode<TokenReply>(challengeText)
@@ -63,6 +68,7 @@ class GitHubDeviceAuthorization(
             if (remaining <= 0) expired()
             waitMillis(minOf(interval, remaining))
             if (elapsedMillis() >= deadline) expired()
+            beforeTokenRequest()
             val reply = decode<TokenReply>(post("login/oauth/access_token", mapOf(
                 "client_id" to clientId, "device_code" to challenge.device_code,
                 "grant_type" to "urn:ietf:params:oauth:grant-type:device_code")))
@@ -77,6 +83,17 @@ class GitHubDeviceAuthorization(
                 else -> terminalError(reply.error)
             }
         }
+    }
+    /** Exactly one request. The application must retain and persist its outcome across caller cancellation. */
+    suspend fun refresh(refreshToken: GitHubToken): GitHubUserTokens {
+        val reply = decode<TokenReply>(post("login/oauth/access_token", mapOf("client_id" to clientId,
+            "grant_type" to "refresh_token", "refresh_token" to refreshToken.value)))
+        if (reply.error != null) {
+            if (reply.access_token != null || reply.refresh_token != null) invalid()
+            if (reply.error == "bad_refresh_token") throw GitHubAuthException(GitHubAuthProblem.EXPIRED, "GitHub 登录已失效，请重新登录")
+            terminalError(reply.error)
+        }
+        return tokens(reply)
     }
     private fun tokens(reply: TokenReply): GitHubUserTokens {
         if (!reply.token_type.equals("bearer", ignoreCase = true)) invalid()

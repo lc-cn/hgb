@@ -1,6 +1,6 @@
 # GitHub App 注册配置
 
-2026-11-17；用户报告 App `yys-helper` 已创建并安装到 `lc-cn/yys-helper`，App ID `5794664`、公开 Client ID `Iv23liVW7AdPVQ5Ue4iz`，仅配置 Contents Read & Write。**Device Flow、令牌过期及其他实际设置尚待真实授权核对；本助手没有代为创建、安装或发布 Release。** 对应 [github-app-registration.json](../../config/github-app-registration.json) 将用户提供信息和建议注册项分开，不是 GitHub API 请求或可直接提交的 Manifest。公开 Client ID 可随客户端配置分发，不能把数字 App ID 当作 OAuth Client ID。
+2026-11-17；用户报告 App `yys-helper` 已创建并安装到 `lc-cn/yys-helper`，App ID `5794664`、公开 Client ID `Iv23liVW7AdPVQ5Ue4iz`，仅配置 Contents Read & Write。**用户已完成正式 App 的真实设备码授权，Device Flow 和私有源访问已实测；令牌过期配置及其他实际设置未逐项读取。本助手没有代为创建、安装或发布 Release。** 对应 [github-app-registration.json](../../config/github-app-registration.json) 将用户提供信息和建议注册项分开，不是 GitHub API 请求或可直接提交的 Manifest。配置中的 status 是注册准备时的检查点标签，实际联调结果以本文及会话证据为准；客户端仅从该文件读取公开 Client ID，不将建议注册项作为已验证设置。公开 Client ID 可随客户端配置分发，不能把数字 App ID 当作 OAuth Client ID。
 
 当前仓库已只读核对为 `lc-cn/yys-helper`、个人账号所有、private、默认分支 master。开发机登录仍只用于现有代码协作，不传给 Android 客户端。
 
@@ -44,10 +44,10 @@ GitHub 官方说明设备码流可忽略回调 URL，并可在注册表中启用
 
 已核对当前官方合同：设备码流使用 Client ID 获取挑战及用户令牌；对**由设备码流生成的用户令牌**，刷新请求的 Client Secret 也可省略。此例外不适用于普通 Web 授权码兑换，不能把 Web 流误当成无密钥客户端流程。依据[生成用户令牌](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app#using-the-device-flow-to-generate-a-user-access-token)和[刷新用户令牌](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/refreshing-user-access-tokens#refreshing-a-user-access-token-with-a-refresh-token)。
 
-设备码请求／轮询／取消和可注入鉴权的任务源已有 [core 协议实现](github-device-authorization.md)，尚未接入正式 App 会话。Android 仍需正式授权界面、令牌私有存储、单次续期与轮换交接、仓库权限核对和真实私有附件验证。刷新会使旧令牌失效，请求结果未知不能盲目重放。实际权限撤销、重启恢复和私有附件下载都要用最终 App 令牌验证；开发机成功查询仓库不代替客户端验证。
+设备码请求／轮询／取消和鉴权任务源已有 [core 协议实现](github-device-authorization.md)，后续已接入正式 [Android 会话](github-session.md)：原生授权页、Keystore 私有存储及单次续期交接通过本地集成验证，用户真实授权和私有源空 Release 读取已成功。开发者有效写权限、真实到期续期和非空私有附件仍待验证。刷新会使旧令牌失效，请求结果未知不能盲目重放。实际权限撤销、重启恢复和私有附件下载都要用最终 App 令牌验证；开发机成功查询仓库不代替客户端验证。
 
-## 创建前的评审点
+## 注册评审与当前边界
 
-具体待确认操作是：按本表在 `lc-cn` 创建可由其他账号授权的 GitHub App，并仅安装到 `lc-cn/yys-helper`，授予 Contents write／Metadata read；仓库继续私有。创建／安装的恢复方式是卸载该仓库安装并删除新 App 注册；这不会撤回此前发布、修改的代码或已下载附件。因此本次不发 Release、不发消息、不修改仓库内容或成员。
+原配置稿建议在 `lc-cn` 创建可由其他账号授权的 GitHub App，仅安装到 `lc-cn/yys-helper`，授予 Contents write／Metadata read；用户已报告注册／安装完成，不重复请求创建。是否允许其他账号授权仍需核对；仓库继续私有。创建／安装的恢复方式是卸载该仓库安装并删除新 App 注册；这不会撤回此前发布、修改的代码或已下载附件。因此本次不发 Release、不发消息、不修改仓库内容或成员。
 
-目前已准备配置并核对官方合同，用户报告注册／安装完成且已提供 Client ID。App 登录、私有任务拉取及指定开发者账号验证仍待实际接入与授权后继续；不能凭这份清单声称 M2 已完成。公开 App 查询返回 404，开发机凭据不能调用 GitHub App 用户安装列表（403）；均不据此否定用户报告或把权限查询失败当作无安装。
+目前已准备配置并核对官方合同，用户报告注册／安装完成且已提供 Client ID。随后正式 App 登录与私有任务源读取已实际成功，重开保留会话；当前没有已发布版本，因此非空附件及指定开发者写权限仍待验证，不能凭这份清单声称 M2 已完成。公开 App 查询返回 404，开发机凭据不能调用 GitHub App 用户安装列表（403）；均不据此否定用户报告或把权限查询失败当作无安装。

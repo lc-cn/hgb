@@ -1,0 +1,6 @@
+{
+  "app/src/main/kotlin/io/github/yysassist/auth/GitHubSession.kt": "9909fd1477aaf87215f13bf66393bcd4b066454cc224257f3ef0dee6f3656c7d",
+  "app/src/androidTest/kotlin/io/github/yysassist/auth/GitHubSessionIntegrationTest.kt": "191756a8c62ed030ba1a99df472c13e6786d7d744f1b464ca9724cbd637cb5d7",
+  "app/build/outputs/apk/debug/app-debug.apk": "4169cd17f58e8bc1ef73f4d5850f7bdbd1d5335bfdea04791c84cb7e0dc2f7dc",
+  "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": "ef7ff6b8c4047d8f49271a36f8d510393c33e732466afcc3272578e50a303243"
+}

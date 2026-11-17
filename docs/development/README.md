@@ -29,7 +29,7 @@
 | [只读观察动作](observation-actions.md) | 同一解释器的截图／文字核对、原生中断结算与版本资源联验；已测专用模拟器，尚无游戏领取结果 |
 | [屏幕定位与输入](screen-input-actions.md) | 语义目标、重新定位点击、输入意图／平台回执、后置核对及当前会话独立静默；已测自有画面，尚无游戏领取结果 |
 | [步骤启动条件](execution-readiness.md) | 工作器创建前核对服务／前台／屏幕，事件驱动重查，等待与业务未知分开；保留暂停／移除和安全恢复边界 |
-| [GitHub 注册配置](github-app-registration.md)与[设备码协议](github-device-authorization.md) | 用户已提供 App／Client ID；设备码与鉴权接口已有本地协议证据，正式会话／真实私有源仍待接入 |
+| [GitHub 注册配置](github-app-registration.md)与[设备码协议](github-device-authorization.md) | 用户已完成正式 App 授权；[会话](github-session.md)、升级后恢复和真实私有空 Release 读取已验证，非空附件及开发者写权仍待验证 |
 | [Android 平台桥](device-bridge.md) | 截图／输入所有权、撤权与取消回归及平台 PoC 边界 |
 | [原生悬浮控制](floating-controls.md) | 三层窗口、常用与同一执行器、显示偏好、截图／输入排除及真实设备测试边界 |
 | [首版任务分发](task-distribution.md) | 当前已实现的 Release 读取／附件校验／本地版本页，及未完成的资源与运行联动边界 |
@@ -111,7 +111,7 @@
 | C3 实际代表任务 | 领取类优先，具体选项取决于账号资格和当前游戏界面 | 制作真实任务、采集账号画面或发起游戏输入前明确；不能拿原型字段冒充真实规格 |
 | C4 定时规则 | 时间所属时区、错过、重叠、达到计划时长和停机期间的定时补做策略仍待定 | 对应调度路径，不阻塞手动入队和暂停语义 |
 | App 重开恢复 | 用户已确认：安全任务自动恢复，未知暂停核对；保留人工暂停 | 策略已定，输入／身份与结果证据仍需实现和实测 |
-| C5 GitHub 实际资源 | 用户已指定 lc-cn/yys-helper；2026-11-17 报告 GitHub App yys-helper 已创建并安装，仅 Contents Read & Write；公开 Client ID 已记录在 config/github-app-registration.json | 正式会话／Device Flow 实际设置、私有拉取及开发者权限仍需联调；不重复创建 App，发送 Release 仍需具体授权 |
+| C5 GitHub 实际资源 | 用户已指定 lc-cn/yys-helper；2026-11-17 报告 GitHub App yys-helper 已创建并安装，仅 Contents Read & Write；公开 Client ID 已记录在 config/github-app-registration.json | 正式会话与 Device Flow 已实测，私有源可访问且无发布；非空附件、令牌真实到期续期及开发者有效写权仍需联调，不重复授权或创建 App，发送 Release 仍需具体授权 |
 | C6 高影响业务规则 | 商品／币种／数量、强化素材、御魂保留和处置、模型成本与外发、留存等待定 | 只阻塞相关功能；不自行填数值、启用自动化或放宽条件 |
 
 这不是要求一次回答所有问题。C1 已确认；做到依赖位置时再核对 C2–C6，已有明确授权可直接复用。用户已选网易官服作为开发模拟器的验证客户端。普通界面不放开发待决表，这些内容仅用于开发协作。

@@ -1,0 +1,22 @@
+{
+  "core": {
+    "tests": 107,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "androidFull": {
+    "total": 171,
+    "passed": 167,
+    "skipped": 4,
+    "failures": 0
+  },
+  "processPhases": {
+    "runtimeSeed": true,
+    "runtimeVerify": true,
+    "authSeed": true,
+    "authVerify": true
+  },
+  "focusedOverlapsFull": true,
+  "scope": "API36 arm64 4KiB emulator, fixture accounts/HTTPS; live GitHub consent separate."
+}

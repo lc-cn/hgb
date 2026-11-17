@@ -36,6 +36,7 @@ import io.github.yysassist.storage.TaskAddress
 import kotlinx.coroutines.launch
 import java.io.IOException
 import android.accessibilityservice.AccessibilityService
+import io.github.yysassist.auth.GitHubSessionState
 
 private enum class Page(val title: String, val icon: ImageVector) {
     HOME("工作台", AssistIcons.Home), TASKS("任务中心", AssistIcons.Tasks),
@@ -53,6 +54,7 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
     val pull by application.taskUpdates.pull.collectAsState()
     val versionOperation by application.taskUpdates.operation.collectAsState()
     val taskDrafts by application.taskEditor.drafts.collectAsState()
+    val github by application.github.state.collectAsState()
     val mode = (appearance as? AppearanceState.Ready)?.mode ?: ThemeMode.SYSTEM
     val scope = rememberCoroutineScope()
     var selected by rememberSaveable { mutableStateOf(Page.HOME.name) }
@@ -100,6 +102,8 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
                                 TextButton(enabled = pull !is TaskPullState.Fetching, onClick = application.taskUpdates::pullLatest) {
                                     Text(if (pull is TaskPullState.Fetching) "拉取中" else "拉取")
                                 }
+                            } else if (detail == "GitHub" && github is GitHubSessionState.Connected) {
+                                TextButton(enabled = !(github as GitHubSessionState.Connected).checking, onClick = application.github::checkAccount) { Text("检查") }
                             } else if (page == Page.TASKS && detail == null) {
                                 TaskVersionEntry(versions) { detail = "任务更新" }
                             }
@@ -108,6 +112,8 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
                         Box(Modifier.weight(1f).fillMaxWidth()) {
                             when (detail) {
                                 "运行环境" -> EnvironmentPage()
+                                "GitHub" -> GitHubAccountPage(github, wide, application.github::signIn, application.github::cancelSignIn,
+                                    application.github::signOut, { detail = "任务更新" })
                                 "悬浮球" -> FloatingSettingsPage(floating, application.floating::setVisible, application.floating::reload)
                                 "任务更新" -> TaskVersionsPage(versions, pull, versionOperation, application.taskUpdates::reloadCatalog,
                                     application.taskUpdates::activate, application.taskUpdates::delete)
@@ -132,7 +138,7 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
                                     Page.HISTORY -> if (runtimeStatus == RuntimeStatus.Loading) Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
                                         else if (runtimeStatus is RuntimeStatus.Failure) EmptyContent("运行记录暂不可用", (runtimeStatus as RuntimeStatus.Failure).message)
                                         else History(executor, wide, historyTab) { historyTab = it }
-                                    Page.SETTINGS -> SettingsPage(appearance, versions) {
+                                    Page.SETTINGS -> SettingsPage(appearance, versions, github) {
                                         if (it == "运行与数据") { selected = Page.HISTORY.name; historyTab = 1; detail = null }
                                         else detail = it
                                     }
@@ -253,7 +259,7 @@ internal fun TaskCenter(versions: VersionCatalogState, executor: ExecutorSnapsho
 }
 
 @Composable
-private fun SettingsPage(appearance: AppearanceState, versions: VersionCatalogState, open: (String) -> Unit) {
+private fun SettingsPage(appearance: AppearanceState, versions: VersionCatalogState, github: GitHubSessionState, open: (String) -> Unit) {
     val p = LocalAssistPalette.current
     LazyColumn(Modifier.fillMaxSize()) {
         if (appearance is AppearanceState.Failure) item {
@@ -265,6 +271,11 @@ private fun SettingsPage(appearance: AppearanceState, versions: VersionCatalogSt
             is VersionCatalogState.Ready -> versions.catalog.activeVersion?.let { "当前版本 $it" } ?: "暂无已启用任务版本"
         }, AssistIcons.Cloud, p.blue) { open("任务更新") } }
         item { SettingsRow("悬浮球", "游戏中的快捷控制", AssistIcons.Circle, p.violet) { open("悬浮球") } }
+        item { SettingsRow("GitHub", when (github) {
+            GitHubSessionState.Loading -> "读取中"; GitHubSessionState.Saving -> "保存登录中"
+            is GitHubSessionState.SigningIn -> "等待授权"; is GitHubSessionState.Failure -> "登录资料暂不可用"
+            is GitHubSessionState.SignedOut -> "未登录"; is GitHubSessionState.Connected -> github.login?.let { "@$it" } ?: "已登录"
+        }, AssistIcons.Cloud, p.teal) { open("GitHub") } }
         item { SettingsRow("运行环境", "授权与运行条件", AssistIcons.Phone, p.orange) { open("运行环境") } }
         item { SettingsRow("运行与数据", "执行记录", AssistIcons.Data, p.teal) { open("运行与数据") } }
     }

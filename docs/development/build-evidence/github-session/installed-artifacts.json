@@ -1,0 +1,12 @@
+[
+  {
+    "package": "io.github.yysassist",
+    "sha256": "9502eb55a078a79fd6de64bbe455a033445c2b46983a2589544207f228bf3489",
+    "installedMatchesBuild": true
+  },
+  {
+    "package": "io.github.yysassist.test",
+    "sha256": "85e1b3b5584f33dcd4654cd8c47128beca8d1f18c58e3ab0f98e3855a1ee3eea",
+    "installedMatchesBuild": true
+  }
+]

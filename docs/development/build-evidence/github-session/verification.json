@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-17",
+  "baseCommit": "b73126c5d77b28a45f4c9839247fe2d7af16f2fd",
+  "sourceSha256": {
+    "app/build.gradle.kts": "a582d43b7d7d3577e8b79261773f3e5a23598cf58606a53581a9c7646f38239b",
+    "app/src/main/kotlin/io/github/yysassist/AssistApplication.kt": "46d720acbc54600094dc86a088aa064833b5ceadef5e42157382db3577b02cef",
+    "app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt": "2b87d3d4463e1d49e962b1b7881d67871af9e22b2fdef032a528929f4409a417",
+    "app/src/main/kotlin/io/github/yysassist/ui/GitHubAccountPage.kt": "725eb273363905d992f493026bf823297a97fd5efe6c8e97c61de61bc1c91e41",
+    "app/src/main/kotlin/io/github/yysassist/auth/GitHubSession.kt": "efd6b1edffb82bc362833f6d811edf49da42af98c39754cf4d2ff49dfa406110",
+    "app/src/main/kotlin/io/github/yysassist/auth/GitHubSessionStore.kt": "c572869445e0f317178f453e190472f54caf98e01fb2fd29f31aec7a58aeec71",
+    "core/src/main/kotlin/io/github/yysassist/core/auth/GitHubDeviceAuthorization.kt": "2828729273183157c8e2cbfe4f668cd46f5ede9f587962bb94962c698156fd06",
+    "core/src/main/kotlin/io/github/yysassist/core/auth/GitHubUserApi.kt": "e15dbbe1e83db3f4f6913cbd39cc14f63e737de02027f098c00ad0583c1f2cb7",
+    "core/src/main/kotlin/io/github/yysassist/core/content/GitHubTaskSource.kt": "8ba421e82878fe3d2c2d1892af78d3021d9338db13e806f8a6071dafa0298c34",
+    "core/src/test/kotlin/io/github/yysassist/core/auth/GitHubDeviceAuthorizationTest.kt": "23ef194007e212a592322e21ab094ad21fa98515b91c6da5edc47476ada2ad2e",
+    "core/src/test/kotlin/io/github/yysassist/core/content/GitHubTaskSourceTest.kt": "c649f7a0939a00d2f78b96f0e40bd4d1ee89c17a7bcff73bf523e865b8c1cabd",
+    "app/src/androidTest/kotlin/io/github/yysassist/auth/GitHubSessionIntegrationTest.kt": "f7994fac6dc04e83783b22189145ce935614f21b973cbbdb309957b7edfd3d6c",
+    "app/src/androidTest/kotlin/io/github/yysassist/auth/GitHubSessionProcessTest.kt": "95352472489697011ba16f77ffc38bdfbc7a682bcc6157e4f2cefa82622f8569",
+    "app/src/androidTest/kotlin/io/github/yysassist/ui/GitHubAccountPageTest.kt": "6d0844a4bca211b4e2995467bcd1b7d50e6d70ba07c09d5e9651fafa88ec31e4",
+    "config/github-app-registration.json": "0c16fc0eabc38c398af44ab591321225b07cfbaee112355258e837283e84d6c5"
+  },
+  "apkSha256": {
+    "app/build/outputs/apk/debug/app-debug.apk": "9502eb55a078a79fd6de64bbe455a033445c2b46983a2589544207f228bf3489",
+    "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": "85e1b3b5584f33dcd4654cd8c47128beca8d1f18c58e3ab0f98e3855a1ee3eea"
+  }
+}

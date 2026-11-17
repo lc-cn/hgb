@@ -136,4 +136,12 @@ class GitHubDeviceAuthorizationTest {
         assertEquals(503, failure(GitHubAuthProblem.HTTP) { auth().authorize {} }.httpCode)
         assertEquals(2, server.requestCount)
     }
+    @Test fun tokenValidityStartsAtTheGrantRequestRatherThanBeforeTheUserAuthorizationWait(): Unit = runBlocking {
+        server.enqueue(MockResponse().setBody(challenge()))
+        server.enqueue(MockResponse().setBody("""{"error":"authorization_pending"}"""))
+        server.enqueue(MockResponse().setBody(granted()))
+        val clock = Clock(); val requestTimes = mutableListOf<Long>()
+        auth(clock).authorize(beforeTokenRequest = { requestTimes += clock.now }) { clock.now += 60_000 }
+        assertEquals(listOf(65_000L, 70_000L), requestTimes)
+    }
 }

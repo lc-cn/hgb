@@ -18,6 +18,8 @@ import java.nio.ByteBuffer
 import java.nio.charset.CodingErrorAction
 import java.security.MessageDigest
 import io.github.yysassist.core.auth.GitHubToken
+import io.github.yysassist.core.auth.GitHubAuthorization
+import io.github.yysassist.core.auth.GitHubAuthException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -28,7 +30,7 @@ data class TaskRepository(val owner: String, val name: String) {
 data class RemoteReleaseAsset(val id: Long, val name: String, val state: String, val bytes: Long, val digest: String?)
 data class RemoteTaskVersion(val version: String, val assetId: Long, val bytes: Long, val sha256: String,
     val assets: List<RemoteReleaseAsset> = emptyList())
-enum class TaskSourceProblem { NETWORK, HTTP, REPOSITORY_UNAVAILABLE, INVALID_RESPONSE, INVALID_CONTENT }
+enum class TaskSourceProblem { NETWORK, HTTP, REPOSITORY_UNAVAILABLE, INVALID_RESPONSE, INVALID_CONTENT, AUTHORIZATION }
 class TaskSourceException(val problem: TaskSourceProblem, message: String, val httpCode: Int? = null, cause: Throwable? = null) :
     IOException(message, cause)
 
@@ -37,13 +39,18 @@ class GitHubTaskSource(
     private val repository: TaskRepository,
     private val apiBase: HttpUrl,
     private val calls: Call.Factory,
-    private val authorization: suspend () -> GitHubToken? = { null },
+    private val authorization: GitHubAuthorization = GitHubAuthorization { null },
 ) {
     private val json = Json { ignoreUnknownKeys = true }
     @Serializable private data class Repository(val full_name: String)
     @Serializable private data class Release(val tag_name: String, val draft: Boolean, val prerelease: Boolean, val assets: List<Asset>)
     @Serializable private data class Asset(val id: Long, val name: String, val state: String, val size: Long, val digest: String? = null)
-    private data class Payload(val code: Int, val bytes: ByteArray)
+    private enum class ResponseOrigin { API, REDIRECT, NO_RESPONSE }
+    private data class Payload(val code: Int, val bytes: ByteArray, val origin: ResponseOrigin)
+    private data class Transfer(val result: Result<Unit>, val origin: ResponseOrigin)
+    private fun origin(response: Response, request: Request): ResponseOrigin =
+        if (response.request.url.let { it.scheme == request.url.scheme && it.host == request.url.host && it.port == request.url.port })
+            ResponseOrigin.API else ResponseOrigin.REDIRECT
 
     suspend fun latest(): RemoteTaskVersion? {
         val response = get("releases/latest")
@@ -94,14 +101,16 @@ class GitHubTaskSource(
             ?: invalidResponse("远端版本缺少唯一的资源附件：${resource.assetName}")
         if (asset.id <= 0 || asset.state != "uploaded" || asset.bytes != resource.bytes ||
             asset.digest != "sha256:${resource.sha256}") invalidResponse("资源附件与任务清单不一致：${resource.assetName}")
-        val call = calls.newCall(request("releases/assets/${asset.id}", accept = "application/octet-stream"))
-        val completed = CompletableDeferred<Result<Unit>>()
+        val request = request("releases/assets/${asset.id}", accept = "application/octet-stream")
+        val call = calls.newCall(request)
+        val completed = CompletableDeferred<Transfer>()
         call.enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                completed.complete(Result.failure(TaskSourceException(TaskSourceProblem.NETWORK, "资源下载连接失败", cause = e)))
+                completed.complete(Transfer(Result.failure(TaskSourceException(TaskSourceProblem.NETWORK, "资源下载连接失败", cause = e)), ResponseOrigin.NO_RESPONSE))
             }
             override fun onResponse(call: Call, response: Response) {
-                completed.complete(runCatching {
+                val responseOrigin = origin(response, request)
+                completed.complete(Transfer(runCatching {
                     response.use {
                         if (it.code != 200) throw TaskSourceException(TaskSourceProblem.HTTP, "资源下载失败（HTTP ${it.code}）", it.code)
                         val hash = MessageDigest.getInstance("SHA-256")
@@ -124,10 +133,16 @@ class GitHubTaskSource(
                         if (count != resource.bytes || digest != resource.sha256)
                             throw TaskSourceException(TaskSourceProblem.INVALID_CONTENT, "资源内容不完整或摘要不匹配")
                     }
-                })
+                }, responseOrigin))
             }
         })
-        try { completed.await().getOrThrow() }
+        try {
+            val transfer = completed.await()
+            val failed = transfer.result.exceptionOrNull()
+            if (transfer.origin == ResponseOrigin.API && failed is TaskSourceException && failed.httpCode == 401)
+                request.tag(GitHubToken::class.java)?.let { authorization.rejected(it) }
+            transfer.result.getOrThrow()
+        }
         catch (cancelled: CancellationException) { call.cancel(); throw cancelled }
         finally {
             // OkHttp cancel requests interruption; it does not itself prove a response callback is quiet.
@@ -137,7 +152,7 @@ class GitHubTaskSource(
 
     private suspend fun get(path: String, query: Pair<String, String>? = null, accept: String = "application/vnd.github+json"): Payload {
         val request = request(path, query, accept)
-        return suspendCancellableCoroutine { continuation ->
+        val result = suspendCancellableCoroutine<Payload> { continuation ->
             val call = calls.newCall(request)
             continuation.invokeOnCancellation { call.cancel() }
             call.enqueue(object : Callback {
@@ -147,7 +162,7 @@ class GitHubTaskSource(
                 }
                 override fun onResponse(call: Call, response: Response) {
                     try {
-                        val payload = response.use { Payload(it.code, if (it.code == 200) it.body.bytes() else byteArrayOf()) }
+                        val payload = response.use { Payload(it.code, if (it.code == 200) it.body.bytes() else byteArrayOf(), origin(it, request)) }
                         if (continuation.isActive) continuation.resume(payload)
                     } catch (error: IOException) {
                         if (continuation.isActive) continuation.resumeWithException(
@@ -156,14 +171,17 @@ class GitHubTaskSource(
                 }
             })
         }
+        if (result.origin == ResponseOrigin.API && result.code == 401) request.tag(GitHubToken::class.java)?.let { authorization.rejected(it) }
+        return result
     }
     private suspend fun request(path: String, query: Pair<String, String>? = null, accept: String): Request {
         val url = apiBase.newBuilder().addPathSegments("repos/${repository.owner}/${repository.name}")
         if (path.isNotEmpty()) url.addPathSegments(path)
         query?.let { url.addQueryParameter(it.first, it.second) }
-        val token = authorization()
+        val token = try { authorization.token() }
+        catch (error: GitHubAuthException) { throw TaskSourceException(TaskSourceProblem.AUTHORIZATION, error.message ?: "请检查 GitHub 登录", error.httpCode) }
         return Request.Builder().url(url.build()).header("Accept", accept)
-            .apply { if (token != null) header("Authorization", "Bearer ${token.value}") }
+            .apply { if (token != null) { header("Authorization", "Bearer ${token.value}"); tag(GitHubToken::class.java, token) } }
             .header("X-GitHub-Api-Version", "2022-11-28").header("User-Agent", "YysAssist-Android").get().build()
     }
     private inline fun <reified T> decode(bytes: ByteArray): T = try { json.decodeFromString<T>(bytes.toString(Charsets.UTF_8)) }

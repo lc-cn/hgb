@@ -1,10 +1,16 @@
 import java.security.MessageDigest
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
+val githubPublicConfiguration = JsonSlurper().parseText(providers.fileContents(
+    rootProject.layout.projectDirectory.file("config/github-app-registration.json")).asText.get()) as Map<*, *>
+val githubClientId = (githubPublicConfiguration["client"] as Map<*, *>)["clientId"] as String
+check(githubPublicConfiguration["formatVersion"] == 1 && githubClientId.isNotBlank()) { "Missing public GitHub Client ID" }
 android {
     namespace = "io.github.yysassist"
     compileSdk { version = release(37) }
@@ -15,8 +21,9 @@ android {
         versionCode = 1
         versionName = "0.1.0-dev"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "GITHUB_CLIENT_ID", JsonOutput.toJson(githubClientId))
     }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
     sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

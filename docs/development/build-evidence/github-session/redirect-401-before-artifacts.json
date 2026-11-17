@@ -1,0 +1,4 @@
+{
+  "core/src/main/kotlin/io/github/yysassist/core/content/GitHubTaskSource.kt": "433815c4ab71a9532e111b0c9d6a027520ff635add5ed2c3d9e2e87b879f0c29",
+  "core/src/test/kotlin/io/github/yysassist/core/content/GitHubTaskSourceTest.kt": "c649f7a0939a00d2f78b96f0e40bd4d1ee89c17a7bcff73bf523e865b8c1cabd"
+}

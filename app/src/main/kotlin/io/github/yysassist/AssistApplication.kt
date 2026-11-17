@@ -26,6 +26,10 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import io.github.yysassist.auth.EncryptedGitHubSessionStore
+import io.github.yysassist.auth.GitHubSession
+import io.github.yysassist.core.auth.GitHubDeviceAuthorization
+import io.github.yysassist.core.auth.GitHubUserApi
 
 /** Application-owned services survive Activity recreation; screens never construct an executor. */
 class AssistApplication : Application() {
@@ -42,6 +46,8 @@ class AssistApplication : Application() {
     lateinit var appearance: AppearancePreferences
         private set
     lateinit var taskUpdates: TaskUpdates
+        private set
+    internal lateinit var github: GitHubSession
         private set
     lateinit var configurations: TaskConfigurationRepository
         private set
@@ -68,7 +74,10 @@ class AssistApplication : Application() {
         taskEditor = TaskConfigurationEditor(configurations, scope)
         val client = OkHttpClient.Builder().proxy(Proxy.NO_PROXY).followSslRedirects(false)
             .callTimeout(30, TimeUnit.SECONDS).build()
-        val source = GitHubTaskSource(TaskRepository("lc-cn", "yys-helper"), "https://api.github.com/".toHttpUrl(), client)
+        github = GitHubSession(BuildConfig.GITHUB_CLIENT_ID,
+            EncryptedGitHubSessionStore(File(noBackupFilesDir, "github-session.bin"), "io.github.yysassist.github.v1"),
+            GitHubDeviceAuthorization(BuildConfig.GITHUB_CLIENT_ID, client), GitHubUserApi(client), scope)
+        val source = GitHubTaskSource(TaskRepository("lc-cn", "yys-helper"), "https://api.github.com/".toHttpUrl(), client, github)
         taskUpdates = TaskUpdates(library, source, scope)
         taskUpdates.pullLatest()
     }
