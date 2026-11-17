@@ -1,0 +1,742 @@
+{
+  "date": "2026-11-17",
+  "sourceCommit": "8adca13",
+  "input": {
+    "source": "ADB screenshot of actual phone official game title page",
+    "dimensions": [
+      2400,
+      1080
+    ],
+    "uniqueFrames": 1,
+    "sha256": "4bb8ffd1721bc545934a2c2561ca25f992f520df53e61dc209aa72652065034f",
+    "annotationsSha256": "7e3eaf6ba41d23a461a41c69bdfbb8e2f62a8b552390525c507b9c6c9ec256c8",
+    "manuallySelectedRegion": [
+      2140,
+      315,
+      2350,
+      660
+    ],
+    "uniqueAnnotatedLabels": 7,
+    "independentlyReviewed": false
+  },
+  "environments": [
+    {
+      "runId": "54b4516c-a50c-4b91-92e5-49140f7a1c3f",
+      "sdk": 36,
+      "abi": "arm64-v8a",
+      "internetPermission": false,
+      "models": {
+        "sourceCommit": "dabcd4681ac990dc4361de26416d986abd80e4aa",
+        "files": [
+          {
+            "path": "det.onnx",
+            "url": "https://raw.githubusercontent.com/MaaXYZ/MaaCommonAssets/dabcd4681ac990dc4361de26416d986abd80e4aa/OCR/ppocr_v6/small/det.onnx",
+            "bytes": 9893172,
+            "gitBlob": "1b6cd44fed65c3f8b8186c8baaee85198d15df35",
+            "sha256": "66c0f34caaf432553710fd9973a7134d8cf924db7109310c3d2562dcc39b209d"
+          },
+          {
+            "path": "rec.onnx",
+            "url": "https://raw.githubusercontent.com/MaaXYZ/MaaCommonAssets/dabcd4681ac990dc4361de26416d986abd80e4aa/OCR/ppocr_v6/small/rec.onnx",
+            "bytes": 21146753,
+            "gitBlob": "1acdeb6a697ef98fdacc0365f184bf601168838c",
+            "sha256": "7dcf6298d77d2a6eb44c1ebeed990826ca895a9c68d955a3eace00763d052949"
+          },
+          {
+            "path": "keys.txt",
+            "url": "https://raw.githubusercontent.com/MaaXYZ/MaaCommonAssets/dabcd4681ac990dc4361de26416d986abd80e4aa/OCR/ppocr_v6/small/keys.txt",
+            "bytes": 74947,
+            "gitBlob": "270082aa29aec1ff3ac74d0d575c90399216f74d",
+            "sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d"
+          }
+        ],
+        "scope": "Maa converted PP-OCRv6 small; different bytes/preprocessing from the official Paddle SDK candidate."
+      },
+      "engine": "MaaFramework-5.16.1-ONNX-CPU-converted-v6-small",
+      "success": true,
+      "environment": "API36 ARM64 emulator",
+      "runs": [
+        {
+          "sample": "phone-title-current",
+          "repetition": 0,
+          "elapsedMs": 1306.157043,
+          "labels": [
+            {
+              "expected": "进入游戏",
+              "exact": true,
+              "bestIoU": 0.6710526347160339,
+              "locatedExact": true,
+              "locatedIoU": 0.6710526347160339
+            },
+            {
+              "expected": "用户中心",
+              "exact": false,
+              "bestIoU": 0,
+              "locatedExact": false,
+              "locatedIoU": 0
+            },
+            {
+              "expected": "账号",
+              "exact": false,
+              "bestIoU": 0,
+              "locatedExact": false,
+              "locatedIoU": 0
+            },
+            {
+              "expected": "反馈",
+              "exact": true,
+              "bestIoU": 0.4121446907520294,
+              "locatedExact": true,
+              "locatedIoU": 0.4121446907520294
+            },
+            {
+              "expected": "修复",
+              "exact": true,
+              "bestIoU": 0.3852657079696655,
+              "locatedExact": true,
+              "locatedIoU": 0.3852657079696655
+            },
+            {
+              "expected": "观看动画",
+              "exact": true,
+              "bestIoU": 0.6645264625549316,
+              "locatedExact": true,
+              "locatedIoU": 0.6645264625549316
+            },
+            {
+              "expected": "下载码",
+              "exact": true,
+              "bestIoU": 0.572147011756897,
+              "locatedExact": true,
+              "locatedIoU": 0.572147011756897
+            }
+          ],
+          "readingCount": 24,
+          "controllerBound": false,
+          "literalPublicMenuMatches": {
+            "用户中心": 0,
+            "账号": 0,
+            "反馈": 1
+          }
+        },
+        {
+          "sample": "phone-title-current",
+          "repetition": 1,
+          "elapsedMs": 1001.849875,
+          "labels": [
+            {
+              "expected": "进入游戏",
+              "exact": true,
+              "bestIoU": 0.6710526347160339,
+              "locatedExact": true,
+              "locatedIoU": 0.6710526347160339
+            },
+            {
+              "expected": "用户中心",
+              "exact": false,
+              "bestIoU": 0,
+              "locatedExact": false,
+              "locatedIoU": 0
+            },
+            {
+              "expected": "账号",
+              "exact": false,
+              "bestIoU": 0,
+              "locatedExact": false,
+              "locatedIoU": 0
+            },
+            {
+              "expected": "反馈",
+              "exact": true,
+              "bestIoU": 0.4121446907520294,
+              "locatedExact": true,
+              "locatedIoU": 0.4121446907520294
+            },
+            {
+              "expected": "修复",
+              "exact": true,
+              "bestIoU": 0.3852657079696655,
+              "locatedExact": true,
+              "locatedIoU": 0.3852657079696655
+            },
+            {
+              "expected": "观看动画",
+              "exact": true,
+              "bestIoU": 0.6645264625549316,
+              "locatedExact": true,
+              "locatedIoU": 0.6645264625549316
+            },
+            {
+              "expected": "下载码",
+              "exact": true,
+              "bestIoU": 0.572147011756897,
+              "locatedExact": true,
+              "locatedIoU": 0.572147011756897
+            }
+          ],
+          "readingCount": 24,
+          "controllerBound": false,
+          "literalPublicMenuMatches": {
+            "用户中心": 0,
+            "账号": 0,
+            "反馈": 1
+          }
+        },
+        {
+          "sample": "phone-title-current",
+          "repetition": 2,
+          "elapsedMs": 844.356042,
+          "labels": [
+            {
+              "expected": "进入游戏",
+              "exact": true,
+              "bestIoU": 0.6710526347160339,
+              "locatedExact": true,
+              "locatedIoU": 0.6710526347160339
+            },
+            {
+              "expected": "用户中心",
+              "exact": false,
+              "bestIoU": 0,
+              "locatedExact": false,
+              "locatedIoU": 0
+            },
+            {
+              "expected": "账号",
+              "exact": false,
+              "bestIoU": 0,
+              "locatedExact": false,
+              "locatedIoU": 0
+            },
+            {
+              "expected": "反馈",
+              "exact": true,
+              "bestIoU": 0.4121446907520294,
+              "locatedExact": true,
+              "locatedIoU": 0.4121446907520294
+            },
+            {
+              "expected": "修复",
+              "exact": true,
+              "bestIoU": 0.3852657079696655,
+              "locatedExact": true,
+              "locatedIoU": 0.3852657079696655
+            },
+            {
+              "expected": "观看动画",
+              "exact": true,
+              "bestIoU": 0.6645264625549316,
+              "locatedExact": true,
+              "locatedIoU": 0.6645264625549316
+            },
+            {
+              "expected": "下载码",
+              "exact": true,
+              "bestIoU": 0.572147011756897,
+              "locatedExact": true,
+              "locatedIoU": 0.572147011756897
+            }
+          ],
+          "readingCount": 24,
+          "controllerBound": false,
+          "literalPublicMenuMatches": {
+            "用户中心": 0,
+            "账号": 0,
+            "反馈": 1
+          }
+        },
+        {
+          "sample": "phone-title-menu-region",
+          "repetition": 0,
+          "elapsedMs": 106.210042,
+          "labels": [
+            {
+              "expected": "用户中心",
+              "exact": true,
+              "bestIoU": 0.6098412871360779,
+              "locatedExact": true,
+              "locatedIoU": 0.6098412871360779
+            },
+            {
+              "expected": "账号",
+              "exact": true,
+              "bestIoU": 0.5428571701049805,
+              "locatedExact": true,
+              "locatedIoU": 0.5428571701049805
+            },
+            {
+              "expected": "反馈",
+              "exact": true,
+              "bestIoU": 0.5201550126075745,
+              "locatedExact": true,
+              "locatedIoU": 0.5201550126075745
+            }
+          ],
+          "readingCount": 4,
+          "controllerBound": false,
+          "literalPublicMenuMatches": {
+            "用户中心": 1,
+            "账号": 1,
+            "反馈": 1
+          }
+        },
+        {
+          "sample": "phone-title-menu-region",
+          "repetition": 1,
+          "elapsedMs": 51.294416,
+          "labels": [
+            {
+              "expected": "用户中心",
+              "exact": true,
+              "bestIoU": 0.6098412871360779,
+              "locatedExact": true,
+              "locatedIoU": 0.6098412871360779
+            },
+            {
+              "expected": "账号",
+              "exact": true,
+              "bestIoU": 0.5428571701049805,
+              "locatedExact": true,
+              "locatedIoU": 0.5428571701049805
+            },
+            {
+              "expected": "反馈",
+              "exact": true,
+              "bestIoU": 0.5201550126075745,
+              "locatedExact": true,
+              "locatedIoU": 0.5201550126075745
+            }
+          ],
+          "readingCount": 4,
+          "controllerBound": false,
+          "literalPublicMenuMatches": {
+            "用户中心": 1,
+            "账号": 1,
+            "反馈": 1
+          }
+        },
+        {
+          "sample": "phone-title-menu-region",
+          "repetition": 2,
+          "elapsedMs": 58.194625,
+          "labels": [
+            {
+              "expected": "用户中心",
+              "exact": true,
+              "bestIoU": 0.6098412871360779,
+              "locatedExact": true,
+              "locatedIoU": 0.6098412871360779
+            },
+            {
+              "expected": "账号",
+              "exact": true,
+              "bestIoU": 0.5428571701049805,
+              "locatedExact": true,
+              "locatedIoU": 0.5428571701049805
+            },
+            {
+              "expected": "反馈",
+              "exact": true,
+              "bestIoU": 0.5201550126075745,
+              "locatedExact": true,
+              "locatedIoU": 0.5201550126075745
+            }
+          ],
+          "readingCount": 4,
+          "controllerBound": false,
+          "literalPublicMenuMatches": {
+            "用户中心": 1,
+            "账号": 1,
+            "反馈": 1
+          }
+        }
+      ]
+    },
+    {
+      "runId": "177742f0-d031-4865-bbb7-44854f4569ec",
+      "sdk": 35,
+      "abi": "arm64-v8a",
+      "internetPermission": false,
+      "models": {
+        "sourceCommit": "dabcd4681ac990dc4361de26416d986abd80e4aa",
+        "files": [
+          {
+            "path": "det.onnx",
+            "url": "https://raw.githubusercontent.com/MaaXYZ/MaaCommonAssets/dabcd4681ac990dc4361de26416d986abd80e4aa/OCR/ppocr_v6/small/det.onnx",
+            "bytes": 9893172,
+            "gitBlob": "1b6cd44fed65c3f8b8186c8baaee85198d15df35",
+            "sha256": "66c0f34caaf432553710fd9973a7134d8cf924db7109310c3d2562dcc39b209d"
+          },
+          {
+            "path": "rec.onnx",
+            "url": "https://raw.githubusercontent.com/MaaXYZ/MaaCommonAssets/dabcd4681ac990dc4361de26416d986abd80e4aa/OCR/ppocr_v6/small/rec.onnx",
+            "bytes": 21146753,
+            "gitBlob": "1acdeb6a697ef98fdacc0365f184bf601168838c",
+            "sha256": "7dcf6298d77d2a6eb44c1ebeed990826ca895a9c68d955a3eace00763d052949"
+          },
+          {
+            "path": "keys.txt",
+            "url": "https://raw.githubusercontent.com/MaaXYZ/MaaCommonAssets/dabcd4681ac990dc4361de26416d986abd80e4aa/OCR/ppocr_v6/small/keys.txt",
+            "bytes": 74947,
+            "gitBlob": "270082aa29aec1ff3ac74d0d575c90399216f74d",
+            "sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d"
+          }
+        ],
+        "scope": "Maa converted PP-OCRv6 small; different bytes/preprocessing from the official Paddle SDK candidate."
+      },
+      "engine": "MaaFramework-5.16.1-ONNX-CPU-converted-v6-small",
+      "success": true,
+      "environment": "SM-G9910 API35 ARM64",
+      "runs": [
+        {
+          "sample": "phone-title-current",
+          "repetition": 0,
+          "elapsedMs": 2034.923021,
+          "labels": [
+            {
+              "expected": "进入游戏",
+              "exact": true,
+              "bestIoU": 0.6710526347160339,
+              "locatedExact": true,
+              "locatedIoU": 0.6710526347160339
+            },
+            {
+              "expected": "用户中心",
+              "exact": false,
+              "bestIoU": 0,
+              "locatedExact": false,
+              "locatedIoU": 0
+            },
+            {
+              "expected": "账号",
+              "exact": false,
+              "bestIoU": 0,
+              "locatedExact": false,
+              "locatedIoU": 0
+            },
+            {
+              "expected": "反馈",
+              "exact": true,
+              "bestIoU": 0.4121446907520294,
+              "locatedExact": true,
+              "locatedIoU": 0.4121446907520294
+            },
+            {
+              "expected": "修复",
+              "exact": true,
+              "bestIoU": 0.3852657079696655,
+              "locatedExact": true,
+              "locatedIoU": 0.3852657079696655
+            },
+            {
+              "expected": "观看动画",
+              "exact": true,
+              "bestIoU": 0.6645264625549316,
+              "locatedExact": true,
+              "locatedIoU": 0.6645264625549316
+            },
+            {
+              "expected": "下载码",
+              "exact": true,
+              "bestIoU": 0.572147011756897,
+              "locatedExact": true,
+              "locatedIoU": 0.572147011756897
+            }
+          ],
+          "readingCount": 24,
+          "controllerBound": false,
+          "literalPublicMenuMatches": {
+            "用户中心": 0,
+            "账号": 0,
+            "反馈": 1
+          }
+        },
+        {
+          "sample": "phone-title-current",
+          "repetition": 1,
+          "elapsedMs": 2250.982707,
+          "labels": [
+            {
+              "expected": "进入游戏",
+              "exact": true,
+              "bestIoU": 0.6710526347160339,
+              "locatedExact": true,
+              "locatedIoU": 0.6710526347160339
+            },
+            {
+              "expected": "用户中心",
+              "exact": false,
+              "bestIoU": 0,
+              "locatedExact": false,
+              "locatedIoU": 0
+            },
+            {
+              "expected": "账号",
+              "exact": false,
+              "bestIoU": 0,
+              "locatedExact": false,
+              "locatedIoU": 0
+            },
+            {
+              "expected": "反馈",
+              "exact": true,
+              "bestIoU": 0.4121446907520294,
+              "locatedExact": true,
+              "locatedIoU": 0.4121446907520294
+            },
+            {
+              "expected": "修复",
+              "exact": true,
+              "bestIoU": 0.3852657079696655,
+              "locatedExact": true,
+              "locatedIoU": 0.3852657079696655
+            },
+            {
+              "expected": "观看动画",
+              "exact": true,
+              "bestIoU": 0.6645264625549316,
+              "locatedExact": true,
+              "locatedIoU": 0.6645264625549316
+            },
+            {
+              "expected": "下载码",
+              "exact": true,
+              "bestIoU": 0.572147011756897,
+              "locatedExact": true,
+              "locatedIoU": 0.572147011756897
+            }
+          ],
+          "readingCount": 24,
+          "controllerBound": false,
+          "literalPublicMenuMatches": {
+            "用户中心": 0,
+            "账号": 0,
+            "反馈": 1
+          }
+        },
+        {
+          "sample": "phone-title-current",
+          "repetition": 2,
+          "elapsedMs": 2094.849895,
+          "labels": [
+            {
+              "expected": "进入游戏",
+              "exact": true,
+              "bestIoU": 0.6710526347160339,
+              "locatedExact": true,
+              "locatedIoU": 0.6710526347160339
+            },
+            {
+              "expected": "用户中心",
+              "exact": false,
+              "bestIoU": 0,
+              "locatedExact": false,
+              "locatedIoU": 0
+            },
+            {
+              "expected": "账号",
+              "exact": false,
+              "bestIoU": 0,
+              "locatedExact": false,
+              "locatedIoU": 0
+            },
+            {
+              "expected": "反馈",
+              "exact": true,
+              "bestIoU": 0.4121446907520294,
+              "locatedExact": true,
+              "locatedIoU": 0.4121446907520294
+            },
+            {
+              "expected": "修复",
+              "exact": true,
+              "bestIoU": 0.3852657079696655,
+              "locatedExact": true,
+              "locatedIoU": 0.3852657079696655
+            },
+            {
+              "expected": "观看动画",
+              "exact": true,
+              "bestIoU": 0.6645264625549316,
+              "locatedExact": true,
+              "locatedIoU": 0.6645264625549316
+            },
+            {
+              "expected": "下载码",
+              "exact": true,
+              "bestIoU": 0.572147011756897,
+              "locatedExact": true,
+              "locatedIoU": 0.572147011756897
+            }
+          ],
+          "readingCount": 24,
+          "controllerBound": false,
+          "literalPublicMenuMatches": {
+            "用户中心": 0,
+            "账号": 0,
+            "反馈": 1
+          }
+        },
+        {
+          "sample": "phone-title-menu-region",
+          "repetition": 0,
+          "elapsedMs": 194.269531,
+          "labels": [
+            {
+              "expected": "用户中心",
+              "exact": true,
+              "bestIoU": 0.6098412871360779,
+              "locatedExact": true,
+              "locatedIoU": 0.6098412871360779
+            },
+            {
+              "expected": "账号",
+              "exact": true,
+              "bestIoU": 0.5428571701049805,
+              "locatedExact": true,
+              "locatedIoU": 0.5428571701049805
+            },
+            {
+              "expected": "反馈",
+              "exact": true,
+              "bestIoU": 0.5201550126075745,
+              "locatedExact": true,
+              "locatedIoU": 0.5201550126075745
+            }
+          ],
+          "readingCount": 4,
+          "controllerBound": false,
+          "literalPublicMenuMatches": {
+            "用户中心": 1,
+            "账号": 1,
+            "反馈": 1
+          }
+        },
+        {
+          "sample": "phone-title-menu-region",
+          "repetition": 1,
+          "elapsedMs": 192.821041,
+          "labels": [
+            {
+              "expected": "用户中心",
+              "exact": true,
+              "bestIoU": 0.6098412871360779,
+              "locatedExact": true,
+              "locatedIoU": 0.6098412871360779
+            },
+            {
+              "expected": "账号",
+              "exact": true,
+              "bestIoU": 0.5428571701049805,
+              "locatedExact": true,
+              "locatedIoU": 0.5428571701049805
+            },
+            {
+              "expected": "反馈",
+              "exact": true,
+              "bestIoU": 0.5201550126075745,
+              "locatedExact": true,
+              "locatedIoU": 0.5201550126075745
+            }
+          ],
+          "readingCount": 4,
+          "controllerBound": false,
+          "literalPublicMenuMatches": {
+            "用户中心": 1,
+            "账号": 1,
+            "反馈": 1
+          }
+        },
+        {
+          "sample": "phone-title-menu-region",
+          "repetition": 2,
+          "elapsedMs": 182.609062,
+          "labels": [
+            {
+              "expected": "用户中心",
+              "exact": true,
+              "bestIoU": 0.6098412871360779,
+              "locatedExact": true,
+              "locatedIoU": 0.6098412871360779
+            },
+            {
+              "expected": "账号",
+              "exact": true,
+              "bestIoU": 0.5428571701049805,
+              "locatedExact": true,
+              "locatedIoU": 0.5428571701049805
+            },
+            {
+              "expected": "反馈",
+              "exact": true,
+              "bestIoU": 0.5201550126075745,
+              "locatedExact": true,
+              "locatedIoU": 0.5201550126075745
+            }
+          ],
+          "readingCount": 4,
+          "controllerBound": false,
+          "literalPublicMenuMatches": {
+            "用户中心": 1,
+            "账号": 1,
+            "反馈": 1
+          }
+        }
+      ]
+    }
+  ],
+  "installedProbeArtifacts": [
+    {
+      "environment": "API36 ARM64 emulator",
+      "package": "io.github.yysassist.maaprobe",
+      "sha256": "eceb77682086634dd35cadae5caa4993d470140ea4cd77390a5f0d6e8595c0bc",
+      "matchesBuild": true
+    },
+    {
+      "environment": "API36 ARM64 emulator",
+      "package": "io.github.yysassist.maaprobe.test",
+      "sha256": "f2499b5ee3c733483422bb689f4826ba753b755cd489a4629ba4d24025d15d76",
+      "matchesBuild": true
+    },
+    {
+      "environment": "SM-G9910/API35",
+      "package": "io.github.yysassist.maaprobe",
+      "sha256": "eceb77682086634dd35cadae5caa4993d470140ea4cd77390a5f0d6e8595c0bc",
+      "matchesBuild": true
+    },
+    {
+      "environment": "SM-G9910/API35",
+      "package": "io.github.yysassist.maaprobe.test",
+      "sha256": "f2499b5ee3c733483422bb689f4826ba753b755cd489a4629ba4d24025d15d76",
+      "matchesBuild": true
+    }
+  ],
+  "phone": {
+    "model": "SM-G9910",
+    "api": 35,
+    "abi": "arm64-v8a",
+    "pageBytes": 4096,
+    "gameVersionName": "2.8.89",
+    "gameVersionCode": 261014
+  },
+  "privateAssetsRestored": {
+    "restored": true,
+    "files": 4
+  },
+  "phoneCleanup": {
+    "io.github.yysassist.maaprobe.test": {
+      "uninstalled": true
+    },
+    "io.github.yysassist.maaprobe": {
+      "uninstalled": true
+    },
+    "helper": {
+      "sha256": "251db799817b944877bf984f919f518cebf296d5cc71427e8ab5a6bb0e06cab1",
+      "boundServiceObserved": true
+    }
+  },
+  "emulatorCleanup": {
+    "privateScreenshotTestApkRemoved": true,
+    "existingProbeMainAndDataPreserved": true
+  }
+}
