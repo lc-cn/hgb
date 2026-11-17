@@ -1,0 +1,86 @@
+core/src/main/kotlin/io/github/yysassist/core/execution/TaskExecutor.kt
+  s_b0f0af2da7f631::t_6694f503eb0f39 8-9,18,28,44
+  s_b0f0af2da7f631::t_a3b1502490a0ad 401-404,438
+  s_b0f0af2da7f631::t_0105bb6da0b212 27,43,114-119,154,167,220-225,405-433,589
+  s_73eb2432348eb5::t_e4cbe0dce332b5 434
+docs/development/build-evidence/device-action-records/android-full-tests.txt
+  s_b0f0af2da7f631::t_58ad7d5f449df3 1-1852
+docs/development/build-evidence/device-action-records/integration-build.txt
+  s_b0f0af2da7f631::t_58ad7d5f449df3 1-158
+docs/development/build-evidence/device-action-records/installed-artifacts.json
+  s_b0f0af2da7f631::t_58ad7d5f449df3 1-18
+docs/development/build-evidence/device-action-records/process-seed.txt
+  s_b0f0af2da7f631::t_58ad7d5f449df3 1-23
+docs/development/build-evidence/device-action-records/android-boundary-tests.txt
+  s_b0f0af2da7f631::t_58ad7d5f449df3 1-459
+docs/development/build-evidence/device-action-records/test-summary.json
+  s_b0f0af2da7f631::t_58ad7d5f449df3 1-199
+docs/development/build-evidence/device-action-records/README.md
+  s_b0f0af2da7f631::t_b49fcdff0b3c95 12
+  s_b0f0af2da7f631::t_b13f6742f03ead 1-11,13-14
+docs/development/device-bridge.md
+  s_b0f0af2da7f631::t_b13f6742f03ead 3,47-52
+core/src/main/kotlin/io/github/yysassist/core/execution/ExecutionModels.kt
+  s_b0f0af2da7f631::t_0105bb6da0b212 87
+docs/development/build-evidence/device-action-records/process-verify.txt
+  s_b0f0af2da7f631::t_58ad7d5f449df3 1-23
+core/src/main/kotlin/io/github/yysassist/core/execution/DeviceActionRecord.kt
+  s_b0f0af2da7f631::t_0105bb6da0b212 1-40
+app/src/androidTest/kotlin/io/github/yysassist/ExecutionRuntimeTest.kt
+  s_b0f0af2da7f631::t_7fcc08a7fa2072 55-131
+docs/development/build-evidence/device-action-records/process-result.json
+  s_b0f0af2da7f631::t_58ad7d5f449df3 1
+app/src/androidTest/kotlin/io/github/yysassist/device/DeviceRuntimeIntegrationTest.kt
+  s_b0f0af2da7f631::t_d2cca12d70558b 149-225
+docs/development/README.md
+  s_b0f0af2da7f631::t_853e33e5d04e4d 23
+docs/development/build-evidence/device-action-records/build.txt
+  s_b0f0af2da7f631::t_58ad7d5f449df3 1-158
+docs/development/execution-persistence.md
+  s_b0f0af2da7f631::t_853e33e5d04e4d 3,60-75
+docs/development/build-evidence/device-action-records/phone-check.json
+  s_b0f0af2da7f631::t_58ad7d5f449df3 1-26
+docs/development/build-evidence/device-action-records/verification.json
+  s_b0f0af2da7f631::t_58ad7d5f449df3 1-44
+docs/development/build-evidence/device-action-records/cleanup.json
+  s_b0f0af2da7f631::t_7d6e7eee4da7d6 1-7
+docs/development/game-validation.md
+  s_b0f0af2da7f631::t_81841fe09d2c21 52-59
+core/src/main/kotlin/io/github/yysassist/core/execution/ExecutorCommand.kt
+  s_b0f0af2da7f631::t_0105bb6da0b212 23-24,33
+app/src/main/kotlin/io/github/yysassist/ExecutionRuntime.kt
+  s_b0f0af2da7f631::t_a3b1502490a0ad 134,213-214,238-243
+core/src/test/kotlin/io/github/yysassist/core/execution/DeviceActionRecordTest.kt
+  s_b0f0af2da7f631::t_6694f503eb0f39 99
+  s_b0f0af2da7f631::t_ec415668bcaaa4 112-117
+  s_b0f0af2da7f631::t_a3b1502490a0ad 1-98,100-111,118-122
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_853e33e5d04e4d 21-22,156-162
+  s_b0f0af2da7f631::t_81841fe09d2c21 163
+docs/development/build-evidence/device-action-records/core-build.txt
+  s_b0f0af2da7f631::t_58ad7d5f449df3 1-158
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b5ff227a352cf390a79828701eff48d176b5e4d1",
+  "prompts": {},
+  "sessions": {
+    "s_73eb2432348eb5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab3194df-5b78-49aa-ab2a-15c1010bbda7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    },
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
