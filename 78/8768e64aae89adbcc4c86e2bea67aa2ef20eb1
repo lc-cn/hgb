@@ -1,0 +1,27 @@
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_c50b6256824821 228-235
+docs/development/build-evidence/phone-title-observation/verification.json
+  s_b0f0af2da7f631::t_cb411e4417e291 1-742
+docs/development/build-evidence/phone-title-observation/emulator-test.txt
+  s_b0f0af2da7f631::t_cb411e4417e291 1-23
+docs/development/build-evidence/phone-title-observation/README.md
+  s_b0f0af2da7f631::t_c50b6256824821 1-25
+docs/development/build-evidence/phone-title-observation/phone-test.txt
+  s_b0f0af2da7f631::t_cb411e4417e291 1-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "788768e64aae89adbcc4c86e2bea67aa2ef20eb1",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
