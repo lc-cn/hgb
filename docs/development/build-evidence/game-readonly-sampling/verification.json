@@ -1,0 +1,188 @@
+{
+  "date": "2026-11-17",
+  "sourceCommit": "788768e",
+  "environment": {
+    "navigation": "SM-G9910 API35; official game 2.8.89 (261014), 2400x1080",
+    "staticInference": "Dedicated API36 ARM64 emulator; no game installed"
+  },
+  "authorization": "User explicitly allowed read-only navigation and local sampling; no claiming, buying, strengthening or messaging",
+  "observations": {
+    "courtyardConfirmed": true,
+    "profileFieldsObserved": [
+      "nickname",
+      "role identifier"
+    ],
+    "profileValuesIncluded": false,
+    "dailyGiftClaimLabelVisible": true,
+    "claimServerEligibilityVerified": false,
+    "permanentCardShopState": "sold out",
+    "permanentCardOutputEligibility": "unknown; courtyard paper doll not clicked",
+    "returnedToCourtyard": true,
+    "optionalModelDownload": "cancelled"
+  },
+  "inputs": {
+    "uniqueFrames": 2,
+    "uniquePublicLabels": 6,
+    "annotationsIndependentReview": false,
+    "annotationsSha256": "0a4280985e9d16efde566786c31acd9614967d4224ab77d6f80994705647eefc",
+    "frames": {
+      "daily-gift": "fc3fdc77c8488917c34e8cef4818f0cd838e7fd8a0e4ccec3d20a494c78eb8fc",
+      "permanent-card": "3991d0ab0037aefce135478429e76a9b4259241087357e00c720d3d237f73fc6"
+    }
+  },
+  "probe": {
+    "runId": "8d3b4887-9178-44f4-b983-991059c64822",
+    "engine": "MaaFramework-5.16.1-ONNX-CPU-converted-v6-small",
+    "internetPermission": false,
+    "success": true,
+    "modelSourceCommit": "dabcd4681ac990dc4361de26416d986abd80e4aa",
+    "modelHashes": {
+      "det.onnx": "66c0f34caaf432553710fd9973a7134d8cf924db7109310c3d2562dcc39b209d",
+      "rec.onnx": "7dcf6298d77d2a6eb44c1ebeed990826ca895a9c68d955a3eace00763d052949",
+      "keys.txt": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d"
+    },
+    "samples": [
+      {
+        "sample": "daily-gift-full",
+        "publicLabels": [
+          "每日礼包",
+          "领取",
+          "每日优惠礼包",
+          "每日符咒包"
+        ],
+        "runs": [
+          {
+            "repetition": 0,
+            "locatedExactCount": 4,
+            "literalLabelsAllPresent": true,
+            "controllerBound": false,
+            "elapsedMs": 716.093375
+          },
+          {
+            "repetition": 1,
+            "locatedExactCount": 4,
+            "literalLabelsAllPresent": true,
+            "controllerBound": false,
+            "elapsedMs": 663.757167
+          },
+          {
+            "repetition": 2,
+            "locatedExactCount": 4,
+            "literalLabelsAllPresent": true,
+            "controllerBound": false,
+            "elapsedMs": 729.369
+          }
+        ]
+      },
+      {
+        "sample": "daily-gift-region",
+        "publicLabels": [
+          "每日礼包",
+          "领取",
+          "每日优惠礼包",
+          "每日符咒包"
+        ],
+        "runs": [
+          {
+            "repetition": 0,
+            "locatedExactCount": 4,
+            "literalLabelsAllPresent": true,
+            "controllerBound": false,
+            "elapsedMs": 250.58375
+          },
+          {
+            "repetition": 1,
+            "locatedExactCount": 4,
+            "literalLabelsAllPresent": true,
+            "controllerBound": false,
+            "elapsedMs": 243.184417
+          },
+          {
+            "repetition": 2,
+            "locatedExactCount": 4,
+            "literalLabelsAllPresent": true,
+            "controllerBound": false,
+            "elapsedMs": 227.778583
+          }
+        ]
+      },
+      {
+        "sample": "permanent-card-full",
+        "publicLabels": [
+          "永久勾玉卡",
+          "售罄"
+        ],
+        "runs": [
+          {
+            "repetition": 0,
+            "locatedExactCount": 2,
+            "literalLabelsAllPresent": true,
+            "controllerBound": false,
+            "elapsedMs": 722.508834
+          },
+          {
+            "repetition": 1,
+            "locatedExactCount": 2,
+            "literalLabelsAllPresent": true,
+            "controllerBound": false,
+            "elapsedMs": 1159.143292
+          },
+          {
+            "repetition": 2,
+            "locatedExactCount": 2,
+            "literalLabelsAllPresent": true,
+            "controllerBound": false,
+            "elapsedMs": 691.289958
+          }
+        ]
+      },
+      {
+        "sample": "permanent-card-region",
+        "publicLabels": [
+          "永久勾玉卡",
+          "售罄"
+        ],
+        "runs": [
+          {
+            "repetition": 0,
+            "locatedExactCount": 2,
+            "literalLabelsAllPresent": true,
+            "controllerBound": false,
+            "elapsedMs": 62.867333
+          },
+          {
+            "repetition": 1,
+            "locatedExactCount": 2,
+            "literalLabelsAllPresent": true,
+            "controllerBound": false,
+            "elapsedMs": 52.4565
+          },
+          {
+            "repetition": 2,
+            "locatedExactCount": 2,
+            "literalLabelsAllPresent": true,
+            "controllerBound": false,
+            "elapsedMs": 47.258292
+          }
+        ]
+      }
+    ]
+  },
+  "installedProbeArtifacts": {
+    "environment": "API36 ARM64 dedicated emulator",
+    "mainSha256": "eceb77682086634dd35cadae5caa4993d470140ea4cd77390a5f0d6e8595c0bc",
+    "testSha256": "39e90ecd00c5a8d4ca254b4796c1059311f84c65f81743297aeca855d8e35c89",
+    "bothMatchBuild": true
+  },
+  "privateAssetsRestored": {
+    "restored": true,
+    "files": 4
+  },
+  "cleanup": {
+    "privateScreenshotTestApkRemoved": true,
+    "currentRunPrivateOutputsRemoved": true,
+    "existingProbeMainAndOtherDataPreserved": true,
+    "formalHelperReopened": true,
+    "phoneProbeInstalledThisRound": false
+  }
+}
