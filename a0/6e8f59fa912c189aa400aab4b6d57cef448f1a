@@ -1,0 +1,25 @@
+docs/development/build-evidence/game-display/experiment.json
+  s_b0f0af2da7f631::t_b4c8bbc0983d0f 1-40
+docs/development/build-evidence/game-display/graphics-error.txt
+  s_b0f0af2da7f631::t_b4c8bbc0983d0f 1
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_8ce7fa73e69f3a 210-215
+docs/development/build-evidence/game-display/README.md
+  s_b0f0af2da7f631::t_b4c8bbc0983d0f 1-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a06e8f59fa912c189aa400aab4b6d57cef448f1a",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
