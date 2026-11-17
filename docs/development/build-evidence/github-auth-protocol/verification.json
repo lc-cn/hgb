@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-17",
+  "baseCommit": "265ad5554c68dbfd84dd77c3cb84894c15fb676b",
+  "sourceSha256": {
+    "core/src/main/kotlin/io/github/yysassist/core/auth/GitHubDeviceAuthorization.kt": "a1fb8776e8389b0356760dc55fc38b33d688328a11d3c008d8a977844510d348",
+    "core/src/test/kotlin/io/github/yysassist/core/auth/GitHubDeviceAuthorizationTest.kt": "9884efd3d6b37590b2814d77f2ac92abd8bf05066de6ef25bca9836388e1d76c",
+    "core/src/main/kotlin/io/github/yysassist/core/content/GitHubTaskSource.kt": "b5231143f180a8a28c810bce625f19e45f99e3f2cc20b9371aed360283271309",
+    "core/src/test/kotlin/io/github/yysassist/core/content/GitHubTaskSourceTest.kt": "2d8ef6c4afd47d61e6b85238f7ccbbb417419797b64ed6626693245ffcba26a6",
+    "app/src/androidTest/kotlin/io/github/yysassist/TaskUpdatesIntegrationTest.kt": "f9def7a25ca0aedf2ca52d2e95c84d98b26777e751e8163c07ba3418a58c38da"
+  },
+  "productionSessionConnected": false,
+  "liveGitHubAuthorization": false,
+  "apkSha256": {
+    "app/build/outputs/apk/debug/app-debug.apk": "5322aa9c6f4529e43a520bc4fd2c9e711d41e5fd55944dea1a0e5e1490319095",
+    "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": "3b58282967b0fd2e74c9c93489e4419b77c341066d03a159686c3cd18836b2b3"
+  }
+}

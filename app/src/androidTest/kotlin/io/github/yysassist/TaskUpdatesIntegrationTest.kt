@@ -19,6 +19,8 @@ import org.junit.runner.RunWith
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 import java.io.File
+import io.github.yysassist.core.auth.GitHubToken
+import io.github.yysassist.core.auth.GitHubDeviceAuthorization
 
 /** Local HTTPS + the real source/controller + real SQLite; no publishing or game actions. */
 @RunWith(AndroidJUnit4::class)
@@ -31,6 +33,7 @@ class TaskUpdatesIntegrationTest {
     private lateinit var scope: CoroutineScope
     private lateinit var name: String
     private lateinit var resources: File
+    private var credential: GitHubToken? = null
     @Before fun setup() {
         val certificate = HeldCertificate.Builder().commonName("localhost").addSubjectAlternativeName("localhost").build()
         val serverTls = HandshakeCertificates.Builder().heldCertificate(certificate).build()
@@ -44,7 +47,7 @@ class TaskUpdatesIntegrationTest {
         resources = File(context.noBackupFilesDir, name)
         library = TaskVersionLibrary(database, BundleCodec(listOf(CapabilityContract("test.observe", 1) { null })), TaskResourceFiles(resources))
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-        updates = TaskUpdates(library, GitHubTaskSource(TaskRepository("test", "tasks"), server.url("/"), client), scope)
+        updates = TaskUpdates(library, GitHubTaskSource(TaskRepository("test", "tasks"), server.url("/"), client) { credential }, scope)
     }
     @After fun close() = runBlocking {
         scope.cancel(); scope.coroutineContext[Job]!!.join()
@@ -103,6 +106,31 @@ class TaskUpdatesIntegrationTest {
         assertEquals("one", library.snapshot().activeVersion)
         assertEquals("one", library.activeCatalog()!!.version)
         assertEquals(1, library.snapshot().versions.size)
+    }
+    @Test fun deviceAuthorizationFeedsAnAuthenticatedPullThroughHttpsIntoTheRealVersionLibrary(): Unit = runBlocking {
+        server.enqueue(MockResponse().setBody("""{"device_code":"fixture_device","user_code":"TEST-CODE","verification_uri":"https://github.com/login/device","expires_in":900,"interval":1}"""))
+        server.enqueue(MockResponse().setBody("""{"access_token":"fixture_access","token_type":"bearer","expires_in":28800,"refresh_token":"fixture_refresh","refresh_token_expires_in":15897600}"""))
+        var clock = 0L
+        val tokens = GitHubDeviceAuthorization("fixture_public_client", client, server.url("/"), { clock }, { clock += it }).authorize {
+            assertEquals("TEST-CODE", it.userCode)
+        }
+        credential = tokens.accessToken
+        enqueue("one"); updates.pullLatest(); finished()
+        assertEquals(listOf("one"), library.snapshot().versions.map { it.version })
+        assertNull(library.snapshot().activeVersion)
+        for (path in listOf("/login/device/code", "/login/oauth/access_token")) {
+            val request = server.takeRequest(); assertEquals(path, request.path); assertNull(request.getHeader("Authorization"))
+        }
+        for (path in listOf("/repos/test/tasks/releases/latest", "/repos/test/tasks/releases/assets/42")) {
+            val request = server.takeRequest(); assertEquals(path, request.path)
+            assertEquals("Bearer fixture_access", request.getHeader("Authorization")); assertNull(request.requestUrl!!.query)
+        }
+        updates.activate("one"); active("one")
+        server.enqueue(MockResponse().setResponseCode(401)); updates.pullLatest()
+        val result = withTimeout(10_000) { updates.pull.filterIsInstance<TaskPullState.Failure>().first() }
+        assertTrue(result.message.contains("401")); assertEquals(5, server.requestCount)
+        assertEquals("one", library.activeCatalog()!!.version)
+        assertEquals("one", library.snapshot().latestVersion)
     }
 
     @Test fun sameReleaseResourcesReachTheVersionLeaseAndBadDownloadsNeverRegisterANewVersion() = runBlocking {

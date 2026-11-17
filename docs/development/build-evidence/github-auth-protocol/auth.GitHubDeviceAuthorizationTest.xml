@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.github.yysassist.core.auth.GitHubDeviceAuthorizationTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-11-17T04:15:10.517Z" hostname="class-1033.local" time="0.707">
+  <properties/>
+  <testcase name="cancellationStopsTheOutstandingHttpCallAndMakesNoFurtherPoll" classname="io.github.yysassist.core.auth.GitHubDeviceAuthorizationTest" time="0.492"/>
+  <testcase name="aServerRetryAfterHeaderCannotAutomaticallyReplayATokenGrantPost" classname="io.github.yysassist.core.auth.GitHubDeviceAuthorizationTest" time="0.107"/>
+  <testcase name="pendingAndSlowDownRespectTheServersNewMinimumAndNeverPollFaster" classname="io.github.yysassist.core.auth.GitHubDeviceAuthorizationTest" time="0.022"/>
+  <testcase name="disabledFlowDenialAndServerExpiryKeepTheirMeaningAndDoNotRetry" classname="io.github.yysassist.core.auth.GitHubDeviceAuthorizationTest" time="0.014"/>
+  <testcase name="malformedResponsesNeverLeakSecretsOrOpenAnUntrustedVerificationPage" classname="io.github.yysassist.core.auth.GitHubDeviceAuthorizationTest" time="0.027"/>
+  <testcase name="aRedirectCannotForwardDeviceCodesAndAnHttpFailureIsNotPending" classname="io.github.yysassist.core.auth.GitHubDeviceAuthorizationTest" time="0.01"/>
+  <testcase name="localExpiryStopsWithoutAnotherRequestOrCreatingAnotherChallenge" classname="io.github.yysassist.core.auth.GitHubDeviceAuthorizationTest" time="0.014"/>
+  <testcase name="anIncompleteTokenResponseIsUnconfirmedWithoutAnAutomaticReplay" classname="io.github.yysassist.core.auth.GitHubDeviceAuthorizationTest" time="0.009"/>
+  <testcase name="aDeviceLoginUsesOnlyClientIdShowsTheOfficialCodeAndReturnsRedactedCredentials" classname="io.github.yysassist.core.auth.GitHubDeviceAuthorizationTest" time="0.005"/>
+  <testcase name="aMissingIntervalUsesTheProtocolDefaultAndADecreasingSlowDownStillAddsFiveSeconds" classname="io.github.yysassist.core.auth.GitHubDeviceAuthorizationTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

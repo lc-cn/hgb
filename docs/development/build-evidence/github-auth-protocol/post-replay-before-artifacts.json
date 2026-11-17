@@ -1,0 +1,4 @@
+{
+  "core/src/main/kotlin/io/github/yysassist/core/auth/GitHubDeviceAuthorization.kt": "427898dc999ad7fc3e45cb20642d8db464066ac04fe81527d36c14b231ff357f",
+  "core/src/test/kotlin/io/github/yysassist/core/auth/GitHubDeviceAuthorizationTest.kt": "9884efd3d6b37590b2814d77f2ac92abd8bf05066de6ef25bca9836388e1d76c"
+}

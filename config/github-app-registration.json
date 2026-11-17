@@ -1,0 +1,43 @@
+{
+  "formatVersion": 1,
+  "status": "proposed-settings-user-reported-created-and-installed-live-auth-unverified",
+  "userReportedApp": {
+    "appId": 5794664,
+    "name": "yys-helper",
+    "installedRepository": "lc-cn/yys-helper",
+    "configuredRepositoryPermissions": { "contents": "write" }
+  },
+  "registration": {
+    "owner": "lc-cn",
+    "name": "yys-helper",
+    "description": "Authorize task downloads and permitted task releases for the Android task container.",
+    "homepageUrl": "https://github.com/lc-cn",
+    "installationAudience": "any-account",
+    "enableDeviceFlow": true,
+    "expireUserAuthorizationTokens": true,
+    "requestUserAuthorizationOnInstall": false,
+    "callbackUrls": [],
+    "setupUrl": null,
+    "webhook": {
+      "active": false,
+      "url": null
+    },
+    "repositoryPermissions": {
+      "contents": "write",
+      "metadata": "read"
+    },
+    "organizationPermissions": {},
+    "accountPermissions": {},
+    "subscribedEvents": []
+  },
+  "installation": {
+    "account": "lc-cn",
+    "repositorySelection": "selected",
+    "repositories": ["lc-cn/yys-helper"]
+  },
+  "client": {
+    "authorizationFlow": "device-flow",
+    "clientId": "Iv23liVW7AdPVQ5Ue4iz",
+    "developerRepository": "lc-cn/yys-helper"
+  }
+}

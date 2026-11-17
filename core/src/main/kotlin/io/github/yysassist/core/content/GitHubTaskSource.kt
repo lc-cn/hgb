@@ -17,6 +17,7 @@ import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.charset.CodingErrorAction
 import java.security.MessageDigest
+import io.github.yysassist.core.auth.GitHubToken
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -31,11 +32,12 @@ enum class TaskSourceProblem { NETWORK, HTTP, REPOSITORY_UNAVAILABLE, INVALID_RE
 class TaskSourceException(val problem: TaskSourceProblem, message: String, val httpCode: Int? = null, cause: Throwable? = null) :
     IOException(message, cause)
 
-/** Public, read-only Releases adapter. No tokens, repository writes, source-archive guesses or mirror fallback. */
+/** Read-only Releases adapter. Credentials come from the client session, never task content or URLs. */
 class GitHubTaskSource(
     private val repository: TaskRepository,
     private val apiBase: HttpUrl,
     private val calls: Call.Factory,
+    private val authorization: suspend () -> GitHubToken? = { null },
 ) {
     private val json = Json { ignoreUnknownKeys = true }
     @Serializable private data class Repository(val full_name: String)
@@ -155,11 +157,13 @@ class GitHubTaskSource(
             })
         }
     }
-    private fun request(path: String, query: Pair<String, String>? = null, accept: String): Request {
+    private suspend fun request(path: String, query: Pair<String, String>? = null, accept: String): Request {
         val url = apiBase.newBuilder().addPathSegments("repos/${repository.owner}/${repository.name}")
         if (path.isNotEmpty()) url.addPathSegments(path)
         query?.let { url.addQueryParameter(it.first, it.second) }
+        val token = authorization()
         return Request.Builder().url(url.build()).header("Accept", accept)
+            .apply { if (token != null) header("Authorization", "Bearer ${token.value}") }
             .header("X-GitHub-Api-Version", "2022-11-28").header("User-Agent", "YysAssist-Android").get().build()
     }
     private inline fun <reified T> decode(bytes: ByteArray): T = try { json.decodeFromString<T>(bytes.toString(Charsets.UTF_8)) }

@@ -1,0 +1,15 @@
+{
+  "core": {
+    "tests": 105,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "androidTargeted": {
+    "total": 4,
+    "passed": 4,
+    "skipped": 0,
+    "failures": 0
+  },
+  "scope": "Dedicated API36 arm64 emulator; local HTTP/HTTPS and real SQLite, not live GitHub or a game."
+}

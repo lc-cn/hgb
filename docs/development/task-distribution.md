@@ -6,7 +6,7 @@
 
 `Application` 创建唯一 `TaskUpdates` 和本地版本库，启动时发起一次拉取。Activity 重建、导航和方向改变只订阅状态，不重复发起启动拉取。手动拉取复用同一路径，并发拉取合并；下载期间仍可查看和管理已有本地版本。所有变更继续由版本库事务核对，UI 禁用状态不是引用保护的唯一依据。
 
-指定源为 `lc-cn/yys-helper`，首次联调时公开，用户现已将其设为私有。当前 App 传输尚未接入私有仓库读取授权，不能将未授权的 404 当作无发布；开发机 GitHub 凭据不会写进 App。初次公开联调的记录如下。读取 GitHub 明确的 `/releases/latest`，不按版本字符串排序；当时仓库可访问、公开 Release 列表为空；此结论不延伸到当前私有状态。latest 的 404 会先核对仓库访问与发布列表；不可访问、查询失败、无正式发布及矛盾响应分开处理，不把错误当空目录。只有成功取得的明确指针或经核对的缺失结果更新本地 latest；网络失败保留此前信息。
+指定源为 `lc-cn/yys-helper`，首次联调时公开，用户现已将其设为私有。源适配器已支持注入客户端令牌，但正式 App 仍未接入私有仓库会话授权，不能将未授权的 404 当作无发布；开发机 GitHub 凭据不会写进 App。初次公开联调的记录如下。读取 GitHub 明确的 `/releases/latest`，不按版本字符串排序；当时仓库可访问、公开 Release 列表为空；此结论不延伸到当前私有状态。latest 的 404 会先核对仓库访问与发布列表；不可访问、查询失败、无正式发布及矛盾响应分开处理，不把错误当空目录。只有成功取得的明确指针或经核对的缺失结果更新本地 latest；网络失败保留此前信息。
 
 ## 首版附件合同
 
@@ -17,13 +17,15 @@
 - 同版本不同内容拒绝覆盖。拉取不启用；启用／回退是用户操作，且需没有未结束引用。删除仅作用于该版本的本地内容。
 - 可选 `resources` 清单引用同一 Release 的资源附件；按声明长度／摘要与远端 asset 元数据双重核对，全部资源完成后才登记本地版本。资源流式保存到 App 私有文件，并沿用版本库的引用、删除和使用期租约保护。详情见[版本资源](versioned-resources.md)。
 
-当前资源附件已有完整提交与本地使用期保护，并已接内部[文字观察 API](versioned-text-observation.md)，尚未注册正式观察动作。生产注册表当前仅登记实际等待工作器 `control.wait` v1（非负整数 `durationMs`），已支持结构化[配置与前序输出引用](action-bindings.md)，尚无分支／循环等完整业务表达；正式工作器未就绪的动作不提前宣称支持。完整任务、识别动作与开发者发布闭环仍须继续实现和验证。
+当前资源附件已有完整提交与本地使用期保护，已接[文字观察 API](versioned-text-observation.md)及正式 `screen.readText`／`screen.expectText`／`screen.locateText`／`screen.tap` v1；原 `control.wait` v1 与结构化[配置和前序输出引用](action-bindings.md)保留。动作链已用自有页面验证，尚无分支／循环等完整业务表达，不把它当成真实领取闭环。完整任务与开发者发布仍须继续实现和验证。
 
 ## 网络与证据边界
 
 网络适配接受注入的 `Call.Factory`；当前 App 使用已确认的默认直连，禁止 HTTPS 降级和私自镜像回退。用户选择的代理范围及配置保存尚需接入该工厂，不宣称已完成网络设置。JSON 响应在回调内读取并关闭；资源使用固定缓冲流式写入暂存区。取消资源传输时，会取消实际 HTTP Call 并等回调不再使用写入流后返回，不以发出 cancel 等同写入静默。不保留图片、账号或游戏画面。
 
 截至本次开发，早期公开远端只验证了仓库访问与没有发布，当前私有源读取仍待客户端授权；没有创建或修改 Release，也没有真实任务附件可下载。核心测试在本地 HTTP 服务器检验协议与取消；Android 集成测试使用测试证书的本地 HTTPS、真实文件和 SQLite；32MiB 合成资源验证流式落盘／摘要／重开／删除，未测网络慢速下载和内存峰值。UI 测试使用版本行夹具，不能代替正式云任务或游戏结果。长期运行和 Windows 设备兼容仍未验证。
+
+2026-11-17 补充：用户已提供 GitHub App 的公开 Client ID 并报告安装到指定仓库。设备码和可选任务源鉴权已用本地 HTTP／Android HTTPS 验证；正式 App 会话、令牌存储、续期与仓库权限仍待接入，不以本地模拟响应替代真实登录。见[授权协议](github-device-authorization.md)。
 
 核对来源：[GitHub Releases API](https://docs.github.com/en/rest/releases/releases)、[Release assets API](https://docs.github.com/en/rest/releases/assets)、[GitHub 附件摘要说明](https://github.blog/changelog/2025-06-03-releases-now-expose-digests-for-release-assets/)。依赖通过官方 Maven 下载并锁定；API header 使用已实际读取成功的 `2022-11-28` 合同版本。
 

@@ -16,6 +16,7 @@ import java.io.OutputStream
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import io.github.yysassist.core.auth.GitHubToken
 
 class GitHubTaskSourceTest {
     private lateinit var server: MockWebServer
@@ -46,6 +47,41 @@ class GitHubTaskSourceTest {
         assertNull(latest.getHeader("Authorization"))
         assertEquals("/repos/test-owner/test-repo/releases/assets/42", asset.path)
         assertEquals("application/octet-stream", asset.getHeader("Accept"))
+    }
+    @Test fun authenticatedReadsApplyTheCurrentSessionHeaderWithoutChangingPrivate404Meaning(): Unit = runBlocking {
+        var credential = GitHubToken("fixture_access_one")
+        val authenticated = GitHubTaskSource(TaskRepository("test-owner", "test-repo"), server.url("/"), client) { credential }
+        server.enqueue(MockResponse().setBody(release()))
+        server.enqueue(MockResponse().setBody("内容"))
+        val version = authenticated.latest()!!
+        credential = GitHubToken("fixture_access_two")
+        assertEquals("内容", authenticated.download(version))
+        assertEquals("Bearer fixture_access_one", server.takeRequest().getHeader("Authorization"))
+        val asset = server.takeRequest()
+        assertEquals("Bearer fixture_access_two", asset.getHeader("Authorization")); assertNull(asset.requestUrl!!.query)
+        server.enqueue(MockResponse().setResponseCode(404)); server.enqueue(MockResponse().setResponseCode(404))
+        failure(TaskSourceProblem.REPOSITORY_UNAVAILABLE) { authenticated.latest() }
+    }
+    @Test fun aPrivateAssetRedirectDropsCredentialsAtTheOtherOriginAndStillVerifiesResourceBytes(): Unit = runBlocking {
+        MockWebServer().use { other ->
+            other.start()
+            val authenticated = GitHubTaskSource(TaskRepository("test-owner", "test-repo"), server.url("/"), client) { GitHubToken("fixture_access") }
+            server.enqueue(MockResponse().setResponseCode(302).setHeader("Location", other.url("/signed-download?signature=fixture")))
+            other.enqueue(MockResponse().setBody("model"))
+            val sink = ByteArrayOutputStream()
+            authenticated.downloadResource(withResource(), resource(), sink)
+            assertEquals("model", sink.toString("UTF-8"))
+            assertEquals("Bearer fixture_access", server.takeRequest().getHeader("Authorization"))
+            val redirected = other.takeRequest()
+            assertNull(redirected.getHeader("Authorization")); assertEquals("signature=fixture", redirected.requestUrl!!.query)
+        }
+    }
+    @Test fun rejectedCredentialsAreNotMistakenForNoPublishedVersionOrAutomaticallyRetried(): Unit = runBlocking {
+        val authenticated = GitHubTaskSource(TaskRepository("test-owner", "test-repo"), server.url("/"), client) { GitHubToken("fixture_access") }
+        server.enqueue(MockResponse().setResponseCode(401))
+        assertEquals(401, failure(TaskSourceProblem.HTTP) { authenticated.latest() }.httpCode)
+        assertEquals(1, server.requestCount)
+        assertFalse(GitHubToken("fixture_access").toString().contains("fixture_access"))
     }
     @Test fun inaccessibleRepositoryIsNotAnEmptyReleaseCatalog(): Unit = runBlocking {
         server.enqueue(MockResponse().setResponseCode(404)); server.enqueue(MockResponse().setResponseCode(404))

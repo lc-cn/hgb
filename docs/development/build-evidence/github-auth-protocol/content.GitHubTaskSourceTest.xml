@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.github.yysassist.core.content.GitHubTaskSourceTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-11-17T04:15:11.312Z" hostname="class-1033.local" time="0.241">
+  <properties/>
+  <testcase name="failedEmptyCatalogConfirmationRemainsAnHttpFailure" classname="io.github.yysassist.core.content.GitHubTaskSourceTest" time="0.008"/>
+  <testcase name="canonicalLatestAndAssetDownloadUseHeadersAndVerifyBytes" classname="io.github.yysassist.core.content.GitHubTaskSourceTest" time="0.01"/>
+  <testcase name="cancelledRequestReleasesTheActualHttpCall" classname="io.github.yysassist.core.content.GitHubTaskSourceTest" time="0.109"/>
+  <testcase name="emptyReleaseCatalogRequiresSuccessfulRepositoryAndListReads" classname="io.github.yysassist.core.content.GitHubTaskSourceTest" time="0.01"/>
+  <testcase name="missingTaskAssetDigestAndMalformedResponsesAreNotInstallable" classname="io.github.yysassist.core.content.GitHubTaskSourceTest" time="0.03"/>
+  <testcase name="resourcesUseSameReleaseAssetMetadataAndStreamValidatedBytes" classname="io.github.yysassist.core.content.GitHubTaskSourceTest" time="0.024"/>
+  <testcase name="aPrivateAssetRedirectDropsCredentialsAtTheOtherOriginAndStillVerifiesResourceBytes" classname="io.github.yysassist.core.content.GitHubTaskSourceTest" time="0.008"/>
+  <testcase name="inaccessibleRepositoryIsNotAnEmptyReleaseCatalog" classname="io.github.yysassist.core.content.GitHubTaskSourceTest" time="0.005"/>
+  <testcase name="rejectedCredentialsAreNotMistakenForNoPublishedVersionOrAutomaticallyRetried" classname="io.github.yysassist.core.content.GitHubTaskSourceTest" time="0.005"/>
+  <testcase name="truncatedOrChangedAssetNeverReturnsPartialContent" classname="io.github.yysassist.core.content.GitHubTaskSourceTest" time="0.006"/>
+  <testcase name="cancellationWaitsForAStillWritingResponseBeforeReturningToTheStagingOwner" classname="io.github.yysassist.core.content.GitHubTaskSourceTest" time="0.007"/>
+  <testcase name="changedOversizedOrMissingResourceNeverReportsACompleteDownload" classname="io.github.yysassist.core.content.GitHubTaskSourceTest" time="0.013"/>
+  <testcase name="authenticatedReadsApplyTheCurrentSessionHeaderWithoutChangingPrivate404Meaning" classname="io.github.yysassist.core.content.GitHubTaskSourceTest" time="0.006"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
