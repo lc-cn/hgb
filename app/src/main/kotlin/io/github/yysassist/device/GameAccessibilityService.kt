@@ -65,8 +65,10 @@ class GameAccessibilityService : AccessibilityService() {
     }
     override fun onConfigurationChanged(newConfig: Configuration) { super.onConfigurationChanged(newConfig); floating?.configurationChanged(newConfig); sceneChanged() }
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        // Android 11 can replace the focused window without a separate FOCUSED change event.
         if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
-            (event?.eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED && event.windowChanges and AccessibilityEvent.WINDOWS_CHANGE_FOCUSED != 0)) sceneChanged()
+            (event?.eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED && event.windowChanges and
+                (AccessibilityEvent.WINDOWS_CHANGE_ADDED or AccessibilityEvent.WINDOWS_CHANGE_REMOVED or AccessibilityEvent.WINDOWS_CHANGE_FOCUSED) != 0)) sceneChanged()
     }
     override fun onInterrupt() = Unit
     override fun onUnbind(intent: Intent?): Boolean {

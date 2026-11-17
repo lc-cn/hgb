@@ -117,7 +117,7 @@ class FloatingOverlayIntegrationTest {
     }
     private suspend fun waitFor(label: String = "condition", test: () -> Boolean) {
         val done = withTimeoutOrNull(8_000) { while (!withContext(Dispatchers.Main) { test() }) delay(20); true }
-        if (done != true) throw AssertionError("$label; bounds=${withContext(Dispatchers.Main) { window?.frameBounds() }}; screen=${context.resources.displayMetrics.widthPixels}x${context.resources.displayMetrics.heightPixels}; nodes=${allNodes().map { "${it.text}/${it.contentDescription}" }}")
+        if (done != true) throw AssertionError("$label; bounds=${withContext(Dispatchers.Main) { window?.frameBounds() }}; screen=${screenBounds()}; context=${context.resources.displayMetrics.widthPixels}x${context.resources.displayMetrics.heightPixels}; nodes=${allNodes().map { "${it.text}/${it.contentDescription}" }}")
     }
     private fun allNodes(type: Int = AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY): List<AccessibilityNodeInfo> {
         fun descend(node: AccessibilityNodeInfo, result: MutableList<AccessibilityNodeInfo>) { result += node; repeat(node.childCount) { node.getChild(it)?.let { child -> descend(child, result) } } }
@@ -141,7 +141,8 @@ class FloatingOverlayIntegrationTest {
         waitFor("common heading") { allNodes().any { it.isVisibleToUser && it.text?.toString() == "常用" && it.isHeading } }
         val wide = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         val width = (if (wide) FloatingUi.wideCommonWidth.value else FloatingUi.quickWidth.value) * context.resources.displayMetrics.density
-        waitFor("complete common window, expected width $width") { window!!.frameBounds().let { it.width() >= width.toInt() - 1 && it.left >= 0 && it.right <= context.resources.displayMetrics.widthPixels } }
+        val screen = screenBounds()
+        waitFor("complete common window, expected width $width") { window!!.frameBounds().let { it.width() >= width.toInt() - 1 && screen.contains(it) } }
     }
     private fun pointer(action: Int, x: Float, y: Float, started: Long) {
         val event = MotionEvent.obtain(started, SystemClock.uptimeMillis(), action, x, y, 0).apply { source = InputDevice.SOURCE_TOUCHSCREEN }
@@ -166,6 +167,8 @@ class FloatingOverlayIntegrationTest {
         })
     }
     private inline fun <T> Bitmap.useBitmap(block: (Bitmap) -> T): T = try { block(this) } finally { recycle() }
+    // Raw overlay/window coordinates share the screenshot's origin, not a context's usable width.
+    private fun screenBounds(): Rect = ui!!.takeScreenshot().useBitmap { Rect(0, 0, it.width, it.height) }
 
     @Test fun defaultBallIsRealAndScreenshotExcludesItThenRestoresIt(): Unit = runBlocking {
         val bounds = withContext(Dispatchers.Main) { window!!.frameBounds() }
@@ -271,7 +274,9 @@ class FloatingOverlayIntegrationTest {
         // This fixture owns a separate runtime/window; production forwards this service callback to its window.
         withContext(Dispatchers.Main) { window!!.configurationChanged(context.resources.configuration) }
         app.appearance.setTheme(ThemeMode.DARK)
-        waitFor { window!!.isShowing && window!!.frameBounds().right <= context.resources.displayMetrics.widthPixels }
+        screenshot("landscape-ball-drag")
+        val screen = screenBounds()
+        waitFor { window!!.isShowing && screen.contains(window!!.frameBounds()) }
         common(); screenshot("common-dark-landscape")
         assertEquals(portrait, (preferences.state.value as FloatingPreferencesState.Ready).settings.portrait)
         click("收起悬浮面板")

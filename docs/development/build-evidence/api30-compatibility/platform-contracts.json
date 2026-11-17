@@ -1,0 +1,34 @@
+[
+  {
+    "tag": "android-11.0.0_r48",
+    "role": "client",
+    "source": "https://github.com/aosp-mirror/platform_frameworks_base/blob/android-11.0.0_r48/core/java/android/accessibilityservice/AccessibilityService.java",
+    "sha256": "834dc4e6ee7ebeaf3318b640168a600ef07c7f2a1a72313b71144dfc779a0f03",
+    "minimumIntervalMs": 1000,
+    "rejectsEqualInterval": true
+  },
+  {
+    "tag": "android-11.0.0_r48",
+    "role": "server",
+    "source": "https://github.com/aosp-mirror/platform_frameworks_base/blob/android-11.0.0_r48/services/accessibility/java/com/android/server/accessibility/AbstractAccessibilityServiceConnection.java",
+    "sha256": "5ca9551290f60ea45ca5f2f0c220e0e528c46f408d3df2b291d35f0d29240c29",
+    "minimumIntervalMs": 1000,
+    "rejectsEqualInterval": true
+  },
+  {
+    "tag": "android-12.0.0_r34",
+    "role": "client",
+    "source": "https://github.com/aosp-mirror/platform_frameworks_base/blob/android-12.0.0_r34/core/java/android/accessibilityservice/AccessibilityService.java",
+    "sha256": "b38d09a6260c4429767730bcd05cfe3799ea6d1f28cfefbd9242f59df04f1ace",
+    "minimumIntervalMs": 333,
+    "rejectsEqualInterval": true
+  },
+  {
+    "tag": "android-12.0.0_r34",
+    "role": "server",
+    "source": "https://github.com/aosp-mirror/platform_frameworks_base/blob/android-12.0.0_r34/services/accessibility/java/com/android/server/accessibility/AbstractAccessibilityServiceConnection.java",
+    "sha256": "d3924e38595dcddf1827dd0730173ad03ff6a02d96383fbe763ae02579f041d6",
+    "minimumIntervalMs": 333,
+    "rejectsEqualInterval": true
+  }
+]

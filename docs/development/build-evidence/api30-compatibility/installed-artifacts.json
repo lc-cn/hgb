@@ -1,0 +1,26 @@
+[
+  {
+    "device": "emulator-5564",
+    "package": "io.github.yysassist",
+    "sha256": "251db799817b944877bf984f919f518cebf296d5cc71427e8ab5a6bb0e06cab1",
+    "installedMatchesBuild": true
+  },
+  {
+    "device": "emulator-5564",
+    "package": "io.github.yysassist.test",
+    "sha256": "adc4ebf8400ab50b7bc640f54eabae97293d295f36891e3517fa18806946a447",
+    "installedMatchesBuild": true
+  },
+  {
+    "device": "emulator-5560",
+    "package": "io.github.yysassist",
+    "sha256": "251db799817b944877bf984f919f518cebf296d5cc71427e8ab5a6bb0e06cab1",
+    "installedMatchesBuild": true
+  },
+  {
+    "device": "emulator-5560",
+    "package": "io.github.yysassist.test",
+    "sha256": "adc4ebf8400ab50b7bc640f54eabae97293d295f36891e3517fa18806946a447",
+    "installedMatchesBuild": true
+  }
+]

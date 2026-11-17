@@ -218,7 +218,13 @@ class TextObservationRuntimeTest {
         withTimeout(10_000) { runtime.status.first { it is RuntimeStatus.Waiting } }
         assertFalse(workFinished.isCompleted); assertTrue(runtime.state.value.unresolved.isEmpty())
         context.startActivity(Intent(context, ComponentActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
-        val done = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        val done = try { withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } } }
+        catch (error: TimeoutCancellationException) {
+            val focus = shell("dumpsys window").lineSequence().filter { "mCurrentFocus=" in it || "mFocusedApp=" in it }.joinToString("\n")
+            File(context.filesDir, "qa/offscreen-return.txt").apply { parentFile!!.mkdirs() }.writeText(
+                "availability=${bridge.availability(setOf(context.packageName))}\nstatus=${runtime.status.value}\nstate=${runtime.state.value}\n$focus\n")
+            throw error
+        }
         assertTrue(done.toString(), done.unresolved.isEmpty()); assertNull(done.current)
         assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
         assertEquals(0, library.snapshot().versions.single().referenceCount)

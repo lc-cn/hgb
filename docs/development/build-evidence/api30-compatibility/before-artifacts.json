@@ -1,0 +1,8 @@
+{
+  "app/src/main/kotlin/io/github/yysassist/device/AndroidDeviceBridge.kt": "1ac4ed070a39ef7b8db9cdbc2053ad046ea8608125db1717c2481f08525809ac",
+  "app/src/androidTest/kotlin/io/github/yysassist/device/AndroidDeviceBridgeTest.kt": "0d6d93bdab09c5358c5e558228a3a9a1201ddd641181c905bf81eab67b86dfe0",
+  "app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationRuntimeTest.kt": "93ae91b13ce89486b7da07805bbd017ba132633f3f9be90ca4ea8b8089499986",
+  "app/build/outputs/apk/debug/app-debug.apk": "9502eb55a078a79fd6de64bbe455a033445c2b46983a2589544207f228bf3489",
+  "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": "85e1b3b5584f33dcd4654cd8c47128beca8d1f18c58e3ab0f98e3855a1ee3eea",
+  "app/src/androidTest/kotlin/io/github/yysassist/floating/FloatingOverlayIntegrationTest.kt": "d7ce6c9e46340e268a2eaa93e95ce5774374268ae2b087fc0d74709cea3b052b"
+}

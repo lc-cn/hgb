@@ -29,6 +29,7 @@
 | [只读观察动作](observation-actions.md) | 同一解释器的截图／文字核对、原生中断结算与版本资源联验；已测专用模拟器，尚无游戏领取结果 |
 | [屏幕定位与输入](screen-input-actions.md) | 语义目标、重新定位点击、输入意图／平台回执、后置核对及当前会话独立静默；已测自有画面，尚无游戏领取结果 |
 | [步骤启动条件](execution-readiness.md) | 工作器创建前核对服务／前台／屏幕，事件驱动重查，等待与业务未知分开；保留暂停／移除和安全恢复边界 |
+| [最低版本兼容](build-evidence/api30-compatibility/README.md) | API30实际截图／输入／浮层／会话及进程恢复；版本化截图间隔和窗口替换漏查修复，API36受影响链路对照；非游戏兼容结论 |
 | [GitHub 注册配置](github-app-registration.md)与[设备码协议](github-device-authorization.md) | 用户已完成正式 App 授权；[会话](github-session.md)、升级后恢复和真实私有空 Release 读取已验证，非空附件及开发者写权仍待验证 |
 | [Android 平台桥](device-bridge.md) | 截图／输入所有权、撤权与取消回归及平台 PoC 边界 |
 | [原生悬浮控制](floating-controls.md) | 三层窗口、常用与同一执行器、显示偏好、截图／输入排除及真实设备测试边界 |

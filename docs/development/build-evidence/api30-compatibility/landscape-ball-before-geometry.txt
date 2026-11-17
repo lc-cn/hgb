@@ -1,0 +1,4 @@
+view=Rect(2116, 190 - 2253, 327)
+service=DisplayMetrics{density=2.625, width=2138, height=1080, scaledDensity=2.625, xdpi=420.0, ydpi=420.0}
+window=Rect(2116, 190 - 2255, 329)
+null/展开快捷控制: Rect(2116, 190 - 2253, 327)

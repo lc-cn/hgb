@@ -1,0 +1,17 @@
+{
+  "initialApi30": {
+    "total": 171,
+    "passed": 155,
+    "failed": 12,
+    "skipped": 4,
+    "localLogSha256": "235578ccc220053fe24001d486752cdc3a0e0bbd4f33da3168638634be815ea2"
+  },
+  "afterPacingAndViewportCorrection": {
+    "total": 171,
+    "passed": 165,
+    "failed": 2,
+    "skipped": 4,
+    "localLogSha256": "e8100ff535cdc2353ede0e7ad9908a839b4fe1ec5e58dbce55fd1b324d884f4b"
+  },
+  "scope": "Fixture-only API30 emulator; no game. Targeted before logs and platform state retained in this folder; full local logs are ignored."
+}

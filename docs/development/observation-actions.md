@@ -33,11 +33,11 @@ APK 合同新增工具／观察／核对角色。含观察动作的步骤必须�
 
 ## 截图频率
 
-真实快速继续用例复现了截图错误 3。SDK 将该错误定义为截图请求间隔过短；AOSP 公开源码中的间隔字段为 333ms，服务端使用小于等于判断。本机 SDK 没有公开该间隔常量，源码修复采用 334ms 适配间隔，不调用隐藏 API。[SDK 错误说明](https://developer.android.com/reference/android/accessibilityservice/AccessibilityService#ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT)、[AOSP 间隔字段](https://android.googlesource.com/platform/frameworks/base/+/main/core/java/android/accessibilityservice/AccessibilityService.java)、[AOSP 服务端检查](https://android.googlesource.com/platform/frameworks/base/+/39b9fc2a718d/services/accessibility/java/com/android/server/accessibility/AbstractAccessibilityServiceConnection.java)
+真实快速继续用例复现了截图错误 3。SDK 将该错误定义为截图请求间隔过短。最初按 AOSP 当前源码的 333ms 及服务端小于等于判断使用 334ms；后续最低支持版本实测确认 Android 11 的限制为 1000ms。当前唯一设备桥按 Android 11 使用 1001ms，Android 12 起保持 334ms；本机 SDK 不公开该间隔常量，不调用隐藏 API。[SDK 错误说明](https://developer.android.com/reference/android/accessibilityservice/AccessibilityService#ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT)、[AOSP 间隔字段](https://android.googlesource.com/platform/frameworks/base/+/main/core/java/android/accessibilityservice/AccessibilityService.java)、[AOSP 服务端检查](https://android.googlesource.com/platform/frameworks/base/+/39b9fc2a718d/services/accessibility/java/com/android/server/accessibility/AbstractAccessibilityServiceConnection.java)
 
 源码在唯一设备桥内串行安排截图，依据实际提交／完成边界等待后续请求，等待发生在隐藏浮层之前。取消等待不启动截图，结果不缓存复用；当前连接的截图回调尚未结束时保持占用信息，旧连接不会阻塞新连接。位图交付后没有新增 dispatcher 返回边界，保留原取消回收路径。没有把等待塞到游戏任务、增加自动重试、改变错误为正常空白或设置任务超时。
 
-该数值是 AOSP 兼容参数，**不能据此承诺所有厂商、Android 版本或截图实现**。固定 Android 16 tag 原文读取未成功，只有公开索引内容和 SDK 错误合同可供本轮源审；目标 API36 上并发三次截图及实际阻塞识别后的快速继续均已通过，没有将此前失败隐藏为重试成功。
+这些数值是 AOSP 兼容参数，**不能据此承诺所有厂商或截图实现**。最初 API36 验证没有取得固定 Android16 tag 原文；后续已实际读取固定 Android11 `android-11.0.0_r48` 和 Android12 `android-12.0.0_r34` 的客户端字段及服务端小于等于检查，原文地址与摘要见 [API30 兼容验证](build-evidence/api30-compatibility/README.md)。原有并发三次截图断言在 Android11 修复前失败，修改设备桥后通过；没有将失败隐藏为重试成功。
 
 ## 当前证据与未完成项
 

@@ -1,0 +1,83 @@
+INSTRUMENTATION_STATUS: class=io.github.yysassist.device.AndroidDeviceBridgeTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+io.github.yysassist.device.AndroidDeviceBridgeTest:
+INSTRUMENTATION_STATUS: test=concurrentCapturesRespectPlatformPacingAndReturnIndependentFrames
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.device.AndroidDeviceBridgeTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=concurrentCapturesRespectPlatformPacingAndReturnIndependentFrames
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.floating.FloatingOverlayIntegrationTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+io.github.yysassist.floating.FloatingOverlayIntegrationTest:
+INSTRUMENTATION_STATUS: test=draggingDoesNotOpenAndRotationUsesAnIndependentClampedAnchor
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.floating.FloatingOverlayIntegrationTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: condition; bounds=Rect(2116, 190 - 2253, 327); screen=2138x1080; nodes=[null/null, null/null, null/展开快捷控制]
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest.waitFor(FloatingOverlayIntegrationTest.kt:120)
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest.access$waitFor(FloatingOverlayIntegrationTest.kt:33)
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest$waitFor$1.invokeSuspend(Unknown Source:15)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest.draggingDoesNotOpenAndRotationUsesAnIndependentClampedAnchor(FloatingOverlayIntegrationTest.kt:258)
+
+INSTRUMENTATION_STATUS: stream=
+Error in draggingDoesNotOpenAndRotationUsesAnIndependentClampedAnchor(io.github.yysassist.floating.FloatingOverlayIntegrationTest):
+java.lang.AssertionError: condition; bounds=Rect(2116, 190 - 2253, 327); screen=2138x1080; nodes=[null/null, null/null, null/展开快捷控制]
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest.waitFor(FloatingOverlayIntegrationTest.kt:120)
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest.access$waitFor(FloatingOverlayIntegrationTest.kt:33)
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest$waitFor$1.invokeSuspend(Unknown Source:15)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest.draggingDoesNotOpenAndRotationUsesAnIndependentClampedAnchor(FloatingOverlayIntegrationTest.kt:258)
+
+INSTRUMENTATION_STATUS: test=draggingDoesNotOpenAndRotationUsesAnIndependentClampedAnchor
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 14.93
+There was 1 failure:
+1) draggingDoesNotOpenAndRotationUsesAnIndependentClampedAnchor(io.github.yysassist.floating.FloatingOverlayIntegrationTest)
+java.lang.AssertionError: condition; bounds=Rect(2116, 190 - 2253, 327); screen=2138x1080; nodes=[null/null, null/null, null/展开快捷控制]
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest.waitFor(FloatingOverlayIntegrationTest.kt:120)
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest.access$waitFor(FloatingOverlayIntegrationTest.kt:33)
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest$waitFor$1.invokeSuspend(Unknown Source:15)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.floating.FloatingOverlayIntegrationTest.draggingDoesNotOpenAndRotationUsesAnIndependentClampedAnchor(FloatingOverlayIntegrationTest.kt:258)
+
+FAILURES!!!
+Tests run: 2,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

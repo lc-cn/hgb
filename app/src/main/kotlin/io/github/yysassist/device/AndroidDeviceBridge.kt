@@ -5,6 +5,7 @@ import android.accessibilityservice.GestureDescription
 import android.graphics.Bitmap
 import android.graphics.Path
 import android.hardware.display.DisplayManager
+import android.os.Build
 import android.os.Looper
 import android.os.SystemClock
 import android.view.Display
@@ -78,9 +79,9 @@ internal interface InputDevicePort : ObservationDevice {
 internal class AndroidDeviceBridge(private val service: AccessibilityService) : InputDevicePort {
     private class ScreenshotRequest(val connection: Any)
     companion object {
-        // AOSP rejects intervals <=333ms. This is adapter pacing, not a task retry or timeout.
-        // The interval constant is not a public SDK field; see observation-actions.md for sources.
-        private const val SCREENSHOT_GAP_MS = 334L
+        // AOSP rejects intervals <=1000ms on Android 11, <=333ms from Android 12.
+        // Adapter pacing, not task retry/timeout; the SDK field is hidden. See observation-actions.md.
+        private val SCREENSHOT_GAP_MS = if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) 1_001L else 334L
         private val screenshotGate = Mutex()
         // Main Looper owns these fields. Tokens contain no Service or bitmap references.
         private var screenshotPending: ScreenshotRequest? = null

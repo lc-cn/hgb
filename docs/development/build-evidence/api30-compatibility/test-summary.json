@@ -1,0 +1,26 @@
+{
+  "api30": {
+    "total": 171,
+    "passed": 167,
+    "skipped": 4,
+    "failures": 0
+  },
+  "api30ProcessPhases": {
+    "runtimeSeed": true,
+    "runtimeVerify": true,
+    "authSeed": true,
+    "authVerify": true
+  },
+  "api36Affected": {
+    "total": 38,
+    "passed": 38,
+    "skipped": 0,
+    "failures": 0
+  },
+  "core": {
+    "reportTests": 108,
+    "newExecution": false,
+    "gradleTask": "UP-TO-DATE"
+  },
+  "scope": "Two dedicated ARM64 emulators; no physical device, Windows, real game task or 24-hour run."
+}

@@ -1,0 +1,25 @@
+--------- beginning of kernel
+--------- beginning of system
+--------- beginning of main
+--------- beginning of crash
+11-17 14:28:25.189 13281 13281 D YysReadyProbe: type=4194304 changes=1 at=2061742
+11-17 14:28:25.189 13281 13281 D YysReadyProbe: type=4194304 changes=1 at=2061742
+11-17 14:28:25.472 13281 13281 D YysReadyProbe: type=32 changes=0 at=2062026
+11-17 14:28:25.567 13281 13281 D YysReadyProbe: type=4194304 changes=1 at=2062120
+11-17 14:28:50.834 13376 13376 D YysReadyProbe: type=4194304 changes=1 at=2087388
+11-17 14:28:50.834 13376 13376 D YysReadyProbe: type=4194304 changes=1 at=2087388
+11-17 14:28:50.991 13376 13376 D YysReadyProbe: type=32 changes=0 at=2087544
+11-17 14:28:51.050 13376 13376 D YysReadyProbe: type=32 changes=0 at=2087604
+11-17 14:28:51.139 13376 13376 D YysReadyProbe: type=4194304 changes=2 at=2087692
+11-17 14:28:51.139 13376 13376 D YysReadyProbe: type=4194304 changes=1 at=2087692
+11-17 14:28:51.139 13376 13376 D YysReadyProbe: type=4194304 changes=1 at=2087692
+11-17 14:28:51.139 13376 13376 D YysReadyProbe: type=32 changes=0 at=2087692
+11-17 14:28:51.217 13376 13376 D YysReadyProbe: type=4194304 changes=8 at=2087770
+11-17 14:28:52.493 13376 13376 D YysReadyProbe: type=4194304 changes=2 at=2089046
+11-17 14:28:52.493 13376 13376 D YysReadyProbe: type=4194304 changes=1 at=2089046
+11-17 14:28:52.495 13376 13376 D YysReadyProbe: type=32 changes=0 at=2089048
+11-17 14:28:52.521 13376 13376 D YysReadyProbe: type=32 changes=0 at=2089075
+11-17 14:28:52.610 13376 13376 D YysReadyProbe: type=32 changes=0 at=2089164
+11-17 14:28:53.020 13376 13400 D YysReadyProbe: check=WRONG_FOREGROUND at=2089573
+11-17 14:28:53.330 13376 13376 D YysReadyProbe: type=4194304 changes=2 at=2089884
+11-17 14:28:53.330 13376 13376 D YysReadyProbe: type=4194304 changes=1 at=2089884
