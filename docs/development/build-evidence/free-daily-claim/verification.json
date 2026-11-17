@@ -1,0 +1,788 @@
+{
+  "date": "2026-11-17",
+  "baseCommit": "fec781d",
+  "authorization": "At most one free daily-gift claim on current official-client account, with local screenshots; stop on cost/recharge/exchange requirements; no Release",
+  "environment": {
+    "device": "SM-G9910/API35",
+    "package": "com.netease.onmyoji",
+    "versionName": "2.8.89",
+    "versionCode": 261014
+  },
+  "navigationInterruption": {
+    "unexpectedPageBeforeClaim": true,
+    "claimInputBeforeHandoff": false,
+    "userConfirmedStoppedInteracting": true,
+    "initialResourceChangesExcludedFromClaimEvidence": true
+  },
+  "identity": {
+    "currentNicknameAndRoleIdVisuallyMatchedPriorSample": true,
+    "valuesIncluded": false
+  },
+  "claim": {
+    "entryTaps": 1,
+    "blindRetry": false,
+    "rewardPopupObserved": true,
+    "visibleReward": {
+      "type": "金币",
+      "quantity": 30000
+    },
+    "claimedStampVisuallyObserved": true,
+    "noCostRequestedForFreeClaim": true,
+    "paidButtonsPressed": 0,
+    "afterListSameTitleNowHasPaidOffer": true,
+    "observedPaidPrice": {
+      "currency": "魂玉",
+      "quantity": 1
+    },
+    "returnedToCourtyard": true,
+    "inputMechanism": "Human-reviewed ADB sampling; not the production App executor"
+  },
+  "inputs": {
+    "uniqueFrames": 4,
+    "textRegionsAnnotatedAcrossUniqueFrames": 11,
+    "uniquePublicTextValues": 8,
+    "independentAnnotationReview": false,
+    "annotationsSha256": "2054a723d7b1ecd854416f232cd10bffb56b4be713b7eeb75848ec7a88c4dfbe",
+    "frames": {
+      "daily-before.png": "1aa8e0795b72089fb7a731dc7755c020ab62a2cfe93fb634748f80f8630da574",
+      "reward-popup.png": "8e27cf6adc5ecaa367ca8a736c9dd5e6705bdd2db4ad6e3cbde63fbaf15512e2",
+      "claimed-details.png": "ab63f7a028daa99809e19885d5223b0f6a2706b5219dbab0c7a8da9f785869ce",
+      "daily-after.png": "23bbe561f6f1c378ca8ac3db06f00f2c9a80294aa86fd7da4bbd5e8fb46149c3"
+    }
+  },
+  "probe": {
+    "runId": "9c564ba8-223e-4470-984c-d3fcf337ef16",
+    "sdk": 36,
+    "abi": "arm64-v8a",
+    "engine": "MaaFramework-5.16.1-ONNX-CPU-converted-v6-small",
+    "internetPermission": false,
+    "success": true,
+    "modelHashes": {
+      "det.onnx": "66c0f34caaf432553710fd9973a7134d8cf924db7109310c3d2562dcc39b209d",
+      "rec.onnx": "7dcf6298d77d2a6eb44c1ebeed990826ca895a9c68d955a3eace00763d052949",
+      "keys.txt": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d"
+    },
+    "runs": [
+      {
+        "sample": "daily-before-full",
+        "repetition": 0,
+        "elapsedMs": 642.768125,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.6857143044471741,
+            "locatedExact": true,
+            "locatedIoU": 0.6857143044471741
+          },
+          {
+            "expected": "领取",
+            "exact": true,
+            "bestIoU": 0.7747368216514587,
+            "locatedExact": true,
+            "locatedIoU": 0.7747368216514587
+          }
+        ],
+        "readingCount": 52,
+        "controllerBound": false
+      },
+      {
+        "sample": "daily-before-full",
+        "repetition": 1,
+        "elapsedMs": 607.411666,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.6857143044471741,
+            "locatedExact": true,
+            "locatedIoU": 0.6857143044471741
+          },
+          {
+            "expected": "领取",
+            "exact": true,
+            "bestIoU": 0.7747368216514587,
+            "locatedExact": true,
+            "locatedIoU": 0.7747368216514587
+          }
+        ],
+        "readingCount": 52,
+        "controllerBound": false
+      },
+      {
+        "sample": "daily-before-full",
+        "repetition": 2,
+        "elapsedMs": 1143.910292,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.6857143044471741,
+            "locatedExact": true,
+            "locatedIoU": 0.6857143044471741
+          },
+          {
+            "expected": "领取",
+            "exact": true,
+            "bestIoU": 0.7747368216514587,
+            "locatedExact": true,
+            "locatedIoU": 0.7747368216514587
+          }
+        ],
+        "readingCount": 52,
+        "controllerBound": false
+      },
+      {
+        "sample": "daily-before-region",
+        "repetition": 0,
+        "elapsedMs": 131.667833,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.7796609997749329,
+            "locatedExact": true,
+            "locatedIoU": 0.7796609997749329
+          },
+          {
+            "expected": "领取",
+            "exact": true,
+            "bestIoU": 0.8688457012176514,
+            "locatedExact": true,
+            "locatedIoU": 0.8688457012176514
+          }
+        ],
+        "readingCount": 5,
+        "controllerBound": false
+      },
+      {
+        "sample": "daily-before-region",
+        "repetition": 1,
+        "elapsedMs": 94.063333,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.7796609997749329,
+            "locatedExact": true,
+            "locatedIoU": 0.7796609997749329
+          },
+          {
+            "expected": "领取",
+            "exact": true,
+            "bestIoU": 0.8688457012176514,
+            "locatedExact": true,
+            "locatedIoU": 0.8688457012176514
+          }
+        ],
+        "readingCount": 5,
+        "controllerBound": false
+      },
+      {
+        "sample": "daily-before-region",
+        "repetition": 2,
+        "elapsedMs": 91.880375,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.7796609997749329,
+            "locatedExact": true,
+            "locatedIoU": 0.7796609997749329
+          },
+          {
+            "expected": "领取",
+            "exact": true,
+            "bestIoU": 0.8688457012176514,
+            "locatedExact": true,
+            "locatedIoU": 0.8688457012176514
+          }
+        ],
+        "readingCount": 5,
+        "controllerBound": false
+      },
+      {
+        "sample": "reward-popup-full",
+        "repetition": 0,
+        "elapsedMs": 314.336,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.8245810270309448,
+            "locatedExact": true,
+            "locatedIoU": 0.8245810270309448
+          },
+          {
+            "expected": "获得奖励",
+            "exact": true,
+            "bestIoU": 0.7977951765060425,
+            "locatedExact": true,
+            "locatedIoU": 0.7977951765060425
+          },
+          {
+            "expected": "30000",
+            "exact": true,
+            "bestIoU": 0.6972955465316772,
+            "locatedExact": true,
+            "locatedIoU": 0.6972955465316772
+          }
+        ],
+        "readingCount": 9,
+        "controllerBound": false
+      },
+      {
+        "sample": "reward-popup-full",
+        "repetition": 1,
+        "elapsedMs": 184.168833,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.8245810270309448,
+            "locatedExact": true,
+            "locatedIoU": 0.8245810270309448
+          },
+          {
+            "expected": "获得奖励",
+            "exact": true,
+            "bestIoU": 0.7977951765060425,
+            "locatedExact": true,
+            "locatedIoU": 0.7977951765060425
+          },
+          {
+            "expected": "30000",
+            "exact": true,
+            "bestIoU": 0.6972955465316772,
+            "locatedExact": true,
+            "locatedIoU": 0.6972955465316772
+          }
+        ],
+        "readingCount": 9,
+        "controllerBound": false
+      },
+      {
+        "sample": "reward-popup-full",
+        "repetition": 2,
+        "elapsedMs": 223.852125,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.8245810270309448,
+            "locatedExact": true,
+            "locatedIoU": 0.8245810270309448
+          },
+          {
+            "expected": "获得奖励",
+            "exact": true,
+            "bestIoU": 0.7977951765060425,
+            "locatedExact": true,
+            "locatedIoU": 0.7977951765060425
+          },
+          {
+            "expected": "30000",
+            "exact": true,
+            "bestIoU": 0.6972955465316772,
+            "locatedExact": true,
+            "locatedIoU": 0.6972955465316772
+          }
+        ],
+        "readingCount": 9,
+        "controllerBound": false
+      },
+      {
+        "sample": "reward-popup-region",
+        "repetition": 0,
+        "elapsedMs": 227.732,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.8556638360023499,
+            "locatedExact": true,
+            "locatedIoU": 0.8556638360023499
+          },
+          {
+            "expected": "获得奖励",
+            "exact": true,
+            "bestIoU": 0.9371524453163147,
+            "locatedExact": true,
+            "locatedIoU": 0.9371524453163147
+          },
+          {
+            "expected": "30000",
+            "exact": true,
+            "bestIoU": 0.6891584396362305,
+            "locatedExact": true,
+            "locatedIoU": 0.6891584396362305
+          }
+        ],
+        "readingCount": 12,
+        "controllerBound": false
+      },
+      {
+        "sample": "reward-popup-region",
+        "repetition": 1,
+        "elapsedMs": 237.013792,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.8556638360023499,
+            "locatedExact": true,
+            "locatedIoU": 0.8556638360023499
+          },
+          {
+            "expected": "获得奖励",
+            "exact": true,
+            "bestIoU": 0.9371524453163147,
+            "locatedExact": true,
+            "locatedIoU": 0.9371524453163147
+          },
+          {
+            "expected": "30000",
+            "exact": true,
+            "bestIoU": 0.6891584396362305,
+            "locatedExact": true,
+            "locatedIoU": 0.6891584396362305
+          }
+        ],
+        "readingCount": 12,
+        "controllerBound": false
+      },
+      {
+        "sample": "reward-popup-region",
+        "repetition": 2,
+        "elapsedMs": 195.707708,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.8556638360023499,
+            "locatedExact": true,
+            "locatedIoU": 0.8556638360023499
+          },
+          {
+            "expected": "获得奖励",
+            "exact": true,
+            "bestIoU": 0.9371524453163147,
+            "locatedExact": true,
+            "locatedIoU": 0.9371524453163147
+          },
+          {
+            "expected": "30000",
+            "exact": true,
+            "bestIoU": 0.6891584396362305,
+            "locatedExact": true,
+            "locatedIoU": 0.6891584396362305
+          }
+        ],
+        "readingCount": 12,
+        "controllerBound": false
+      },
+      {
+        "sample": "claimed-details-full",
+        "repetition": 0,
+        "elapsedMs": 526.845251,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": false,
+            "bestIoU": 0,
+            "locatedExact": false,
+            "locatedIoU": 0
+          },
+          {
+            "expected": "御行达摩的赠礼",
+            "exact": true,
+            "bestIoU": 0.8052588105201721,
+            "locatedExact": true,
+            "locatedIoU": 0.8052588105201721
+          },
+          {
+            "expected": "已领取",
+            "exact": false,
+            "bestIoU": 0,
+            "locatedExact": false,
+            "locatedIoU": 0
+          },
+          {
+            "expected": "免费",
+            "exact": true,
+            "bestIoU": 0.7919191718101501,
+            "locatedExact": true,
+            "locatedIoU": 0.7919191718101501
+          }
+        ],
+        "readingCount": 42,
+        "controllerBound": false
+      },
+      {
+        "sample": "claimed-details-full",
+        "repetition": 1,
+        "elapsedMs": 499.849459,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": false,
+            "bestIoU": 0,
+            "locatedExact": false,
+            "locatedIoU": 0
+          },
+          {
+            "expected": "御行达摩的赠礼",
+            "exact": true,
+            "bestIoU": 0.8052588105201721,
+            "locatedExact": true,
+            "locatedIoU": 0.8052588105201721
+          },
+          {
+            "expected": "已领取",
+            "exact": false,
+            "bestIoU": 0,
+            "locatedExact": false,
+            "locatedIoU": 0
+          },
+          {
+            "expected": "免费",
+            "exact": true,
+            "bestIoU": 0.7919191718101501,
+            "locatedExact": true,
+            "locatedIoU": 0.7919191718101501
+          }
+        ],
+        "readingCount": 42,
+        "controllerBound": false
+      },
+      {
+        "sample": "claimed-details-full",
+        "repetition": 2,
+        "elapsedMs": 705.106792,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": false,
+            "bestIoU": 0,
+            "locatedExact": false,
+            "locatedIoU": 0
+          },
+          {
+            "expected": "御行达摩的赠礼",
+            "exact": true,
+            "bestIoU": 0.8052588105201721,
+            "locatedExact": true,
+            "locatedIoU": 0.8052588105201721
+          },
+          {
+            "expected": "已领取",
+            "exact": false,
+            "bestIoU": 0,
+            "locatedExact": false,
+            "locatedIoU": 0
+          },
+          {
+            "expected": "免费",
+            "exact": true,
+            "bestIoU": 0.7919191718101501,
+            "locatedExact": true,
+            "locatedIoU": 0.7919191718101501
+          }
+        ],
+        "readingCount": 42,
+        "controllerBound": false
+      },
+      {
+        "sample": "claimed-details-region",
+        "repetition": 0,
+        "elapsedMs": 155.516458,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.8727842569351196,
+            "locatedExact": true,
+            "locatedIoU": 0.8727842569351196
+          },
+          {
+            "expected": "御行达摩的赠礼",
+            "exact": true,
+            "bestIoU": 0.7446540594100952,
+            "locatedExact": true,
+            "locatedIoU": 0.7446540594100952
+          },
+          {
+            "expected": "已领取",
+            "exact": false,
+            "bestIoU": 0,
+            "locatedExact": false,
+            "locatedIoU": 0
+          },
+          {
+            "expected": "免费",
+            "exact": true,
+            "bestIoU": 0.7922534942626953,
+            "locatedExact": true,
+            "locatedIoU": 0.7922534942626953
+          }
+        ],
+        "readingCount": 8,
+        "controllerBound": false
+      },
+      {
+        "sample": "claimed-details-region",
+        "repetition": 1,
+        "elapsedMs": 140.677167,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.8727842569351196,
+            "locatedExact": true,
+            "locatedIoU": 0.8727842569351196
+          },
+          {
+            "expected": "御行达摩的赠礼",
+            "exact": true,
+            "bestIoU": 0.7446540594100952,
+            "locatedExact": true,
+            "locatedIoU": 0.7446540594100952
+          },
+          {
+            "expected": "已领取",
+            "exact": false,
+            "bestIoU": 0,
+            "locatedExact": false,
+            "locatedIoU": 0
+          },
+          {
+            "expected": "免费",
+            "exact": true,
+            "bestIoU": 0.7922534942626953,
+            "locatedExact": true,
+            "locatedIoU": 0.7922534942626953
+          }
+        ],
+        "readingCount": 8,
+        "controllerBound": false
+      },
+      {
+        "sample": "claimed-details-region",
+        "repetition": 2,
+        "elapsedMs": 139.860833,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.8727842569351196,
+            "locatedExact": true,
+            "locatedIoU": 0.8727842569351196
+          },
+          {
+            "expected": "御行达摩的赠礼",
+            "exact": true,
+            "bestIoU": 0.7446540594100952,
+            "locatedExact": true,
+            "locatedIoU": 0.7446540594100952
+          },
+          {
+            "expected": "已领取",
+            "exact": false,
+            "bestIoU": 0,
+            "locatedExact": false,
+            "locatedIoU": 0
+          },
+          {
+            "expected": "免费",
+            "exact": true,
+            "bestIoU": 0.7922534942626953,
+            "locatedExact": true,
+            "locatedIoU": 0.7922534942626953
+          }
+        ],
+        "readingCount": 8,
+        "controllerBound": false
+      },
+      {
+        "sample": "daily-after-full",
+        "repetition": 0,
+        "elapsedMs": 683.475792,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.6857143044471741,
+            "locatedExact": true,
+            "locatedIoU": 0.6857143044471741
+          },
+          {
+            "expected": "1",
+            "exact": false,
+            "bestIoU": 0,
+            "locatedExact": false,
+            "locatedIoU": 0
+          }
+        ],
+        "readingCount": 52,
+        "controllerBound": false
+      },
+      {
+        "sample": "daily-after-full",
+        "repetition": 1,
+        "elapsedMs": 618.652001,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.6857143044471741,
+            "locatedExact": true,
+            "locatedIoU": 0.6857143044471741
+          },
+          {
+            "expected": "1",
+            "exact": false,
+            "bestIoU": 0,
+            "locatedExact": false,
+            "locatedIoU": 0
+          }
+        ],
+        "readingCount": 52,
+        "controllerBound": false
+      },
+      {
+        "sample": "daily-after-full",
+        "repetition": 2,
+        "elapsedMs": 637.621959,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.6857143044471741,
+            "locatedExact": true,
+            "locatedIoU": 0.6857143044471741
+          },
+          {
+            "expected": "1",
+            "exact": false,
+            "bestIoU": 0,
+            "locatedExact": false,
+            "locatedIoU": 0
+          }
+        ],
+        "readingCount": 52,
+        "controllerBound": false
+      },
+      {
+        "sample": "daily-after-region",
+        "repetition": 0,
+        "elapsedMs": 47.379041,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.7971781492233276,
+            "locatedExact": true,
+            "locatedIoU": 0.7971781492233276
+          },
+          {
+            "expected": "1",
+            "exact": false,
+            "bestIoU": 0,
+            "locatedExact": false,
+            "locatedIoU": 0
+          }
+        ],
+        "readingCount": 2,
+        "controllerBound": false
+      },
+      {
+        "sample": "daily-after-region",
+        "repetition": 1,
+        "elapsedMs": 50.408834,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.7971781492233276,
+            "locatedExact": true,
+            "locatedIoU": 0.7971781492233276
+          },
+          {
+            "expected": "1",
+            "exact": false,
+            "bestIoU": 0,
+            "locatedExact": false,
+            "locatedIoU": 0
+          }
+        ],
+        "readingCount": 2,
+        "controllerBound": false
+      },
+      {
+        "sample": "daily-after-region",
+        "repetition": 2,
+        "elapsedMs": 51.680834,
+        "labels": [
+          {
+            "expected": "每日礼包",
+            "exact": true,
+            "bestIoU": 0.7971781492233276,
+            "locatedExact": true,
+            "locatedIoU": 0.7971781492233276
+          },
+          {
+            "expected": "1",
+            "exact": false,
+            "bestIoU": 0,
+            "locatedExact": false,
+            "locatedIoU": 0
+          }
+        ],
+        "readingCount": 2,
+        "controllerBound": false
+      }
+    ]
+  },
+  "installedProbeArtifacts": {
+    "environment": "Dedicated API36 ARM64 emulator",
+    "artifacts": [
+      {
+        "package": "io.github.yysassist.maaprobe",
+        "sha256": "eceb77682086634dd35cadae5caa4993d470140ea4cd77390a5f0d6e8595c0bc",
+        "installedMatchesBuild": true
+      },
+      {
+        "package": "io.github.yysassist.maaprobe.test",
+        "sha256": "e219d65b8b58daab9561d5a2bae43cac0f80a28dc59b7e59903b3744be9b7a89",
+        "installedMatchesBuild": true
+      }
+    ]
+  },
+  "cleanup": {
+    "privateScreenshotTestApkRemoved": true,
+    "currentRunPrivateOutputsRemoved": true,
+    "probeMainAndOtherDataPreserved": true,
+    "originalPrivateSourceFilesRestored": 4,
+    "phoneProbeInstalled": false,
+    "gameReturnedToCourtyard": true
+  },
+  "observedStampRecognition": [
+    {
+      "sample": "claimed-details-full",
+      "nativeText": "領取",
+      "confidence": 0.766161
+    },
+    {
+      "sample": "claimed-details-region",
+      "nativeText": "领取",
+      "confidence": 0.828469
+    }
+  ],
+  "scopeLimits": [
+    "No second claim or paid purchase",
+    "No runnable real-game task created, installed or published",
+    "Not production App screenshot/resource/executor integration",
+    "No held-out theme or long-run validation",
+    "Static probe passed transport assertions; annotated recognition failures retained"
+  ]
+}
