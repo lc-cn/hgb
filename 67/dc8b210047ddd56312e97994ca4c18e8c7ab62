@@ -1,0 +1,26 @@
+docs/design/examples/step-control-flow.proposal.json
+  s_b0f0af2da7f631::t_dc9eef4eb594f9 1-162
+docs/design/step-control-flow-proposal.md
+  s_b0f0af2da7f631::t_9c795d700105a1 52-64
+  s_b0f0af2da7f631::t_dc9eef4eb594f9 1-51,65-80
+docs/design/action-step-task-model.md
+  s_b0f0af2da7f631::t_9c795d700105a1 99-100
+docs/development/implementation-status.md
+  s_b0f0af2da7f631::t_9c795d700105a1 204-209
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "67dc8b210047ddd56312e97994ca4c18e8c7ab62",
+  "prompts": {},
+  "sessions": {
+    "s_b0f0af2da7f631": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1dcb1-0dfe-7271-bfa1-b38ce7764885",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
