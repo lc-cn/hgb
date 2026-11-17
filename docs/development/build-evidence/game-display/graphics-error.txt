@@ -1,0 +1,1 @@
+GL Error 0x0501 in virtual void neox::dyntex::DynamicTextureGLPBO::DoUpdate(neox::dyntex::IDataProviderMemory *, int, const neox::dyntex::GLTextureDesc &), line 329, GL_INVALID_VALUE

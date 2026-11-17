@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-17",
+  "assistantAvd": {
+    "name": "yys-assist-dev",
+    "port": 5560,
+    "gameInstalled": false,
+    "unchanged": true
+  },
+  "gameAvd": {
+    "name": "yys-official-validation",
+    "port": 5562,
+    "api": 36,
+    "abi": "arm64-v8a",
+    "graphics": "software",
+    "disabledFeature": "Vulkan",
+    "bootCompleted": true,
+    "gamePackage": "com.netease.onmyoji",
+    "versionName": "2.8.89",
+    "versionCode": 261014,
+    "launchResult": "ok, COLD, totalTimeMs=1153"
+  },
+  "observations": [
+    "Startup resource progress was shown for 46.29 MB",
+    "Video and Chinese subtitle rendered",
+    "Black rectangles observed on three startup icon areas during resource download",
+    "DynamicTextureGLPBO GL_INVALID_VALUE recorded"
+  ],
+  "rootCauseConfirmed": false,
+  "loginScreenAndCourtyardValidated": false,
+  "gameInputSent": false,
+  "consentOrLoginPerformed": false,
+  "privateScreenshotsCommitted": false,
+  "rawGameLogRetained": false,
+  "limitations": [
+    "No game task completed",
+    "No proof that graphics error caused every black rectangle",
+    "No claim that downloaded resource set is complete",
+    "Physical phone still absent in this turn initial inventory"
+  ]
+}
