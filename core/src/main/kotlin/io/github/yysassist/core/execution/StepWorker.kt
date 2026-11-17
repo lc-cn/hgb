@@ -52,14 +52,14 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null) : Step
     override fun canStartWithoutObservation(request: ExecutionRequest, bundle: TaskBundle): Boolean = runCatching {
         request.tasks.forEach { task ->
             val (content, _) = definition(request, task, bundle)
-            require(content.steps.flatMap { it.actions }.all { it.capability == "control.wait" })
+            require(content.steps.flatMap { it.actionDefinitions() }.all { it.capability == "control.wait" })
         }
         require(request.tasks.isNotEmpty())
         true
     }.getOrDefault(false)
     override fun create(attempt: StepAttempt, bundle: TaskBundle): StepWork {
         val (step, configuration) = program(attempt, bundle)
-        val usesInput = step.actions.any { action -> contracts.single { it.id == action.capability && it.version == action.contractVersion }.sendsDeviceInput }
+        val usesInput = step.actionDefinitions().any { action -> contracts.single { it.id == action.capability && it.version == action.contractVersion }.sendsDeviceInput }
         return object : StepWork {
             private val lock = Any()
             private var revoked = false
@@ -77,37 +77,73 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null) : Step
                         }
                         currentCoroutineContext().ensureActive()
                         val activeSession = actions?.open(attempt, bundle).also { session = it }
-                        val outputs = mutableMapOf<String, JsonObject>()
                         var verification: String? = null
-                        var observed = false
-                        step.actions.forEach { action ->
-                            currentCoroutineContext().ensureActive()
-                            val contract = contracts.single { it.id == action.capability && it.version == action.contractVersion }
-                            val inputs = resolveActionInputs(action, configuration, outputs)
-                            require(contract.inputIssue(inputs) == null)
-                            val result = if (action.capability == "control.wait") {
-                                val milliseconds = checkNotNull(duration(inputs)); delay(milliseconds)
-                                ActionResult.Produced(buildJsonObject { put("durationMs", milliseconds) })
-                            } else checkNotNull(activeSession).perform(action, inputs)
-                            currentCoroutineContext().ensureActive()
-                            val value = when (result) {
-                                ActionResult.Interrupted -> return@coroutineScope StepOutcome.Interrupted
-                                is ActionResult.Unavailable -> return@coroutineScope StepOutcome.Unknown(result.reason)
-                                is ActionResult.Produced -> {
-                                    check(contract.role != ActionRole.VERIFICATION) { "核对动作未提供核对证据" }
-                                    verification = null; result.outputs
-                                }
-                                is ActionResult.Verified -> {
-                                    check(contract.role == ActionRole.VERIFICATION && result.evidence.isNotBlank())
-                                    verification = result.evidence; result.outputs
+                        var requiresVerification = false
+                        fun emptyRepeat(node: ProgramNode): Boolean = node is ProgramNode.Repeat &&
+                            (repeatCount(node.count, configuration) == 0L || node.program.all(::emptyRepeat))
+                        suspend fun executeBlock(nodes: List<ProgramNode>, outputs: MutableMap<String, JsonObject>, completesStep: Boolean): StepOutcome? {
+                            // Only skip provably empty repetition tails. A future branch must still
+                            // actually resolve; never predict its outcome to retain completion.
+                            val terminalSuffix = BooleanArray(nodes.size + 1)
+                            terminalSuffix[nodes.size] = completesStep
+                            for (index in nodes.indices.reversed()) terminalSuffix[index] = terminalSuffix[index + 1] && emptyRepeat(nodes[index])
+                            for ((position, node) in nodes.withIndex()) {
+                                // Even zero-duration actions and empty repeats must remain cancellable.
+                                yield()
+                                val atEnd = terminalSuffix[position + 1]
+                                when (node) {
+                                    is ProgramNode.Branch -> {
+                                        val value = resolveProgramValue(node.value, configuration, outputs)
+                                        val selected = node.cases.singleOrNull { sameProgramValue(it.equals, value) }
+                                            ?: return StepOutcome.Unknown("本次输出未能匹配唯一分支")
+                                        executeBlock(selected.program, outputs.toMutableMap(), atEnd)?.let { return it }
+                                    }
+                                    is ProgramNode.Repeat -> {
+                                        val count = repeatCount(node.count, configuration)
+                                        var index = 0L
+                                        while (index < count) {
+                                            yield()
+                                            executeBlock(node.program, outputs.toMutableMap(), atEnd && index == count - 1)?.let { return it }
+                                            index++
+                                        }
+                                    }
+                                    is ProgramNode.Action -> {
+                                        val action = node.action
+                                        val contract = contracts.single { it.id == action.capability && it.version == action.contractVersion }
+                                        val inputs = resolveActionInputs(action, configuration, outputs)
+                                        require(contract.inputIssue(inputs) == null)
+                                        activeSession?.prepareAction(action, atEnd)
+                                        val result = if (action.capability == "control.wait") {
+                                            val milliseconds = checkNotNull(duration(inputs)); delay(milliseconds)
+                                            ActionResult.Produced(buildJsonObject { put("durationMs", milliseconds) })
+                                        } else checkNotNull(activeSession).perform(action, inputs)
+                                        currentCoroutineContext().ensureActive()
+                                        val value = when (result) {
+                                            ActionResult.Interrupted -> return StepOutcome.Interrupted
+                                            is ActionResult.Unavailable -> return StepOutcome.Unknown(result.reason)
+                                            is ActionResult.Produced -> {
+                                                check(contract.role != ActionRole.VERIFICATION) { "核对动作未提供核对证据" }
+                                                verification = null; result.outputs
+                                            }
+                                            is ActionResult.Verified -> {
+                                                check(contract.role == ActionRole.VERIFICATION && result.evidence.isNotBlank())
+                                                verification = result.evidence; result.outputs
+                                            }
+                                        }
+                                        check(contract.outputIssue(value) == null)
+                                        outputs[action.id] = value
+                                        requiresVerification = requiresVerification || contract.role == ActionRole.OBSERVATION || contract.sendsDeviceInput
+                                    }
                                 }
                             }
-                            check(contract.outputIssue(value) == null)
-                            outputs[action.id] = value
-                            observed = observed || contract.role == ActionRole.OBSERVATION
+                            return null
                         }
-                        if (observed && verification == null) StepOutcome.Unknown("观察结果尚未核对")
-                        else StepOutcome.Completed(verification ?: "已完成等待步骤")
+                        executeBlock(step.nodes(), mutableMapOf(), true)?.let { return@coroutineScope it }
+                        if (requiresVerification && verification == null) StepOutcome.Unknown("观察结果尚未核对")
+                        else {
+                            verification?.let { activeSession?.verifiedStepCompleted(it) }
+                            StepOutcome.Completed(verification ?: "已完成等待步骤")
+                        }
                     }
                 } finally {
                     // Outside coroutineScope: it has drained its children. The native adapter must
@@ -129,7 +165,7 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null) : Step
         }
     }
     override fun restartHasNoDeviceInput(attempt: StepAttempt, bundle: TaskBundle): Boolean =
-        runCatching { program(attempt, bundle).first.actions.none { action ->
+        runCatching { program(attempt, bundle).first.actionDefinitions().none { action ->
             contracts.single { it.id == action.capability && it.version == action.contractVersion }.sendsDeviceInput
         } }.getOrDefault(false)
     override fun canReenterAfterQuiet(attempt: StepAttempt, bundle: TaskBundle): Boolean =

@@ -1,0 +1,139 @@
+{
+  "date": "2026-11-17",
+  "baseCommit": "c1fcf09",
+  "sourceSha256": {
+    "app/src/androidTest/kotlin/io/github/yysassist/RuntimeProcessRecoveryTest.kt": "acf866bfd16bf69c45a857b8c280ba0a9eaa3989ee23b58cfe55f9c5c3112c1e",
+    "app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationContractTest.kt": "99578071e99bde737e2d6da61afce4418988728f8b259d4a31e29a72d6a4662d",
+    "app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationRuntimeTest.kt": "c3815e20c21d3aad2ab7a041e6d9b06cef03fe45bc6542b9fc31fcf8dec23350",
+    "app/src/androidTest/kotlin/io/github/yysassist/device/DeviceExecutionReadinessTest.kt": "480af71034c542ff4372a02d36a85f7a7a67041759d6da9582d3f95d4e22198d",
+    "app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt": "60be9810424bb18a3ef4ae9766131fd95802ce13e4f4f8766b2889c40535e83a",
+    "app/src/main/kotlin/io/github/yysassist/device/DeviceExecutionReadiness.kt": "bd9efff865d29bd3d83bdf69fe3edc27d90aed42eab7ab69e343f2b2d7cb091a",
+    "core/src/main/kotlin/io/github/yysassist/core/content/ActionBindings.kt": "25c244954ca5713ffc24b8e558cff093fa064c1e4eb00c1aa57505030131a74d",
+    "core/src/main/kotlin/io/github/yysassist/core/content/StepProgram.kt": "8d433f3d9b175fb3c1a86e2d64f8e1b4adc3ee6ec818de7697b55adcd1ffd73e",
+    "core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt": "4827e8d61d2d2087478a2a5aa269b3b2b776cf7b905613b5a1fc6f5954f4ce93",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/ActionProvider.kt": "55cad75ac7fb2e487d28ed436451b8db87cc28363c61a0be7f313d337676c43f",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/StepWorker.kt": "aff1d2b9c3a9727b8426143524fe8e6d285513f8a7a5412cfd0bd12aa767dcab",
+    "core/src/test/kotlin/io/github/yysassist/core/execution/ProgramCompatibilityTest.kt": "e91d13fae3c256cf0f59488dd918e9fba988c0dbd24948533558822f67d74f56",
+    "core/src/test/kotlin/io/github/yysassist/core/execution/StepProgramTest.kt": "4b03a73e19b534429fc36e0054604462c1a731f9299db6be999e0b2b17f2b271",
+    "core/src/test/resources/task-bundle-program.json": "4a3d845774448db5782319c4bc2f0932dd47bc1fcf94a148cba6bb824438dd64"
+  },
+  "coreTotals": {
+    "tests": 119,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "api36": {
+    "tests": 182,
+    "passed": 178,
+    "skipped": 4,
+    "failed": [],
+    "conditionalSkips": [
+      {
+        "class": "io.github.yysassist.RuntimeProcessRecoveryTest",
+        "test": "seedBeforeExternalProcessStop",
+        "code": -4
+      },
+      {
+        "class": "io.github.yysassist.RuntimeProcessRecoveryTest",
+        "test": "verifyAfterExternalProcessStop",
+        "code": -4
+      },
+      {
+        "class": "io.github.yysassist.auth.GitHubSessionProcessTest",
+        "test": "seedBeforeExternalProcessStop",
+        "code": -4
+      },
+      {
+        "class": "io.github.yysassist.auth.GitHubSessionProcessTest",
+        "test": "verifyAfterExternalProcessStop",
+        "code": -4
+      }
+    ]
+  },
+  "api30Affected": {
+    "tests": 38,
+    "passed": 38,
+    "skipped": 0,
+    "failed": [],
+    "conditionalSkips": []
+  },
+  "api36InstalledArtifacts": {
+    "environment": "Dedicated API36 ARM64 emulator",
+    "artifacts": [
+      {
+        "package": "io.github.yysassist",
+        "sha256": "b1c9a8bbf34bd3164c33311e83ade687da09d9f83628e2ab5721f68604de498b",
+        "installedMatchesBuild": true
+      },
+      {
+        "package": "io.github.yysassist.test",
+        "sha256": "51e9c2fce6391b49e270e627faae0455a38ea3276493ade80b43a89f2a8522ec",
+        "installedMatchesBuild": true
+      }
+    ]
+  },
+  "api30InstalledArtifacts": {
+    "environment": "Dedicated API30 ARM64 emulator",
+    "artifacts": [
+      {
+        "package": "io.github.yysassist",
+        "sha256": "b1c9a8bbf34bd3164c33311e83ade687da09d9f83628e2ab5721f68604de498b",
+        "installedMatchesBuild": true
+      },
+      {
+        "package": "io.github.yysassist.test",
+        "sha256": "51e9c2fce6391b49e270e627faae0455a38ea3276493ade80b43a89f2a8522ec",
+        "installedMatchesBuild": true
+      }
+    ]
+  },
+  "compatibilityBefore": {
+    "originalCommit": "c1fcf0956f6921563b094d5608566b9f13b7ac89",
+    "testSha256": "e91d13fae3c256cf0f59488dd918e9fba988c0dbd24948533558822f67d74f56",
+    "failure": "java.lang.AssertionError: Invalid(issues=[ContentIssue(location=bundle, reason=任务格式不可解析或包含未知字段)])",
+    "sameTestAndJsonAsAfter": true
+  },
+  "zeroTailBefore": {
+    "failure": "java.lang.AssertionError: expected:<Quiet(outcome=Completed(evidence=verified))> but was:<Quiet(outcome=Unknown(reason=proof not retained))>",
+    "assertionUnchangedAfterFix": true,
+    "testMethodSha256": "3668137f07d89d58e220c9bf562171fd3f4ab807efeb7d3f55c2f68832a709a2"
+  },
+  "actualProcessRecovery": [
+    {
+      "oldPid": 27999,
+      "newPid": 28065,
+      "oldGeneration": 2,
+      "newGeneration": 3,
+      "completedStepPreserved": true,
+      "queuePreserved": true,
+      "programMode": false,
+      "scope": "Actual Android process stop; production runtime class and built-in no-input runner on dedicated fixture DB. No game or main application DB."
+    },
+    {
+      "oldPid": 28130,
+      "newPid": 28197,
+      "oldGeneration": 2,
+      "newGeneration": 3,
+      "completedStepPreserved": true,
+      "queuePreserved": true,
+      "programMode": true,
+      "scope": "Actual Android process stop; production runtime class and built-in no-input runner on dedicated fixture DB. No game or main application DB."
+    }
+  ],
+  "cleanup": {
+    "api30OriginalAccessibilitySettingsRestored": true,
+    "testApksRemoved": [
+      "API36",
+      "API30"
+    ],
+    "mainAppsPreserved": true,
+    "phoneModifiedThisImplementationRound": false
+  },
+  "scope": "Self-owned native surfaces, synthetic model observations, isolated databases and declared device grants. No real game actions, real-account snapshots, Release or external notifications.",
+  "utilityProofBefore": {
+    "message": "java.lang.AssertionError: [ContentIssue(location=target/fixture/task/task/step/step/program, reason=观察步骤必须在每条执行路径以核对动作结束)]",
+    "sameAssertionAfterFix": true,
+    "testSourceSha256": "4b03a73e19b534429fc36e0054604462c1a731f9299db6be999e0b2b17f2b271"
+  }
+}

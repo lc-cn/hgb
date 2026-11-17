@@ -11,6 +11,10 @@ interface ActionProvider {
 }
 fun interface ActionSession {
     suspend fun perform(action: ActionDefinition, inputs: JsonObject): ActionResult
+    /** Actual selected path/iteration, supplied before perform so cancellation cannot lose proof. */
+    fun prepareAction(action: ActionDefinition, completesStep: Boolean) {}
+    /** The interpreter has reached the actual path end with final verification evidence. */
+    fun verifiedStepCompleted(evidence: String) {}
     /** Input programs must implement independent quiet and retained business evidence. */
     suspend fun revoke(): InputStopObservation = InputStopObservation.Unconfirmed("动作提供者未实现输入交接")
 }

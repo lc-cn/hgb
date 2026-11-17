@@ -3,9 +3,7 @@ package io.github.yysassist.core.content
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.*
 import java.math.BigDecimal
 import io.github.yysassist.core.model.ExecutionContext
 import io.github.yysassist.core.model.Principal
@@ -57,7 +55,11 @@ data class TaskDefinition(
     val steps: List<StepDefinition>,
 )
 @Serializable
-data class StepDefinition(val id: String, val name: String, val actions: List<ActionDefinition>)
+data class StepDefinition(
+    val id: String, val name: String,
+    val actions: List<ActionDefinition> = emptyList(),
+    val program: List<ProgramNode>? = null,
+)
 @Serializable
 data class ActionDefinition(
     val id: String,
@@ -99,14 +101,23 @@ data class CapabilityContract(
     val sendsDeviceInput: Boolean = false,
     /** Validate only present values; unresolved outputs are never replaced by fake placeholders. */
     val validateKnownInputs: (JsonObject) -> ContentIssue? = { null },
-    val validateDefinition: (TaskBundle, TaskDefinition, StepDefinition, ActionDefinition) -> String? = { _, _, _, _ -> null },
+    val validateDefinition: (TaskBundle, TaskDefinition, ActionFlowContext, ActionDefinition) -> String? = { _, _, _, _ -> null },
     val validateInputs: (JsonObject) -> String?,
 )
 class BundleCodec(private val capabilities: List<CapabilityContract>) {
     private val json = Json { ignoreUnknownKeys = false; isLenient = false; coerceInputValues = false }
 
     fun read(text: String): BundleReadResult {
-        val bundle = try { json.decodeFromString<TaskBundle>(text) }
+        val bundle = try {
+            val element = json.parseToJsonElement(text)
+            val value = json.decodeFromJsonElement<TaskBundle>(element)
+            require(element.jsonObject.getValue("tasks").jsonArray.none { task ->
+                task.jsonObject.getValue("steps").jsonArray.any { step ->
+                    "actions" in step.jsonObject && "program" in step.jsonObject
+                }
+            }) { "program与actions不能同时指定" }
+            value
+        }
         catch (_: IllegalArgumentException) {
             return BundleReadResult.Invalid(listOf(ContentIssue("bundle", "任务格式不可解析或包含未知字段")))
         }
@@ -179,23 +190,8 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
             if (task.steps.isEmpty() || task.steps.map { it.id }.distinct().size != task.steps.size) issue(location, "步骤为空或身份重复")
             task.steps.forEach { step ->
                 val path = "$location/step/${step.id}"
-                if (step.id.isBlank() || step.name.isBlank() || step.actions.isEmpty()) issue(path, "步骤身份、名称或动作为空")
-                if (step.actions.map { it.id }.distinct().size != step.actions.size) issue(path, "动作身份重复")
-                val previous = mutableMapOf<String, CapabilityContract>()
-                step.actions.forEach { action ->
-                    val actionPath = "$path/action/${action.id}"
-                    if (action.id.isBlank()) issue(actionPath, "缺少动作身份")
-                    val contract = capabilities.find { it.id == action.capability && it.version == action.contractVersion }
-                    if (contract == null) issue(actionPath, "容器不支持所需动作或合同版本")
-                    else {
-                        actionBindingIssues(task, action, contract, previous).forEach { issue(actionPath, it) }
-                        contract.validateDefinition(bundle, task, step, action)?.let { issue(actionPath, it) }
-                        previous[action.id] = contract
-                    }
-                }
-                if (previous.values.any { it.role == ActionRole.OBSERVATION || it.sendsDeviceInput } &&
-                    previous[step.actions.lastOrNull()?.id]?.role != ActionRole.VERIFICATION)
-                    issue(path, "观察步骤必须以核对动作结束")
+                if (step.id.isBlank() || step.name.isBlank()) issue(path, "步骤身份或名称为空")
+                programIssues(bundle, task, step, capabilities).forEach { issue("$path/${it.location}", it.reason) }
             }
         }
     }

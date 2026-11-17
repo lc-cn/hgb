@@ -52,6 +52,7 @@ class TextObservationRuntimeTest {
         var downs = 0
         var claimed = false
         var duplicate = false
+        var bothStates = false
         var textLeft = 90f
         var textBaseline = 400f
         var lastDownY: Float? = null
@@ -64,6 +65,7 @@ class TextObservationRuntimeTest {
             canvas.drawColor(Color.WHITE)
             canvas.drawText(text(), textLeft, textBaseline, paint)
             if (duplicate) canvas.drawText("领取物资", 90f, 650f, paint)
+            if (bothStates) canvas.drawText("已领取", 90f, 800f, paint)
         }
         override fun onTouchEvent(event: MotionEvent): Boolean {
             touches++
@@ -505,5 +507,104 @@ class TextObservationRuntimeTest {
             assertFalse(state.facts.any { it.taskId == high.taskId })
             assertTrue(state.waiting.isEmpty()); assertEquals(0, library.snapshot().versions.single().referenceCount)
         } finally { permitClosed.complete(Unit); highRelease.complete(Unit) }
+    }
+
+    private fun classified(value: TaskBundle, inside: Boolean = false, absent: Boolean = false): TaskBundle = value.copy(tasks = value.tasks.map { task ->
+        val old = task.steps.single(); val (read, locate, tap, after, verify) = old.actions
+        val classifier = ActionDefinition("classify", ScreenActions.CLASSIFY, 1, buildJsonObject {
+            put("states", buildJsonArray {
+                add(buildJsonObject { put("id", "ready"); put("text", if (absent) "不存在的待领状态" else "领取物资"); put("minimumConfidence", 0.75) })
+                add(buildJsonObject { put("id", "done"); put("text", if (absent) "不存在的已领状态" else "已领取"); put("minimumConfidence", 0.75) })
+            })
+        }, mapOf("observation" to ActionInputBinding.Output(read.id, "observation")))
+        fun nodes(vararg definitions: ActionDefinition) = definitions.map(ProgramNode::Action)
+        val branch = ProgramNode.Branch(ActionInputBinding.Output("classify", "state"), listOf(
+            ProgramCase(JsonPrimitive("ready"), if (inside) nodes(locate, tap, after, verify) else nodes(locate, tap)),
+            ProgramCase(JsonPrimitive("done"), if (inside) nodes(verify.copy(id = "already", bindings =
+                mapOf("observation" to ActionInputBinding.Output(read.id, "observation")))) else emptyList()),
+        ))
+        task.copy(steps = listOf(old.copy(actions = emptyList(), program = nodes(read, classifier) + branch + if (inside) emptyList() else nodes(after, verify))))
+    })
+    @Test fun classifiedReadyPathTraversesTheRealVersionedWorkerAndClicksOnce(): Unit = runBlocking {
+        prepare("已领取", withInput = true, transform = { classified(it) })
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        assertTrue(state.toString(), state.unresolved.isEmpty()); assertNull(state.current)
+        assertEquals(1, withContext(Dispatchers.Main) { surface.downs })
+        assertEquals(DeviceActionDelivery.COMPLETED, state.deviceActions.single().receipt!!.delivery)
+        assertEquals(0, library.snapshot().versions.single().referenceCount)
+    }
+    @Test fun classifiedAlreadyDonePathVerifiesWithoutAnyInput(): Unit = runBlocking {
+        withContext(Dispatchers.Main) { surface.claimed = true; surface.invalidate() }
+        prepare("已领取", withInput = true, transform = { classified(it) })
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        assertTrue(state.toString(), state.unresolved.isEmpty()); assertTrue(state.deviceActions.isEmpty())
+        assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
+        assertEquals(0, library.snapshot().versions.single().referenceCount)
+    }
+    @Test fun simultaneousDeclaredStatesStayUnknownWithoutInput(): Unit = runBlocking {
+        withContext(Dispatchers.Main) { surface.bothStates = true; surface.invalidate() }
+        prepare("已领取", withInput = true, transform = { classified(it) })
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.unresolved.isNotEmpty() } }
+        assertTrue(state.unresolved.single().reason.contains("多个声明状态"))
+        assertTrue(state.deviceActions.isEmpty()); assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
+        assertFalse(state.facts.any { it.type == "task-completed" || it.type == "task-failed" })
+    }
+    @Test fun noDeclaredStateStaysUnknownRatherThanGuessingAlreadyDone(): Unit = runBlocking {
+        prepare("已领取", withInput = true, transform = { classified(it, absent = true) })
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.unresolved.isNotEmpty() } }
+        assertTrue(state.unresolved.single().reason.contains("未能确认任何声明状态"))
+        assertTrue(state.deviceActions.isEmpty()); assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
+        assertFalse(state.facts.any { it.type == "task-completed" || it.type == "task-failed" })
+    }
+    @Test fun cancellationAfterTheSelectedBranchFinalProofRetainsCompletion(): Unit = runBlocking {
+        val proved = CompletableDeferred<Unit>(); val hold = CompletableDeferred<Unit>()
+        prepare("已领取", withInput = true, transform = { classified(it, inside = true) }, onActionFinished = { action, _ ->
+            if (action.capability == ScreenActions.EXPECT) { proved.complete(Unit); hold.await() }
+        })
+        try {
+            runtime.enqueueTask(address).await(); withTimeout(30_000) { proved.await() }
+            runtime.submit(ExecutorCommand.Pause).await()
+            val state = withTimeout(10_000) { runtime.state.first { it.phase == ExecutorPhase.PAUSED || it.unresolved.isNotEmpty() } }
+            assertTrue(state.toString(), state.unresolved.isEmpty()); assertNull(state.current)
+            assertEquals(1, state.facts.count { it.type == "task-completed" })
+            assertEquals(1, withContext(Dispatchers.Main) { surface.downs })
+        } finally { hold.complete(Unit) }
+    }
+    private fun repeated(value: TaskBundle) = value.copy(tasks = value.tasks.map { task ->
+        task.copy(steps = task.steps.map { step -> step.copy(actions = emptyList(), program = listOf(ProgramNode.Repeat(JsonPrimitive(2),
+            step.actions.map { action -> ProgramNode.Action(if (action.capability == ScreenActions.LOCATE)
+                action.copy(inputs = JsonObject(action.inputs + ("text" to JsonPrimitive("已领取")))) else action) }))) })
+    })
+    @Test fun repeatedInputDefinitionCreatesDistinctDurableInvocationIds(): Unit = runBlocking {
+        withContext(Dispatchers.Main) { surface.claimed = true; surface.invalidate() }
+        prepare("已领取", withInput = true, transform = ::repeated)
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        assertTrue(state.toString(), state.unresolved.isEmpty())
+        assertEquals(2, withContext(Dispatchers.Main) { surface.downs })
+        assertEquals(2, state.deviceActions.size)
+        assertEquals(2, state.deviceActions.map { it.intent.id }.distinct().size)
+        assertEquals(2, state.deviceActions.map { it.intent.observationReference }.distinct().size)
+        assertEquals(1, state.deviceActions.map { it.intent.actionId }.distinct().size)
+        assertTrue(state.deviceActions.all { it.receipt!!.delivery == DeviceActionDelivery.COMPLETED })
+    }
+    @Test fun intermediateLoopProofCannotCompleteTheWholeStepOnPause(): Unit = runBlocking {
+        withContext(Dispatchers.Main) { surface.claimed = true; surface.invalidate() }
+        val proved = CompletableDeferred<Unit>(); val hold = CompletableDeferred<Unit>()
+        prepare("已领取", withInput = true, transform = ::repeated, onActionFinished = { action, _ ->
+            if (action.capability == ScreenActions.EXPECT && !proved.isCompleted) { proved.complete(Unit); hold.await() }
+        })
+        try {
+            runtime.enqueueTask(address).await(); withTimeout(30_000) { proved.await() }
+            runtime.submit(ExecutorCommand.Pause).await()
+            val state = withTimeout(10_000) { runtime.state.first { it.unresolved.isNotEmpty() } }
+            assertEquals(ExecutorPhase.BLOCKED_UNKNOWN, state.phase); assertTrue(state.manualHold)
+            assertEquals(1, withContext(Dispatchers.Main) { surface.downs })
+            assertFalse(state.facts.any { it.type == "task-completed" || it.type == "task-failed" })
+        } finally { hold.complete(Unit) }
     }
 }

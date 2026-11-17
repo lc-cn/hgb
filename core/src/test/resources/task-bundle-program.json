@@ -1,0 +1,19 @@
+{
+  "formatVersion": 1,
+  "version": "program-fixture-v1",
+  "updatedAt": "2026-11-17T00:00:00Z",
+  "changelog": "Only an offline wait fixture; no game input or publication.",
+  "targets": [{"id":"fixture","name":"Fixture","androidPackages":["test.fixture"],"identityPolicy":"NONE","categories":[{"id":"tools","name":"Tools"}]}],
+  "tasks": [{
+    "id":"wait","targetId":"fixture","name":"Wait","category":"tools","priority":1,
+    "fields":[{"id":"count","label":"Count","widget":"NUMBER","required":true,"minimum":0}],
+    "steps":[{"id":"step","name":"Step","program":[
+      {"type":"action","action":{"id":"first","capability":"control.wait","contractVersion":1,"inputs":{"durationMs":2}}},
+      {"type":"branch","value":{"type":"output","actionId":"first","field":"durationMs"},"cases":[
+        {"equals":2.00,"program":[{"type":"repeat","count":{"type":"configuration","fieldId":"count"},"program":[
+          {"type":"action","action":{"id":"inside","capability":"control.wait","contractVersion":1,"inputs":{"durationMs":1}}}
+        ]}]}
+      ]}
+    ]}]
+  }]
+}

@@ -20,13 +20,21 @@ class RuntimeProcessRecoveryTest {
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
     private val dbName = "qa-process-recovery.db"
     private val factory = BuiltInStepWorkFactory()
+    private val programMode get() = InstrumentationRegistry.getArguments().getString("runtimeProgram") == "true"
     private fun phase(expected: String) {
         Assume.assumeTrue("Explicit emulator process-QA only", Build.HARDWARE == "ranchu" &&
             InstrumentationRegistry.getArguments().getString("runtimeProcessPhase") == expected)
     }
     private fun fixture(): TaskBundle {
-        fun step(id: String, duration: Long) = StepDefinition(id, id, listOf(ActionDefinition(id, "control.wait", 1,
-            JsonObject(mapOf("durationMs" to JsonPrimitive(duration))))))
+        fun step(id: String, duration: Long): StepDefinition {
+            val action = ActionDefinition(id, "control.wait", 1, JsonObject(mapOf("durationMs" to JsonPrimitive(duration))))
+            if (!programMode) return StepDefinition(id, id, listOf(action))
+            return StepDefinition(id, id, program = listOf(
+                ProgramNode.Action(action.copy(id = "$id-select", inputs = buildJsonObject { put("durationMs", 0) })),
+                ProgramNode.Branch(ActionInputBinding.Output("$id-select", "durationMs"), listOf(ProgramCase(JsonPrimitive(0),
+                    listOf(ProgramNode.Repeat(JsonPrimitive(2), listOf(ProgramNode.Action(action))))))),
+            ))
+        }
         return TaskBundle(1, "qa-process-v1", "2026-11-16T00:00:00Z", "Process QA", listOf(
             TaskDefinition("one", "qa-process", "进程测试一", "tools", 1, steps = listOf(step("first", 1), step("second", 60_000))),
             TaskDefinition("two", "qa-process", "进程测试二", "tools", 1, steps = listOf(step("second", 60_000)))),
@@ -48,12 +56,14 @@ class RuntimeProcessRecoveryTest {
         val state = withTimeout(5_000) { runtime.state.first { it.waiting.size == 1 } }
         context.filesDir.resolve("qa-process-seed.json").writeText(JsonObject(mapOf(
             "pid" to JsonPrimitive(Process.myPid()), "runId" to JsonPrimitive(state.current!!.runId),
+            "programMode" to JsonPrimitive(programMode),
             "generation" to JsonPrimitive(state.activeTicket!!.generation))).toString())
         // Deliberately no graceful shutdown: the runner/ADB terminates this Android process next.
     }
     @Test fun verifyAfterExternalProcessStop(): Unit = runBlocking {
         phase("verify")
         val seed = Json.parseToJsonElement(context.filesDir.resolve("qa-process-seed.json").readText()).jsonObject
+        assertEquals(programMode, seed.getValue("programMode").jsonPrimitive.boolean)
         assertNotEquals(seed.getValue("pid").jsonPrimitive.int, Process.myPid())
         val database = AssistDatabase.open(context, dbName)
         val library = TaskVersionLibrary(database, BundleCodec(factory.contracts))
@@ -72,6 +82,7 @@ class RuntimeProcessRecoveryTest {
                 "oldPid" to seed.getValue("pid"), "newPid" to JsonPrimitive(Process.myPid()),
                 "oldGeneration" to seed.getValue("generation"), "newGeneration" to JsonPrimitive(state.activeTicket!!.generation),
                 "completedStepPreserved" to JsonPrimitive(true), "queuePreserved" to JsonPrimitive(true),
+                "programMode" to JsonPrimitive(programMode),
                 "scope" to JsonPrimitive("Actual Android process stop; production runtime class and built-in no-input runner on dedicated fixture DB. No game or main application DB."))).toString())
             runtime.submit(ExecutorCommand.Pause).await()
             withTimeout(5_000) { runtime.state.first { it.phase == ExecutorPhase.PAUSED } }

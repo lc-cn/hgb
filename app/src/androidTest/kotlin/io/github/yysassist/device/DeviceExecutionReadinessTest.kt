@@ -7,6 +7,7 @@ import io.github.yysassist.core.model.*
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -48,5 +49,16 @@ class DeviceExecutionReadinessTest {
             assertTrue(result is StepStartCondition.Unconfirmed)
             assertTrue((result as StepStartCondition.Unconfirmed).message.contains("暂无法确认"))
         }
+    }
+    @Test fun nestedAndZeroCountInputStillRequireTheFrozenDeviceBeforeWorkConstruction(): Unit = runBlocking {
+        var checks = 0
+        val readiness = DeviceExecutionReadiness(contracts, availability = { checks++; DeviceAvailability.DISCONNECTED }, changes = emptyFlow())
+        val (attempt, original) = fixture("fixture.input")
+        val value = original.copy(tasks = original.tasks.map { task -> task.copy(steps = task.steps.map { step ->
+            step.copy(actions = emptyList(), program = listOf(ProgramNode.Repeat(JsonPrimitive(0),
+                listOf(ProgramNode.Action(step.actions.single())))))
+        }) })
+        assertTrue(readiness.check(attempt, value) is StepStartCondition.Waiting)
+        assertEquals(1, checks)
     }
 }

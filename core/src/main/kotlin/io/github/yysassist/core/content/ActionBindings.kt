@@ -24,7 +24,7 @@ enum class ActionValueType {
     }
 }
 
-private fun ConfigurationField.valueType(): ActionValueType = when (widget) {
+internal fun ConfigurationField.valueType(): ActionValueType = when (widget) {
     FieldWidget.NUMBER, FieldWidget.RANGE -> ActionValueType.NUMBER
     FieldWidget.MULTI_CHOICE -> ActionValueType.ARRAY
     FieldWidget.DATE_RANGE -> ActionValueType.OBJECT
@@ -77,15 +77,17 @@ internal fun actionBindingIssues(task: TaskDefinition, action: ActionDefinition,
 /** Output values exist only after a successful action, in this one step attempt. */
 fun resolveActionInputs(action: ActionDefinition, configuration: JsonObject, outputs: Map<String, JsonObject>): JsonObject {
     require(action.inputs.keys.intersect(action.bindings.keys).isEmpty()) { "常量与引用参数冲突" }
-    val bound = action.bindings.mapValues { (_, source) -> when (source) {
-        is ActionInputBinding.Configuration -> requireNotNull(configuration[source.fieldId]) { "配置引用不可用" }
-        is ActionInputBinding.Output -> requireNotNull(outputs[source.actionId]?.get(source.field)) { "前序动作输出不可用" }
-    } }
+    val bound = action.bindings.mapValues { (_, source) -> resolveProgramValue(source, configuration, outputs) }
     return JsonObject(action.inputs + bound)
 }
 
 internal fun configuredActionIssues(task: TaskDefinition, values: JsonObject, contracts: List<CapabilityContract>): List<ContentIssue> = buildList {
-    task.steps.forEach { step -> step.actions.forEach actionLoop@ { action ->
+    task.steps.forEach { step ->
+        step.nodes().repeats().forEach { repeat ->
+            if (runCatching { repeatCount(repeat.count, values) }.isFailure)
+                add(ContentIssue(repeatConfiguration(repeat.count) ?: "step/${step.id}", "重复次数需为明确的非负整数且不能溢出"))
+        }
+        step.actionDefinitions().forEach actionLoop@ { action ->
         val contract = contracts.singleOrNull { it.id == action.capability && it.version == action.contractVersion }
         val fields = action.bindings.values.filterIsInstance<ActionInputBinding.Configuration>().map { it.fieldId }.distinct()
         val location = fields.singleOrNull() ?: "step/${step.id}/action/${action.id}"

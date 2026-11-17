@@ -92,4 +92,47 @@ class TextObservationContractTest {
         assertTrue(codec.validate(configured).isEmpty())
         assertEquals("time", codec.configurationIssues(configured.tasks.single(), buildJsonObject { put("time", 0) }).single().location)
     }
+
+    private fun nodes(vararg actions: ActionDefinition) = actions.map(ProgramNode::Action)
+    private fun programmed(program: List<ProgramNode>) = bundle.copy(tasks = bundle.tasks.map { task ->
+        task.copy(steps = listOf(StepDefinition("step", "核对", program = program)))
+    })
+    private val classify = ActionDefinition("classify", ScreenActions.CLASSIFY, 1, buildJsonObject {
+        put("states", buildJsonArray {
+            for ((id, text) in listOf("ready" to "领取物资", "done" to "已领取")) add(buildJsonObject {
+                put("id", id); put("text", text); put("minimumConfidence", 0.75)
+            })
+        })
+    }, mapOf("observation" to ActionInputBinding.Output("read", "observation")))
+    private fun branch(ready: List<ProgramNode>, done: List<ProgramNode>) = ProgramNode.Branch(ActionInputBinding.Output("classify", "state"),
+        listOf(ProgramCase(JsonPrimitive("ready"), ready), ProgramCase(JsonPrimitive("done"), done)))
+
+    @Test fun classifiedBranchChecksAllResourcesPathsAndPostInputProvenance() {
+        val valid = nodes(read, classify) + branch(nodes(locate, tap), emptyList()) + nodes(after, finalProof)
+        assertTrue(codec.validate(programmed(valid)).toString(), codec.validate(programmed(valid)).isEmpty())
+        // A path that clicks invalidates the outer observation even when the other case does not.
+        assertTrue(codec.validate(programmed(nodes(read, classify) + branch(nodes(locate, tap), emptyList()) + nodes(verify))).isNotEmpty())
+        // A bad resource in either case is checked before the program is enabled.
+        assertTrue(codec.validate(programmed(nodes(read, classify) + branch(nodes(verify), nodes(after.copy(inputs =
+            JsonObject(after.inputs + ("detector" to JsonPrimitive("missing")))), finalProof)))).isNotEmpty())
+        val inside = nodes(read, classify) + branch(nodes(locate, tap, after, finalProof), nodes(verify.copy(id = "already")))
+        assertTrue(codec.validate(programmed(inside)).isEmpty())
+        assertTrue(codec.validate(programmed(nodes(read, classify) + branch(nodes(locate, tap, after, finalProof), emptyList()))).isNotEmpty())
+    }
+    @Test fun aLoopCannotReuseOuterObservationAfterItsOwnInputOrTreatZeroAsProof() {
+        val repeated = ProgramNode.Repeat(JsonPrimitive(2), nodes(locate, tap, after, finalProof))
+        assertTrue(codec.validate(programmed(nodes(read) + repeated)).isNotEmpty())
+        assertTrue(codec.validate(programmed(listOf(ProgramNode.Repeat(JsonPrimitive(2), nodes(read, locate, tap, after, finalProof))))).isEmpty())
+        assertTrue(codec.validate(programmed(nodes(read) + ProgramNode.Repeat(JsonPrimitive(0), nodes(verify)))).isNotEmpty())
+    }
+    @Test fun classifyRequiresExplicitUniqueStateDefinitionsAndCurrentObservation() {
+        for (states in listOf(JsonArray(emptyList()), JsonArray(listOf(JsonPrimitive("ready"))),
+            buildJsonArray { repeat(2) { add(buildJsonObject { put("id", "same"); put("text", "x"); put("minimumConfidence", 0.75) }) } },
+            buildJsonArray { add(buildJsonObject { put("id", "one"); put("text", "x"); put("minimumConfidence", "0.75") }) })) {
+            val bad = classify.copy(inputs = buildJsonObject { put("states", states) })
+            assertTrue(codec.validate(programmed(nodes(read, bad, verify))).isNotEmpty())
+        }
+        assertTrue(codec.validate(programmed(nodes(read, classify, verify))).isEmpty())
+        assertTrue(codec.validate(programmed(nodes(read, locate, tap, classify, after, finalProof))).isNotEmpty())
+    }
 }

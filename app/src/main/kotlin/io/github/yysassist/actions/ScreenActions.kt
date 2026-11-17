@@ -21,6 +21,7 @@ internal class ScreenActions(
     companion object {
         const val READ = "screen.readText"; const val EXPECT = "screen.expectText"
         const val LOCATE = "screen.locateText"; const val TAP = "screen.tap"
+        const val CLASSIFY = "screen.classifyText"
     }
     private fun JsonObject.text(key: String) = (get(key) as? JsonPrimitive)?.takeIf { it.isString }?.content
     private fun threshold(inputs: JsonObject): BigDecimal? = (inputs["minimumConfidence"] as? JsonPrimitive)
@@ -39,15 +40,19 @@ internal class ScreenActions(
     }
     private fun completeText(inputs: JsonObject): String? = if (inputs.keys != textTypes.keys || inputs.text("observation").isNullOrBlank() ||
         inputs.text("text").isNullOrBlank() || threshold(inputs) == null) "请指定观察、文字及零到一之间的置信度" else null
-    private fun priorSource(step: StepDefinition, action: ActionDefinition, parameter: String, field: String, capability: String): ActionDefinition? {
+    private fun priorSource(flow: ActionFlowContext, action: ActionDefinition, parameter: String, field: String, capability: String): ActionDefinition? {
         val source = action.bindings[parameter] as? ActionInputBinding.Output ?: return null
-        val earlier = step.actions.takeWhile { it.id != action.id }
-        val found = earlier.singleOrNull { it.id == source.actionId } ?: return null
+        val found = flow.previous[source.actionId] ?: return null
         if (source.field != field || found.capability != capability || found.contractVersion != 1) return null
-        // Any previous input invalidates earlier observations/targets. Post-input proof must be new.
-        return found.takeIf { earlier.indexOf(it) > earlier.indexOfLast { previous ->
-            contracts.any { contract -> contract.id == previous.capability && contract.version == previous.contractVersion && contract.sendsDeviceInput }
-        } }
+        return found.takeIf { it.id in flow.freshOutputs }
+    }
+    private fun validStates(inputs: JsonObject): Boolean {
+        val states = inputs["states"] as? JsonArray ?: return false
+        if (states.isEmpty()) return false
+        val definitions = states.map { it as? JsonObject ?: return false }
+        return definitions.all { state -> state.keys == setOf("id", "text", "minimumConfidence") &&
+            !state.text("id").isNullOrBlank() && !state.text("text").isNullOrBlank() && threshold(state) != null } &&
+            definitions.map { it.text("id") }.distinct().size == definitions.size
     }
     override val contracts = listOf(
         CapabilityContract(READ, 1, inputTypes = readKeys.associateWith { ActionValueType.STRING },
@@ -66,6 +71,17 @@ internal class ScreenActions(
             validateKnownInputs = ::knownText,
             validateDefinition = { _, _, step, action -> if (priorSource(step, action, "observation", "observation", READ) == null)
                 "文字定位必须引用本步骤当前输入阶段的前序文字观察" else null }, validateInputs = ::completeText),
+        CapabilityContract(CLASSIFY, 1,
+            inputTypes = mapOf("observation" to ActionValueType.STRING, "states" to ActionValueType.ARRAY),
+            outputTypes = mapOf("state" to ActionValueType.STRING),
+            validateKnownInputs = { inputs -> if ("states" in inputs && !validStates(inputs))
+                ContentIssue("states", "请明确提供身份唯一的状态、文字及零到一之间的置信度") else null },
+            validateDefinition = { _, _, flow, action -> when {
+                "states" in action.bindings -> "状态证据必须由任务版本明确指定"
+                priorSource(flow, action, "observation", "observation", READ) == null -> "状态分类必须引用当前输入阶段的前序文字观察"
+                else -> null
+            } }) { inputs -> if (inputs.keys != setOf("observation", "states") || inputs.text("observation").isNullOrBlank() || !validStates(inputs))
+                "请指定观察和完整的状态证据" else null },
         CapabilityContract(TAP, 1, inputTypes = mapOf("target" to ActionValueType.STRING, "durationMs" to ActionValueType.NUMBER),
             outputTypes = mapOf("delivered" to ActionValueType.BOOLEAN), sendsDeviceInput = true,
             validateKnownInputs = { inputs -> if ("durationMs" in inputs && duration(inputs) == null)
@@ -146,6 +162,10 @@ internal class ScreenActions(
         private val targets = mutableMapOf<String, Target>()
         private val invocations = mutableListOf<Invocation>()
         private var businessEvidence: StepOutcome.Completed? = null
+        private var terminalAction: String? = null
+        override fun prepareAction(action: ActionDefinition, completesStep: Boolean) {
+            terminalAction = action.id.takeIf { completesStep }
+        }
         private suspend fun settle(invocation: Invocation): InputStopObservation {
             invocation.settlement?.let { return it }
             val result = withContext(NonCancellable) {
@@ -191,10 +211,19 @@ internal class ScreenActions(
                         }
                     }
                 }
-                EXPECT, LOCATE -> {
+                EXPECT, LOCATE, CLASSIFY -> {
                     val observation = observations[inputs.text("observation")] ?: return ActionResult.Unavailable("本步骤的画面观察不可用")
                     observation.bridge.validateObservation(observation.result.stamp)?.let { return ActionResult.Unavailable(deviceReason(it)) }
                     if (!permitted(attempt.ticket)) return ActionResult.Interrupted
+                    if (action.capability == CLASSIFY) {
+                        val matches = inputs.getValue("states").jsonArray.map { it.jsonObject }.filter { state ->
+                            observation.result.candidates.any { it.text == state.text("text") && it.confidence.isFinite() &&
+                                BigDecimal.valueOf(it.confidence) >= checkNotNull(threshold(state)) }
+                        }
+                        if (matches.size != 1) return ActionResult.Unavailable(if (matches.isEmpty())
+                            "本次画面未能确认任何声明状态" else "本次画面同时命中多个声明状态")
+                        return ActionResult.Produced(buildJsonObject { put("state", checkNotNull(matches.single().text("id"))) })
+                    }
                     val expected = checkNotNull(inputs.text("text")); val minimum = checkNotNull(threshold(inputs))
                     if (action.capability == LOCATE) {
                         if (uniqueTarget(observation, expected, minimum) == null) return ActionResult.Unavailable("本次画面不能唯一定位目标文字")
@@ -205,15 +234,16 @@ internal class ScreenActions(
                             return ActionResult.Unavailable("本次画面中未能确认目标文字")
                         val evidence = "已在本次画面中核对目标文字" + observation.result.diagnostics.takeIf { it.isNotEmpty() }
                             ?.joinToString("；", "（识别清理诊断：", "）").orEmpty()
-                        val step = bundle.tasks.single { it.id == attempt.run.task.id && it.targetId == attempt.run.request.context.targetId }
-                            .steps.single { it.id == attempt.run.stepId }
-                        if (step.actions.last().id == action.id) businessEvidence = StepOutcome.Completed(evidence)
+                        if (terminalAction == action.id) businessEvidence = StepOutcome.Completed(evidence)
                         ActionResult.Verified(buildJsonObject { put("matched", true) }, evidence)
                     }
                 }
                 TAP -> tap(action, inputs)
                 else -> error("未注册的屏幕动作")
             }
+        }
+        override fun verifiedStepCompleted(evidence: String) {
+            businessEvidence = StepOutcome.Completed(evidence)
         }
         private suspend fun tap(action: ActionDefinition, inputs: JsonObject): ActionResult {
             val target = targets[inputs.text("target")] ?: return ActionResult.Unavailable("本步骤的定位目标不可用")

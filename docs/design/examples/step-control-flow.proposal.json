@@ -1,5 +1,5 @@
 {
-  "status": "proposal-not-loadable-by-current-app",
+  "status": "step-contract-fragment-not-a-task-bundle",
   "purpose": "Only a control-flow contract fixture; not a game task, no business defaults or Release.",
   "step": {
     "id": "inspect-and-collect",

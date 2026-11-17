@@ -17,7 +17,7 @@ internal class DeviceExecutionReadiness(
     override suspend fun check(attempt: StepAttempt, bundle: TaskBundle): StepStartCondition {
         val task = bundle.tasks.single { it.id == attempt.run.task.id && it.targetId == attempt.run.request.context.targetId }
         val step = task.steps.single { it.id == attempt.run.stepId }
-        val needsScreen = step.actions.any { action ->
+        val needsScreen = step.actionDefinitions().any { action ->
             contracts.single { it.id == action.capability && it.version == action.contractVersion }.let { it.role == ActionRole.OBSERVATION || it.sendsDeviceInput }
         }
         if (!needsScreen) return StepStartCondition.Ready
