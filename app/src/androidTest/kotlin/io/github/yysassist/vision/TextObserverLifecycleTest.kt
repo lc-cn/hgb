@@ -3,6 +3,7 @@ package io.github.yysassist.vision
 import android.graphics.Bitmap
 import android.os.ParcelFileDescriptor
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.room.withTransaction
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.yysassist.core.content.*
 import io.github.yysassist.core.execution.BuiltInStepWorkFactory
@@ -17,6 +18,7 @@ import java.io.File
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 /** Real version library/SQLite/pipes. Backend completion is controlled, not claimed as real OCR. */
 @RunWith(AndroidJUnit4::class)
@@ -126,5 +128,28 @@ class TextObserverLifecycleTest {
             assertFalse(backend.entered.isDone)
             assertEquals(0, library.snapshot().versions.single { it.version == "old" }.referenceCount)
         } finally { backend.end(); frame.close() }
+    }
+
+    @Test fun admissionRevokedDuringResourceAcquisitionNeverStartsForeignUseAndReleasesTheLease(): Unit = runBlocking {
+        val locked = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        val checked = CompletableDeferred<Unit>(); val allowed = AtomicBoolean(true)
+        val holder = async(Dispatchers.IO) { database.withTransaction { locked.complete(Unit); release.await() } }
+        val backend = ControlledBackend(); val frame = frame()
+        var work: Deferred<TextReadResult>? = null
+        try {
+            withTimeout(5_000) { locked.await() }
+            val observation = async(Dispatchers.IO) { VersionedTextObserver(library, backend).observe("old", references, frame) {
+                val value = allowed.get(); checked.complete(Unit); value
+            } }.also { work = it }
+            withTimeout(5_000) { checked.await() }
+            allowed.set(false); release.complete(Unit)
+            assertEquals(TextReadResult.Interrupted, withTimeout(5_000) { observation.await() })
+            assertFalse(backend.entered.isDone)
+            assertEquals(0, library.snapshot().versions.single { it.version == "old" }.referenceCount)
+            assertEquals(VersionChange.Applied, library.delete("old"))
+        } finally {
+            release.complete(Unit)
+            try { holder.await() } finally { work?.cancelAndJoin(); backend.end(); frame.close() }
+        }
     }
 }

@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.Path
 import android.hardware.display.DisplayManager
 import android.os.Looper
+import android.os.SystemClock
 import android.view.Display
 import android.view.WindowManager
 import io.github.yysassist.core.execution.AttemptTicket
@@ -16,6 +17,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.resumeWithException
 
 internal data class ScreenGeometry(val width: Int, val height: Int, val rotation: Int)
@@ -32,6 +36,11 @@ internal enum class DeviceRejection { DISCONNECTED, WRONG_FOREGROUND, SCREEN_CHA
 internal sealed interface FrameResult {
     data class Ready(val frame: ScreenFrame) : FrameResult
     data class Unavailable(val reason: DeviceRejection, val platformCode: Int? = null) : FrameResult
+}
+/** Read-only view of the one device owner; it grants no gesture authority. */
+internal interface ObservationDevice {
+    suspend fun capture(expectedPackage: String): FrameResult
+    suspend fun validateObservation(stamp: FrameStamp): DeviceRejection?
 }
 internal sealed interface GestureResult {
     data object Completed : GestureResult
@@ -51,7 +60,17 @@ internal sealed interface InputDrain {
  * Revocation closes admission immediately, then drains the independently retained platform callback.
  * Neither a terminal callback nor a quiet channel establishes the business result of a click.
  */
-internal class AndroidDeviceBridge(private val service: AccessibilityService) {
+internal class AndroidDeviceBridge(private val service: AccessibilityService) : ObservationDevice {
+    private class ScreenshotRequest(val connection: Any)
+    companion object {
+        // AOSP rejects intervals <=333ms. This is adapter pacing, not a task retry or timeout.
+        // The interval constant is not a public SDK field; see observation-actions.md for sources.
+        private const val SCREENSHOT_GAP_MS = 334L
+        private val screenshotGate = Mutex()
+        // Main Looper owns these fields. Tokens contain no Service or bitmap references.
+        private var screenshotPending: ScreenshotRequest? = null
+        private var screenshotAfterUptime = 0L
+    }
     private var connection = Any()
     private var connected = false
     private var owner: InputSession? = null
@@ -66,10 +85,30 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) {
         owner?.connectionLost()
     }
 
-    suspend fun capture(expectedPackage: String): FrameResult = captureScreen(expectedPackage)
+    override suspend fun capture(expectedPackage: String): FrameResult = captureScreen(expectedPackage)
     suspend fun checkScreen(): FrameResult = captureScreen(null)
+    /** Revalidate ownership/geometry, not the continued presence of pixels seen in the old image. */
+    override suspend fun validateObservation(stamp: FrameStamp): DeviceRejection? = withContext(Dispatchers.Main.immediate) {
+        when {
+            !connected -> DeviceRejection.DISCONNECTED
+            stamp.connection !== connection || stamp.geometry != geometry() -> DeviceRejection.SCREEN_CHANGED
+            stamp.packageName == null || foreground() != stamp.packageName -> DeviceRejection.WRONG_FOREGROUND
+            else -> null
+        }
+    }
 
-    private suspend fun captureScreen(expectedPackage: String?): FrameResult = suspendCancellableCoroutine { continuation ->
+    private suspend fun captureScreen(expectedPackage: String?): FrameResult = screenshotGate.withLock {
+        val remaining = withContext(Dispatchers.Main.immediate) {
+            if (screenshotPending?.connection === connection && connected) null
+            else (screenshotAfterUptime - SystemClock.uptimeMillis()).coerceAtLeast(0)
+        } ?: return@withLock FrameResult.Unavailable(DeviceRejection.BUSY)
+        if (remaining > 0) delay(remaining)
+        // No dispatcher handoff after bitmap delivery: the original cancellation release remains
+        // attached to the caller receiving the frame. Waiting happens before hiding the overlay.
+        captureNow(expectedPackage)
+    }
+
+    private suspend fun captureNow(expectedPackage: String?): FrameResult = suspendCancellableCoroutine { continuation ->
         service.mainExecutor.execute {
             if (!continuation.isActive) return@execute
             fun begin(lease: Closeable) {
@@ -103,8 +142,19 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) {
         val requestedConnection = connection
         val before = geometry()
         if (before == null) { completeCapture(continuation, lease, FrameResult.Unavailable(DeviceRejection.DISCONNECTED)); return }
-        service.takeScreenshot(Display.DEFAULT_DISPLAY, service.mainExecutor, object : AccessibilityService.TakeScreenshotCallback {
+        val request = ScreenshotRequest(requestedConnection)
+        screenshotPending = request
+        screenshotAfterUptime = SystemClock.uptimeMillis() + SCREENSHOT_GAP_MS
+        fun terminal() {
+            if (screenshotPending === request) {
+                screenshotPending = null
+                if (connected && connection === requestedConnection)
+                    screenshotAfterUptime = SystemClock.uptimeMillis() + SCREENSHOT_GAP_MS
+            }
+        }
+        try { service.takeScreenshot(Display.DEFAULT_DISPLAY, service.mainExecutor, object : AccessibilityService.TakeScreenshotCallback {
                     override fun onSuccess(result: AccessibilityService.ScreenshotResult) {
+                        terminal()
                         var hardware: Bitmap? = null
                         var pixels: Bitmap? = null
                         val value = try {
@@ -125,9 +175,10 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) {
                         completeCapture(continuation, lease, value)
                     }
                     override fun onFailure(errorCode: Int) {
+                        terminal()
                         completeCapture(continuation, lease, FrameResult.Unavailable(DeviceRejection.PLATFORM_REJECTED, errorCode))
                     }
-        })
+        }) } catch (error: Exception) { terminal(); throw error }
     }
 
     suspend fun openInput(ticket: AttemptTicket, permitsInput: (AttemptTicket) -> Boolean): InputSession? =

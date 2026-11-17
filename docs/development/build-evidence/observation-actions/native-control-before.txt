@@ -1,0 +1,204 @@
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationContractTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+io.github.yysassist.actions.TextObservationContractTest:
+INSTRUMENTATION_STATUS: test=aLiteralOrOtherActionCannotInventAnObservationToken
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationContractTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=aLiteralOrOtherActionCannotInventAnObservationToken
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationContractTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=confidenceIsExplicitAndNonFiniteOutOfRangeOrStringValuesNeverBecomeDefaults
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationContractTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=confidenceIsExplicitAndNonFiniteOutOfRangeOrStringValuesNeverBecomeDefaults
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationContractTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=completeVersionDefinesModelsPackageThresholdAndObservationProvenance
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationContractTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=completeVersionDefinesModelsPackageThresholdAndObservationProvenance
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationContractTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=missingModelAndUnrelatedPackageCannotBeEnabled
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationContractTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=missingModelAndUnrelatedPackageCannotBeEnabled
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationContractTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=confidenceConfigurationIsCheckedBeforeAnObservationOutputExists
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationContractTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=confidenceConfigurationIsCheckedBeforeAnObservationOutputExists
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationRuntimeTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+io.github.yysassist.actions.TextObservationRuntimeTest:
+INSTRUMENTATION_STATUS: test=actualScreenAndVersionModelsProduceAVerifiedRuntimeResultWithoutInput
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationRuntimeTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=actualScreenAndVersionModelsProduceAVerifiedRuntimeResultWithoutInput
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationRuntimeTest
+INSTRUMENTATION_STATUS: current=7
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=absentTextIsUnknownRatherThanAnInventedSuccessOrConfirmedBusinessFailure
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationRuntimeTest
+INSTRUMENTATION_STATUS: current=7
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=absentTextIsUnknownRatherThanAnInventedSuccessOrConfirmedBusinessFailure
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationRuntimeTest
+INSTRUMENTATION_STATUS: current=8
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=removingActualBlockedNativeUseRunsTheQueuedTaskAfterDeathEvidence
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationRuntimeTest
+INSTRUMENTATION_STATUS: current=8
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=removingActualBlockedNativeUseRunsTheQueuedTaskAfterDeathEvidence
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationRuntimeTest
+INSTRUMENTATION_STATUS: current=9
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=pauseStopsActualBlockedNativeUseAndContinueObservesAgain
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationRuntimeTest
+INSTRUMENTATION_STATUS: current=9
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: ExecutorSnapshot(context=ExecutionContext(targetId=fixture, principal=Anonymous), phase=BLOCKED_UNKNOWN, manualHold=false, current=RunProgress(runId=1, sequence=1, request=ExecutionRequest(ref=SubmissionRef(kind=TASK, id=read), context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, tasks=[TaskSnapshot(id=read, name=自有画面核对, priority=1, stepIds=[read], configurationJson={})]), priority=1, taskIndex=0, stepIndex=0, failedTaskIds=[]), waiting=[], activeTicket=null, unresolved=[UnresolvedResult(attempt=StepAttempt(ticket=AttemptTicket(runId=1, generation=2), run=RunProgress(runId=1, sequence=1, request=ExecutionRequest(ref=SubmissionRef(kind=TASK, id=read), context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, tasks=[TaskSnapshot(id=read, name=自有画面核对, priority=1, stepIds=[read], configurationJson={})]), priority=1, taskIndex=0, stepIndex=0, failedTaskIds=[])), reason=设备观察被拒绝（PLATFORM_REJECTED）（截图错误 3）)], facts=[ExecutionFact(type=enqueued, runId=1, taskId=read, detail=, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794840879831), ExecutionFact(type=step-started, runId=1, taskId=read, detail=, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794840879831), ExecutionFact(type=step-started, runId=1, taskId=read, detail=, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794840880155), ExecutionFact(type=step-observed, runId=1, taskId=read, detail=Unknown(reason=设备观察被拒绝（PLATFORM_REJECTED）（截图错误 3）), taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794840880201), ExecutionFact(type=revocation-observed, runId=1, taskId=read, detail=Interrupted, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794840880201)])
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at io.github.yysassist.actions.TextObservationRuntimeTest$pauseStopsActualBlockedNativeUseAndContinueObservesAgain$1.invokeSuspend(TextObservationRuntimeTest.kt:213)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.internal.ScopeCoroutine.afterResume(Scopes.kt:35)
+	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:101)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:47)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.actions.TextObservationRuntimeTest.pauseStopsActualBlockedNativeUseAndContinueObservesAgain(TextObservationRuntimeTest.kt:200)
+
+INSTRUMENTATION_STATUS: stream=
+Error in pauseStopsActualBlockedNativeUseAndContinueObservesAgain(io.github.yysassist.actions.TextObservationRuntimeTest):
+java.lang.AssertionError: ExecutorSnapshot(context=ExecutionContext(targetId=fixture, principal=Anonymous), phase=BLOCKED_UNKNOWN, manualHold=false, current=RunProgress(runId=1, sequence=1, request=ExecutionRequest(ref=SubmissionRef(kind=TASK, id=read), context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, tasks=[TaskSnapshot(id=read, name=自有画面核对, priority=1, stepIds=[read], configurationJson={})]), priority=1, taskIndex=0, stepIndex=0, failedTaskIds=[]), waiting=[], activeTicket=null, unresolved=[UnresolvedResult(attempt=StepAttempt(ticket=AttemptTicket(runId=1, generation=2), run=RunProgress(runId=1, sequence=1, request=ExecutionRequest(ref=SubmissionRef(kind=TASK, id=read), context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, tasks=[TaskSnapshot(id=read, name=自有画面核对, priority=1, stepIds=[read], configurationJson={})]), priority=1, taskIndex=0, stepIndex=0, failedTaskIds=[])), reason=设备观察被拒绝（PLATFORM_REJECTED）（截图错误 3）)], facts=[ExecutionFact(type=enqueued, runId=1, taskId=read, detail=, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794840879831), ExecutionFact(type=step-started, runId=1, taskId=read, detail=, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794840879831), ExecutionFact(type=step-started, runId=1, taskId=read, detail=, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794840880155), ExecutionFact(type=step-observed, runId=1, taskId=read, detail=Unknown(reason=设备观察被拒绝（PLATFORM_REJECTED）（截图错误 3）), taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794840880201), ExecutionFact(type=revocation-observed, runId=1, taskId=read, detail=Interrupted, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794840880201)])
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at io.github.yysassist.actions.TextObservationRuntimeTest$pauseStopsActualBlockedNativeUseAndContinueObservesAgain$1.invokeSuspend(TextObservationRuntimeTest.kt:213)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.internal.ScopeCoroutine.afterResume(Scopes.kt:35)
+	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:101)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:47)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.actions.TextObservationRuntimeTest.pauseStopsActualBlockedNativeUseAndContinueObservesAgain(TextObservationRuntimeTest.kt:200)
+
+INSTRUMENTATION_STATUS: test=pauseStopsActualBlockedNativeUseAndContinueObservesAgain
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationRuntimeTest
+INSTRUMENTATION_STATUS: current=10
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=realBadModelChildCrashReachesTheRuntimeAsUnknownWithItsCause
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationRuntimeTest
+INSTRUMENTATION_STATUS: current=10
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=10
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=realBadModelChildCrashReachesTheRuntimeAsUnknownWithItsCause
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 11.513
+There was 1 failure:
+1) pauseStopsActualBlockedNativeUseAndContinueObservesAgain(io.github.yysassist.actions.TextObservationRuntimeTest)
+java.lang.AssertionError: ExecutorSnapshot(context=ExecutionContext(targetId=fixture, principal=Anonymous), phase=BLOCKED_UNKNOWN, manualHold=false, current=RunProgress(runId=1, sequence=1, request=ExecutionRequest(ref=SubmissionRef(kind=TASK, id=read), context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, tasks=[TaskSnapshot(id=read, name=自有画面核对, priority=1, stepIds=[read], configurationJson={})]), priority=1, taskIndex=0, stepIndex=0, failedTaskIds=[]), waiting=[], activeTicket=null, unresolved=[UnresolvedResult(attempt=StepAttempt(ticket=AttemptTicket(runId=1, generation=2), run=RunProgress(runId=1, sequence=1, request=ExecutionRequest(ref=SubmissionRef(kind=TASK, id=read), context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, tasks=[TaskSnapshot(id=read, name=自有画面核对, priority=1, stepIds=[read], configurationJson={})]), priority=1, taskIndex=0, stepIndex=0, failedTaskIds=[])), reason=设备观察被拒绝（PLATFORM_REJECTED）（截图错误 3）)], facts=[ExecutionFact(type=enqueued, runId=1, taskId=read, detail=, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794840879831), ExecutionFact(type=step-started, runId=1, taskId=read, detail=, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794840879831), ExecutionFact(type=step-started, runId=1, taskId=read, detail=, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794840880155), ExecutionFact(type=step-observed, runId=1, taskId=read, detail=Unknown(reason=设备观察被拒绝（PLATFORM_REJECTED）（截图错误 3）), taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794840880201), ExecutionFact(type=revocation-observed, runId=1, taskId=read, detail=Interrupted, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794840880201)])
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at io.github.yysassist.actions.TextObservationRuntimeTest$pauseStopsActualBlockedNativeUseAndContinueObservesAgain$1.invokeSuspend(TextObservationRuntimeTest.kt:213)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.internal.ScopeCoroutine.afterResume(Scopes.kt:35)
+	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:101)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:47)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.actions.TextObservationRuntimeTest.pauseStopsActualBlockedNativeUseAndContinueObservesAgain(TextObservationRuntimeTest.kt:200)
+
+FAILURES!!!
+Tests run: 10,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

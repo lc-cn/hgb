@@ -91,6 +91,82 @@ class ExecutionRuntimeTest {
             override fun restartHasNoDeviceInput(attempt: StepAttempt, bundle: TaskBundle) = safeRecovery
         }
 
+    @Test fun aQuietNoInputInterruptionReentersOnlyAfterIndependentQuietAndDoesNotReportBusinessCompletion(): Unit = runBlocking {
+        val count = AtomicInteger(); val quiet = CompletableDeferred<Unit>()
+        val port = counting(count, {
+            if (count.get() == 1) StepOutcome.Interrupted else awaitCancellation()
+        }, stop = { quiet.await(); InputStopObservation.Quiet(StepOutcome.Interrupted) })
+        val runtime = runtime(port); add(runtime, "one")
+        withTimeout(5_000) { while (count.get() != 1) delay(5) }
+        val original = runtime.state.value.activeTicket
+        assertNotNull(original); assertTrue(runtime.state.value.unresolved.isEmpty())
+        quiet.complete(Unit)
+        val reentered = wait(runtime) { it.activeTicket != original && it.facts.any { fact -> fact.type == "step-reentered" } }
+        withTimeout(5_000) { while (count.get() != 2) delay(5) }
+        assertTrue(reentered.unresolved.isEmpty())
+        assertFalse(reentered.facts.any { it.type == "task-completed" || it.type == "task-failed" || it.type == "process-step-reentered" })
+        assertEquals(RuntimeStatus.Ready, runtime.status.value)
+    }
+
+    @Test fun aWorkerInterruptionWithoutNoInputProofCannotAutomaticallyReplay(): Unit = runBlocking {
+        val count = AtomicInteger()
+        val port = counting(count, { StepOutcome.Interrupted }, safeRecovery = false)
+        val runtime = runtime(port); add(runtime, "one")
+        val state = wait(runtime) { it.unresolved.isNotEmpty() }
+        assertEquals(ExecutorPhase.BLOCKED_UNKNOWN, state.phase); assertEquals(1, count.get())
+        assertFalse(state.facts.any { it.type == "task-completed" || it.type == "task-failed" })
+        assertEquals(RuntimeStatus.Ready, runtime.status.value)
+    }
+
+    @Test fun rejectedHigherPriorityAdmissionReentersTheInterruptedOldReadOnlyAttemptWithoutAdmittingTheNewTask(): Unit = runBlocking {
+        val definition = bundle().copy(version = "rejected-priority", tasks = bundle().tasks.map {
+            if (it.id == "two") it.copy(priority = 5, fields = listOf(ConfigurationField("amount", "测试值", FieldWidget.NUMBER, true))) else it
+        })
+        val text = BundleCodec(factory.contracts).write(definition)
+        assertEquals(VersionChange.Applied, library.install(text, definition.version, TaskVersionLibrary.sha256(text)))
+        assertEquals(VersionChange.Applied, library.activate(definition.version))
+        val configurations = TaskConfigurationRepository(database, library)
+        val high = TaskAddress("fixture", "two")
+        assertTrue(configurations.save(configurations.open(high), buildJsonObject { put("amount", 1) }) is ConfigurationSaveResult.Saved)
+        val started = CompletableDeferred<StepAttempt>(); val interrupt = CompletableDeferred<Unit>()
+        val hintReturned = CompletableDeferred<Unit>(); val admissionEntered = CompletableDeferred<Unit>()
+        val admissionRelease = CompletableDeferred<Unit>(); val count = AtomicInteger()
+        lateinit var host: ExecutionRuntime
+        val port = counting(count, { attempt ->
+            if (count.get() == 1) {
+                started.complete(attempt); interrupt.await()
+                assertFalse(host.permitsInput(attempt.ticket))
+                hintReturned.complete(Unit); StepOutcome.Interrupted
+            } else awaitCancellation()
+        })
+        val gated = object : ExecutionPersistence {
+            override suspend fun load() = store.load()
+            override suspend fun persist(expectedRevision: Long, prepared: PreparedExecutorTransition): Long {
+                if (prepared.admittedRunId != null && prepared.snapshot.waiting.any { it.request.ref.id == "two" }) {
+                    admissionEntered.complete(Unit); admissionRelease.await()
+                }
+                return store.persist(expectedRevision, prepared)
+            }
+        }
+        host = runtime(port, gated)
+        try {
+            add(host, "one"); val original = withTimeout(5_000) { started.await() }
+            val receipt = host.enqueueTask(high)
+            withTimeout(5_000) { admissionEntered.await() }
+            interrupt.complete(Unit); withTimeout(5_000) { hintReturned.await() }
+            // The candidate was prepared from value 1; the real final transaction must reject it.
+            assertTrue(configurations.save(configurations.open(high), buildJsonObject { put("amount", 2) }) is ConfigurationSaveResult.Saved)
+            admissionRelease.complete(Unit)
+            assertTrue(withTimeout(5_000) { receipt.await() } is RuntimeCommandResult.Rejected)
+            val state = wait(host) { it.activeTicket != original.ticket && it.facts.any { fact -> fact.type == "step-reentered" } }
+            withTimeout(5_000) { while (count.get() != 2) delay(5) }
+            assertEquals("one", state.current!!.task.id); assertEquals(original.run.runId, state.current!!.runId)
+            assertTrue(state.waiting.isEmpty()); assertTrue(state.unresolved.isEmpty()); assertFalse(state.manualHold)
+            assertFalse(state.facts.any { it.taskId == "two" || it.type == "task-completed" || it.type == "task-failed" })
+            assertEquals(1, library.snapshot().versions.single { it.version == definition.version }.referenceCount)
+        } finally { interrupt.complete(Unit); admissionRelease.complete(Unit) }
+    }
+
     @Test fun enqueueDeduplicatesAndManualPauseHoldsTheWholeQueueUntilContinue() = runBlocking {
         val runtime = runtime()
         assertTrue(add(runtime, "one") is RuntimeCommandResult.Applied)

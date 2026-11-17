@@ -17,6 +17,7 @@ import io.github.yysassist.storage.TaskAdmissionRepository
 import io.github.yysassist.storage.ExecutionStateStore
 import io.github.yysassist.vision.VersionedTextObserver
 import io.github.yysassist.vision.MaaTextBackend
+import io.github.yysassist.actions.TextObservationActions
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import java.net.Proxy
@@ -55,7 +56,7 @@ class AssistApplication : Application() {
         appearance = AppearancePreferences(this, scope)
         floating = FloatingPreferences(this, scope)
         val database = AssistDatabase.open(this)
-        val workers = BuiltInStepWorkFactory()
+        val workers = BuiltInStepWorkFactory(TextObservationActions({ textObserver }, { executor.permitsInput(it) }))
         val library = TaskVersionLibrary(database, BundleCodec(workers.contracts), TaskResourceFiles(File(noBackupFilesDir, "task-resources")))
         textObserver = VersionedTextObserver(library, MaaTextBackend(this))
         executor = ExecutionRuntime(ExecutionStateStore(database, library), library,

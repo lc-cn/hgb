@@ -7,6 +7,7 @@ internal data class RecognizedText(val text: String, val confidence: Double, val
 internal data class OcrModelReferences(val contract: String, val resources: Map<String, String>)
 internal enum class TextReadProblem { FRAME_INVALID, RESOURCE_UNAVAILABLE, STORAGE_ERROR, UNSUPPORTED_MODEL, UNSUPPORTED_ENVIRONMENT, ENCODING_FAILED, ENGINE_UNAVAILABLE, INVALID_OUTPUT }
 internal sealed interface TextReadResult {
+    data object Interrupted : TextReadResult
     /** Complete observation, not proof of a business absence or task completion. */
     data class Observed(val stamp: FrameStamp, val version: String, val bundleDigest: String, val candidates: List<RecognizedText>, val diagnostics: List<String> = emptyList()) : TextReadResult
     data class Unavailable(val problem: TextReadProblem, val detail: String? = null, val diagnostics: List<String> = emptyList()) : TextReadResult

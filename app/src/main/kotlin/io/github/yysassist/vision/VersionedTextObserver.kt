@@ -12,7 +12,9 @@ import kotlin.coroutines.resumeWithException
 
 /** Owns resource handoff, not task scheduling or game semantics. Caller retains pixels until return. */
 internal class VersionedTextObserver(private val library: TaskVersionLibrary, private val backend: TextBackend) {
-    suspend fun observe(version: String, models: OcrModelReferences, frame: ScreenFrame): TextReadResult = withContext(Dispatchers.IO) {
+    suspend fun observe(version: String, models: OcrModelReferences, frame: ScreenFrame,
+        permitted: () -> Boolean = { true }): TextReadResult = withContext(Dispatchers.IO) {
+        if (!permitted()) return@withContext TextReadResult.Interrupted
         if (frame.bitmap.isRecycled || frame.bitmap.width != frame.stamp.geometry.width || frame.bitmap.height != frame.stamp.geometry.height)
             return@withContext TextReadResult.Unavailable(TextReadProblem.FRAME_INVALID)
         if (models.contract != backend.modelContract) return@withContext TextReadResult.Unavailable(TextReadProblem.UNSUPPORTED_MODEL)
@@ -32,6 +34,8 @@ internal class VersionedTextObserver(private val library: TaskVersionLibrary, pr
             currentCoroutineContext().ensureActive()
             val pipe = ParcelFileDescriptor.createPipe()
             try {
+                // The executor may have closed admission while model verification was in progress.
+                if (!permitted()) return@withContext TextReadResult.Interrupted
                 call = backend.start(inputs, pipe[0], frame.bitmap.width, frame.bitmap.height, lease::close)
                 val active = checkNotNull(call)
                 coroutineScope {

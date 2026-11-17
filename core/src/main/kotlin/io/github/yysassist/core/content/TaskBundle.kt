@@ -90,10 +90,15 @@ sealed interface BundleReadResult {
 }
 
 /** Capabilities are supplied by the APK; a bundle cannot register a new capability. */
+enum class ActionRole { UTILITY, OBSERVATION, VERIFICATION }
 data class CapabilityContract(
     val id: String, val version: Int,
     val inputTypes: Map<String, ActionValueType> = emptyMap(),
     val outputTypes: Map<String, ActionValueType> = emptyMap(),
+    val role: ActionRole = ActionRole.UTILITY,
+    /** Validate only present values; unresolved outputs are never replaced by fake placeholders. */
+    val validateKnownInputs: (JsonObject) -> ContentIssue? = { null },
+    val validateDefinition: (TaskBundle, TaskDefinition, StepDefinition, ActionDefinition) -> String? = { _, _, _, _ -> null },
     val validateInputs: (JsonObject) -> String?,
 )
 class BundleCodec(private val capabilities: List<CapabilityContract>) {
@@ -183,9 +188,13 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
                     if (contract == null) issue(actionPath, "容器不支持所需动作或合同版本")
                     else {
                         actionBindingIssues(task, action, contract, previous).forEach { issue(actionPath, it) }
+                        contract.validateDefinition(bundle, task, step, action)?.let { issue(actionPath, it) }
                         previous[action.id] = contract
                     }
                 }
+                if (previous.values.any { it.role == ActionRole.OBSERVATION } &&
+                    previous[step.actions.lastOrNull()?.id]?.role != ActionRole.VERIFICATION)
+                    issue(path, "观察步骤必须以核对动作结束")
             }
         }
     }

@@ -74,7 +74,8 @@ class BuiltInStepWorkFactoryTest {
         val firstRun = launch { work.execute() }
         runCurrent(); advanceTimeBy(180); runCurrent(); firstRun.cancelAndJoin()
         assertEquals(InputStopObservation.Quiet(StepOutcome.Interrupted), work.revoke())
-        val resumed = async { work.execute() }
+        // Runtime creates a fresh work/session for each resumed step attempt.
+        val resumed = async { factory.create(bound, content).execute() }
         runCurrent(); advanceTimeBy(239); runCurrent(); assertFalse(resumed.isCompleted)
         advanceTimeBy(1); runCurrent(); assertTrue(resumed.await() is StepOutcome.Completed)
         val invalid = bound.copy(run = bound.run.copy(request = bound.run.request.copy(tasks =

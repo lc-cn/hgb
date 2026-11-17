@@ -51,7 +51,8 @@ class ExecutionRuntime(
         data object Readiness : Message
     }
     private data class PendingStart(val attempt: StepAttempt, var binding: Job? = null)
-    private data class Running(val work: StepWork, val job: Job, var outcome: StepOutcome? = null, var drain: Job? = null)
+    private data class Running(val work: StepWork, val job: Job, val attempt: StepAttempt, val bundle: TaskBundle,
+        var outcome: StepOutcome? = null, var drain: Job? = null)
     private val commands = Channel<Message>(Channel.UNLIMITED)
     private val mutableState = MutableStateFlow(TaskExecutor().state.value)
     val state = mutableState.asStateFlow()
@@ -188,7 +189,10 @@ class ExecutionRuntime(
             is Message.Bound -> bind(message)
             is Message.Finished -> {
                 val record = running[message.ticket]
-                if (record == null) change(ExecutorCommand.StepFinished(message.ticket, message.outcome))
+                if (record == null) {
+                    // A late control hint has no business evidence. Late unknown results still reconcile.
+                    if (message.outcome != StepOutcome.Interrupted) change(ExecutorCommand.StepFinished(message.ticket, message.outcome))
+                }
                 else { record.outcome = message.outcome; drain(message.ticket, record) }
             }
             is Message.Drained -> {
@@ -201,8 +205,19 @@ class ExecutionRuntime(
                     is InputStopObservation.Quiet -> {
                         running.remove(message.ticket)
                         val outcome = record?.outcome
-                        change(if (outcome == null) ExecutorCommand.InputQuiescent(message.ticket, observation.outcome)
-                            else ExecutorCommand.StepSettled(message.ticket, outcome, observation.outcome))
+                        val command = if (outcome == StepOutcome.Interrupted) {
+                            if (observation.outcome == StepOutcome.Interrupted && engine?.permitsInput(message.ticket) == true) {
+                                // A rejected admission/transition may leave the old attempt active.
+                                // Re-entry requires the APK's no-input proof AND independent quiet.
+                                val binding = checkNotNull(record)
+                                val safe = try { factory.restartHasNoDeviceInput(binding.attempt, binding.bundle) }
+                                catch (_: Exception) { false }
+                                if (safe) ExecutorCommand.RecoverNoInput(message.ticket, NoInputRecoveryCause.STEP_INTERRUPTION)
+                                else ExecutorCommand.StepSettled(message.ticket, StepOutcome.Unknown("步骤中断后的重入条件未确认"), observation.outcome)
+                            } else ExecutorCommand.InputQuiescent(message.ticket, observation.outcome)
+                        } else if (outcome == null) ExecutorCommand.InputQuiescent(message.ticket, observation.outcome)
+                        else ExecutorCommand.StepSettled(message.ticket, outcome, observation.outcome)
+                        change(command)
                     }
                 }
             }
@@ -323,7 +338,7 @@ class ExecutionRuntime(
             catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { commands.send(Message.Finished(message.ticket, StepOutcome.Unknown("步骤结果未确认"))) }
         }
-        running[message.ticket] = Running(work, job)
+        running[message.ticket] = Running(work, job, pending.attempt, bundle)
         job.start()
     }
     private fun drain(ticket: AttemptTicket, record: Running) {

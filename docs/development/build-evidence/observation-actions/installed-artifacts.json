@@ -1,0 +1,54 @@
+{
+  "device": {
+    "sdk": "36",
+    "release": "16",
+    "abi": "arm64-v8a",
+    "pageSize": "4096"
+  },
+  "artifacts": {
+    "io.github.yysassist": {
+      "sha256": "5b1ee769e8ee725b89f426947d7c4d99a2be1b7828621a3cb54f5ab06ae8c52a",
+      "installedMatches": true,
+      "assets": [
+        "assets/PublicSuffixDatabase.list",
+        "assets/maa-license/LICENSE.md"
+      ]
+    },
+    "io.github.yysassist.test": {
+      "sha256": "f0fab8cbda60d86134834e44e8aed6ee4c3838869038d67f96790bc6f0e3bb38",
+      "installedMatches": true,
+      "assets": [
+        "assets/io.github.yysassist.storage.AssistDatabase/1.json",
+        "assets/io.github.yysassist.storage.AssistDatabase/2.json",
+        "assets/io.github.yysassist.storage.AssistDatabase/3.json",
+        "assets/io.github.yysassist.storage.AssistDatabase/4.json",
+        "assets/maa-license/LICENSE.md",
+        "assets/maa-model/det.onnx",
+        "assets/maa-model/keys.txt",
+        "assets/maa-model/rec.onnx",
+        "assets/model-manifest.json"
+      ]
+    }
+  },
+  "nativeControls": [
+    {
+      "case": "remove-queued",
+      "nativeEntered": true,
+      "quietEvidence": "binder-death",
+      "binderDeathAt": 76673886207935,
+      "nextObservationStartedAt": 76673971221477,
+      "touches": 0,
+      "calls": 2
+    },
+    {
+      "case": "pause-continue",
+      "nativeEntered": true,
+      "quietEvidence": "binder-death",
+      "binderDeathAt": 76676948529645,
+      "nextObservationStartedAt": 76677026057229,
+      "touches": 0,
+      "calls": 2
+    }
+  ],
+  "nativeControlsFrom": "Current android-native-tests.txt batch; latest record per scenario only"
+}

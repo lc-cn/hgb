@@ -104,7 +104,7 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
             is ExecutorCommand.InputQuiescent -> draft.inputQuiescent(command.ticket, command.outcome)
             is ExecutorCommand.StepSettled -> draft.stepFinished(command.ticket, command.result) +
                 draft.inputQuiescent(command.ticket, command.quietOutcome)
-            is ExecutorCommand.RecoverNoInput -> draft.recoverNoInput(command.ticket)
+            is ExecutorCommand.RecoverNoInput -> draft.recoverNoInput(command.ticket, command.cause)
             is ExecutorCommand.InputUnconfirmed -> draft.inputUnconfirmed(command.ticket, command.reason)
             is ExecutorCommand.ResolveUnknown -> draft.resolveUnknown(command.ticket, command.outcome)
             is ExecutorCommand.VerifyContext -> {
@@ -382,12 +382,12 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
         active?.ticket == ticket && pending == null && !manualHold && unknowns.isEmpty()
 
     @Synchronized
-    private fun recoverNoInput(ticket: AttemptTicket): List<ExecutorEffect> {
+    private fun recoverNoInput(ticket: AttemptTicket, cause: NoInputRecoveryCause): List<ExecutorEffect> {
         if (active?.ticket != ticket) return emptyList()
         if (pending != null) return inputQuiescent(ticket, StepOutcome.Interrupted)
         return change { effects ->
             active = null
-            fact("process-step-reentered", current!!)
+            fact(if (cause == NoInputRecoveryCause.PROCESS_RESTART) "process-step-reentered" else "step-reentered", current!!)
             schedule(effects)
         }
     }

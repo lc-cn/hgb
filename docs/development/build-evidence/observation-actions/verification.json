@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-17",
+  "baseCommit": "8b0fe34dec3deac8e6b49bad45ea66a9d150b350",
+  "sourceSha256": {
+    "app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationContractTest.kt": "d7a7eab609c859129879f771b69a2f8158ffa868749e28ce10c77207d7da75b5",
+    "app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationRuntimeTest.kt": "bcbda8b8969dceefb326135624fbe2de3a6f8164050417d2e5759d3c6f59dcf3",
+    "app/src/main/kotlin/io/github/yysassist/actions/TextObservationActions.kt": "c82403117669f239d18882c5cfdd4b06bf371241c72769a610c313e5e0f9d969",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/ReadOnlyActionProvider.kt": "a2d3bb282715348ef508620f4e3edf619aaa0cb174f32d4f384d998808bcd6b7",
+    "core/src/test/kotlin/io/github/yysassist/core/execution/ReadOnlyActionInterpreterTest.kt": "394884b4e518892a59ec335831a7621d5d8caa03000e008409b595b08b99ba30",
+    "app/src/androidTest/kotlin/io/github/yysassist/ExecutionRuntimeTest.kt": "da36dedaba82d2130faff8611eb1a0ac984a629bfa11760348592b8be255f62c",
+    "app/src/androidTest/kotlin/io/github/yysassist/device/AndroidDeviceBridgeTest.kt": "c2e19501b5725f01c2d321b50f4269b8f212ca03566cdc25b8371fa3ff380dab",
+    "app/src/androidTest/kotlin/io/github/yysassist/vision/TextObserverLifecycleTest.kt": "6a36e6587e2e0271843ec1c151d55abd19606e6b63618112cf3e900414d5e97a",
+    "app/src/main/kotlin/io/github/yysassist/AssistApplication.kt": "167da0f977d14d014f79b12f157d87d3791099a962a5dd7fb79233649bb78985",
+    "app/src/main/kotlin/io/github/yysassist/ExecutionRuntime.kt": "040882df9e7bd2e93c39cf7603364ff3d7e306ae64ce358bb05488a19812c751",
+    "app/src/main/kotlin/io/github/yysassist/device/AndroidDeviceBridge.kt": "412b24fb0311fae2041004adb8406dbee898cbf085a5be02e046d00f4ce62f01",
+    "app/src/main/kotlin/io/github/yysassist/vision/TextObservation.kt": "f5290bc5462a7da5e38aaa89a3ee718e97df82409ee31eda16dbc08e07bd13a2",
+    "app/src/main/kotlin/io/github/yysassist/vision/VersionedTextObserver.kt": "7e1673b5d1acfb7f1129f21e6c92b6d4a800b5e92adac1d3682e22d2e6b8a6b5",
+    "core/src/main/kotlin/io/github/yysassist/core/content/ActionBindings.kt": "2cdeac6cb16b6d058b48d6503709e3d3c87f1de61ad9f909f45384c8d4a42765",
+    "core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt": "a1f6ccda609b5282d745572a55806fc9935d46c309ffb7e3ac84f745e3e793ae",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/ExecutorCommand.kt": "8a6f7810b52a2806e1f47769cfb1f76c76ea6e70f28796972f8451f3e31dacab",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/StepWorker.kt": "c93b352c6c34597f28ee17ecea56511d4912ca47cf2837880ee7fed3e75f0762",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/TaskExecutor.kt": "daeab9706b81ae1dcdfec47c4695028f73e4fee780417143c91a7957dd55080d",
+    "core/src/test/kotlin/io/github/yysassist/core/execution/BuiltInStepWorkFactoryTest.kt": "d7b65e1bd00010e6b043135ed2669a538dce8c211a37fbc56c29e0a3412ad591"
+  },
+  "sameTestApkRegression": {
+    "testApkSha256": "c790888b25163eb2d23e1057b38e86d82b8fb2fbdb55f0e5e15c817fe6b5b081",
+    "before": {
+      "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": "c790888b25163eb2d23e1057b38e86d82b8fb2fbdb55f0e5e15c817fe6b5b081",
+      "app/build/outputs/apk/debug/app-debug.apk": "ac7a78a6dd603e4ee2bffbd4f0e19caf841b6b8e2e61463fb0d5dd4495c7fd5c",
+      "app/src/main/kotlin/io/github/yysassist/actions/TextObservationActions.kt": "95226a53611bcf5886ab456cddcee01c4fddcb0b190581e62e6b7edcee03cc53"
+    },
+    "beforeNativeStarts": 1,
+    "afterNativeStarts": 0,
+    "after": "passed including final paused state",
+    "intermediate": "native admission fixed but host interruption settlement timed out; not a passing result"
+  },
+  "platform": "Android 16 / API36 / arm64 / 4096-byte pages, dedicated emulator",
+  "limitations": [
+    "No phone or game test in this checkpoint",
+    "No input primitive registered by the new action provider",
+    "No cross-theme, private GitHub authorization, game claim, CI, Release or 24-hour validation"
+  ]
+}

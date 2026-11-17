@@ -122,6 +122,17 @@ class AndroidDeviceBridgeTest {
         assertEquals(InputDrain.NoInFlightGesture, channel.revoke())
         mark("capture-and-tap-terminal")
     }
+    @Test fun concurrentCapturesRespectPlatformPacingAndReturnIndependentFrames(): Unit = runBlocking {
+        val results = coroutineScope { List(3) { async(Dispatchers.Default) { service.bridge.capture(instrumentation.targetContext.packageName) } }.awaitAll() }
+        val frames = results.filterIsInstance<FrameResult.Ready>().map { it.frame }
+        try {
+            assertEquals(results.toString(), 3, frames.size)
+            assertNotSame(frames[0].bitmap, frames[1].bitmap); assertNotSame(frames[1].bitmap, frames[2].bitmap)
+            assertEquals(3, frames.map { it.stamp.timestamp }.distinct().size)
+            val point = center()
+            frames.forEach { assertEquals(Color.rgb(30, 110, 190), it.bitmap.getPixel(point.x.toInt(), point.y.toInt())) }
+        } finally { frames.forEach { it.close() } }
+    }
     @Test fun pauseClosesAdmissionAndWaitsForThePlatformTerminalCallback() = runBlocking {
         frame().use { capture ->
             val channel = input(); val point = center()

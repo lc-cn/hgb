@@ -2,6 +2,8 @@ package io.github.yysassist.core.execution
 
 import io.github.yysassist.core.model.ExecutionContext
 
+enum class NoInputRecoveryCause { PROCESS_RESTART, STEP_INTERRUPTION }
+
 /** Commands enter the same reducer; workers never acquire their own scheduling state. */
 sealed interface ExecutorCommand {
     data class Enqueue(val commandId: String, val request: ExecutionRequest) : ExecutorCommand
@@ -16,7 +18,7 @@ sealed interface ExecutorCommand {
     data class InputQuiescent(val ticket: AttemptTicket, val outcome: StepOutcome) : ExecutorCommand
     data class StepSettled(val ticket: AttemptTicket, val result: StepOutcome, val quietOutcome: StepOutcome) : ExecutorCommand
     /** Supplied only when the APK runner proves the old step cannot have issued device input. */
-    data class RecoverNoInput(val ticket: AttemptTicket) : ExecutorCommand
+    data class RecoverNoInput(val ticket: AttemptTicket, val cause: NoInputRecoveryCause = NoInputRecoveryCause.PROCESS_RESTART) : ExecutorCommand
     data class InputUnconfirmed(val ticket: AttemptTicket, val reason: String) : ExecutorCommand
     data class ResolveUnknown(val ticket: AttemptTicket, val outcome: StepOutcome) : ExecutorCommand
     data class VerifyContext(val context: ExecutionContext) : ExecutorCommand

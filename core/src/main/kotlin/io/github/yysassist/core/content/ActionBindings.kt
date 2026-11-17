@@ -32,11 +32,16 @@ private fun ConfigurationField.valueType(): ActionValueType = when (widget) {
 }
 
 fun CapabilityContract.inputIssue(values: JsonObject): String? {
-    if (inputTypes.isNotEmpty()) {
-        if (values.keys != inputTypes.keys) return "动作参数缺失或包含未知参数"
-        if (inputTypes.any { (key, type) -> !type.accepts(values.getValue(key)) }) return "动作参数类型不匹配"
+    if (inputTypes.isNotEmpty() && values.keys != inputTypes.keys) return "动作参数缺失或包含未知参数"
+    return knownInputIssue(values)?.reason ?: validateInputs(values)
+}
+
+fun CapabilityContract.knownInputIssue(values: JsonObject): ContentIssue? {
+    if (inputTypes.isNotEmpty()) values.forEach { (key, value) ->
+        val type = inputTypes[key] ?: return ContentIssue(key, "动作包含未知参数")
+        if (!type.accepts(value)) return ContentIssue(key, "动作参数类型不匹配")
     }
-    return validateInputs(values)
+    return validateKnownInputs(values)
 }
 
 fun CapabilityContract.outputIssue(values: JsonObject): String? = when {
@@ -50,9 +55,7 @@ internal fun actionBindingIssues(task: TaskDefinition, action: ActionDefinition,
     if (action.bindings.isEmpty()) { contract.inputIssue(action.inputs)?.let(::add); return@buildList }
     if (action.inputs.keys.intersect(action.bindings.keys).isNotEmpty()) add("同一动作参数不能同时提供常量与引用")
     if (contract.inputTypes.keys != action.inputs.keys + action.bindings.keys) add("动作参数缺失、未知或未声明引用类型")
-    action.inputs.forEach { (key, value) ->
-        if (contract.inputTypes[key]?.accepts(value) != true) add("动作常量参数类型不匹配")
-    }
+    contract.knownInputIssue(action.inputs)?.let { add(it.reason) }
     action.bindings.forEach { (key, source) ->
         val type = when (source) {
             is ActionInputBinding.Configuration -> {
@@ -87,11 +90,17 @@ internal fun configuredActionIssues(task: TaskDefinition, values: JsonObject, co
         val fields = action.bindings.values.filterIsInstance<ActionInputBinding.Configuration>().map { it.fieldId }.distinct()
         val location = fields.singleOrNull() ?: "step/${step.id}/action/${action.id}"
         if (contract == null) { add(ContentIssue(location, "容器不支持所需动作或合同版本")); return@actionLoop }
-        // Outputs cannot be fabricated at save/admission time. Validate their values only once read.
-        if (action.bindings.values.none { it is ActionInputBinding.Output }) {
-            val inputs = try { resolveActionInputs(action, values, emptyMap()) }
-            catch (_: IllegalArgumentException) { add(ContentIssue(location, "配置引用不可用")); return@actionLoop }
-            contract.inputIssue(inputs)?.let { add(ContentIssue(location, it)) }
+        // Independently known constraints still apply even when another parameter needs an output.
+        val known = try { resolveActionInputs(action.copy(bindings = action.bindings.filterValues {
+            it is ActionInputBinding.Configuration
+        }), values, emptyMap()) }
+        catch (_: IllegalArgumentException) { add(ContentIssue(location, "配置引用不可用")); return@actionLoop }
+        val problem = contract.knownInputIssue(known)
+        if (problem != null) {
+            val field = (action.bindings[problem.location] as? ActionInputBinding.Configuration)?.fieldId
+            add(ContentIssue(field ?: location, problem.reason))
+        } else if (action.bindings.values.none { it is ActionInputBinding.Output }) {
+            contract.inputIssue(known)?.let { add(ContentIssue(location, it)) }
         }
     } }
 }.distinct()
