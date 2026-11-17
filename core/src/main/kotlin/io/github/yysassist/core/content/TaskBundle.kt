@@ -96,6 +96,7 @@ data class CapabilityContract(
     val inputTypes: Map<String, ActionValueType> = emptyMap(),
     val outputTypes: Map<String, ActionValueType> = emptyMap(),
     val role: ActionRole = ActionRole.UTILITY,
+    val sendsDeviceInput: Boolean = false,
     /** Validate only present values; unresolved outputs are never replaced by fake placeholders. */
     val validateKnownInputs: (JsonObject) -> ContentIssue? = { null },
     val validateDefinition: (TaskBundle, TaskDefinition, StepDefinition, ActionDefinition) -> String? = { _, _, _, _ -> null },
@@ -192,7 +193,7 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
                         previous[action.id] = contract
                     }
                 }
-                if (previous.values.any { it.role == ActionRole.OBSERVATION } &&
+                if (previous.values.any { it.role == ActionRole.OBSERVATION || it.sendsDeviceInput } &&
                     previous[step.actions.lastOrNull()?.id]?.role != ActionRole.VERIFICATION)
                     issue(path, "观察步骤必须以核对动作结束")
             }

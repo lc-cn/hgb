@@ -19,22 +19,22 @@ class ReadOnlyActionInterpreterTest {
         listOf(TargetProfile("fixture", "夹具", listOf("test.fixture"), IdentityPolicy.NONE, listOf(TaskCategory("tools", "工具")))))
     private val attempt = StepAttempt(AttemptTicket(1, 1), RunProgress(1, 1, ExecutionRequest(SubmissionRef(SubmissionKind.TASK, task.id),
         ExecutionContext("fixture", Principal.Anonymous), "v1", listOf(TaskSnapshot(task.id, task.name, 1, listOf("step")))), 1))
-    private fun provider(run: suspend (ActionDefinition, JsonObject) -> ReadOnlyActionResult) = object : ReadOnlyActionProvider {
+    private fun provider(run: suspend (ActionDefinition, JsonObject) -> ActionResult) = object : ActionProvider {
         override val contracts = listOf(
             CapabilityContract("fixture.read", 1, outputTypes = mapOf("seen" to ActionValueType.BOOLEAN), role = ActionRole.OBSERVATION) {
                 if (it.isEmpty()) null else "Unexpected read arguments"
             },
             CapabilityContract("fixture.verify", 1, inputTypes = mapOf("seen" to ActionValueType.BOOLEAN),
                 outputTypes = mapOf("matched" to ActionValueType.BOOLEAN), role = ActionRole.VERIFICATION) { null })
-        override fun open(attempt: StepAttempt, bundle: TaskBundle) = ReadOnlyActionSession { action, inputs -> run(action, inputs) }
+        override fun open(attempt: StepAttempt, bundle: TaskBundle) = ActionSession { action, inputs -> run(action, inputs) }
     }
     private val seen = buildJsonObject { put("seen", true) }
     private val matched = buildJsonObject { put("matched", true) }
 
     @Test fun actualOutputReachesVerificationAndItsEvidenceCompletesTheStep() = runTest {
         val factory = BuiltInStepWorkFactory(provider { action, inputs ->
-            if (action.id == "read") ReadOnlyActionResult.Produced(seen)
-            else { assertEquals(seen, inputs); ReadOnlyActionResult.Verified(matched, "本次观察已核对") }
+            if (action.id == "read") ActionResult.Produced(seen)
+            else { assertEquals(seen, inputs); ActionResult.Verified(matched, "本次观察已核对") }
         })
         assertFalse(factory.canStartWithoutObservation(attempt.run.request, bundle))
         assertTrue(factory.restartHasNoDeviceInput(attempt, bundle))
@@ -51,13 +51,13 @@ class ReadOnlyActionInterpreterTest {
 
     @Test fun missingObservationStaysUnknownAndDoesNotRunVerification() = runTest {
         var calls = 0
-        val factory = BuiltInStepWorkFactory(provider { _, _ -> calls++; ReadOnlyActionResult.Unavailable("未取得观察：进程中断") })
+        val factory = BuiltInStepWorkFactory(provider { _, _ -> calls++; ActionResult.Unavailable("未取得观察：进程中断") })
         assertEquals(StepOutcome.Unknown("未取得观察：进程中断"), factory.create(attempt, bundle).execute())
         assertEquals(1, calls)
     }
     @Test fun authorityInterruptionDoesNotBecomeUnknownOrRunAnotherAction() = runTest {
         var calls = 0
-        val factory = BuiltInStepWorkFactory(provider { _, _ -> calls++; ReadOnlyActionResult.Interrupted })
+        val factory = BuiltInStepWorkFactory(provider { _, _ -> calls++; ActionResult.Interrupted })
         assertEquals(StepOutcome.Interrupted, factory.create(attempt, bundle).execute())
         assertEquals(1, calls)
     }
@@ -65,8 +65,8 @@ class ReadOnlyActionInterpreterTest {
     @Test fun aVerificationLabelOrMalformedOutputCannotFabricateProof() = runTest {
         for (mode in 0..1) {
             val factory = BuiltInStepWorkFactory(provider { action, _ ->
-                if (action.id == "read") ReadOnlyActionResult.Produced(if (mode == 0) JsonObject(emptyMap()) else seen)
-                else ReadOnlyActionResult.Produced(matched) // No verified evidence.
+                if (action.id == "read") ActionResult.Produced(if (mode == 0) JsonObject(emptyMap()) else seen)
+                else ActionResult.Produced(matched) // No verified evidence.
             })
             val result = runCatching { factory.create(attempt, bundle).execute() }
             assertTrue(result.exceptionOrNull() is IllegalStateException)
@@ -78,7 +78,7 @@ class ReadOnlyActionInterpreterTest {
         val factory = BuiltInStepWorkFactory(provider { _, _ ->
             entered.complete(Unit)
             withContext(NonCancellable) { foreignQuiet.await() }
-            ReadOnlyActionResult.Produced(seen)
+            ActionResult.Produced(seen)
         })
         val work = factory.create(attempt, bundle)
         val execution = launch { work.execute() }; runCurrent(); entered.await()
@@ -93,7 +93,7 @@ class ReadOnlyActionInterpreterTest {
         var calls = 0
         val factory = BuiltInStepWorkFactory(provider { action, _ ->
             calls++
-            if (action.id == "read") ReadOnlyActionResult.Produced(seen) else ReadOnlyActionResult.Verified(matched, "核对完成")
+            if (action.id == "read") ActionResult.Produced(seen) else ActionResult.Verified(matched, "核对完成")
         })
         val unused = factory.create(attempt, bundle)
         assertEquals(InputStopObservation.Quiet(StepOutcome.Interrupted), unused.revoke())
@@ -102,5 +102,49 @@ class ReadOnlyActionInterpreterTest {
         assertTrue(actual.execute() is StepOutcome.Completed)
         actual.revoke()
         assertTrue(currentCoroutineContext().isActive)
+    }
+
+    @Test fun inputProgramsCannotClaimNoInputRecoveryOrDefaultQuiet() = runTest {
+        val input = read.copy(capability = "fixture.input")
+        val content = bundle.copy(tasks = listOf(task.copy(steps = listOf(task.steps.single().copy(actions = listOf(input, verify))))))
+        val port = object : ActionProvider {
+            override val contracts = listOf(
+                CapabilityContract("fixture.input", 1, outputTypes = mapOf("seen" to ActionValueType.BOOLEAN), sendsDeviceInput = true) { null },
+                provider { _, _ -> error("never") }.contracts.last())
+            override fun open(attempt: StepAttempt, bundle: TaskBundle) = ActionSession { action, _ ->
+                if (action.id == "read") ActionResult.Produced(seen) else ActionResult.Verified(matched, "业务证据")
+            }
+        }
+        val factory = BuiltInStepWorkFactory(port)
+        assertFalse(factory.restartHasNoDeviceInput(attempt, content))
+        assertTrue(factory.canReenterAfterQuiet(attempt, content)) // Only meaningful with independent stop evidence.
+        val work = factory.create(attempt, content)
+        assertTrue(work.execute() is StepOutcome.Completed)
+        assertTrue(work.revoke() is InputStopObservation.Unconfirmed)
+        val missingProof = content.copy(tasks = listOf(task.copy(steps = listOf(task.steps.single().copy(actions = listOf(input))))))
+        assertTrue(BundleCodec(factory.contracts).validate(missingProof).isNotEmpty())
+    }
+
+    @Test fun inputRevocationNeedsItsOwnQuietEvenAfterTheWorkerScopeHasDrained() = runTest {
+        val input = read.copy(capability = "fixture.input")
+        val content = bundle.copy(tasks = listOf(task.copy(steps = listOf(task.steps.single().copy(actions = listOf(input, verify))))))
+        val entered = CompletableDeferred<Unit>(); val platformQuiet = CompletableDeferred<Unit>()
+        val port = object : ActionProvider {
+            override val contracts = listOf(
+                CapabilityContract("fixture.input", 1, outputTypes = mapOf("seen" to ActionValueType.BOOLEAN), sendsDeviceInput = true) { null },
+                provider { _, _ -> error("never") }.contracts.last())
+            override fun open(attempt: StepAttempt, bundle: TaskBundle) = object : ActionSession {
+                override suspend fun perform(action: ActionDefinition, inputs: JsonObject): ActionResult { entered.complete(Unit); awaitCancellation() }
+                override suspend fun revoke(): InputStopObservation {
+                    platformQuiet.await(); return InputStopObservation.Quiet(StepOutcome.Unknown("实际输入结果待核对"))
+                }
+            }
+        }
+        val work = BuiltInStepWorkFactory(port).create(attempt, content)
+        val execute = launch { work.execute() }; runCurrent(); entered.await()
+        val stop = async { work.revoke() }; runCurrent()
+        assertTrue(execute.isCancelled); assertFalse(stop.isCompleted)
+        platformQuiet.complete(Unit)
+        assertEquals(InputStopObservation.Quiet(StepOutcome.Unknown("实际输入结果待核对")), stop.await())
     }
 }

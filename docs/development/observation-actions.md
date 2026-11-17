@@ -2,6 +2,8 @@
 
 2026-11-16 接入，2026-11-17 完成当前源码的构建及专用模拟器回归。`screen.readText`／`screen.expectText` 已接入唯一执行链，尚无游戏领取结果，M2／M3／M4 保持进行中。[验证证据](build-evidence/observation-actions/README.md)分别记录回归、原故障、安装摘要及尚未验证的边界。
 
+此文记录只读接入检查点。后续同一接口已扩展为 `ActionProvider`，新增定位／点击及输入静默合同见[屏幕定位与输入](screen-input-actions.md)，没有另保留一套只读执行器。
+
 ## 同一解释器与版本资源
 
 `BuiltInStepWorkFactory` 沿用同一个动作列表解释器，接受 APK 注册的本地、可重复只读动作提供者；默认等待动作与新增观察动作混用，不新增队列或调度器。`AssistApplication` 注册提供者后，仍将同一版本库交给执行器和 `VersionedTextObserver`；构造时不截图或加载 native。

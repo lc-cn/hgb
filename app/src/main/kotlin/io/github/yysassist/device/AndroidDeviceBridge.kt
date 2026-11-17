@@ -54,13 +54,26 @@ internal sealed interface InputDrain {
     data class Terminal(val gesture: GestureResult) : InputDrain
     data object Unconfirmed : InputDrain
 }
+/** A call handle is created before execute(), and retains platform evidence after caller cancellation. */
+internal interface InputGestureCall {
+    suspend fun execute(): GestureResult
+    /** Only after closing the channel. Null means this call never reached platform dispatch. */
+    suspend fun observeAfterRevoke(): GestureResult?
+}
+internal interface DeviceInputChannel {
+    fun gestureCall(stamp: FrameStamp, points: List<ScreenPoint>, durationMillis: Long): InputGestureCall
+    suspend fun revoke(): InputDrain
+}
+internal interface InputDevicePort : ObservationDevice {
+    suspend fun openInput(ticket: AttemptTicket, permitsInput: (AttemptTicket) -> Boolean): DeviceInputChannel?
+}
 
 /**
  * Main-thread device owner. Worker cancellation does not cancel or acknowledge a platform gesture.
  * Revocation closes admission immediately, then drains the independently retained platform callback.
  * Neither a terminal callback nor a quiet channel establishes the business result of a click.
  */
-internal class AndroidDeviceBridge(private val service: AccessibilityService) : ObservationDevice {
+internal class AndroidDeviceBridge(private val service: AccessibilityService) : InputDevicePort {
     private class ScreenshotRequest(val connection: Any)
     companion object {
         // AOSP rejects intervals <=333ms. This is adapter pacing, not a task retry or timeout.
@@ -181,7 +194,7 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
         }) } catch (error: Exception) { terminal(); throw error }
     }
 
-    suspend fun openInput(ticket: AttemptTicket, permitsInput: (AttemptTicket) -> Boolean): InputSession? =
+    override suspend fun openInput(ticket: AttemptTicket, permitsInput: (AttemptTicket) -> Boolean): InputSession? =
         suspendCancellableCoroutine { continuation ->
             service.mainExecutor.execute {
                 if (!continuation.isActive) return@execute
@@ -197,7 +210,7 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
             }
         }
 
-    internal inner class InputSession internal constructor(val ticket: AttemptTicket, private val permitsInput: (AttemptTicket) -> Boolean) {
+    internal inner class InputSession internal constructor(val ticket: AttemptTicket, private val permitsInput: (AttemptTicket) -> Boolean) : DeviceInputChannel {
         private val admittedConnection = connection
         internal var closed = false
         private var pending: InFlight? = null
@@ -255,7 +268,26 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
                     } catch (error: Exception) { continuation.resumeWithException(error) }
                 }
             }
-        suspend fun gesture(stamp: FrameStamp, points: List<ScreenPoint>, durationMillis: Long): GestureResult {
+        override fun gestureCall(stamp: FrameStamp, points: List<ScreenPoint>, durationMillis: Long): InputGestureCall =
+            GestureCall(stamp, points.toList(), durationMillis)
+
+        private inner class GestureCall(val stamp: FrameStamp, val points: List<ScreenPoint>, val duration: Long) : InputGestureCall {
+            var submission: InFlight? = null // Main Looper owns this retained evidence, not the worker Job.
+            private var started = false
+            override suspend fun execute(): GestureResult {
+                synchronized(this) { check(!started) { "手势调用不可重复执行" }; started = true }
+                return performGesture(stamp, points, duration, this)
+            }
+            override suspend fun observeAfterRevoke(): GestureResult? {
+                val record = withContext(Dispatchers.Main.immediate) { check(closed) { "须先关闭输入通道" }; submission }
+                return record?.result?.await()
+            }
+        }
+
+        suspend fun gesture(stamp: FrameStamp, points: List<ScreenPoint>, durationMillis: Long): GestureResult =
+            gestureCall(stamp, points, durationMillis).execute()
+
+        private suspend fun performGesture(stamp: FrameStamp, points: List<ScreenPoint>, durationMillis: Long, call: GestureCall): GestureResult {
             val pathPoints = points.toList()
             val preparation = prepareGesture(stamp, pathPoints, durationMillis)
             if (preparation is GesturePreparation.Rejected) return GestureResult.Rejected(preparation.reason)
@@ -271,6 +303,7 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
                     val gesture = GestureDescription.Builder().addStroke(GestureDescription.StrokeDescription(path, 0, durationMillis)).build()
                     val record = InFlight(lease)
                     pending = record
+                    call.submission = record
                     val accepted = try {
                         service.dispatchGesture(gesture, object : AccessibilityService.GestureResultCallback() {
                             override fun onCompleted(gestureDescription: GestureDescription) { terminal(record, GestureResult.Completed) }
@@ -281,7 +314,11 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
                         record.result.complete(GestureResult.Unconfirmed)
                         return@withContext GestureDispatch.Pending(record)
                     }
-                    if (!accepted) { pending = null; return@withContext GestureDispatch.Rejected(DeviceRejection.PLATFORM_REJECTED) }
+                    if (!accepted) {
+                        pending = null
+                        record.result.complete(GestureResult.Rejected(DeviceRejection.PLATFORM_REJECTED))
+                        return@withContext GestureDispatch.Rejected(DeviceRejection.PLATFORM_REJECTED)
+                    }
                     GestureDispatch.Pending(record)
                 }
                 return when (dispatched) {
@@ -294,7 +331,7 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
             }
         }
 
-        suspend fun revoke(): InputDrain {
+        override suspend fun revoke(): InputDrain {
             val flight = withContext(Dispatchers.Main.immediate) {
                 closed = true
                 active.also { if (it == null && owner === this@InputSession) owner = null }

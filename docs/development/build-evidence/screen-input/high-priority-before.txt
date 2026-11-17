@@ -1,0 +1,77 @@
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationRuntimeTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+io.github.yysassist.actions.TextObservationRuntimeTest:
+INSTRUMENTATION_STATUS: test=rejectedHighPriorityAdmissionReentersTheOldInputProgramWhenNothingWasSent
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.yysassist.actions.TextObservationRuntimeTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: ExecutorSnapshot(context=ExecutionContext(targetId=fixture, principal=Anonymous), phase=BLOCKED_UNKNOWN, manualHold=false, current=RunProgress(runId=1, sequence=1, request=ExecutionRequest(ref=SubmissionRef(kind=TASK, id=read), context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, tasks=[TaskSnapshot(id=read, name=自有画面核对, priority=1, stepIds=[read], configurationJson={})]), priority=1, taskIndex=0, stepIndex=0, failedTaskIds=[]), waiting=[], activeTicket=null, unresolved=[UnresolvedResult(attempt=StepAttempt(ticket=AttemptTicket(runId=1, generation=1), run=RunProgress(runId=1, sequence=1, request=ExecutionRequest(ref=SubmissionRef(kind=TASK, id=read), context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, tasks=[TaskSnapshot(id=read, name=自有画面核对, priority=1, stepIds=[read], configurationJson={})]), priority=1, taskIndex=0, stepIndex=0, failedTaskIds=[])), reason=步骤中断后的重入条件未确认)], facts=[ExecutionFact(type=enqueued, runId=1, taskId=read, detail=, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794882872498), ExecutionFact(type=step-started, runId=1, taskId=read, detail=, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794882872498), ExecutionFact(type=step-observed, runId=1, taskId=read, detail=Unknown(reason=步骤中断后的重入条件未确认), taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794882873393), ExecutionFact(type=revocation-observed, runId=1, taskId=read, detail=Interrupted, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794882873393)], deviceActions=[])
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at io.github.yysassist.actions.TextObservationRuntimeTest$rejectedHighPriorityAdmissionReentersTheOldInputProgramWhenNothingWasSent$1.invokeSuspend(TextObservationRuntimeTest.kt:431)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.internal.ScopeCoroutine.afterResume(Scopes.kt:35)
+	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:101)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:47)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.actions.TextObservationRuntimeTest.rejectedHighPriorityAdmissionReentersTheOldInputProgramWhenNothingWasSent(TextObservationRuntimeTest.kt:403)
+
+INSTRUMENTATION_STATUS: stream=
+Error in rejectedHighPriorityAdmissionReentersTheOldInputProgramWhenNothingWasSent(io.github.yysassist.actions.TextObservationRuntimeTest):
+java.lang.AssertionError: ExecutorSnapshot(context=ExecutionContext(targetId=fixture, principal=Anonymous), phase=BLOCKED_UNKNOWN, manualHold=false, current=RunProgress(runId=1, sequence=1, request=ExecutionRequest(ref=SubmissionRef(kind=TASK, id=read), context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, tasks=[TaskSnapshot(id=read, name=自有画面核对, priority=1, stepIds=[read], configurationJson={})]), priority=1, taskIndex=0, stepIndex=0, failedTaskIds=[]), waiting=[], activeTicket=null, unresolved=[UnresolvedResult(attempt=StepAttempt(ticket=AttemptTicket(runId=1, generation=1), run=RunProgress(runId=1, sequence=1, request=ExecutionRequest(ref=SubmissionRef(kind=TASK, id=read), context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, tasks=[TaskSnapshot(id=read, name=自有画面核对, priority=1, stepIds=[read], configurationJson={})]), priority=1, taskIndex=0, stepIndex=0, failedTaskIds=[])), reason=步骤中断后的重入条件未确认)], facts=[ExecutionFact(type=enqueued, runId=1, taskId=read, detail=, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794882872498), ExecutionFact(type=step-started, runId=1, taskId=read, detail=, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794882872498), ExecutionFact(type=step-observed, runId=1, taskId=read, detail=Unknown(reason=步骤中断后的重入条件未确认), taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794882873393), ExecutionFact(type=revocation-observed, runId=1, taskId=read, detail=Interrupted, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794882873393)], deviceActions=[])
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at io.github.yysassist.actions.TextObservationRuntimeTest$rejectedHighPriorityAdmissionReentersTheOldInputProgramWhenNothingWasSent$1.invokeSuspend(TextObservationRuntimeTest.kt:431)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.internal.ScopeCoroutine.afterResume(Scopes.kt:35)
+	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:101)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:47)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.actions.TextObservationRuntimeTest.rejectedHighPriorityAdmissionReentersTheOldInputProgramWhenNothingWasSent(TextObservationRuntimeTest.kt:403)
+
+INSTRUMENTATION_STATUS: test=rejectedHighPriorityAdmissionReentersTheOldInputProgramWhenNothingWasSent
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 3.378
+There was 1 failure:
+1) rejectedHighPriorityAdmissionReentersTheOldInputProgramWhenNothingWasSent(io.github.yysassist.actions.TextObservationRuntimeTest)
+java.lang.AssertionError: ExecutorSnapshot(context=ExecutionContext(targetId=fixture, principal=Anonymous), phase=BLOCKED_UNKNOWN, manualHold=false, current=RunProgress(runId=1, sequence=1, request=ExecutionRequest(ref=SubmissionRef(kind=TASK, id=read), context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, tasks=[TaskSnapshot(id=read, name=自有画面核对, priority=1, stepIds=[read], configurationJson={})]), priority=1, taskIndex=0, stepIndex=0, failedTaskIds=[]), waiting=[], activeTicket=null, unresolved=[UnresolvedResult(attempt=StepAttempt(ticket=AttemptTicket(runId=1, generation=1), run=RunProgress(runId=1, sequence=1, request=ExecutionRequest(ref=SubmissionRef(kind=TASK, id=read), context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, tasks=[TaskSnapshot(id=read, name=自有画面核对, priority=1, stepIds=[read], configurationJson={})]), priority=1, taskIndex=0, stepIndex=0, failedTaskIds=[])), reason=步骤中断后的重入条件未确认)], facts=[ExecutionFact(type=enqueued, runId=1, taskId=read, detail=, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794882872498), ExecutionFact(type=step-started, runId=1, taskId=read, detail=, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794882872498), ExecutionFact(type=step-observed, runId=1, taskId=read, detail=Unknown(reason=步骤中断后的重入条件未确认), taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794882873393), ExecutionFact(type=revocation-observed, runId=1, taskId=read, detail=Interrupted, taskName=自有画面核对, context=ExecutionContext(targetId=fixture, principal=Anonymous), packageVersion=text-runtime, occurredAtEpochMillis=1794882873393)], deviceActions=[])
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at io.github.yysassist.actions.TextObservationRuntimeTest$rejectedHighPriorityAdmissionReentersTheOldInputProgramWhenNothingWasSent$1.invokeSuspend(TextObservationRuntimeTest.kt:431)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.internal.ScopeCoroutine.afterResume(Scopes.kt:35)
+	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:101)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:47)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)
+	at kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source:1)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)
+	at kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source:1)
+	at io.github.yysassist.actions.TextObservationRuntimeTest.rejectedHighPriorityAdmissionReentersTheOldInputProgramWhenNothingWasSent(TextObservationRuntimeTest.kt:403)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

@@ -14,6 +14,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import io.github.yysassist.*
 import io.github.yysassist.core.content.*
 import io.github.yysassist.core.execution.*
+import io.github.yysassist.core.execution.ActionProvider
 import io.github.yysassist.device.*
 import io.github.yysassist.storage.*
 import io.github.yysassist.vision.*
@@ -47,11 +48,30 @@ class TextObservationRuntimeTest {
     private val address = TaskAddress("fixture", "read")
     private class OwnSurface(activity: ComponentActivity) : View(activity) {
         var touches = 0
+        var downs = 0
+        var claimed = false
+        var duplicate = false
+        var textLeft = 90f
+        var textBaseline = 400f
+        var lastDownY: Float? = null
+        private var downOnTarget = false
+        private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; textSize = 72f }
+        private fun text() = if (claimed) "已领取" else "领取物资"
+        private fun targetBounds() = RectF(textLeft, textBaseline + paint.fontMetrics.top,
+            textLeft + paint.measureText(text()), textBaseline + paint.fontMetrics.bottom)
         override fun onDraw(canvas: Canvas) {
             canvas.drawColor(Color.WHITE)
-            canvas.drawText("领取物资", 90f, 400f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; textSize = 72f })
+            canvas.drawText(text(), textLeft, textBaseline, paint)
+            if (duplicate) canvas.drawText("领取物资", 90f, 650f, paint)
         }
-        override fun onTouchEvent(event: MotionEvent): Boolean { touches++; return true }
+        override fun onTouchEvent(event: MotionEvent): Boolean {
+            touches++
+            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                downs++; lastDownY = event.y; downOnTarget = targetBounds().contains(event.x, event.y)
+            }
+            if (event.actionMasked == MotionEvent.ACTION_UP && downOnTarget && targetBounds().contains(event.x, event.y)) { claimed = true; invalidate() }
+            return true
+        }
     }
     private fun shell(command: String): String = automation.executeShellCommand(command)
         .use { android.os.ParcelFileDescriptor.AutoCloseInputStream(it).bufferedReader().use { it.readText().trim() } }
@@ -88,9 +108,22 @@ class TextObservationRuntimeTest {
 
     private suspend fun prepare(expected: String, corrupt: Boolean = false, backend: TextBackend = MaaTextBackend(context),
         device: () -> ObservationDevice? = { GameAccessibilityService.connection.value?.bridge },
-        beforePersist: suspend (PreparedExecutorTransition) -> Unit = {}, onWorkFinished: (StepOutcome) -> Unit = {}) {
+        beforePersist: suspend (PreparedExecutorTransition) -> Unit = {}, onWorkFinished: (StepOutcome) -> Unit = {},
+        withInput: Boolean = false, durationMs: Long = 80,
+        submit: suspend (ExecutorCommand) -> RuntimeCommandResult = { runtime.submit(it).await() },
+        onActionFinished: suspend (ActionDefinition, ActionResult) -> Unit = { _, _ -> },
+        transform: (TaskBundle) -> TaskBundle = { it }) {
         lateinit var observer: VersionedTextObserver
-        val factory = BuiltInStepWorkFactory(TextObservationActions({ observer }, { runtime.permitsInput(it) }, device))
+        val provider = ScreenActions({ observer }, { runtime.permitsInput(it) }, device, submit)
+        val watchedProvider = object : ActionProvider by provider {
+            override fun open(attempt: StepAttempt, bundle: TaskBundle): ActionSession {
+                val actual = provider.open(attempt, bundle)
+                return object : ActionSession by actual {
+                    override suspend fun perform(action: ActionDefinition, inputs: JsonObject) = actual.perform(action, inputs).also { onActionFinished(action, it) }
+                }
+            }
+        }
+        val factory = BuiltInStepWorkFactory(watchedProvider)
         val codec = BundleCodec(factory.contracts)
         library = TaskVersionLibrary(database!!, codec, TaskResourceFiles(folder))
         observer = VersionedTextObserver(library, backend)
@@ -103,17 +136,22 @@ class TextObservationRuntimeTest {
                 TaskResource(id, id, bytes.size.toLong(), MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) })
             }
         }
-        val read = ActionDefinition("read", TextObservationActions.READ, 1, buildJsonObject {
+        val read = ActionDefinition("read", ScreenActions.READ, 1, buildJsonObject {
             put("packageName", context.packageName); put("detector", "det.onnx"); put("recognizer", "rec.onnx"); put("dictionary", "keys.txt")
         })
-        val verify = ActionDefinition("verify", TextObservationActions.EXPECT, 1,
+        val verify = ActionDefinition("verify", ScreenActions.EXPECT, 1,
             buildJsonObject { put("text", expected); put("minimumConfidence", 0.75) },
+            mapOf("observation" to ActionInputBinding.Output(if (withInput) "after" else "read", "observation")))
+        val locate = ActionDefinition("locate", ScreenActions.LOCATE, 1,
+            buildJsonObject { put("text", "领取物资"); put("minimumConfidence", 0.75) },
             mapOf("observation" to ActionInputBinding.Output("read", "observation")))
+        val tap = ActionDefinition("tap", ScreenActions.TAP, 1, buildJsonObject { put("durationMs", durationMs) },
+            mapOf("target" to ActionInputBinding.Output("locate", "target")))
         val task = TaskDefinition(address.taskId, address.targetId, "自有画面核对", "tools", 1,
-            steps = listOf(StepDefinition("read", "观察后核对", listOf(read, verify))))
+            steps = listOf(StepDefinition("read", "观察后核对", if (withInput) listOf(read, locate, tap, read.copy(id = "after"), verify) else listOf(read, verify))))
         val target = TargetProfile(address.targetId, "测试画面", listOf(context.packageName), IdentityPolicy.NONE, listOf(TaskCategory("tools", "工具")))
-        val bundle = TaskBundle(1, "text-runtime", "2026-11-16T00:00:00Z", "独立只读夹具",
-            listOf(task, task.copy(id = "read-next", name = "后续自有画面核对")), listOf(target), resources)
+        val bundle = transform(TaskBundle(1, "text-runtime", "2026-11-16T00:00:00Z", "独立画面夹具",
+            listOf(task, task.copy(id = "read-next", name = "后续自有画面核对")), listOf(target), resources))
         val text = codec.write(bundle)
         assertEquals(VersionChange.Applied, library.install(text, bundle.version, TaskVersionLibrary.sha256(text)) { resource, output ->
             if (!corrupt) instrumentation.context.assets.open("maa-model/${resource.id}").use { it.copyTo(output) }
@@ -286,5 +324,144 @@ class TextObservationRuntimeTest {
             val paused = withTimeout(5_000) { runtime.state.first { it.phase == ExecutorPhase.PAUSED || it.unresolved.isNotEmpty() } }
             assertTrue(paused.toString(), paused.unresolved.isEmpty()); assertTrue(paused.manualHold)
         } finally { deliver.complete(Unit); commitRelease.complete(Unit) }
+    }
+
+    @Test fun semanticTargetProducesOneRealGestureAndFreshBusinessProof(): Unit = runBlocking {
+        prepare("已领取", withInput = true)
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        assertTrue(state.toString(), state.unresolved.isEmpty()); assertNull(state.current)
+        assertEquals(1, withContext(Dispatchers.Main) { surface.downs })
+        assertEquals(ScreenActions.TAP, state.deviceActions.single().intent.capability)
+        assertEquals(DeviceActionDelivery.COMPLETED, state.deviceActions.single().receipt!!.delivery)
+        assertEquals(0, library.snapshot().versions.single().referenceCount)
+        assertEquals(state.deviceActions, ExecutionStateStore(database!!, library).load().decode().state.value.deviceActions)
+    }
+    @Test fun duplicateTextNeverCreatesAnInputIntentOrTouchesTheSurface(): Unit = runBlocking {
+        withContext(Dispatchers.Main) { surface.duplicate = true; surface.invalidate() }
+        prepare("已领取", withInput = true)
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.unresolved.isNotEmpty() } }
+        assertTrue(state.unresolved.single().reason, state.unresolved.single().reason.contains("唯一"))
+        assertTrue(state.deviceActions.isEmpty()); assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
+        assertFalse(state.facts.any { it.type == "task-completed" || it.type == "task-failed" })
+    }
+    @Test fun inputReobservesAMovedTargetRatherThanUsingTheOldCoordinates(): Unit = runBlocking {
+        prepare("已领取", withInput = true, onActionFinished = { action, _ ->
+            if (action.capability == ScreenActions.LOCATE) withContext(Dispatchers.Main) {
+                surface.textLeft = 350f; surface.textBaseline = 700f; surface.invalidate()
+            }
+        })
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        assertTrue(state.toString(), state.unresolved.isEmpty()); assertNull(state.current)
+        withContext(Dispatchers.Main) { assertEquals(1, surface.downs); assertTrue(surface.claimed); assertTrue(surface.lastDownY!! > 600f) }
+    }
+    @Test fun aTargetThatDisappearsBeforeInputIsNotClickedOrRegistered(): Unit = runBlocking {
+        prepare("已领取", withInput = true, onActionFinished = { action, _ ->
+            if (action.capability == ScreenActions.LOCATE) withContext(Dispatchers.Main) { surface.claimed = true; surface.invalidate() }
+        })
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.unresolved.isNotEmpty() } }
+        assertTrue(state.deviceActions.isEmpty()); assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
+        assertFalse(state.facts.any { it.type == "task-completed" || it.type == "task-failed" })
+    }
+    @Test fun pauseAfterIntentCommitBeforeDispatchRecordsNotSentAndContinueStartsFresh(): Unit = runBlocking {
+        val committed = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
+        prepare("已领取", withInput = true, submit = { command ->
+            runtime.submit(command).await().also {
+                if (command is ExecutorCommand.RecordDeviceAction && !committed.isCompleted) { committed.complete(Unit); release.await() }
+            }
+        })
+        try {
+            runtime.enqueueTask(address).await(); withTimeout(30_000) { committed.await() }
+            val old = runtime.state.value.activeTicket
+            runtime.submit(ExecutorCommand.Pause).await()
+            assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
+            release.complete(Unit)
+            val paused = withTimeout(10_000) { runtime.state.first { it.phase == ExecutorPhase.PAUSED || it.unresolved.isNotEmpty() } }
+            assertTrue(paused.toString(), paused.unresolved.isEmpty()); assertTrue(paused.manualHold)
+            assertEquals(DeviceActionDelivery.NOT_SENT, paused.deviceActions.single().receipt!!.delivery)
+            runtime.submit(ExecutorCommand.Resume(ResumeMode.CONTINUE)).await()
+            val done = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+            assertTrue(done.toString(), done.unresolved.isEmpty()); assertNull(done.current)
+            assertEquals(1, withContext(Dispatchers.Main) { surface.downs })
+            assertEquals(2, done.deviceActions.size)
+            assertNotEquals(old, done.deviceActions.last().intent.ticket)
+            assertEquals(DeviceActionDelivery.COMPLETED, done.deviceActions.last().receipt!!.delivery)
+        } finally { release.complete(Unit) }
+    }
+    @Test fun pauseDuringRealGestureRetainsUnknownUntilBusinessCanBeObserved(): Unit = runBlocking {
+        prepare("已领取", withInput = true, durationMs = 800)
+        runtime.enqueueTask(address).await()
+        withTimeout(30_000) { while (withContext(Dispatchers.Main) { surface.downs == 0 }) delay(5) }
+        val ticket = runtime.state.value.activeTicket
+        runtime.submit(ExecutorCommand.Pause).await()
+        val state = withTimeout(10_000) { runtime.state.first { it.unresolved.isNotEmpty() && it.phase == ExecutorPhase.BLOCKED_UNKNOWN } }
+        assertTrue(state.manualHold); assertEquals(ticket, state.unresolved.single().attempt.ticket)
+        assertEquals(DeviceActionDelivery.COMPLETED, state.deviceActions.single().receipt!!.delivery)
+        assertEquals(1, withContext(Dispatchers.Main) { surface.downs })
+        assertFalse(state.facts.any { it.type == "task-completed" || it.type == "task-failed" })
+        assertEquals(1, library.snapshot().versions.single().referenceCount)
+    }
+    @Test fun platformCompletionCannotReplaceTheMissingPostcondition(): Unit = runBlocking {
+        prepare("结果没有出现", withInput = true)
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.unresolved.isNotEmpty() } }
+        assertEquals(DeviceActionDelivery.COMPLETED, state.deviceActions.single().receipt!!.delivery)
+        assertEquals(1, withContext(Dispatchers.Main) { surface.downs })
+        assertFalse(state.facts.any { it.type == "task-completed" || it.type == "task-failed" })
+        assertEquals(1, library.snapshot().versions.single().referenceCount)
+    }
+    @Test fun cancellationAfterFinalProofRetainsCompletionRatherThanReplayingTheInput(): Unit = runBlocking {
+        val proved = CompletableDeferred<Unit>(); val hold = CompletableDeferred<Unit>()
+        prepare("已领取", withInput = true, onActionFinished = { action, _ ->
+            if (action.capability == ScreenActions.EXPECT) { proved.complete(Unit); hold.await() }
+        })
+        try {
+            runtime.enqueueTask(address).await(); withTimeout(30_000) { proved.await() }
+            runtime.submit(ExecutorCommand.Pause).await()
+            val state = withTimeout(10_000) { runtime.state.first { it.phase == ExecutorPhase.PAUSED || it.unresolved.isNotEmpty() } }
+            assertTrue(state.toString(), state.unresolved.isEmpty()); assertNull(state.current)
+            assertEquals(1, state.facts.count { it.type == "task-completed" })
+            runtime.submit(ExecutorCommand.Resume(ResumeMode.CONTINUE)).await()
+            assertNull(runtime.state.value.current)
+            assertEquals(1, withContext(Dispatchers.Main) { surface.downs })
+        } finally { hold.complete(Unit) }
+    }
+    @Test fun rejectedHighPriorityAdmissionReentersTheOldInputProgramWhenNothingWasSent(): Unit = runBlocking {
+        val located = CompletableDeferred<Unit>(); val permitClosed = CompletableDeferred<Unit>()
+        val hint = CompletableDeferred<StepOutcome>(); val highEntered = CompletableDeferred<Unit>(); val highRelease = CompletableDeferred<Unit>()
+        prepare("已领取", withInput = true, transform = { value -> value.copy(tasks = value.tasks.map {
+            if (it.id == "read-next") it.copy(priority = 2, fields = listOf(ConfigurationField("amount", "测试值", FieldWidget.NUMBER, true))) else it
+        }) }, beforePersist = {
+            if (it.admittedRunId != null && it.snapshot.waiting.any { run -> run.request.ref.id == "read-next" }) {
+                highEntered.complete(Unit); highRelease.await()
+            }
+        }, onActionFinished = { action, _ ->
+            if (action.capability == ScreenActions.LOCATE && !located.isCompleted) {
+                located.complete(Unit); permitClosed.await()
+                assertFalse(runtime.permitsInput(runtime.state.value.activeTicket!!))
+            }
+        }, onWorkFinished = { if (it == StepOutcome.Interrupted) hint.complete(it) })
+        val high = address.copy(taskId = "read-next")
+        val configurations = TaskConfigurationRepository(database!!, library)
+        assertTrue(configurations.save(configurations.open(high), buildJsonObject { put("amount", 1) }) is ConfigurationSaveResult.Saved)
+        try {
+            runtime.enqueueTask(address).await(); withTimeout(30_000) { located.await() }
+            val original = runtime.state.value.current!!
+            val candidate = runtime.enqueueTask(high)
+            withTimeout(5_000) { highEntered.await() }
+            permitClosed.complete(Unit); assertEquals(StepOutcome.Interrupted, withTimeout(5_000) { hint.await() })
+            assertTrue(configurations.save(configurations.open(high), buildJsonObject { put("amount", 2) }) is ConfigurationSaveResult.Saved)
+            highRelease.complete(Unit)
+            assertTrue(candidate.await() is RuntimeCommandResult.Rejected)
+            val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+            assertTrue(state.toString(), state.unresolved.isEmpty()); assertNull(state.current)
+            assertEquals(1, withContext(Dispatchers.Main) { surface.downs })
+            assertTrue(state.facts.any { it.type == "step-reentered" && it.runId == original.runId })
+            assertFalse(state.facts.any { it.taskId == high.taskId })
+            assertTrue(state.waiting.isEmpty()); assertEquals(0, library.snapshot().versions.single().referenceCount)
+        } finally { permitClosed.complete(Unit); highRelease.complete(Unit) }
     }
 }

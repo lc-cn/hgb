@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-17",
+  "baseCommit": "b5ff227a352cf390a79828701eff48d176b5e4d1",
+  "sourceSha256": {
+    "app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt": "651ef10e7673e88ae487affbdee17cc6b9001a5cd2b69cc7777c6dea0c86da02",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/ActionProvider.kt": "f47d17971621da34ce78b667a1062eee215e37d505e1eaae77c3b1865d68e070",
+    "app/src/androidTest/kotlin/io/github/yysassist/ExecutionRuntimeTest.kt": "f21521796a5137a3841e10058012a120b186160d135da1472ce93abaf0cec971",
+    "app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationContractTest.kt": "693fdb4cfa3da4613892a8f213ba3904c63f614f51ea47a13faa5a307b9d5e22",
+    "app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationRuntimeTest.kt": "76b7db5a7f9fd6e6680455f35ff5524bdf9801e1949f6a87feced422e4c17664",
+    "app/src/androidTest/kotlin/io/github/yysassist/device/AndroidDeviceBridgeTest.kt": "557c880a648b7e6bedd02d3b78c94bea7cb0d4d8317007492ed8ca6f62d70496",
+    "app/src/main/kotlin/io/github/yysassist/AssistApplication.kt": "0c942788bf744e58f406a20dcd0ab58c5b3126af4deac5a94a4c6dbd1b214393",
+    "app/src/main/kotlin/io/github/yysassist/ExecutionRuntime.kt": "bec10c56edea4acf4a5123c1f3c23493741f476ed22f1863d86f4a9bd644061b",
+    "app/src/main/kotlin/io/github/yysassist/device/AndroidDeviceBridge.kt": "c515dc34d4d51fbe00a2cf8a4790076e14aa751c46a4ccef6a77388f345d1bd3",
+    "core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt": "69f658c972b9b74bead0c8237f1eba934aabe6549817a8cc538c3b5453a0b0ac",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/StepWorker.kt": "f3ae568cf46c562fe10b306dda3345f93bcdca9da1435526190a627c4d077d5c",
+    "core/src/test/kotlin/io/github/yysassist/core/execution/ReadOnlyActionInterpreterTest.kt": "31fc0edd87a0691ac69882a4669832e6454bf709487c771934340e599bc0d1a9"
+  },
+  "removedSourcePaths": [
+    "app/src/main/kotlin/io/github/yysassist/actions/TextObservationActions.kt",
+    "core/src/main/kotlin/io/github/yysassist/core/execution/ReadOnlyActionProvider.kt"
+  ],
+  "regressions": {
+    "highPriority": "Actual new input-program fixture, real SQLite rejection; no input sent before failure. Fixed dynamic quiet re-entry contract; original assertions retained. Fixture hit region strengthened later.",
+    "retainedProof": "Real SQLite runtime with controlled worker/owner evidence. Old reducer host ignored completion without pending handoff; same regression test source after fix."
+  },
+  "limitations": [
+    "New input action code only installed to dedicated API36 arm64 emulator",
+    "No current phone, game claim, held-out theme, private task source auth, CI, Release or 24-hour result",
+    "Actual process-stop cases cover no-input runner; input recovery is not claimed",
+    "Pixel content and identity are not atomic with accessibility input",
+    "No new dependency, manifest permission or Room schema"
+  ]
+}

@@ -206,11 +206,15 @@ class ExecutionRuntime(
                         running.remove(message.ticket)
                         val outcome = record?.outcome
                         val command = if (outcome == StepOutcome.Interrupted) {
-                            if (observation.outcome == StepOutcome.Interrupted && engine?.permitsInput(message.ticket) == true) {
+                            if (engine?.permitsInput(message.ticket) == true && observation.outcome != StepOutcome.Interrupted) {
+                                // Independent business evidence settles the still-current attempt,
+                                // even if its worker only returned a control hint.
+                                ExecutorCommand.StepSettled(message.ticket, observation.outcome, observation.outcome)
+                            } else if (observation.outcome == StepOutcome.Interrupted && engine?.permitsInput(message.ticket) == true) {
                                 // A rejected admission/transition may leave the old attempt active.
                                 // Re-entry requires the APK's no-input proof AND independent quiet.
                                 val binding = checkNotNull(record)
-                                val safe = try { factory.restartHasNoDeviceInput(binding.attempt, binding.bundle) &&
+                                val safe = try { factory.canReenterAfterQuiet(binding.attempt, binding.bundle) &&
                                     engine?.mayHaveDeliveredInput(message.ticket) == false }
                                 catch (_: Exception) { false }
                                 if (safe) ExecutorCommand.RecoverNoInput(message.ticket, NoInputRecoveryCause.STEP_INTERRUPTION)

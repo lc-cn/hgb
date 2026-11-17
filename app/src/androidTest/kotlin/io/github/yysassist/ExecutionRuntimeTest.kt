@@ -194,6 +194,16 @@ class ExecutionRuntimeTest {
         assertFalse(state.facts.any { it.type == "task-completed" || it.type == "task-failed" })
         assertEquals(RuntimeStatus.Ready, runtime.status.value)
     }
+    @Test fun retainedBusinessProofCanSettleAnInterruptedAttemptWithoutAPendingHandoff(): Unit = runBlocking {
+        val count = AtomicInteger()
+        val port = counting(count, { StepOutcome.Interrupted },
+            stop = { InputStopObservation.Quiet(StepOutcome.Completed("输入所有者保留的本次业务核对")) }, safeRecovery = false)
+        val host = runtime(port); add(host, "one")
+        val state = wait(host) { it.current == null || it.unresolved.isNotEmpty() }
+        assertTrue(state.unresolved.isEmpty()); assertNull(state.activeTicket)
+        assertEquals(1, count.get()); assertEquals(1, state.facts.count { it.type == "task-completed" })
+        assertEquals(0, library.snapshot().versions.single().referenceCount)
+    }
 
     @Test fun rejectedHigherPriorityAdmissionReentersTheInterruptedOldReadOnlyAttemptWithoutAdmittingTheNewTask(): Unit = runBlocking {
         val definition = bundle().copy(version = "rejected-priority", tasks = bundle().tasks.map {

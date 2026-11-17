@@ -1,0 +1,6 @@
+{
+  "date": "2026-11-17",
+  "emulatorTestPackageRemoved": true,
+  "mainAppGameOrPhoneDataCleanupExecuted": false,
+  "scope": "Only io.github.yysassist.test on the explicitly selected dedicated emulator was uninstalled after all tests completed"
+}

@@ -133,6 +133,24 @@ class AndroidDeviceBridgeTest {
             frames.forEach { assertEquals(Color.rgb(30, 110, 190), it.bitmap.getPixel(point.x.toInt(), point.y.toInt())) }
         } finally { frames.forEach { it.close() } }
     }
+    @Test fun completedCallRetainsItsReceiptAfterTheChannelHasNoInFlightGesture(): Unit = runBlocking {
+        frame().use { capture ->
+            val channel = input()
+            val call = channel.gestureCall(capture.stamp, listOf(center()), 80)
+            assertEquals(GestureResult.Completed, call.execute())
+            assertEquals(InputDrain.NoInFlightGesture, channel.revoke())
+            assertEquals(GestureResult.Completed, call.observeAfterRevoke())
+            assertTrue(runCatching { call.execute() }.isFailure)
+        }
+    }
+    @Test fun aCallCancelledBeforeExecuteHasNoPlatformSubmission(): Unit = runBlocking {
+        frame().use { capture ->
+            val channel = input(); val call = channel.gestureCall(capture.stamp, listOf(center()), 80)
+            assertEquals(InputDrain.NoInFlightGesture, channel.revoke())
+            assertNull(call.observeAfterRevoke())
+            assertEquals(0, touchCount(MotionEvent.ACTION_DOWN))
+        }
+    }
     @Test fun pauseClosesAdmissionAndWaitsForThePlatformTerminalCallback() = runBlocking {
         frame().use { capture ->
             val channel = input(); val point = center()

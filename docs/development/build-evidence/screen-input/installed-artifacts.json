@@ -1,0 +1,25 @@
+{
+  "io.github.yysassist": {
+    "sha256": "75d087f53e677474d1d8b8107e2dbbf535f1b6f431bd1d5fd049f96590ecf71b",
+    "installedMatches": true,
+    "assets": [
+      "assets/PublicSuffixDatabase.list",
+      "assets/maa-license/LICENSE.md"
+    ]
+  },
+  "io.github.yysassist.test": {
+    "sha256": "6ccbfe6da4d4835810412b8e6adea22ce2ff08f0a202efedd097c6ef15980111",
+    "installedMatches": true,
+    "assets": [
+      "assets/io.github.yysassist.storage.AssistDatabase/1.json",
+      "assets/io.github.yysassist.storage.AssistDatabase/2.json",
+      "assets/io.github.yysassist.storage.AssistDatabase/3.json",
+      "assets/io.github.yysassist.storage.AssistDatabase/4.json",
+      "assets/maa-license/LICENSE.md",
+      "assets/maa-model/det.onnx",
+      "assets/maa-model/keys.txt",
+      "assets/maa-model/rec.onnx",
+      "assets/model-manifest.json"
+    ]
+  }
+}

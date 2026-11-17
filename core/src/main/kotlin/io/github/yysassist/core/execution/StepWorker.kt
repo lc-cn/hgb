@@ -17,12 +17,14 @@ interface StepWorkFactory {
     val contracts: List<CapabilityContract>
     fun create(attempt: StepAttempt, bundle: TaskBundle): StepWork
     fun restartHasNoDeviceInput(attempt: StepAttempt, bundle: TaskBundle): Boolean
+    /** Only after independent Quiet(Interrupted), with no contradictory input journal. Not a boot proof. */
+    fun canReenterAfterQuiet(attempt: StepAttempt, bundle: TaskBundle): Boolean = restartHasNoDeviceInput(attempt, bundle)
     /** True only for APK-owned programs whose start has no screen-observation prerequisite. */
     fun canStartWithoutObservation(request: ExecutionRequest, bundle: TaskBundle): Boolean = false
 }
 
-/** One ordered interpreter for built-in wait and explicitly registered APK-owned read-only actions. */
-class BuiltInStepWorkFactory(private val observations: ReadOnlyActionProvider? = null) : StepWorkFactory {
+/** One ordered interpreter for wait and explicitly registered APK-owned actions. */
+class BuiltInStepWorkFactory(private val actions: ActionProvider? = null) : StepWorkFactory {
     private fun duration(inputs: JsonObject): Long? {
         val number = (inputs["durationMs"] as? JsonPrimitive)?.decimalOrNull() ?: return null
         return try { number.longValueExact().takeIf { it >= 0 } }
@@ -32,7 +34,7 @@ class BuiltInStepWorkFactory(private val observations: ReadOnlyActionProvider? =
         inputTypes = mapOf("durationMs" to ActionValueType.NUMBER),
         outputTypes = mapOf("durationMs" to ActionValueType.NUMBER)) { inputs ->
         if (inputs.keys != setOf("durationMs") || duration(inputs) == null) "等待时长需为非负整数毫秒" else null
-    }) + observations?.contracts.orEmpty()
+    }) + actions?.contracts.orEmpty()
     init { require(contracts.distinctBy { it.id to it.version }.size == contracts.size) { "动作合同身份重复" } }
     private val codec = BundleCodec(contracts)
     private fun definition(request: ExecutionRequest, snapshot: TaskSnapshot, bundle: TaskBundle): Pair<TaskDefinition, JsonObject> {
@@ -57,11 +59,13 @@ class BuiltInStepWorkFactory(private val observations: ReadOnlyActionProvider? =
     }.getOrDefault(false)
     override fun create(attempt: StepAttempt, bundle: TaskBundle): StepWork {
         val (step, configuration) = program(attempt, bundle)
+        val usesInput = step.actions.any { action -> contracts.single { it.id == action.capability && it.version == action.contractVersion }.sendsDeviceInput }
         return object : StepWork {
             private val lock = Any()
             private var revoked = false
             private var owner: Job? = null
             private val quiet = CompletableDeferred<Unit>()
+            private var session: ActionSession? = null
             override suspend fun execute(): StepOutcome {
                 var claimed = false
                 try {
@@ -72,7 +76,7 @@ class BuiltInStepWorkFactory(private val observations: ReadOnlyActionProvider? =
                             owner = execution; claimed = true
                         }
                         currentCoroutineContext().ensureActive()
-                        val session = observations?.open(attempt, bundle)
+                        val activeSession = actions?.open(attempt, bundle).also { session = it }
                         val outputs = mutableMapOf<String, JsonObject>()
                         var verification: String? = null
                         var observed = false
@@ -83,17 +87,17 @@ class BuiltInStepWorkFactory(private val observations: ReadOnlyActionProvider? =
                             require(contract.inputIssue(inputs) == null)
                             val result = if (action.capability == "control.wait") {
                                 val milliseconds = checkNotNull(duration(inputs)); delay(milliseconds)
-                                ReadOnlyActionResult.Produced(buildJsonObject { put("durationMs", milliseconds) })
-                            } else checkNotNull(session).perform(action, inputs)
+                                ActionResult.Produced(buildJsonObject { put("durationMs", milliseconds) })
+                            } else checkNotNull(activeSession).perform(action, inputs)
                             currentCoroutineContext().ensureActive()
                             val value = when (result) {
-                                ReadOnlyActionResult.Interrupted -> return@coroutineScope StepOutcome.Interrupted
-                                is ReadOnlyActionResult.Unavailable -> return@coroutineScope StepOutcome.Unknown(result.reason)
-                                is ReadOnlyActionResult.Produced -> {
+                                ActionResult.Interrupted -> return@coroutineScope StepOutcome.Interrupted
+                                is ActionResult.Unavailable -> return@coroutineScope StepOutcome.Unknown(result.reason)
+                                is ActionResult.Produced -> {
                                     check(contract.role != ActionRole.VERIFICATION) { "核对动作未提供核对证据" }
                                     verification = null; result.outputs
                                 }
-                                is ReadOnlyActionResult.Verified -> {
+                                is ActionResult.Verified -> {
                                     check(contract.role == ActionRole.VERIFICATION && result.evidence.isNotBlank())
                                     verification = result.evidence; result.outputs
                                 }
@@ -117,11 +121,17 @@ class BuiltInStepWorkFactory(private val observations: ReadOnlyActionProvider? =
                     owner.also { if (it == null) quiet.complete(Unit) }
                 }
                 running?.cancel(); quiet.await()
-                // No device input is registered here; native-use quiet is proved by its adapter.
-                return InputStopObservation.Quiet(StepOutcome.Interrupted)
+                // A drained coroutine is insufficient for platform input. Read-only foreign uses
+                // finish inside perform(); input sessions retain and settle their own channel.
+                return if (usesInput) session?.revoke() ?: InputStopObservation.Quiet(StepOutcome.Interrupted)
+                    else InputStopObservation.Quiet(StepOutcome.Interrupted)
             }
         }
     }
     override fun restartHasNoDeviceInput(attempt: StepAttempt, bundle: TaskBundle): Boolean =
+        runCatching { program(attempt, bundle).first.actions.none { action ->
+            contracts.single { it.id == action.capability && it.version == action.contractVersion }.sendsDeviceInput
+        } }.getOrDefault(false)
+    override fun canReenterAfterQuiet(attempt: StepAttempt, bundle: TaskBundle): Boolean =
         runCatching { program(attempt, bundle); true }.getOrDefault(false)
 }
