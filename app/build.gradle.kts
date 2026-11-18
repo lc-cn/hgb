@@ -31,6 +31,9 @@ android {
     }
 }
 ksp { arg("room.schemaLocation", "$projectDir/schemas") }
+// Private game frames for offline task replay; never committed, never in a default test APK.
+if (providers.gradleProperty("includePrivateReplayFrames").orNull == "true")
+    android.sourceSets.getByName("androidTest").assets.directories.add(rootProject.file(".local/vision-poc/region-experiment-assets").path)
 if (providers.gradleProperty("includeOcrIntegrationModels").orNull == "true") {
     val modelAssets = rootProject.file(".local/maa/prepared/assets")
     android.sourceSets.getByName("androidTest").assets.directories.add(modelAssets.path)
