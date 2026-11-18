@@ -91,6 +91,10 @@ data class ConfigurationField(
     val maximum: JsonPrimitive? = null,
     val step: JsonPrimitive? = null,
     val options: List<FieldOption> = emptyList(),
+    /** Heading under which the settings page groups this field. */
+    val section: String? = null,
+    /** Suggested value offered by the settings page; never applied without the user saving it. */
+    val recommended: JsonElement? = null,
 )
 data class ContentIssue(val location: String, val reason: String)
 internal fun JsonPrimitive.decimalOrNull(): BigDecimal? = if (isString) null else content.toBigDecimalOrNull()
@@ -225,6 +229,10 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
                     issue(path, "选择字段缺少选项")
                 if (field.options.any { it.value.isBlank() || it.label.isBlank() } ||
                     field.options.map { it.value }.distinct().size != field.options.size) issue(path, "选项身份或名称无效")
+                if (field.section?.isBlank() == true) issue(path, "分组名称为空")
+                field.recommended?.let { value ->
+                    if (validateConfiguration(task, JsonObject(mapOf(field.id to value))).any { it.location == field.id }) issue(path, "推荐值不符合字段约束")
+                }
             }
             if (task.steps.isEmpty() || task.steps.map { it.id }.distinct().size != task.steps.size) issue(location, "步骤为空或身份重复")
             task.steps.forEach { step ->

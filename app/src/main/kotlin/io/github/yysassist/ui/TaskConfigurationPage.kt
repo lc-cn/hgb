@@ -32,10 +32,15 @@ internal fun TaskConfigurationPage(state: TaskEditorState, wide: Boolean, reload
                     ConfigurationFields(state, true, Modifier.weight(.76f).fillMaxHeight(), false, change, reload)
                 } else ConfigurationFields(state, landscape, Modifier.weight(1f).fillMaxWidth(), true, change, reload)
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Row(Modifier.fillMaxWidth().padding(horizontal = UiSpace.page, vertical = UiSpace.gap)) {
+                Row(Modifier.fillMaxWidth().padding(horizontal = UiSpace.medium, vertical = UiSpace.gap),
+                    horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+                    val recommended = state.snapshot.task.fields.filter { it.recommended != null }
+                    if (recommended.isNotEmpty()) OutlinedButton(enabled = !state.saving,
+                        onClick = { recommended.forEach { change(it.id, it.recommended!!) } },
+                        modifier = Modifier.weight(1f).heightIn(min = UiSpace.hit)) { Text("恢复推荐值") }
                     Button(enabled = !state.saving && (state.dirty || state.snapshot.revision == 0L), onClick = save,
-                        modifier = Modifier.fillMaxWidth().heightIn(min = UiSpace.hit)) {
-                        Text(if (state.saving) "保存中" else "保存规则")
+                        modifier = Modifier.weight(1f).heightIn(min = UiSpace.hit)) {
+                        Text(if (state.saving) "保存中" else "保存")
                     }
                 }
             }
@@ -46,7 +51,7 @@ internal fun TaskConfigurationPage(state: TaskEditorState, wide: Boolean, reload
 @Composable
 private fun ConfigurationFields(state: TaskEditorState.Ready, landscape: Boolean, modifier: Modifier,
     includeSteps: Boolean, change: (String, JsonElement) -> Unit, reload: () -> Unit) {
-    LazyColumn(modifier, contentPadding = PaddingValues(UiSpace.page), verticalArrangement = Arrangement.spacedBy(UiSpace.section)) {
+    LazyColumn(modifier, contentPadding = PaddingValues(UiSpace.medium), verticalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
         if (includeSteps) item { TaskSteps(state, false) }
         state.message?.let { message -> item {
             Column {
@@ -58,14 +63,20 @@ private fun ConfigurationFields(state: TaskEditorState.Ready, landscape: Boolean
             Text("部分原设置与当前任务版本不兼容，原值已保留，可在任务更新中切换版本。", color = MaterialTheme.colorScheme.error)
         }
         if (state.snapshot.task.fields.isEmpty()) item { Text("此任务无需额外设置", color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        items(state.snapshot.task.fields.chunked(if (landscape) 2 else 1), key = { it.first().id }) { fields ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(UiSpace.section)) {
-                fields.forEach { field ->
-                    Box(Modifier.weight(1f)) {
-                        ConfigurationFieldView(field, state.values[field.id], state.issues.filter { it.location == field.id }, !state.saving, landscape) { change(field.id, it) }
+        items(state.snapshot.task.fields.groupBy { it.section }.toList(), key = { it.first ?: "" }) { (section, fields) ->
+            section?.let { SectionLabel(it) }
+            AssistCard {
+                fields.chunked(if (landscape) 2 else 1).forEachIndexed { index, row ->
+                    if (index > 0) RowDivider()
+                    Row(Modifier.fillMaxWidth().padding(UiSpace.medium), horizontalArrangement = Arrangement.spacedBy(UiSpace.section)) {
+                        row.forEach { field ->
+                            Box(Modifier.weight(1f)) {
+                                ConfigurationFieldView(field, state.values[field.id], state.issues.filter { it.location == field.id }, !state.saving, landscape) { change(field.id, it) }
+                            }
+                        }
+                        if (landscape && row.size == 1) Spacer(Modifier.weight(1f))
                     }
                 }
-                if (landscape && fields.size == 1) Spacer(Modifier.weight(1f))
             }
         }
     }

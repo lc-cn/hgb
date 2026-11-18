@@ -35,11 +35,11 @@ private fun Color.compositeOver(background: Color): Color {
 }
 
 @Composable
-fun GlassChoice(label: String, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
+fun GlassChoice(label: String, selected: Boolean, enabled: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val shape = RoundedCornerShape(UiSpace.medium)
     val color = MaterialTheme.colorScheme
     Box(
-        Modifier.sizeIn(minWidth = UiSpace.hit, minHeight = UiSpace.hit)
+        modifier.sizeIn(minWidth = UiSpace.hit, minHeight = UiSpace.hit)
             .clip(shape).background(glassBrush(selected))
             .border(BorderStroke(1.dp, color.outlineVariant), shape)
             .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick),

@@ -168,4 +168,46 @@ class ExecutionControlsTest {
         compose.onNodeWithText("等待一").performClick()
         compose.runOnIdle { assertEquals(TaskAddress("fixture", "one"), edited) }
     }
+    private fun showList() {
+        val catalog = runBlocking { library.snapshot() }
+        compose.setContent { val state by runtime.state.collectAsState(); AssistTheme(ThemeMode.LIGHT) { Surface(Modifier.fillMaxSize()) {
+            TaskCenter(VersionCatalogState.Ready(catalog), state, RuntimeStatus.Ready, { runtime.enqueueTask(it) }, {}, {}, { _, _ -> }, {}, {}, {},
+                FloatingPreferencesState.Ready(FloatingSettings(true, setOf(TaskAddress("fixture", "two")), null, null)), {})
+        } } }
+    }
+    @Test fun groupsCollapseAndSearchAndFavoritesNarrowTheList() {
+        compose.activityRule.scenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT }
+        compose.waitUntil(10_000) { compose.activity.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT }
+        showList()
+        compose.onNodeWithText("工具").performClick()
+        compose.onNodeWithText("等待一").assertDoesNotExist()
+        compose.onNodeWithText("工具").performClick()
+        compose.onNodeWithText("等待一").assertIsDisplayed()
+        compose.onNodeWithText("常用").performClick()
+        compose.onNodeWithText("等待一").assertDoesNotExist()
+        compose.onNodeWithText("等待二").assertIsDisplayed()
+        compose.onNodeWithText("全部").performClick()
+        compose.onNodeWithContentDescription("搜索任务").performClick()
+        compose.onNode(hasSetTextAction()).performTextInput("等待一")
+        compose.onNodeWithText("等待二").assertDoesNotExist()
+        compose.onNode(hasSetTextAction()).performTextReplacement("没有这个任务")
+        compose.onNodeWithText("没有符合条件的任务").assertIsDisplayed()
+    }
+    @Test fun statusBarOpensTheQueueAndStopsOnlyAfterConfirmation() {
+        var opened = 0
+        compose.setContent { val state by runtime.state.collectAsState(); val status by runtime.status.collectAsState()
+            AssistTheme(ThemeMode.LIGHT) { Surface { if (runStatusVisible(state, status)) RunStatusBar(state, status, { opened++ },
+                { runtime.submit(ExecutorCommand.Pause) }, { _, _ -> }, { state.current?.let { runtime.submit(ExecutorCommand.StopCurrent(it.runId)) } }) } }
+        }
+        compose.onNodeWithContentDescription("暂停运行").assertDoesNotExist()
+        compose.runOnIdle { runtime.enqueueTask(TaskAddress("fixture", "one")) }; wait { it.current?.task?.id == "one" }
+        compose.onNodeWithText("等待一").assertIsDisplayed().performClick()
+        compose.runOnIdle { assertEquals(1, opened) }
+        compose.onNodeWithContentDescription("停止当前任务").performClick()
+        compose.onNodeWithText("取消").performClick()
+        compose.runOnIdle { assertEquals("one", runtime.state.value.current?.task?.id) }
+        compose.onNodeWithContentDescription("停止当前任务").performClick()
+        compose.onNodeWithText("停止").performClick()
+        wait { it.current == null }
+    }
 }

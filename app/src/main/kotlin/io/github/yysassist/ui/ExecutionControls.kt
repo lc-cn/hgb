@@ -132,7 +132,7 @@ internal fun ExecutionWorkbench(state: ExecutorSnapshot, status: RuntimeStatus, 
 }
 
 @Composable
-private fun ResumeTaskDialog(resume: (ResumeMode) -> Unit, dismiss: () -> Unit) {
+internal fun ResumeTaskDialog(resume: (ResumeMode) -> Unit, dismiss: () -> Unit) {
     AlertDialog(onDismissRequest = dismiss, title = { Text("恢复当前任务") },
         text = { Column {
             TextButton(onClick = { resume(ResumeMode.CONTINUE) }) { Text("继续") }

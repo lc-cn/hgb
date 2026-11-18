@@ -33,15 +33,14 @@ internal fun notificationAccess(sdk: Int, permissionGranted: Boolean, notificati
 
 @Composable
 internal fun NotificationAccessContent(access: NotificationAccess, request: () -> Unit, openSettings: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(UiSpace.medium)) {
-        Text("任务通知", style = MaterialTheme.typography.titleMedium)
-        Text(when (access) {
-            NotificationAccess.ALLOWED -> "已开启"
-            NotificationAccess.REQUESTABLE -> "未开启。任务可发送纯文字提醒，不含截图；不开启也不影响任务运行"
-            NotificationAccess.SYSTEM_SETTINGS -> "已关闭，请在系统设置中开启。不开启也不影响任务运行"
-        }, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val palette = LocalAssistPalette.current
+    SettingRow(AssistIcons.Bell, palette.orange, "任务通知", when (access) {
+        NotificationAccess.ALLOWED -> "任务可发送纯文字提醒，不含截图"
+        NotificationAccess.REQUESTABLE -> "未开启。任务可发送纯文字提醒，不含截图；不开启也不影响任务运行"
+        NotificationAccess.SYSTEM_SETTINGS -> "已关闭，请在系统设置中开启。不开启也不影响任务运行"
+    }) {
         when (access) {
-            NotificationAccess.ALLOWED -> Unit
+            NotificationAccess.ALLOWED -> SettingValue("已开启", palette.success)
             NotificationAccess.REQUESTABLE -> OutlinedButton(onClick = request) { Text("开启通知") }
             NotificationAccess.SYSTEM_SETTINGS -> OutlinedButton(onClick = openSettings) { Text("打开通知设置") }
         }

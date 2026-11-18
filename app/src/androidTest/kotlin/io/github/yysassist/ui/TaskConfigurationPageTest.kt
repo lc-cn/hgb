@@ -64,6 +64,15 @@ class TaskConfigurationPageTest {
         DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(compose.activity.resources.configuration.locales[0])
             .format(LocalDate.of(2026, 11, day)), substring = true, useUnmergedTree = true)
 
+    @Test fun recommendedValuesAreOfferedButOnlyTheExplicitSaveCommitsThem() {
+        show(listOf(ConfigurationField("stamina", "体力上限", FieldWidget.NUMBER, true, section = "消耗上限", recommended = JsonPrimitive(240)),
+            ConfigurationField("floor", "层数", FieldWidget.NUMBER, true, section = "挑战目标")), JsonObject(mapOf("stamina" to JsonPrimitive(80))))
+        compose.onNodeWithText("消耗上限").assertIsDisplayed()
+        compose.onNodeWithText("推荐值").assertDoesNotExist()
+        compose.onNodeWithText("恢复推荐值").performClick()
+        compose.onNodeWithText("推荐值").assertIsDisplayed()
+        compose.runOnIdle { assertEquals(JsonPrimitive(240), values["stamina"]); assertEquals(0, saves) }
+    }
     @Test fun portraitChoiceButtonsSelectIndependentlyAndStackVertically() {
         show(listOf(ConfigurationField("one", "处理方式", FieldWidget.SINGLE_CHOICE, true, options = options),
             ConfigurationField("many", "领取种类", FieldWidget.MULTI_CHOICE, options = listOf(FieldOption("x", "金币"), FieldOption("y", "体力")))))
@@ -87,7 +96,7 @@ class TaskConfigurationPageTest {
         input.performTextInput("1."); input.assertTextContains("1.")
         input.performTextInput("5"); input.assertTextContains("1.5")
         input.performTextReplacement("9007199254740993")
-        compose.onNodeWithText("保存规则").performClick()
+        compose.onNodeWithText("保存").performClick()
         compose.runOnIdle { assertEquals(JsonPrimitive("9007199254740993"), values["amount"]); assertEquals(1, saves) }
     }
     @Test fun sliderProducesAnExactDecimalEvenBeyondDoubleIntegerPrecision() {

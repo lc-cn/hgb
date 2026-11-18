@@ -9,6 +9,16 @@ class ConfigurationValidatorTest {
     private fun task(vararg fields: ConfigurationField) = TaskDefinition("test", "sample", "测试", "daily", 1, fields.toList(), emptyList())
     private fun values(text: String) = parser.parseToJsonElement(text).jsonObject
 
+    @Test fun `a recommended value must satisfy its own field`() {
+        fun bundle(value: Int) = TaskBundle(1, "v1", "2026-11-18T00:00:00Z", "测试", listOf(TaskDefinition("t", "app", "测试", "daily", 1,
+            listOf(ConfigurationField("stamina", "体力上限", FieldWidget.NUMBER, true, maximum = JsonPrimitive(100), section = "消耗上限", recommended = JsonPrimitive(value))),
+            listOf(StepDefinition("s", "步骤", listOf(ActionDefinition("a", "test.observe", 1, JsonObject(emptyMap()))))))),
+            listOf(TargetProfile("app", "应用", listOf("a.b"), IdentityPolicy.NONE, listOf(TaskCategory("daily", "日常")))))
+        val codec = BundleCodec(listOf(CapabilityContract("test.observe", 1) { null }))
+        assertTrue(codec.read(codec.write(bundle(80))) is BundleReadResult.Valid)
+        val invalid = codec.read(Json.encodeToString(TaskBundle.serializer(), bundle(120))) as BundleReadResult.Invalid
+        assertTrue(invalid.issues.any { it.reason == "推荐值不符合字段约束" })
+    }
     @Test fun `large exact budget is checked without binary floating point coercion`() {
         val schema = task(ConfigurationField("budget", "预算", FieldWidget.NUMBER, required = true,
             maximum = parser.parseToJsonElement("9007199254740993").jsonPrimitive))

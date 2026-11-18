@@ -82,9 +82,16 @@ internal fun ConfigurationFieldView(field: ConfigurationField, value: JsonElemen
             }
             FieldWidget.TIME, FieldWidget.DATE, FieldWidget.DATE_RANGE -> CalendarField(field, value, input, enabled, landscape, change)
         }
+        if (field.recommended != null && sameConfigurationValue(value, field.recommended))
+            Text("推荐值", color = LocalAssistPalette.current.gold, style = MaterialTheme.typography.labelSmall)
         errors.forEach { Text(it.reason, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
     }
 }
+
+/** Number fields hold what the user typed as text, so `240` and "240" are the same value here. */
+internal fun sameConfigurationValue(value: JsonElement?, recommended: JsonElement?): Boolean =
+    if (value is JsonPrimitive && recommended is JsonPrimitive && value != JsonNull && recommended != JsonNull) value.content == recommended.content
+    else value == recommended
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
