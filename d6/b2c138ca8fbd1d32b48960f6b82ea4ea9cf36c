@@ -1,0 +1,57 @@
+app/src/androidTest/kotlin/io/github/yysassist/reactions/ReactionMonitorTest.kt
+  s_fae32e7f0efe76::t_b9e15dfe32e4ce 1-89
+app/src/debug/kotlin/io/github/yysassist/debug/DemoTaskSeeder.kt
+  s_fae32e7f0efe76::t_a5ca0b47c55339 71-81,97
+app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_9d7c734e40e340 62-63,80-81,89
+app/src/main/kotlin/io/github/yysassist/ExecutionRuntime.kt
+  s_fae32e7f0efe76::t_94a7a7bad50182 97
+app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt
+  s_fae32e7f0efe76::t_7969dc1b6d0175 7,23-24,44,465-466
+app/src/main/kotlin/io/github/yysassist/floating/FloatingTasks.kt
+  s_fae32e7f0efe76::t_794a985882d16b 30
+app/src/main/kotlin/io/github/yysassist/reactions/ReactionMonitor.kt
+  s_fae32e7f0efe76::t_b7540f57964e3f 1-60
+app/src/main/kotlin/io/github/yysassist/storage/TaskAdmissionRepository.kt
+  s_fae32e7f0efe76::t_0a65b2fef6de0a 23-31
+app/src/main/kotlin/io/github/yysassist/ui/ConfigurationFields.kt
+  s_fae32e7f0efe76::t_148562b220f83a 118-128
+app/src/main/kotlin/io/github/yysassist/ui/PlanEditorPage.kt
+  s_fae32e7f0efe76::t_af74a0c4f631ee 96
+app/src/main/kotlin/io/github/yysassist/ui/TaskConfigurationPage.kt
+  s_fae32e7f0efe76::t_a869d1943bcfe9 21,61
+app/src/main/kotlin/io/github/yysassist/ui/TaskListPage.kt
+  s_fae32e7f0efe76::t_8935b1dc476929 241,245
+core/src/main/kotlin/io/github/yysassist/core/content/ActionBindings.kt
+  s_fae32e7f0efe76::t_076511f53f6fd5 31,66
+core/src/main/kotlin/io/github/yysassist/core/content/ConfigurationValidator.kt
+  s_fae32e7f0efe76::t_fea03710ad7cd6 18-20,23,36
+core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt
+  s_fae32e7f0efe76::t_9c41255b7f177f 66-67,100-101,179-180,229-230
+core/src/main/kotlin/io/github/yysassist/core/content/TaskTriggers.kt
+  s_fae32e7f0efe76::t_395b3b0ee8fe57 1-68
+core/src/main/kotlin/io/github/yysassist/core/execution/StepWorker.kt
+  s_fae32e7f0efe76::t_c9f1d7e8de507e 26-28,40-43,141-142
+core/src/test/kotlin/io/github/yysassist/core/content/ActionBindingContractTest.kt
+  s_fae32e7f0efe76::t_16bcd6d19457c5 9
+core/src/test/kotlin/io/github/yysassist/core/content/TaskTriggerTest.kt
+  s_fae32e7f0efe76::t_4b76d26b2a2692 1-62
+core/src/test/kotlin/io/github/yysassist/core/execution/BuiltInStepWorkFactoryTest.kt
+  s_fae32e7f0efe76::t_31a310d1a2a00c 33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d6b2c138ca8fbd1d32b48960f6b82ea4ea9cf36c",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "unknown"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
