@@ -1,0 +1,112 @@
+app/src/main/res/drawable/ic_launcher_monochrome.xml
+  s_fae32e7f0efe76::t_ae8cb9fe0bcc1b 1-9
+app/src/main/kotlin/io/github/yysassist/storage/TaskAdmissionRepository.kt
+  s_fae32e7f0efe76::t_aef1687865c80e 9,12,20-30,32,35-36
+app/src/main/kotlin/io/github/yysassist/ExecutionRuntime.kt
+  s_fae32e7f0efe76::t_aef1687865c80e 46-47,96-99,126,166,169,175
+app/src/main/kotlin/io/github/yysassist/ui/RunHistoryPage.kt
+  s_fae32e7f0efe76::t_cd73c60f2543e8 3,17,36-38,48-49,71,79-83,85,87,90-99,101-102
+app/src/main/kotlin/io/github/yysassist/ui/SettingsPage.kt
+  s_fae32e7f0efe76::t_d8db96f9404094 49,59,218,234-235
+  s_fae32e7f0efe76::t_d9ed10b7658992 5,36-37,39,57,166-174
+  s_fae32e7f0efe76::t_cd73c60f2543e8 7,40,42-43,99-100,103,130,175-176,199-200,237-270
+  s_fae32e7f0efe76::t_c9d4af60747f49 177,236
+app/src/main/kotlin/io/github/yysassist/ui/TaskConfigurationPage.kt
+  s_fae32e7f0efe76::t_cd73c60f2543e8 5-7,14-15,17-20,31,44-45,47-60,79,92,100
+app/src/main/kotlin/io/github/yysassist/storage/PlanRepository.kt
+  s_fae32e7f0efe76::t_aef1687865c80e 1-46
+app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_aef1687865c80e 62-63,86-96
+app/schemas/io.github.yysassist.storage.AssistDatabase/7.json
+  s_fae32e7f0efe76::t_aef1687865c80e 1-506
+core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt
+  s_fae32e7f0efe76::t_cd73c60f2543e8 98-101
+app/src/main/kotlin/io/github/yysassist/ui/PlansPage.kt
+  s_fae32e7f0efe76::t_d9ed10b7658992 1-146
+app/src/main/kotlin/io/github/yysassist/ui/SurfaceControls.kt
+  s_fae32e7f0efe76::t_cd73c60f2543e8 12,27-29,40,62,78
+app/src/main/AndroidManifest.xml
+  s_fae32e7f0efe76::t_aef1687865c80e 5-6,36-43
+core/src/main/kotlin/io/github/yysassist/core/plan/PlanSchedule.kt
+  s_fae32e7f0efe76::t_aef1687865c80e 1-44
+core/src/test/kotlin/io/github/yysassist/core/plan/PlanScheduleTest.kt
+  s_fae32e7f0efe76::t_aef1687865c80e 1-39
+app/src/main/kotlin/io/github/yysassist/ui/TaskListPage.kt
+  s_fae32e7f0efe76::t_c474ecfb7d8173 115-116
+  s_fae32e7f0efe76::t_cd73c60f2543e8 54,85,94,118,206,217,236-238,241,245
+  s_fae32e7f0efe76::t_d9ed10b7658992 56,78,86,112,218,244
+app/src/androidTest/kotlin/io/github/yysassist/plans/PlanCoordinatorTest.kt
+  s_fae32e7f0efe76::t_d9ed10b7658992 1-33,35-40,42-43,45-47,49-52,54-57,59-62,64-70
+  s_fae32e7f0efe76::t_88b2c51743ea02 34,41,44,48,53,58,63
+app/src/androidTest/kotlin/io/github/yysassist/ui/TaskConfigurationPageTest.kt
+  s_fae32e7f0efe76::t_cd73c60f2543e8 109-115
+app/src/main/res/drawable/ic_launcher_foreground.xml
+  s_fae32e7f0efe76::t_ae8cb9fe0bcc1b 1-10
+app/src/main/kotlin/io/github/yysassist/plans/PlanAlarmReceiver.kt
+  s_fae32e7f0efe76::t_aef1687865c80e 1-40
+app/src/androidTest/kotlin/io/github/yysassist/storage/ActionBindingIntegrationTest.kt
+  s_fae32e7f0efe76::t_2e1dc0ca8a8374 65
+  s_fae32e7f0efe76::t_89a4ccf4c004fb 69
+app/src/main/kotlin/io/github/yysassist/floating/FloatingPreferences.kt
+  s_fae32e7f0efe76::t_d8db96f9404094 16-17,29,38,68
+app/src/main/res/drawable/ic_logo_mark.xml
+  s_fae32e7f0efe76::t_a2874938264152 1-11
+app/src/main/kotlin/io/github/yysassist/ui/AssistIcons.kt
+  s_fae32e7f0efe76::t_d9ed10b7658992 32
+app/src/debug/kotlin/io/github/yysassist/debug/DemoTaskSeeder.kt
+  s_fae32e7f0efe76::t_2646a10d056a46 10-12,25,39-44
+  s_fae32e7f0efe76::t_cd73c60f2543e8 72-79,86
+app/src/main/res/drawable/ic_launcher_background.xml
+  s_fae32e7f0efe76::t_ae8cb9fe0bcc1b 1-8
+app/src/androidTest/kotlin/io/github/yysassist/floating/FloatingOverlayIntegrationTest.kt
+  s_fae32e7f0efe76::t_b5b3c0130520fe 104-106,143,236,252-262
+  s_fae32e7f0efe76::t_eac7242098dae7 342,344
+  s_fae32e7f0efe76::t_74f4626fddf73e 263
+app/src/androidTest/kotlin/io/github/yysassist/ui/PlanEditorPageTest.kt
+  s_fae32e7f0efe76::t_2646a10d056a46 1-47
+app/src/main/kotlin/io/github/yysassist/storage/AssistDatabase.kt
+  s_fae32e7f0efe76::t_aef1687865c80e 148,150
+core/src/main/kotlin/io/github/yysassist/core/execution/ExecutionModels.kt
+  s_fae32e7f0efe76::t_aef1687865c80e 25-26
+app/src/main/kotlin/io/github/yysassist/ui/PlanEditorPage.kt
+  s_fae32e7f0efe76::t_eceb5b3ab8468d 112-114
+  s_fae32e7f0efe76::t_d9ed10b7658992 1-111,115-132
+app/src/main/kotlin/io/github/yysassist/ui/RunStatusBar.kt
+  s_fae32e7f0efe76::t_cd73c60f2543e8 54-57,102-107,111-115
+app/src/androidTest/kotlin/io/github/yysassist/ui/ExecutionControlsTest.kt
+  s_fae32e7f0efe76::t_cd73c60f2543e8 74,76-78,97-98,114-115,117-118,122,124-125,162,179
+app/src/main/kotlin/io/github/yysassist/floating/FloatingOverlayWindow.kt
+  s_fae32e7f0efe76::t_d8db96f9404094 51,64-66,79,87-88,92-101,107,132,134-136,150-155,157-171,175-187,199,203,205,210-211,221-226,228,270
+app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt
+  s_fae32e7f0efe76::t_cd73c60f2543e8 56,121,154-155
+  s_fae32e7f0efe76::t_d8db96f9404094 153
+  s_fae32e7f0efe76::t_d9ed10b7658992 25-29,57-60,73,83-89,107-108,122-129,142-147
+app/src/main/kotlin/io/github/yysassist/floating/FloatingSurface.kt
+  s_fae32e7f0efe76::t_a2874938264152 5,26,83
+  s_fae32e7f0efe76::t_d8db96f9404094 4,9-11,19-23,35,37-38,40,42-44,47-51,54-82,85-92,97-98,100-111,114-147,156-158,160-161,204-205,208-214,222
+  s_fae32e7f0efe76::t_c6f0fff7865b1c 84
+app/src/main/kotlin/io/github/yysassist/ui/ExecutionControls.kt
+  s_fae32e7f0efe76::t_aef1687865c80e 163
+docs/design/ui-v6.md
+  s_fae32e7f0efe76::t_d7ec2f14114bb0 18,22-28,36
+app/src/main/kotlin/io/github/yysassist/plans/PlanCoordinator.kt
+  s_fae32e7f0efe76::t_aef1687865c80e 1-85
+app/src/main/res/mipmap-anydpi/ic_launcher.xml
+  s_fae32e7f0efe76::t_6454908ab26fce 1,3,5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "532170e2e8a494d188d1b91adf142689c695c580",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
