@@ -160,6 +160,8 @@ abstract class AssistDatabase : RoomDatabase() {
          */
         fun open(context: Context, name: String = "assist.db"): AssistDatabase =
             Room.databaseBuilder(context.applicationContext, AssistDatabase::class.java, name)
-                .fallbackToDestructiveMigration(true).fallbackToDestructiveMigrationOnDowngrade(true).build()
+                // Covers upgrades and downgrades. Do not also call fallbackToDestructiveMigrationOnDowngrade:
+                // in Room 2.8 it turns "migration required" back on and an old database then crashes the app.
+                .fallbackToDestructiveMigration(true).build()
     }
 }

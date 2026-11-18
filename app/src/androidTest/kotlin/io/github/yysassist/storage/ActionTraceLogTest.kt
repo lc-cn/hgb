@@ -35,4 +35,18 @@ class ActionTraceLogTest {
             assertTrue(kept.size.toString(), kept.size <= 50 + 49 + 1 && kept.size < 450)
         } finally { scope.cancel(); database.close() }
     }
+
+    @Test fun anOlderOrNewerDatabaseIsRebuiltInsteadOfCrashing(): Unit = runBlocking {
+        for (version in listOf(5, 99)) {
+            context.deleteDatabase(name)
+            SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(name), null).use { old ->
+                old.execSQL("CREATE TABLE legacy (x INTEGER)"); old.version = version
+            }
+            val database = AssistDatabase.open(context, name)
+            try {
+                assertEquals(0, database.executionFacts().count())
+                assertNull(database.executorState().get())
+            } finally { database.close() }
+        }
+    }
 }
