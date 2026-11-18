@@ -1,0 +1,25 @@
+app/src/androidTest/kotlin/io/github/yysassist/actions/DailyGiftDraft.kt
+  s_fae32e7f0efe76::t_595d62302703dd 1-49
+app/src/androidTest/kotlin/io/github/yysassist/actions/DailyGiftReplayTest.kt
+  s_fae32e7f0efe76::t_595d62302703dd 72
+docs/development/build-evidence/back-key/README.md
+  s_fae32e7f0efe76::t_fd7854ad30e0cd 19-28
+docs/development/implementation-status.md
+  s_fae32e7f0efe76::t_c69a7c4912fc5f 298-299
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6282367b6f798e5ed6f1f8c897e48fd97a69a667",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
