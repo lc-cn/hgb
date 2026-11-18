@@ -1,0 +1,80 @@
+app/src/androidTest/kotlin/io/github/yysassist/TaskUpdatesIntegrationTest.kt
+  s_fae32e7f0efe76::t_47b897a083dd7b 137,144,153-154,160-166
+app/src/main/kotlin/io/github/yysassist/storage/ExecutionStateStore.kt
+  s_fae32e7f0efe76::t_933f1e4f7ab341 84
+  s_fae32e7f0efe76::t_da7eec49cfacad 9,79-83,98
+app/src/main/kotlin/io/github/yysassist/storage/TaskResourceFiles.kt
+  s_fae32e7f0efe76::t_b041787a087f2d 73,76-80,101
+docs/development/action-traces.md
+  s_fae32e7f0efe76::t_ee7970ec6a4225 35
+vision/src/main/kotlin/io/github/yysassist/vision/maa/MaaObservationService.kt
+  s_fae32e7f0efe76::t_f394df4450e14e 78,117,119,127,129,156,171-173
+  s_fae32e7f0efe76::t_6956169f97e382 134-136,148-150
+docs/development/data-structure-review.md
+  s_fae32e7f0efe76::t_8a40fdbec04bbb 1-37
+app/src/main/kotlin/io/github/yysassist/vision/MaaTextBackend.kt
+  s_fae32e7f0efe76::t_f394df4450e14e 15,25,79,141
+  s_fae32e7f0efe76::t_a271e3480f1727 30-31,52,66,123
+app/src/androidTest/kotlin/io/github/yysassist/storage/ExecutionStateStoreTest.kt
+  s_fae32e7f0efe76::t_b8d246256a3f1a 62-75
+docs/development/recognition-speed.md
+  s_fae32e7f0efe76::t_ee7970ec6a4225 1-40
+vision/src/main/cpp/MaaOcr.cpp
+  s_fae32e7f0efe76::t_dc6e1247b74d77 117-125,127-133,222,234
+  s_fae32e7f0efe76::t_6956169f97e382 45-48,85-89,116,126,134,212-221,223-233,235
+app/src/main/kotlin/io/github/yysassist/vision/TextObservation.kt
+  s_fae32e7f0efe76::t_a271e3480f1727 17-30
+  s_fae32e7f0efe76::t_f394df4450e14e 13,46-47
+core/src/test/kotlin/io/github/yysassist/core/execution/ExecutorStateGrowthTest.kt
+  s_fae32e7f0efe76::t_a89902ccc5b431 30-61
+  s_fae32e7f0efe76::t_eba62cfcf01d86 1-29,62
+core/src/main/kotlin/io/github/yysassist/core/execution/ExecutionModels.kt
+  s_fae32e7f0efe76::t_3fcd7c6354513d 76-77
+core/src/main/kotlin/io/github/yysassist/core/execution/TaskExecutor.kt
+  s_fae32e7f0efe76::t_3fcd7c6354513d 58-61,569-584,592
+vision/src/main/cpp/CMakeLists.txt
+  s_fae32e7f0efe76::t_a40944a3effaca 7-8
+vision/src/main/kotlin/io/github/yysassist/vision/maa/MaaNative.kt
+  s_fae32e7f0efe76::t_6956169f97e382 12-14
+vision/src/main/kotlin/io/github/yysassist/vision/maa/MaaProcessCall.kt
+  s_fae32e7f0efe76::t_f394df4450e14e 143-145,253
+  s_fae32e7f0efe76::t_6956169f97e382 31-32,220
+app/src/main/kotlin/io/github/yysassist/storage/AssistDatabase.kt
+  s_fae32e7f0efe76::t_933f1e4f7ab341 52-53,55-59,62,64-65,148,154
+  s_fae32e7f0efe76::t_da7eec49cfacad 48-51,54,60-61,63
+  s_fae32e7f0efe76::t_6560d1710babb4 156-160,163
+app/src/main/kotlin/io/github/yysassist/vision/VersionedTextObserver.kt
+  s_fae32e7f0efe76::t_a40944a3effaca 51-54
+  s_fae32e7f0efe76::t_a271e3480f1727 28,34-35,37,45,59,63
+  s_fae32e7f0efe76::t_f394df4450e14e 29-30,33,36,46,62,72-73
+app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationRuntimeTest.kt
+  s_fae32e7f0efe76::t_ada72e64392db5 280,294
+  s_fae32e7f0efe76::t_521c9d8ab61478 517-527
+  s_fae32e7f0efe76::t_f7574a1d0af859 528
+docs/development/implementation-status.md
+  s_fae32e7f0efe76::t_12985eec918c3c 320-331
+  s_fae32e7f0efe76::t_ee7970ec6a4225 316-319
+app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt
+  s_fae32e7f0efe76::t_a40944a3effaca 299-318,341-348,426-439,624,661,689
+  s_fae32e7f0efe76::t_c95ff773553ba8 32,384-396,403-404,440,488,543,714
+  s_fae32e7f0efe76::t_f394df4450e14e 492-493
+app/schemas/io.github.yysassist.storage.AssistDatabase/6.json
+  s_fae32e7f0efe76::t_933f1e4f7ab341 1-4,6-335,337-338,347-398,400,402-427,429-431
+  s_fae32e7f0efe76::t_da7eec49cfacad 5,336,339-346,399,401,428
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4836b42c8e2fc51d4f71fef479f79975278e112e",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
