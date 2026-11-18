@@ -61,6 +61,8 @@ data class TaskDefinition(
     val priority: Long,
     val fields: List<ConfigurationField> = emptyList(),
     val steps: List<StepDefinition>,
+    /** One line shown under the task name in the list. */
+    val description: String? = null,
 )
 @Serializable
 data class StepDefinition(
@@ -77,7 +79,7 @@ data class ActionDefinition(
     val bindings: Map<String, ActionInputBinding> = emptyMap(),
 )
 @Serializable
-enum class FieldWidget { SINGLE_CHOICE, MULTI_CHOICE, NUMBER, RANGE, TIME, DATE, DATE_RANGE, TEXT }
+enum class FieldWidget { SINGLE_CHOICE, MULTI_CHOICE, NUMBER, RANGE, TIME, DATE, DATE_RANGE, TEXT, SWITCH }
 @Serializable
 data class FieldOption(val value: String, val label: String)
 @Serializable
@@ -93,6 +95,8 @@ data class ConfigurationField(
     val options: List<FieldOption> = emptyList(),
     /** Heading under which the settings page groups this field. */
     val section: String? = null,
+    /** One line explaining the field on the settings page. */
+    val description: String? = null,
     /** Suggested value offered by the settings page; never applied without the user saving it. */
     val recommended: JsonElement? = null,
 )

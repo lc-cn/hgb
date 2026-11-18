@@ -3,6 +3,8 @@ package io.github.yysassist.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -12,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -24,8 +27,10 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 import io.github.yysassist.auth.GitHubSessionState
 
-private enum class Page(val title: String, val icon: ImageVector) {
-    TASKS("任务", AssistIcons.Tasks), PLANS("计划", AssistIcons.Calendar), SETTINGS("设置", AssistIcons.Settings),
+private enum class Page(val title: String, val icon: ImageVector, val selectedIcon: ImageVector) {
+    TASKS("任务", AssistIcons.Tasks, AssistIcons.TasksFilled),
+    PLANS("计划", AssistIcons.Calendar, AssistIcons.CalendarFilled),
+    SETTINGS("设置", AssistIcons.Settings, AssistIcons.SettingsFilled),
 }
 
 @Composable
@@ -71,19 +76,18 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
                 Row(Modifier.fillMaxSize()) {
                     if (wide && detail == null) MainNavigation(page, true) { selected = it.name }
                     Column(Modifier.weight(1f).fillMaxHeight()) {
-                        AppHeader(if (detail == "任务配置") (editor as? TaskEditorState.Ready)?.snapshot?.task?.name ?: "任务设置" else detail ?: page.title,
+                        // The task list and the landscape settings page carry their own title bars.
+                        if (detail != null || (page != Page.TASKS && !(wide && page == Page.SETTINGS)))
+                            AppHeader(if (detail == "任务配置") (editor as? TaskEditorState.Ready)?.snapshot?.task?.name ?: "任务设置" else detail ?: page.title,
                             detail != null, { detail = null }) {
                             if (detail == "任务配置" && (editor as? TaskEditorState.Ready)?.dirty == true) {
-                                Text("未保存", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                                Text("未保存", color = LocalAssistPalette.current.warning, style = MaterialTheme.typography.labelSmall)
                             } else if (detail == "任务更新") {
                                 TextButton(enabled = pull !is TaskPullState.Fetching, onClick = application.taskUpdates::pullLatest) {
                                     Text(if (pull is TaskPullState.Fetching) "拉取中" else "拉取")
                                 }
                             } else if (detail == "GitHub" && github is GitHubSessionState.Connected) {
                                 TextButton(enabled = !(github as GitHubSessionState.Connected).checking, onClick = application.github::checkAccount) { Text("检查") }
-                            } else if (page == Page.TASKS && detail == null) {
-                                TaskVersionEntry(versions) { detail = "任务更新" }
-                                IconButton(onClick = { detail = "运行记录" }) { Icon(AssistIcons.History, "运行记录") }
                             }
                         }
                         if (detail != null) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -109,7 +113,7 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
                                         { id, resume -> application.executor.submit(ExecutorCommand.ResumeCurrent(id, resume)) },
                                         application.taskUpdates::reloadCatalog, { detail = "任务更新" }, edit = {
                                         editTarget = it.targetId; editTask = it.taskId; detail = "任务配置"
-                                    }, favorites = floating, toggleFavorite = application.floating::toggle)
+                                    }, favorites = floating, toggleFavorite = application.floating::toggle, openHistory = { detail = "运行记录" })
                                     Page.PLANS -> EmptyContent("暂无计划", "取得任务并保存配置后，可组合执行计划。")
                                     Page.SETTINGS -> SettingsPage(appearance, mode, { item ->
                                         scope.launch {
@@ -136,50 +140,46 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
 
 @Composable
 internal fun AppHeader(title: String, back: Boolean, onBack: () -> Unit, actions: @Composable RowScope.() -> Unit) {
-    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = UiSpace.page),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(start = if (back) UiSpace.tiny else UiSpace.page, end = UiSpace.page),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(UiSpace.tiny)) {
         if (back) IconButton(onClick = onBack) { Icon(AssistIcons.Back, "返回") }
-        Text(title, Modifier.weight(1f).semantics { heading() }, fontWeight = FontWeight.SemiBold,
-            style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(title, Modifier.weight(1f).semantics { heading() }, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            style = if (back) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge)
         actions()
     }
 }
 
 @Composable
-private fun iconColor(page: Page, strong: Boolean = false): Color = with(if (strong) paletteOnStrong() else LocalAssistPalette.current) {
+private fun pageColor(page: Page): Color = with(LocalAssistPalette.current) {
     when (page) { Page.TASKS -> violet; Page.PLANS -> orange; Page.SETTINGS -> rose }
+}
+
+/** Selected: the label takes the page colour and the icon is filled with it. */
+@Composable
+private fun NavigationItem(page: Page, selected: Boolean, modifier: Modifier, select: (Page) -> Unit) {
+    val color = if (selected) pageColor(page) else MaterialTheme.colorScheme.onSurfaceVariant
+    Column(modifier.selectable(selected, role = Role.Tab, onClick = { select(page) }),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Icon(if (selected) page.selectedIcon else page.icon, null, Modifier.size(UiSpace.icon), tint = color)
+        Spacer(Modifier.height(2.dp))
+        Text(page.title, color = color, maxLines = 1, style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
+    }
 }
 
 @Composable
 private fun MainNavigation(selected: Page, rail: Boolean, select: (Page) -> Unit) {
     val colors = MaterialTheme.colorScheme
-    @Composable fun glyph(page: Page) {
-        val color = iconColor(page, page == selected)
-        Icon(page.icon, null, Modifier.size(UiSpace.icon), tint = color.copy(alpha = .82f))
-    }
-    if (rail) {
-        NavigationRail(Modifier.width(UiSpace.rail).fillMaxHeight(), containerColor = colors.surfaceContainer,
-            windowInsets = WindowInsets(0, 0, 0, 0)) {
-            Page.entries.forEach { page ->
-                NavigationRailItem(selected == page, { select(page) }, icon = { glyph(page) },
-                    modifier = Modifier.clip(RoundedCornerShape(UiSpace.medium)).then(
-                        if (selected == page) Modifier.background(glassBrush(true)) else Modifier),
-                    label = { Text(page.title, style = MaterialTheme.typography.labelSmall, maxLines = 1) },
-                    colors = NavigationRailItemDefaults.colors(indicatorColor = Color.Transparent,
-                        selectedTextColor = colors.onPrimary, unselectedTextColor = colors.onSurfaceVariant))
-            }
+    if (rail) Row(Modifier.fillMaxHeight()) {
+        Column(Modifier.width(UiSpace.rail).fillMaxHeight().background(colors.surfaceContainerHigh).selectableGroup(),
+            verticalArrangement = Arrangement.spacedBy(UiSpace.gap, Alignment.CenterVertically)) {
+            Page.entries.forEach { NavigationItem(it, it == selected, Modifier.fillMaxWidth().height(64.dp), select) }
         }
-    } else {
-        NavigationBar(containerColor = colors.surfaceContainer, tonalElevation = 0.dp,
-            windowInsets = WindowInsets(0, 0, 0, 0)) {
-            Page.entries.forEach { page ->
-                NavigationBarItem(selected == page, { select(page) }, icon = { glyph(page) },
-                    modifier = Modifier.padding(UiSpace.tiny).clip(RoundedCornerShape(UiSpace.page)).then(
-                        if (selected == page) Modifier.background(glassBrush(true)) else Modifier),
-                    label = { Text(page.title, style = MaterialTheme.typography.labelSmall, maxLines = 1) },
-                    colors = NavigationBarItemDefaults.colors(indicatorColor = Color.Transparent,
-                        selectedTextColor = colors.onPrimary, unselectedTextColor = colors.onSurfaceVariant))
-            }
+        VerticalDivider(color = colors.outlineVariant)
+    } else Column(Modifier.fillMaxWidth().background(colors.surfaceContainerHigh)) {
+        HorizontalDivider(color = colors.outlineVariant)
+        Row(Modifier.fillMaxWidth().height(64.dp).selectableGroup()) {
+            Page.entries.forEach { NavigationItem(it, it == selected, Modifier.weight(1f).fillMaxHeight(), select) }
         }
     }
 }

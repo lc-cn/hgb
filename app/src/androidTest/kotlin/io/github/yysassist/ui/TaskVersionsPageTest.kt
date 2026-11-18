@@ -87,24 +87,4 @@ class TaskVersionsPageTest {
         button("删除", "two").assertIsDisplayed()
         screenshot("versions-light-landscape")
     }
-    @Test fun headerShowsActiveVersionAndKnownUpdateInAccessibleLabel() {
-        var opened = false
-        compose.setContent { TestSurface(ThemeMode.DARK) {
-            TaskVersionEntry(VersionCatalogState.Ready(catalog().copy(activeVersion = "one"))) { opened = true }
-        } }
-        compose.onNodeWithContentDescription("任务版本，one，有更新").assertIsDisplayed().performClick()
-        compose.onNodeWithText("one").assertIsDisplayed()
-        compose.runOnIdle { assertEquals(true, opened) }
-    }
-    @Test fun longVersionDoesNotSqueezeTheTaskCenterTitleAway() {
-        compose.setContent { TestSurface(ThemeMode.LIGHT) {
-            Box(Modifier.width(320.dp)) {
-                AppHeader("任务中心", false, {}) {
-                    TaskVersionEntry(VersionCatalogState.Ready(catalog().copy(activeVersion = "tasks-2026-11-16-very-long-maintenance-release-name"))) {}
-                }
-            }
-        } }
-        compose.onNodeWithText("任务中心").assertIsDisplayed().assertWidthIsAtLeast(88.dp)
-        screenshot("long-version-title")
-    }
 }

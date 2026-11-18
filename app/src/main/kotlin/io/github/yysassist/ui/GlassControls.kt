@@ -1,14 +1,14 @@
 package io.github.yysassist.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,7 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
-/** Layered optical material, without blurring foreground text or claiming native backdrop blur. */
+/** Layered optical material for the floating controls and account page. */
 @Composable
 fun glassBrush(strong: Boolean = false): Brush {
     val palette = LocalAssistPalette.current
@@ -36,16 +36,16 @@ private fun Color.compositeOver(background: Color): Color {
 
 @Composable
 fun GlassChoice(label: String, selected: Boolean, enabled: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(UiSpace.medium)
+    val shape = RoundedCornerShape(10.dp)
     val color = MaterialTheme.colorScheme
     Box(
-        modifier.sizeIn(minWidth = UiSpace.hit, minHeight = UiSpace.hit)
-            .clip(shape).background(glassBrush(selected))
-            .border(BorderStroke(1.dp, color.outlineVariant), shape)
-            .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick),
+        modifier.sizeIn(minWidth = UiSpace.hit, minHeight = 40.dp)
+            .clip(shape).background(if (selected) color.primary else color.surfaceContainerHigh)
+            .border(UiSpace.hairline, if (selected) color.primary else color.outlineVariant, shape)
+            .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick)
+            .padding(horizontal = UiSpace.medium),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, color = if (selected) color.onPrimary else color.onSurface,
-            style = MaterialTheme.typography.labelMedium)
+        Text(label, color = if (selected) color.onPrimary else color.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
     }
 }

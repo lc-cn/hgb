@@ -68,12 +68,12 @@ class TaskConfigurationPageTest {
         show(listOf(ConfigurationField("stamina", "体力上限", FieldWidget.NUMBER, true, section = "消耗上限", recommended = JsonPrimitive(240)),
             ConfigurationField("floor", "层数", FieldWidget.NUMBER, true, section = "挑战目标")), JsonObject(mapOf("stamina" to JsonPrimitive(80))))
         compose.onNodeWithText("消耗上限").assertIsDisplayed()
-        compose.onNodeWithText("推荐值").assertDoesNotExist()
+        compose.onNodeWithText("推荐").assertDoesNotExist()
         compose.onNodeWithText("恢复推荐值").performClick()
-        compose.onNodeWithText("推荐值").assertIsDisplayed()
+        compose.onNodeWithText("推荐").assertIsDisplayed()
         compose.runOnIdle { assertEquals(JsonPrimitive(240), values["stamina"]); assertEquals(0, saves) }
     }
-    @Test fun portraitChoiceButtonsSelectIndependentlyAndStackVertically() {
+    @Test fun portraitChoiceButtonsSelectIndependentlyAndShareARow() {
         show(listOf(ConfigurationField("one", "处理方式", FieldWidget.SINGLE_CHOICE, true, options = options),
             ConfigurationField("many", "领取种类", FieldWidget.MULTI_CHOICE, options = listOf(FieldOption("x", "金币"), FieldOption("y", "体力")))))
         compose.onNodeWithText("甲").performScrollTo().performClick()
@@ -82,7 +82,7 @@ class TaskConfigurationPageTest {
         compose.onNodeWithText("乙").assertIsSelected()
         val first = compose.onNodeWithText("甲").fetchSemanticsNode().boundsInRoot
         val second = compose.onNodeWithText("乙").fetchSemanticsNode().boundsInRoot
-        assertTrue(first.top < second.top)
+        assertEquals(first.top, second.top, 1f)
         compose.onNodeWithText("金币").performScrollTo().performClick()
         compose.onNodeWithText("体力").performScrollTo().performClick()
         compose.runOnIdle { assertEquals(JsonArray(listOf(JsonPrimitive("x"), JsonPrimitive("y"))), values["many"]) }
@@ -98,6 +98,18 @@ class TaskConfigurationPageTest {
         input.performTextReplacement("9007199254740993")
         compose.onNodeWithText("保存").performClick()
         compose.runOnIdle { assertEquals(JsonPrimitive("9007199254740993"), values["amount"]); assertEquals(1, saves) }
+    }
+    @Test fun stepperMovesByTheDeclaredStepAndStopsAtTheLimits() {
+        show(listOf(ConfigurationField("floor", "层数", FieldWidget.NUMBER, true, minimum = JsonPrimitive(1), maximum = JsonPrimitive(11), step = JsonPrimitive(5))),
+            JsonObject(mapOf("floor" to JsonPrimitive(6))))
+        compose.onNodeWithContentDescription("增加层数").performClick()
+        compose.runOnIdle { assertEquals("11", values["floor"]!!.jsonPrimitive.content) }
+        compose.onNodeWithContentDescription("增加层数").assertIsNotEnabled()
+    }
+    @Test fun switchFieldStoresARealBoolean() {
+        show(listOf(ConfigurationField("boost", "使用加成", FieldWidget.SWITCH, true)), JsonObject(mapOf("boost" to JsonPrimitive(false))))
+        compose.onNodeWithContentDescription("使用加成").performClick()
+        compose.runOnIdle { assertEquals(JsonPrimitive(true), values["boost"]) }
     }
     @Test fun sliderProducesAnExactDecimalEvenBeyondDoubleIntegerPrecision() {
         val field = ConfigurationField("budget", "预算", FieldWidget.RANGE, true, unit = "份",

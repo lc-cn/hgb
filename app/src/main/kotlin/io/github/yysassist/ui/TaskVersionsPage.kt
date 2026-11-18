@@ -24,24 +24,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun TaskVersionEntry(state: VersionCatalogState, open: () -> Unit) {
-    val catalog = (state as? VersionCatalogState.Ready)?.catalog
-    val label = when (state) {
-        VersionCatalogState.Loading -> "读取中"
-        is VersionCatalogState.Failure -> "读取失败"
-        is VersionCatalogState.Ready -> catalog?.activeVersion ?: "未启用"
-    }
-    TextButton(onClick = open, modifier = Modifier.widthIn(max = UiSpace.versionEntryMax).semantics {
-        contentDescription = "任务版本，$label" + if (catalog?.hasKnownUpdate == true) "，有更新" else ""
-    }) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
-            Text(label, Modifier.weight(1f, fill = false), maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (catalog?.hasKnownUpdate == true) Box(Modifier.size(UiSpace.statusDot).background(LocalAssistPalette.current.error, CircleShape))
-        }
-    }
-}
-
-@Composable
 fun TaskVersionsPage(state: VersionCatalogState, pull: TaskPullState, operation: String?, reload: () -> Unit,
     activate: (String) -> Unit, delete: (String) -> Unit) {
     when (state) {

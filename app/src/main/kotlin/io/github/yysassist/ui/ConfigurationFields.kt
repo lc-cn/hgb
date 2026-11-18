@@ -3,11 +3,13 @@ package io.github.yysassist.ui
 import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,32 +18,84 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import io.github.yysassist.core.content.*
 import kotlinx.serialization.json.*
+import java.math.BigDecimal
 import java.time.*
+
+@Composable
+private fun FieldHeading(field: ConfigurationField, value: JsonElement?, modifier: Modifier = Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+            Text(field.label, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodyLarge)
+            if (field.recommended != null && sameConfigurationValue(value, field.recommended)) TonePill("推荐", LocalAssistPalette.current.gold)
+        }
+        val detail = listOfNotNull(field.description, field.unit?.takeIf { field.description == null }?.let { "单位：$it" }).firstOrNull()
+        detail?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
+    }
+}
+
+/** Exact decimal stepping; the middle stays editable so any allowed amount can still be typed. */
+@Composable
+private fun NumberStepper(field: ConfigurationField, input: String, isError: Boolean, enabled: Boolean, change: (JsonElement) -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val shape = RoundedCornerShape(UiSpace.medium)
+    val step = field.step?.content?.toBigDecimalOrNull() ?: BigDecimal.ONE
+    val minimum = field.minimum?.content?.toBigDecimalOrNull()
+    val maximum = field.maximum?.content?.toBigDecimalOrNull()
+    val current = input.toBigDecimalOrNull()
+    fun moved(next: BigDecimal) = change(JsonPrimitive(next.toPlainString()))
+    @Composable fun button(symbol: String, label: String, allowed: Boolean, action: () -> Unit) =
+        Box(Modifier.size(UiSpace.hit).clickable(enabled = enabled && allowed, role = Role.Button, onClickLabel = label, onClick = action)
+            .semantics { contentDescription = label }, Alignment.Center) {
+            Text(symbol, color = if (enabled && allowed) colors.onSurface else colors.onSurfaceVariant.copy(alpha = .4f), style = MaterialTheme.typography.titleLarge)
+        }
+    Row(Modifier.clip(shape).background(colors.surfaceContainer).border(UiSpace.hairline, if (isError) colors.error else colors.outlineVariant, shape),
+        verticalAlignment = Alignment.CenterVertically) {
+        button("−", "减少${field.label}", current == null || minimum == null || current - step >= minimum) {
+            moved(current?.minus(step) ?: minimum ?: BigDecimal.ZERO)
+        }
+        BasicTextField(input, { change(JsonPrimitive(it)) }, Modifier.width(64.dp).semantics { contentDescription = field.label }, enabled = enabled, singleLine = true,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.onSurface, textAlign = TextAlign.Center, fontWeight = FontWeight.SemiBold),
+            cursorBrush = SolidColor(colors.onSurface), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
+        button("+", "增加${field.label}", current == null || maximum == null || current + step <= maximum) {
+            moved(current?.plus(step) ?: minimum ?: BigDecimal.ZERO)
+        }
+    }
+}
 
 @Composable
 internal fun ConfigurationFieldView(field: ConfigurationField, value: JsonElement?, errors: List<ContentIssue>, enabled: Boolean,
     landscape: Boolean, change: (JsonElement) -> Unit) {
     val input = (value as? JsonPrimitive)?.takeUnless { it == JsonNull }?.content ?: ""
-    val textField = field.widget in listOf(FieldWidget.TEXT, FieldWidget.NUMBER, FieldWidget.RANGE)
+    val clearable = !field.required && value != null && value != JsonNull
     Column(verticalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
-        if (!textField) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(field.label + if (field.required) " *" else "", Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
-            if (!field.required && value != null && value != JsonNull)
-                TextButton(enabled = enabled, onClick = { change(JsonNull) }) { Text("清除") }
-        }
         when (field.widget) {
-            FieldWidget.TEXT, FieldWidget.NUMBER, FieldWidget.RANGE -> {
+            FieldWidget.NUMBER -> Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FieldHeading(field, value, Modifier.weight(1f))
+                if (clearable) IconButton(enabled = enabled, onClick = { change(JsonNull) }) { Icon(AssistIcons.Close, "清除${field.label}") }
+                NumberStepper(field, input, errors.isNotEmpty(), enabled, change)
+            }
+            FieldWidget.SWITCH -> Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                FieldHeading(field, value, Modifier.weight(1f))
+                AssistSwitch((value as? JsonPrimitive)?.booleanOrNull == true, enabled, field.label) { change(JsonPrimitive(it)) }
+            }
+            FieldWidget.TEXT, FieldWidget.RANGE -> {
+                FieldHeading(field, value)
                 OutlinedTextField(value = input, onValueChange = { change(JsonPrimitive(it)) }, enabled = enabled,
-                    modifier = Modifier.fillMaxWidth(), singleLine = field.widget != FieldWidget.TEXT,
+                    modifier = Modifier.fillMaxWidth(), singleLine = field.widget != FieldWidget.TEXT, shape = RoundedCornerShape(UiSpace.medium),
                     keyboardOptions = KeyboardOptions(keyboardType = if (field.widget == FieldWidget.TEXT) KeyboardType.Text else KeyboardType.Decimal),
-                    isError = errors.isNotEmpty(), label = { Text(field.label + if (field.required) " *" else "") },
-                    trailingIcon = if (!field.required && value != null && value != JsonNull) {
+                    isError = errors.isNotEmpty(),
+                    trailingIcon = if (clearable) {
                         { IconButton(enabled = enabled, onClick = { change(JsonNull) }) { Icon(AssistIcons.Close, "清除${field.label}") } }
                     } else null,
                     suffix = field.unit?.let { unit -> { Text(unit) } })
@@ -55,35 +109,40 @@ internal fun ConfigurationFieldView(field: ConfigurationField, value: JsonElemen
                 }
             }
             FieldWidget.SINGLE_CHOICE, FieldWidget.MULTI_CHOICE -> {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    FieldHeading(field, value, Modifier.weight(1f))
+                    if (clearable) TextButton(enabled = enabled, onClick = { change(JsonNull) }) { Text("清除") }
+                }
                 val choices = (value as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }.orEmpty()
                 val single = field.widget == FieldWidget.SINGLE_CHOICE
-                @Composable fun option(option: FieldOption, modifier: Modifier) {
-                    val selected = if (single) value == JsonPrimitive(option.value) else option.value in choices
-                    val action = {
-                        if (single) change(JsonPrimitive(option.value))
-                        else change(JsonArray((if (selected) choices - option.value else choices + option.value).map(::JsonPrimitive)))
-                    }
-                    val semantics = if (single) modifier.selectable(selected, enabled, Role.RadioButton, onClick = action)
-                        else modifier.toggleable(selected, enabled, Role.Checkbox, onValueChange = { action() })
-                    val shape = RoundedCornerShape(UiSpace.medium)
-                    Box(semantics.heightIn(min = UiSpace.hit).clip(shape).background(glassBrush(selected))
-                        .border(androidx.compose.foundation.BorderStroke(UiSpace.hairline, MaterialTheme.colorScheme.outlineVariant), shape)
-                        .padding(horizontal = UiSpace.medium, vertical = UiSpace.gap), contentAlignment = Alignment.Center) {
-                        Text(option.label, color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface)
-                    }
-                }
-                if (landscape) FlowRow(Modifier.fillMaxWidth().then(if (single) Modifier.selectableGroup() else Modifier),
+                FlowRow(Modifier.fillMaxWidth().then(if (single) Modifier.selectableGroup() else Modifier),
                     horizontalArrangement = Arrangement.spacedBy(UiSpace.gap), verticalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
-                    field.options.forEach { option(it, Modifier) }
-                } else Column(Modifier.fillMaxWidth().then(if (single) Modifier.selectableGroup() else Modifier),
-                    verticalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
-                    field.options.forEach { option(it, Modifier.fillMaxWidth()) }
+                    field.options.forEach { option ->
+                        val selected = if (single) value == JsonPrimitive(option.value) else option.value in choices
+                        val action = {
+                            if (single) change(JsonPrimitive(option.value))
+                            else change(JsonArray((if (selected) choices - option.value else choices + option.value).map(::JsonPrimitive)))
+                        }
+                        val shape = RoundedCornerShape(10.dp)
+                        val colors = MaterialTheme.colorScheme
+                        Box((if (single) Modifier.selectable(selected, enabled, Role.RadioButton, onClick = action)
+                            else Modifier.toggleable(selected, enabled, Role.Checkbox, onValueChange = { action() }))
+                            .heightIn(min = UiSpace.hit).clip(shape).background(if (selected) colors.primary else colors.surfaceContainer)
+                            .border(UiSpace.hairline, if (selected) colors.primary else colors.outlineVariant, shape)
+                            .padding(horizontal = 14.dp), contentAlignment = Alignment.Center) {
+                            Text(option.label, color = if (selected) colors.onPrimary else colors.onSurfaceVariant)
+                        }
+                    }
                 }
             }
-            FieldWidget.TIME, FieldWidget.DATE, FieldWidget.DATE_RANGE -> CalendarField(field, value, input, enabled, landscape, change)
+            FieldWidget.TIME, FieldWidget.DATE, FieldWidget.DATE_RANGE -> {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    FieldHeading(field, value, Modifier.weight(1f))
+                    if (clearable) TextButton(enabled = enabled, onClick = { change(JsonNull) }) { Text("清除") }
+                }
+                CalendarField(field, value, input, enabled, landscape, change)
+            }
         }
-        if (field.recommended != null && sameConfigurationValue(value, field.recommended))
-            Text("推荐值", color = LocalAssistPalette.current.gold, style = MaterialTheme.typography.labelSmall)
         errors.forEach { Text(it.reason, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
     }
 }

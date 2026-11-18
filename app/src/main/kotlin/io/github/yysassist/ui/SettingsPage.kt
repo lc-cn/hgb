@@ -4,9 +4,11 @@ import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -39,40 +42,52 @@ internal fun SettingsPage(appearance: AppearanceState, mode: ThemeMode, setTheme
     open: (String) -> Unit) {
     val p = LocalAssistPalette.current
     val service by GameAccessibilityService.connection.collectAsState()
+    val notifications = rememberNotificationAccess()
     val sections = listOf(
         SettingsSection("权限与运行环境", service == null) {
-            AccessibilityRow(service != null); RowDivider(); NotificationAccessSection(); RowDivider(); ScreenshotRow()
+            AccessibilityRow(service != null); RowDivider()
+            NotificationAccessContent(notifications.access, notifications.request, notifications.openSettings); RowDivider(); ScreenshotRow()
         },
         SettingsSection("悬浮球") { FloatingRows(floating, setFloatingVisible, reloadFloating) },
         SettingsSection("外观") {
-            SettingRow(AssistIcons.Theme, p.rose, "主题") {
-                Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(UiSpace.tiny)) {
+            SettingRow(AssistIcons.Theme, p.rose, "主题", "跟随系统或固定明暗") {
+                Row(Modifier.clip(RoundedCornerShape(UiSpace.medium)).background(MaterialTheme.colorScheme.surfaceContainer)
+                    .border(UiSpace.hairline, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(UiSpace.medium)).padding(3.dp).selectableGroup()) {
                     ThemeMode.entries.forEach { item ->
-                        GlassChoice(when (item) { ThemeMode.SYSTEM -> "系统"; ThemeMode.LIGHT -> "浅色"; ThemeMode.DARK -> "深色" },
-                            item == mode, appearance is AppearanceState.Ready) { setTheme(item) }
+                        val active = item == mode
+                        Box(Modifier.heightIn(min = 40.dp).widthIn(min = 44.dp).clip(RoundedCornerShape(9.dp))
+                            .background(if (active) MaterialTheme.colorScheme.primary else Color.Transparent)
+                            .selectable(active, appearance is AppearanceState.Ready, Role.RadioButton) { setTheme(item) }, Alignment.Center) {
+                            Text(when (item) { ThemeMode.SYSTEM -> "系统"; ThemeMode.LIGHT -> "浅色"; ThemeMode.DARK -> "深色" },
+                                color = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal, style = MaterialTheme.typography.labelLarge)
+                        }
                     }
                 }
             }
         },
         SettingsSection("任务与账号") {
             val catalog = (versions as? VersionCatalogState.Ready)?.catalog
-            SettingRow(AssistIcons.Cloud, p.blue, "任务更新", when (versions) {
-                VersionCatalogState.Loading -> "读取中"
-                is VersionCatalogState.Failure -> "本地版本读取失败"
-                is VersionCatalogState.Ready -> versions.catalog.activeVersion?.let { "当前版本 $it" } ?: "暂无已启用任务版本"
-            }, { open("任务更新") }) {
-                if (catalog?.hasKnownUpdate == true) SettingValue("有更新", p.error)
+            SettingRow(AssistIcons.Cloud, p.blue, "任务更新", "拉取和切换任务版本", { open("任务更新") }) {
+                SettingValue(when (versions) {
+                    VersionCatalogState.Loading -> "读取中"
+                    is VersionCatalogState.Failure -> "读取失败"
+                    is VersionCatalogState.Ready -> if (catalog?.hasKnownUpdate == true) "有新版本" else versions.catalog.activeVersion ?: "未启用"
+                }, if (catalog?.hasKnownUpdate == true) p.error else MaterialTheme.colorScheme.onSurfaceVariant)
                 Chevron()
             }
             RowDivider()
-            SettingRow(AssistIcons.User, p.teal, "GitHub", when (github) {
-                GitHubSessionState.Loading -> "读取中"; GitHubSessionState.Saving -> "保存登录中"
-                is GitHubSessionState.SigningIn -> "等待授权"; is GitHubSessionState.Failure -> "登录资料暂不可用"
-                is GitHubSessionState.SignedOut -> "未登录"; is GitHubSessionState.Connected -> github.login?.let { "@$it" } ?: "已登录"
-            }, { open("GitHub") }) { Chevron() }
+            SettingRow(AssistIcons.User, p.teal, "GitHub", "用于下载任务版本", { open("GitHub") }) {
+                SettingValue(when (github) {
+                    GitHubSessionState.Loading -> "读取中"; GitHubSessionState.Saving -> "保存中"
+                    is GitHubSessionState.SigningIn -> "等待授权"; is GitHubSessionState.Failure -> "不可用"
+                    is GitHubSessionState.SignedOut -> "未登录"; is GitHubSessionState.Connected -> github.login?.let { "@$it" } ?: "已登录"
+                })
+                Chevron()
+            }
         },
         SettingsSection("数据与诊断") {
-            SettingRow(AssistIcons.History, p.orange, "运行记录", "查看每次运行的结果", { open("运行记录") }) { Chevron() }
+            SettingRow(AssistIcons.History, p.orange, "运行记录", "查看每次运行的结果和步骤", { open("运行记录") }) { Chevron() }
         },
         SettingsSection("关于") {
             SettingRow(AssistIcons.Info, p.violet, "版本信息") { SettingValue(BuildConfig.VERSION_NAME) }
@@ -84,8 +99,9 @@ internal fun SettingsPage(appearance: AppearanceState, mode: ThemeMode, setTheme
     BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
         if (maxWidth >= UiSpace.wide) Row(Modifier.fillMaxSize()) {
             val selected = sections.firstOrNull { it.name == selectedName } ?: sections.first()
-            Column(Modifier.width(208.dp).verticalScroll(rememberScrollState()).padding(UiSpace.gap),
+            Column(Modifier.width(220.dp).verticalScroll(rememberScrollState()).padding(UiSpace.gap),
                 verticalArrangement = Arrangement.spacedBy(UiSpace.tiny)) {
+                Text("设置", Modifier.padding(horizontal = 10.dp, vertical = UiSpace.gap), style = MaterialTheme.typography.titleLarge)
                 sections.forEach { section ->
                     val active = section === selected
                     Row(Modifier.fillMaxWidth().heightIn(min = UiSpace.hit).clip(RoundedCornerShape(10.dp))
@@ -100,14 +116,29 @@ internal fun SettingsPage(appearance: AppearanceState, mode: ThemeMode, setTheme
             }
             VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(UiSpace.medium)) {
+                ReadinessBanner(service != null, notifications.access)
+                Text(selected.name, Modifier.padding(horizontal = UiSpace.tiny, vertical = UiSpace.gap), style = MaterialTheme.typography.titleMedium)
                 AssistCard(content = selected.content)
             }
         } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())
             .padding(start = UiSpace.medium, end = UiSpace.medium, bottom = UiSpace.medium)) {
+            ReadinessBanner(service != null, notifications.access)
             sections.forEach { section -> SectionLabel(section.name); AssistCard(content = section.content) }
         }
     }
     }
+}
+
+@Composable
+private fun ReadinessBanner(accessibility: Boolean, notification: NotificationAccess) {
+    val p = LocalAssistPalette.current
+    val (text, tint) = when {
+        !accessibility -> "需要开启无障碍服务才能运行任务" to p.warning
+        notification != NotificationAccess.ALLOWED -> "可以运行，开启通知后能及时收到提醒" to p.warning
+        else -> "运行条件已全部就绪" to p.success
+    }
+    Text(text, Modifier.fillMaxWidth().padding(bottom = UiSpace.tiny).clip(RoundedCornerShape(14.dp)).background(tint.copy(alpha = .14f))
+        .padding(horizontal = 14.dp, vertical = UiSpace.medium), color = tint, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
 }
 
 @Composable
@@ -119,7 +150,7 @@ private fun AccessibilityRow(connected: Boolean) {
     val p = LocalAssistPalette.current
     SettingRow(AssistIcons.Shield, p.blue, "无障碍服务", "用于读取画面和执行操作") {
         if (connected) SettingValue("已开启", p.success)
-        else OutlinedButton(onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }) { Text("去开启") }
+        else SmallAction("开启") { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
     }
 }
 
@@ -144,8 +175,8 @@ private fun ScreenshotRow() {
     }
     val success = result as? ScreenshotCheck.Success
     SettingRow(AssistIcons.Phone, p.teal, "屏幕截图", failure ?: success?.let { "已取得可读取画面 · ${it.width} × ${it.height}" } ?: "检查能否读取当前画面") {
-        OutlinedButton(enabled = service != null && !checking, onClick = {
-            val owner = service ?: return@OutlinedButton
+        SmallAction(if (checking) "检查中" else "检查", service != null && !checking) {
+            val owner = service ?: return@SmallAction
             checking = true; error = null; result = null
             try {
                 owner.checkScreenshot { value ->
@@ -157,7 +188,7 @@ private fun ScreenshotRow() {
                     }
                 }
             } catch (_: SecurityException) { checking = false; error = "截图授权不可用" }
-        }) { Text(if (checking) "检查中" else "检查") }
+        }
     }
 }
 
@@ -170,12 +201,12 @@ private fun ColumnScope.FloatingRows(state: FloatingPreferencesState, setVisible
     when (state) {
         FloatingPreferencesState.Loading -> SettingRow(AssistIcons.Circle, p.violet, "显示悬浮球", "读取中")
         is FloatingPreferencesState.Failure -> SettingRow(AssistIcons.Circle, p.violet, "显示悬浮球", state.message) {
-            OutlinedButton(reload) { Text("重新读取") }
+            SmallAction("重新读取", onClick = reload)
         }
         is FloatingPreferencesState.Ready -> {
             SettingRow(AssistIcons.Circle, p.violet, "显示悬浮球", failure ?: if (service == null) "无障碍服务未连接" else "在游戏中快速控制运行") {
-                if (failure != null) OutlinedButton({ service?.floating?.retry() }) { Text("重新显示") }
-                else Switch(state.settings.visible, setVisible)
+                if (failure != null) SmallAction("重新显示") { service?.floating?.retry() }
+                else AssistSwitch(state.settings.visible, label = "显示悬浮球", change = setVisible)
             }
             RowDivider()
             SettingRow(AssistIcons.Star, p.gold, "快捷与常用", "在任务列表点星标添加") { SettingValue("${state.settings.favorites.size} 个") }

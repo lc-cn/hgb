@@ -6,6 +6,7 @@ import android.content.ContextWrapper
 import android.view.WindowInsetsController
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -14,7 +15,9 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.yysassist.ThemeMode
 
 data class AssistPalette(
@@ -37,12 +40,22 @@ fun paletteOnStrong(): AssistPalette = if (LocalAssistPalette.current.dark) Ligh
 object UiSpace {
     val tiny = 4.dp; val gap = 8.dp; val medium = 12.dp; val page = 20.dp
     val section = 24.dp; val hit = 48.dp; val icon = 22.dp; val tile = 32.dp
-    val rail = 80.dp; val wide = 600.dp; val row = 72.dp
+    val rail = 72.dp; val wide = 600.dp; val row = 64.dp
     val statusDot = 6.dp
     val versionEntryMax = 144.dp
     val hairline = 1.dp
     val calendarMaxHeight = 480.dp
 }
+
+private val AssistTypography = Typography().run { copy(
+    titleLarge = titleLarge.copy(fontSize = 22.sp, lineHeight = 30.sp, fontWeight = FontWeight.SemiBold),
+    titleMedium = titleMedium.copy(fontSize = 17.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold),
+    bodyLarge = bodyLarge.copy(fontSize = 15.sp, lineHeight = 21.sp, letterSpacing = 0.sp),
+    bodyMedium = bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.sp),
+    bodySmall = bodySmall.copy(fontSize = 12.sp, lineHeight = 17.sp, letterSpacing = 0.sp),
+    labelLarge = labelLarge.copy(fontSize = 13.sp, lineHeight = 18.sp, letterSpacing = 0.sp),
+    labelSmall = labelSmall.copy(fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.sp),
+) }
 
 @Composable
 fun AssistTheme(mode: ThemeMode, content: @Composable () -> Unit) {
@@ -68,7 +81,7 @@ fun AssistTheme(mode: ThemeMode, content: @Composable () -> Unit) {
         error = LightPalette.error,
     )
     CompositionLocalProvider(LocalAssistPalette provides if (dark) DarkPalette else LightPalette) {
-        MaterialTheme(colorScheme = scheme, content = content)
+        MaterialTheme(colorScheme = scheme, typography = AssistTypography, content = content)
     }
 }
 

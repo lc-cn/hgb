@@ -1,6 +1,7 @@
 package io.github.yysassist.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import io.github.yysassist.RuntimeStatus
 import io.github.yysassist.core.execution.*
 import io.github.yysassist.core.model.Principal
@@ -28,7 +30,8 @@ internal fun RunActionButton(name: String, current: Boolean, queued: Boolean, en
     LaunchedEffect(paused, enabled) { if (!paused || !enabled) chooseResume = false }
     val label = if (current) (if (paused) "继续：$name" else "暂停：$name") else "加入队列：$name"
     Box(Modifier.size(UiSpace.hit).clip(RoundedCornerShape(UiSpace.medium))
-        .background(glassBrush(false)).combinedClickable(enabled = enabled && !queued,
+        .background(MaterialTheme.colorScheme.surfaceContainer)
+        .border(UiSpace.hairline, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(UiSpace.medium)).combinedClickable(enabled = enabled && !queued,
             role = Role.Button, onClickLabel = label, onLongClickLabel = if (current) "停止当前任务" else null,
             onLongClick = if (current) stop else null, onClick = {
                 if (current && paused) { if (onRequestResume != null) onRequestResume() else chooseResume = true } else if (current) pause() else enqueue()
@@ -37,9 +40,8 @@ internal fun RunActionButton(name: String, current: Boolean, queued: Boolean, en
             contentDescription = label
             stateDescription = when { queued -> "队列中"; current && currentStateLabel != null -> currentStateLabel; paused -> "已暂停"; current -> "执行中"; else -> "未加入队列" }
         }, contentAlignment = Alignment.Center) {
-        Icon(if (current && !paused) AssistIcons.Pause else AssistIcons.Play, null, Modifier.size(UiSpace.icon),
-            tint = (if (current && !paused) LocalAssistPalette.current.orange else LocalAssistPalette.current.teal)
-                .copy(alpha = if (enabled && !queued) .82f else .35f))
+        Icon(if (current && !paused) AssistIcons.Pause else AssistIcons.PlayFilled, null, Modifier.size(18.dp),
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled && !queued) 1f else .35f))
     }
     if (chooseResume && enabled && paused) ResumeTaskDialog({ chooseResume = false; resume(it) }, { chooseResume = false })
 }

@@ -50,6 +50,7 @@ fun validateConfiguration(task: TaskDefinition, values: JsonObject): List<Conten
                     if (!matches) invalid("数值不符合任务规定步长或无法精确校验")
                 }
             }
+            FieldWidget.SWITCH -> if ((value as? JsonPrimitive)?.takeUnless { it.isString }?.booleanOrNull == null) invalid("请选择开或关")
             FieldWidget.TIME -> {
                 val text = value.stringValue()
                 if (text == null || !Regex("\\d{2}:\\d{2}").matches(text) || !validTime(text)) invalid("请选择有效时刻")

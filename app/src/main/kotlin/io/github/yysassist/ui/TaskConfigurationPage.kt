@@ -1,14 +1,17 @@
 package io.github.yysassist.ui
 
 import android.content.res.Configuration
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import io.github.yysassist.TaskEditorState
 import kotlinx.serialization.json.JsonElement
 
@@ -23,24 +26,24 @@ internal fun TaskConfigurationPage(state: TaskEditorState, wide: Boolean, reload
         }
         is TaskEditorState.Ready -> {
             val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+            // A task never configured before opens on its recommended values; nothing is stored until the user saves.
+            LaunchedEffect(state.snapshot.address, state.snapshot.revision) {
+                if (state.snapshot.revision == 0L) state.snapshot.task.fields.forEach { field ->
+                    if (field.recommended != null && state.values[field.id] == null) change(field.id, field.recommended!!)
+                }
+            }
             Column(Modifier.fillMaxSize().imePadding()) {
-                if (wide && landscape) Row(Modifier.weight(1f).fillMaxWidth()) {
-                    LazyColumn(Modifier.weight(.24f), contentPadding = PaddingValues(UiSpace.page)) {
-                        item { TaskSteps(state, expandedInitially = true) }
-                    }
-                    VerticalDivider()
-                    ConfigurationFields(state, true, Modifier.weight(.76f).fillMaxHeight(), false, change, reload)
-                } else ConfigurationFields(state, landscape, Modifier.weight(1f).fillMaxWidth(), true, change, reload)
+                ConfigurationFields(state, landscape, Modifier.weight(1f).fillMaxWidth(), change, reload)
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Row(Modifier.fillMaxWidth().padding(horizontal = UiSpace.medium, vertical = UiSpace.gap),
-                    horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+                Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(horizontal = UiSpace.medium, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     val recommended = state.snapshot.task.fields.filter { it.recommended != null }
                     if (recommended.isNotEmpty()) OutlinedButton(enabled = !state.saving,
-                        onClick = { recommended.forEach { change(it.id, it.recommended!!) } },
-                        modifier = Modifier.weight(1f).heightIn(min = UiSpace.hit)) { Text("恢复推荐值") }
-                    Button(enabled = !state.saving && (state.dirty || state.snapshot.revision == 0L), onClick = save,
-                        modifier = Modifier.weight(1f).heightIn(min = UiSpace.hit)) {
-                        Text(if (state.saving) "保存中" else "保存")
+                        onClick = { recommended.forEach { change(it.id, it.recommended!!) } }, shape = RoundedCornerShape(UiSpace.medium),
+                        modifier = Modifier.weight(1f).heightIn(min = UiSpace.hit)) { Text("恢复推荐值", fontWeight = FontWeight.SemiBold) }
+                    Button(enabled = !state.saving && (state.dirty || state.snapshot.revision == 0L), onClick = save, shape = RoundedCornerShape(UiSpace.medium),
+                        modifier = Modifier.weight(1.4f).heightIn(min = UiSpace.hit)) {
+                        Text(if (state.saving) "保存中" else "保存", fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -50,9 +53,8 @@ internal fun TaskConfigurationPage(state: TaskEditorState, wide: Boolean, reload
 
 @Composable
 private fun ConfigurationFields(state: TaskEditorState.Ready, landscape: Boolean, modifier: Modifier,
-    includeSteps: Boolean, change: (String, JsonElement) -> Unit, reload: () -> Unit) {
+    change: (String, JsonElement) -> Unit, reload: () -> Unit) {
     LazyColumn(modifier, contentPadding = PaddingValues(UiSpace.medium), verticalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
-        if (includeSteps) item { TaskSteps(state, false) }
         state.message?.let { message -> item {
             Column {
                 Text(message, color = MaterialTheme.colorScheme.error)
@@ -78,17 +80,6 @@ private fun ConfigurationFields(state: TaskEditorState.Ready, landscape: Boolean
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun TaskSteps(state: TaskEditorState.Ready, expandedInitially: Boolean) {
-    var expanded by rememberSaveable { mutableStateOf(expandedInitially) }
-    Column(verticalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
-        TextButton(onClick = { expanded = !expanded }) { Text("执行步骤 · ${state.snapshot.task.steps.size} 步") }
-        if (expanded) state.snapshot.task.steps.forEachIndexed { index, step ->
-            Text("${index + 1}. ${step.name}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

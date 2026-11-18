@@ -59,6 +59,10 @@ class AssistApplication : Application() {
         private set
     lateinit var actionTraces: ActionTraceLog
         private set
+    internal lateinit var versionLibrary: TaskVersionLibrary
+        private set
+    internal lateinit var taskCodec: BundleCodec
+        private set
     override fun onCreate() {
         super.onCreate()
         // Android creates this Application in :maa_ocr too. Only the main process owns
@@ -70,7 +74,9 @@ class AssistApplication : Application() {
         actionTraces = ActionTraceLog(database, scope)
         val workers = BuiltInStepWorkFactory(ScreenActions({ textObserver }, { executor.permitsInput(it) },
             journal = { command -> executor.submit(command).await() }, notifier = LocalNotifier(this)::post), actionTraces)
-        val library = TaskVersionLibrary(database, BundleCodec(workers.contracts), TaskResourceFiles(File(noBackupFilesDir, "task-resources")))
+        taskCodec = BundleCodec(workers.contracts)
+        val library = TaskVersionLibrary(database, taskCodec, TaskResourceFiles(File(noBackupFilesDir, "task-resources")))
+        versionLibrary = library
         textObserver = VersionedTextObserver(library, MaaTextBackend(this))
         executor = ExecutionRuntime(ExecutionStateStore(database, library), library,
             TaskAdmissionRepository(database, library), workers, scope,

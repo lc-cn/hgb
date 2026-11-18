@@ -37,16 +37,16 @@ class NotificationAccessTest {
         compose.setContent { AssistTheme(ThemeMode.DARK) { Surface(Modifier.fillMaxSize()) {
             NotificationAccessContent(access, { requests++ }, { settings++ })
         } } }
-        compose.onNodeWithText("开启通知").performClick()
-        compose.onNodeWithText("打开通知设置").assertDoesNotExist()
+        compose.onNodeWithText("开启").performClick()
+        compose.onNodeWithText("去设置").assertDoesNotExist()
         compose.runOnIdle { assertEquals(1, requests); assertEquals(0, settings) }
         screenshot("requestable-dark")
         access = NotificationAccess.SYSTEM_SETTINGS
-        compose.onNodeWithText("打开通知设置").performClick()
-        compose.onNodeWithText("开启通知").assertDoesNotExist()
+        compose.onNodeWithText("去设置").performClick()
+        compose.onNodeWithText("开启").assertDoesNotExist()
         compose.runOnIdle { assertEquals(1, settings) }
         access = NotificationAccess.ALLOWED
         compose.onNodeWithText("已开启").assertIsDisplayed()
-        compose.onNodeWithText("开启通知").assertDoesNotExist(); compose.onNodeWithText("打开通知设置").assertDoesNotExist()
+        compose.onNodeWithText("开启").assertDoesNotExist(); compose.onNodeWithText("去设置").assertDoesNotExist()
     }
 }

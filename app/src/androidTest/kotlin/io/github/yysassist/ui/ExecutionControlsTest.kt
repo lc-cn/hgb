@@ -166,6 +166,8 @@ class ExecutionControlsTest {
             assertTrue(runtime.state.value.facts.none { it.type == "enqueued" })
         }
         compose.onNodeWithText("等待一").performClick()
+        compose.runOnIdle { assertNull(edited) }
+        compose.onNodeWithText("配置").performClick()
         compose.runOnIdle { assertEquals(TaskAddress("fixture", "one"), edited) }
     }
     private fun showList() {

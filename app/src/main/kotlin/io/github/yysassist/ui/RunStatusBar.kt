@@ -41,19 +41,22 @@ private fun runProgress(state: ExecutorSnapshot): Float? = state.current?.let {
 }
 
 @Composable
-private fun RunControls(state: ExecutorSnapshot, status: RuntimeStatus, pause: () -> Unit, resume: (Long?, ResumeMode) -> Unit, stop: () -> Unit) {
+private fun RunControls(state: ExecutorSnapshot, status: RuntimeStatus, pause: () -> Unit, resume: (Long?, ResumeMode) -> Unit, stop: () -> Unit, labelled: Boolean = false) {
     val usable = status !is RuntimeStatus.Failure
     var chooseResume by remember { mutableStateOf(false) }
     var confirmStop by remember { mutableStateOf(false) }
     val current = state.current
     LaunchedEffect(current?.runId) { chooseResume = false; confirmStop = false }
-    if (state.manualHold) IconButton(enabled = usable && state.phase == ExecutorPhase.PAUSED,
-        onClick = { if (current != null) chooseResume = true else resume(null, ResumeMode.CONTINUE) }) {
-        Icon(AssistIcons.Play, "继续运行")
-    } else IconButton(enabled = usable && (current != null || state.waiting.isNotEmpty()), onClick = pause) {
-        Icon(AssistIcons.Pause, "暂停运行")
+    val hold = state.manualHold
+    val primaryEnabled = if (hold) usable && state.phase == ExecutorPhase.PAUSED else usable && (current != null || state.waiting.isNotEmpty())
+    val primary = { if (!hold) pause() else if (current != null) chooseResume = true else resume(null, ResumeMode.CONTINUE) }
+    if (labelled) {
+        Button(primary, enabled = primaryEnabled, shape = RoundedCornerShape(10.dp), modifier = Modifier.heightIn(min = UiSpace.hit)) { Text(if (hold) "继续" else "暂停") }
+        OutlinedButton({ confirmStop = true }, enabled = usable && current != null, shape = RoundedCornerShape(10.dp), modifier = Modifier.heightIn(min = UiSpace.hit)) { Text("停止") }
+    } else {
+        IconButton(primary, enabled = primaryEnabled) { Icon(if (hold) AssistIcons.PlayFilled else AssistIcons.Pause, if (hold) "继续运行" else "暂停运行") }
+        IconButton({ confirmStop = true }, enabled = usable && current != null) { Icon(AssistIcons.Stop, "停止当前任务") }
     }
-    IconButton(enabled = usable && current != null, onClick = { confirmStop = true }) { Icon(AssistIcons.Stop, "停止当前任务") }
     if (chooseResume && current != null && usable) ResumeTaskDialog({ chooseResume = false; resume(current.runId, it) }, { chooseResume = false })
     if (confirmStop && current != null) AlertDialog(onDismissRequest = { confirmStop = false },
         title = { Text("停止当前任务？") }, text = { Text("停止后队列会暂停，可以稍后继续运行其余任务。") },
@@ -103,7 +106,7 @@ internal fun RunStatusPanel(state: ExecutorSnapshot, status: RuntimeStatus, open
                 state.waiting.take(3).forEach { Text(it.task.name, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) { RunControls(state, status, pause, resume, stop) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) { RunControls(state, status, pause, resume, stop, labelled = true) }
         }
     }
 }
