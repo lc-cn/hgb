@@ -1,0 +1,35 @@
+app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt
+  s_fae32e7f0efe76::t_6ffe45a2f0c7cd 29-32,55-69,127-141,238-292,340-342
+  s_fae32e7f0efe76::t_89f0633c5a324c 346
+  s_fae32e7f0efe76::t_e504799d69b516 482-489,539-549,673-676,694-765,901-903
+app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationRuntimeTest.kt
+  s_fae32e7f0efe76::t_b0b99311911868 64-66,81-82,503-565
+app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationContractTest.kt
+  s_fae32e7f0efe76::t_b0b99311911868 292-323
+core/src/test/kotlin/io/github/yysassist/core/content/HandleContractTest.kt
+  s_fae32e7f0efe76::t_783dfd588e3c2d 108-119
+docs/development/region-actions.md
+  s_fae32e7f0efe76::t_354ec58b792448 125-141
+core/src/main/kotlin/io/github/yysassist/core/content/StepProgram.kt
+  s_fae32e7f0efe76::t_783dfd588e3c2d 102
+core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt
+  s_fae32e7f0efe76::t_783dfd588e3c2d 110-112
+docs/development/implementation-status.md
+  s_fae32e7f0efe76::t_354ec58b792448 332-335
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8229ceff78a1f7ee60156628e427a782a2fb3a28",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
