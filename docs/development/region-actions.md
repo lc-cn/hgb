@@ -37,6 +37,8 @@
 | `screen.longPress` v1 | `target`、`durationMs` | 在目标中心按住指定毫秒 |
 | `screen.swipe` v1 | `target`、`durationMs`、`dx`、`dy`、`referenceWidth`、`referenceHeight`、`variation` | 从目标起按缩放位移单笔拖动；位移不能为零，路径任一点超出画面或宽高比不符时不输入 |
 
+| `screen.back` v1 | `observation`（句柄） | 系统返回键。先重新截图，确认观察所属应用仍在前台，再在同一输入所有权、画面与前台检查下调用 `GLOBAL_ACTION_BACK`。系统接受返回键只说明按键已送出，业务效果仍须之后重新观察核对 |
+
 `variation` 用于测试程序在不同输入形态下的完整性，所有取值由任务作者明确给出，App 不填默认值：`startJitter`（0–1，起点在目标框内的偏移比例）、`curve`（0–0.5，二次贝塞尔弯曲深度占位移长度的比例）、`durationJitter`（0–0.5，时长变化比例）、`points`（2–32，路径采样点数），`seed` 可选。同一种子生成同一路径；未给种子时由 App 生成，并连同实际时长和点数写入持久化的输入回执，便于复现。全部取 0、`points` 取 2 即为直线。
 
 提案中原写作“`screen.readText` 加可选 `region`”，实施时改为独立的 `screen.readRegionText`。原因：`readText` 会截取新画面，而区域读取必须复用已观察的同一帧，两者语义不同。

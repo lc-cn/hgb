@@ -230,4 +230,15 @@ class TextObservationContractTest {
             assertTrue(codec.validate(programmed(nodes(read, locate, derive, regionRead, inside, fromRegion, after, finalProof))).isNotEmpty())
         }
     }
+
+    @Test fun backKeyIsAnInputBoundToAFreshObservationAndNeedsLaterProof() {
+        val back = ActionDefinition("back", ScreenActions.BACK, 1, JsonObject(emptyMap()), mapOf("observation" to ActionInputBinding.Output("read", "observation")))
+        assertTrue(codec.validate(input(listOf(read, back, after, finalProof))).toString(), codec.validate(input(listOf(read, back, after, finalProof))).isEmpty())
+        assertTrue(factory.contracts.single { it.id == ScreenActions.BACK }.sendsDeviceInput)
+        assertTrue(codec.validate(input(listOf(read, back))).isNotEmpty())
+        assertTrue(codec.validate(input(listOf(read, back.copy(inputs = buildJsonObject { put("observation", "invented") }, bindings = emptyMap()), after, finalProof))).isNotEmpty())
+        // A second back reusing the observation from before the first input is stale.
+        assertTrue(codec.validate(input(listOf(read, back, back.copy(id = "again"), after, finalProof))).any { it.reason.contains("失效") })
+        assertTrue(codec.validate(input(listOf(read, back.copy(inputs = buildJsonObject { put("x", 1) }), after, finalProof))).isNotEmpty())
+    }
 }

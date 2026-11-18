@@ -444,6 +444,21 @@ class TextObservationRuntimeTest {
         withContext(Dispatchers.Main) { assertTrue(surface.moves > 2) }
         assertTrue(state.deviceActions.single().receipt!!.evidence.contains("滑动种子 7"))
     }
+    @Test fun backKeyGoesThroughTheRealBridgeAndNeedsFreshProof(): Unit = runBlocking {
+        scenario!!.onActivity { activity ->
+            activity.onBackPressedDispatcher.addCallback(activity, object : androidx.activity.OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() { surface.claimed = true; surface.invalidate() }
+            })
+        }
+        prepare("已领取", withInput = true, input = { it.copy(capability = ScreenActions.BACK, inputs = JsonObject(emptyMap()),
+            bindings = mapOf("observation" to ActionInputBinding.Output("read", "observation"))) })
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        assertTrue(state.toString(), state.unresolved.isEmpty())
+        assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
+        assertEquals(ScreenActions.BACK, state.deviceActions.single().intent.capability)
+        assertEquals(DeviceActionDelivery.COMPLETED, state.deviceActions.single().receipt!!.delivery)
+    }
     @Test fun aSwipeEndingOffscreenIsRefusedBeforeAnyIntent(): Unit = runBlocking {
         val width = withContext(Dispatchers.Main) { surface.rootView.width }; val height = withContext(Dispatchers.Main) { surface.rootView.height }
         prepare("已领取", withInput = true, input = { it.copy(capability = ScreenActions.SWIPE, inputs = buildJsonObject {

@@ -24,7 +24,7 @@ internal class ScreenActions(
         const val CLASSIFY = "screen.classifyText"
         const val DERIVE = "screen.deriveRegion"; const val READ_REGION = "screen.readRegionText"
         const val MATCH = "screen.matchImage"; const val CLASSIFY_REGION = "screen.classifyRegion"
-        const val LONG_PRESS = "screen.longPress"; const val SWIPE = "screen.swipe"
+        const val LONG_PRESS = "screen.longPress"; const val SWIPE = "screen.swipe"; const val BACK = "screen.back"
         /** Handle kinds. Region-derived observations keep REGION in their lineage. */
         const val OBSERVATION = "screen.observation"; const val TARGET = "screen.target"; const val REGION = "screen.region"
         private const val MAX_STATES = 8; private const val MAX_TEMPLATES = 16; private const val MAX_OFFSET = 100_000
@@ -161,6 +161,12 @@ internal class ScreenActions(
             validateDefinition = { _, _, _, action -> if ((swipeKeys + "variation").any { it in action.bindings }) "滑动位移与变化参数必须由任务版本明确指定" else null }) { inputs ->
             if (inputs.keys != setOf("target", "durationMs", "variation") + swipeKeys || inputs.text("target").isNullOrBlank() || duration(inputs) == null ||
                 swipeKeys.any { integer(inputs[it]) == null } || variation(inputs["variation"]) == null) "请明确指定起点目标、位移、参考尺寸、滑动时长及变化参数" else null
+        },
+        // The observation proves which app the key is for; the key is sent only after a fresh capture
+        // confirms that app is still in front. Back carries no target and no coordinates.
+        CapabilityContract(BACK, 1, inputTypes = mapOf("observation" to ActionValueType.STRING),
+            outputTypes = mapOf("delivered" to ActionValueType.BOOLEAN), sendsDeviceInput = true, inputHandles = observationHandle) { inputs ->
+            if (inputs.keys != setOf("observation") || inputs.text("observation").isNullOrBlank()) "请指定观察" else null
         },
         CapabilityContract(DERIVE, 1, inputTypes = mapOf("target" to ActionValueType.STRING) + geometryKeys.associateWith { ActionValueType.NUMBER },
             outputTypes = mapOf("region" to ActionValueType.STRING), outputHandles = mapOf("region" to REGION),
@@ -395,6 +401,7 @@ internal class ScreenActions(
                     }
                 }
                 TAP, LONG_PRESS, SWIPE -> gesture(action, inputs)
+                BACK -> back(action, inputs)
                 DERIVE -> derive(inputs)
                 READ_REGION -> {
                     val region = regions[inputs.text("region")] ?: return ActionResult.Unavailable("本步骤的区域不可用")
@@ -503,9 +510,27 @@ internal class ScreenActions(
                     put("start", buildJsonArray { add(path.first().x); add(path.first().y) }); put("end", buildJsonArray { add(path.last().x); add(path.last().y) }) }
                 path
             }
+            return deliver(action, bridge, trace, trace?.let { "滑动种子 ${it["seed"]}，时长 ${it["durationMs"]}ms，采样点 ${it["points"]}" }) {
+                it.gestureCall(fresh.result.stamp, points, gestureMillis)
+            }
+        }
+        private suspend fun back(action: ActionDefinition, inputs: JsonObject): ActionResult {
+            val observation = observations[inputs.text("observation")] ?: return ActionResult.Unavailable("本步骤的画面观察不可用")
+            val bridge = observation.bridge as? InputDevicePort ?: return ActionResult.Unavailable("当前观察来源未提供输入所有权")
+            if (journal == null) return ActionResult.Unavailable("未连接持久化执行器")
+            val fresh = when (val acquired = observe(attempt, bundle, bridge, checkNotNull(observation.result.stamp.packageName), observation.models)) {
+                is Acquisition.Problem -> return acquired.result
+                is Acquisition.Ready -> acquired.value
+            }
+            return deliver(action, bridge, buildJsonObject { put("kind", BACK) }, null) { it.backCall(fresh.result.stamp) }
+        }
+        /** Journals the intent, takes the input channel, runs one call and always settles a receipt. */
+        private suspend fun deliver(action: ActionDefinition, bridge: InputDevicePort, trace: JsonObject?, detail: String?,
+            makeCall: (DeviceInputChannel) -> InputGestureCall): ActionResult {
+            val journal = checkNotNull(journal)
             val invocation = Invocation(DeviceActionIntent(UUID.randomUUID().toString(), attempt.ticket, action.id,
                 action.capability, action.contractVersion, UUID.randomUUID().toString()))
-            invocation.detail = trace?.let { "滑动种子 ${it["seed"]}，时长 ${it["durationMs"]}ms，采样点 ${it["points"]}" }
+            invocation.detail = detail
             invocations += invocation; businessEvidence = null
             suspend fun dispatch(): ActionResult {
                 // Cancellation cannot lose whether this accepted command committed. It never opens input.
@@ -522,7 +547,7 @@ internal class ScreenActions(
                 val channel = bridge.openInput(attempt.ticket, permitted) ?: return if (!permitted(attempt.ticket)) ActionResult.Interrupted
                     else ActionResult.Unavailable("输入通道当前不可用")
                 invocation.channel = channel
-                val call = channel.gestureCall(fresh.result.stamp, points, gestureMillis)
+                val call = makeCall(channel)
                 invocation.call = call
                 return when (val result = call.execute()) {
                     GestureResult.Completed -> ActionResult.Produced(buildJsonObject { put("delivered", true) }, trace)

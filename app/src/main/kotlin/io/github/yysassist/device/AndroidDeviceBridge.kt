@@ -65,6 +65,8 @@ internal interface InputGestureCall {
 }
 internal interface DeviceInputChannel {
     fun gestureCall(stamp: FrameStamp, points: List<ScreenPoint>, durationMillis: Long): InputGestureCall
+    /** System back key, under the same ownership, foreground and screen checks as a gesture. */
+    fun backCall(stamp: FrameStamp): InputGestureCall
     suspend fun revoke(): InputDrain
 }
 internal interface InputDevicePort : ObservationDevice {
@@ -266,7 +268,7 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
             if (closed && owner === this) owner = null
         }
 
-        private fun rejection(stamp: FrameStamp, points: List<ScreenPoint>, duration: Long): DeviceRejection? {
+        private fun rejection(stamp: FrameStamp, points: List<ScreenPoint>, duration: Long, key: Boolean = false): DeviceRejection? {
             mainThread()
             return when {
                 !connected || connection !== admittedConnection -> DeviceRejection.DISCONNECTED
@@ -274,6 +276,7 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
                 pending != null -> DeviceRejection.BUSY
                 stamp.connection !== connection || stamp.geometry != geometry() -> DeviceRejection.SCREEN_CHANGED
                 stamp.packageName == null || foreground() != stamp.packageName -> DeviceRejection.WRONG_FOREGROUND
+                key -> null
                 duration !in 1..GestureDescription.getMaxGestureDuration() || points.isEmpty() || points.any {
                     !it.x.isFinite() || !it.y.isFinite() || it.x < 0 || it.y < 0 || it.x >= stamp.geometry.width || it.y >= stamp.geometry.height
                 } -> DeviceRejection.INVALID_GESTURE
@@ -299,6 +302,26 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
             }
         override fun gestureCall(stamp: FrameStamp, points: List<ScreenPoint>, durationMillis: Long): InputGestureCall =
             GestureCall(stamp, points.toList(), durationMillis)
+
+        override fun backCall(stamp: FrameStamp): InputGestureCall = object : InputGestureCall {
+            private var started = false
+            private var dispatched: GestureResult? = null // Main Looper owns this evidence.
+            /**
+             * performGlobalAction is synchronous and has no completion callback: true means the system
+             * accepted the key, not that the target handled it. The business effect is checked separately.
+             */
+            override suspend fun execute(): GestureResult {
+                synchronized(this) { check(!started) { "返回键调用不可重复执行" }; started = true }
+                return withContext(NonCancellable + Dispatchers.Main.immediate) {
+                    rejection(stamp, emptyList(), 0, key = true)?.let { return@withContext GestureResult.Rejected(it) }
+                    val accepted = try { service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK) }
+                        catch (_: SecurityException) { closed = true; dispatched = GestureResult.Unconfirmed; return@withContext GestureResult.Unconfirmed }
+                    (if (accepted) GestureResult.Completed else GestureResult.Rejected(DeviceRejection.PLATFORM_REJECTED)).also { dispatched = it }
+                }
+            }
+            override suspend fun observeAfterRevoke(): GestureResult? =
+                withContext(Dispatchers.Main.immediate) { check(closed) { "须先关闭输入通道" }; dispatched }
+        }
 
         private inner class GestureCall(val stamp: FrameStamp, val points: List<ScreenPoint>, val duration: Long) : InputGestureCall {
             var submission: InFlight? = null // Main Looper owns this retained evidence, not the worker Job.

@@ -40,6 +40,7 @@ class DailyGiftReplayTest {
     private class ReplayDevice(private var frame: Bitmap, private val claimButton: RectF?, private val afterTap: Bitmap?) : InputDevicePort {
         var token = Any()
         val gestures = mutableListOf<List<ScreenPoint>>()
+        var backs = 0
         override suspend fun capture(expectedPackage: String): FrameResult =
             FrameResult.Ready(ScreenFrame(frame.copy(Bitmap.Config.ARGB_8888, false), FrameStamp(token, ScreenGeometry(frame.width, frame.height, 0), expectedPackage, System.nanoTime())))
         override suspend fun validateObservation(stamp: FrameStamp) = if (stamp.connection === token) null else DeviceRejection.SCREEN_CHANGED
@@ -52,6 +53,10 @@ class DailyGiftReplayTest {
                     if (claimButton != null && afterTap != null && point != null && claimButton.contains(point.x, point.y)) { frame = afterTap; token = Any() }
                     return GestureResult.Completed.also { last = it }
                 }
+                override suspend fun observeAfterRevoke(): GestureResult? = last
+            }
+            override fun backCall(stamp: FrameStamp) = object : InputGestureCall {
+                override suspend fun execute(): GestureResult { backs++; return GestureResult.Completed.also { last = it } }
                 override suspend fun observeAfterRevoke(): GestureResult? = last
             }
             override suspend fun revoke(): InputDrain = last?.let { InputDrain.Terminal(it) } ?: InputDrain.NoInFlightGesture
