@@ -107,7 +107,9 @@ enum class ActionRole { UTILITY, OBSERVATION, VERIFICATION }
  * their lineage: [forbiddenAncestors] rejects a handle derived, at any depth, from those kinds (the
  * handle's own kind is not part of its lineage).
  */
-data class HandleRequirement(val kinds: Set<String>, val forbiddenAncestors: Set<String> = emptySet())
+data class HandleRequirement(val kinds: Set<String>, val forbiddenAncestors: Set<String> = emptySet(),
+    /** Read-only comparisons only: the handle may come from before an input (e.g. a before/after diff). */
+    val allowStale: Boolean = false)
 data class CapabilityContract(
     val id: String, val version: Int,
     val inputTypes: Map<String, ActionValueType> = emptyMap(),

@@ -122,3 +122,20 @@ core 的来源检查改为只看来源链上游，不含句柄自身的类型：
 
 模拟器上契约、运行时与识别集成测试共 56 项通过。导航尚未在实际游戏中运行；不在庭院时启动，结果为无法确认，不会输入。
 
+### 读数、选择、颜色与画面对比（2026-11-18）
+
+| 动作 | 输入 | 输出 | 规则 |
+| --- | --- | --- | --- |
+| `screen.readNumber` v1 | `observation`、`minimumConfidence`、`minimum`、`maximum` | `value` | 统一全角数字，去掉空格和千分位逗号后，必须是纯数字。观察里只能有一个不同的数值，多个不同数值判为无法确认；超出范围不截断，也判为无法确认。不解析“万”等单位。 |
+| `screen.readFraction` v1 | 同上 | `value`、`total` | 同上，格式为 `12/30`，范围同时约束两个数。 |
+| `screen.selectText` v1 | `observation`、`text`、`minimumConfidence`、`order`、`index` | `target` | 按 `top`／`bottom`／`left`／`right` 排序后取第 `index` 个（从 0 起，0–49）。数量不够判为无法确认。 |
+| `screen.selectImage` v1 | `observation`（整图）、`template`、`minimumScore`、`order`、`index` | `target` | 同上，匹配对象是图像模板。 |
+| `screen.matchColor` v1 | `region`、`lower`、`upper`、`minimumRatio` | `matched`、`ratio` | 统计区域内落在 RGB 闭区间内的像素比例（隔行隔列采样），直接用已观察的像素计算，不启动识别进程。 |
+| `screen.compareFrames` v1 | `before`（观察）、`region`、`minimumDifference` | `changed`、`difference` | 计算 `before` 与区域所属观察在该区域内的平均绝对差（0–1）。 |
+
+- **选中目标的重新定位：** 输入前在原位置附近的窗口内，取离原位置最近的匹配，且移动距离不得超过目标的宽高中较大者。这样相邻的同名按钮不会被判为“不唯一”，明显移位时也不会点错。
+- **前后对比的边界：** core 的 `HandleRequirement.allowStale` 只开放给 `compareFrames` 的 `before` 参数。输入时，最近的观察和最多 2 帧像素转存一次，只供比较读取，不能用于定位或输入；下一次输入时会被覆盖。
+- **控制流：** `until` 循环配合 `classifyText`／`classifyRegion` 可以写出条件等待，配合 `swipe` 和 `compareFrames` 可以写出滚动查找，不需要单独的动作。
+
+阈值都由任务作者明确给出，App 不提供默认值。这些动作已在模拟器自有画面上用真实识别和真实无障碍验证；`selectImage` 依赖模板匹配，在模拟器上被 CPU 防护拒绝，只做了契约校验，**尚无运行时证据**。都还没有在实际游戏画面上使用过。
+

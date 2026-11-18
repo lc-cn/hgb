@@ -26,6 +26,10 @@ internal class ScreenActions(
         const val MATCH = "screen.matchImage"; const val CLASSIFY_REGION = "screen.classifyRegion"
         const val LONG_PRESS = "screen.longPress"; const val SWIPE = "screen.swipe"; const val BACK = "screen.back"
         const val TAP_REGION = "screen.tapRegion"; const val LOCATE_IMAGE = "screen.locateImage"
+        const val READ_NUMBER = "screen.readNumber"; const val READ_FRACTION = "screen.readFraction"
+        const val SELECT_TEXT = "screen.selectText"; const val SELECT_IMAGE = "screen.selectImage"
+        const val MATCH_COLOR = "screen.matchColor"; const val COMPARE = "screen.compareFrames"
+        private val ORDERS = setOf("top", "bottom", "left", "right")
         /** Handle kinds. Region-derived observations keep REGION in their lineage. */
         const val OBSERVATION = "screen.observation"; const val TARGET = "screen.target"; const val REGION = "screen.region"
         private const val MAX_STATES = 8; private const val MAX_TEMPLATES = 16; private const val MAX_OFFSET = 100_000
@@ -48,6 +52,21 @@ internal class ScreenActions(
     private val textTypes = mapOf("observation" to ActionValueType.STRING, "text" to ActionValueType.STRING, "minimumConfidence" to ActionValueType.NUMBER)
     private val geometryKeys = listOf("dx", "dy", "width", "height", "referenceWidth", "referenceHeight")
     private val swipeKeys = listOf("dx", "dy", "referenceWidth", "referenceHeight")
+    /** Full-width digits and slash folded, spaces and thousands separators removed. No units such as 万. */
+    private fun normalizedNumber(text: String) = buildString {
+        text.forEach { c -> when (c) { in '０'..'９' -> append('0' + (c - '０')); '／' -> append('/'); ' ', '　', ',', '，' -> Unit; else -> append(c) } }
+    }
+    private val integerPattern = Regex("\\d{1,9}"); private val fractionPattern = Regex("(\\d{1,9})/(\\d{1,9})")
+    private fun rangeIssue(inputs: JsonObject): ContentIssue? {
+        val low = integer(inputs["minimum"]); val high = integer(inputs["maximum"])
+        return when {
+            "minimum" in inputs && (low == null || low < 0) -> ContentIssue("minimum", "下限需为非负整数")
+            "maximum" in inputs && (high == null || high < 0) -> ContentIssue("maximum", "上限需为非负整数")
+            low != null && high != null && low > high -> ContentIssue("maximum", "上限不能小于下限")
+            else -> null
+        }
+    }
+    private fun rgb(value: JsonElement?): IntArray? = (value as? JsonArray)?.takeIf { it.size == 3 }?.map { integer(it)?.takeIf { v -> v in 0..255 } ?: return null }?.toIntArray()
     /** Explicit, reproducible path variation. Every field is authored; only seed may be left to the App. */
     private data class Variation(val startJitter: Double, val curve: Double, val durationJitter: Double, val points: Int, val seed: Long?)
     private fun variation(value: JsonElement?): Variation? {
@@ -104,6 +123,21 @@ internal class ScreenActions(
         if (parsed.map { it.id }.distinct().size != parsed.size) return null
         if (parsed.flatMap { (it.present + it.absent).map(ImageCondition::template) }.distinct().size > MAX_TEMPLATES) return null
         return parsed
+    }
+    private fun selectIssue(inputs: JsonObject): ContentIssue? = when {
+        "order" in inputs && inputs.text("order") !in ORDERS -> ContentIssue("order", "排序需为 top、bottom、left 或 right")
+        "index" in inputs && integer(inputs["index"])?.takeIf { it in 0..49 } == null -> ContentIssue("index", "序号需为 0–49 的整数")
+        else -> null
+    }
+    private fun colorIssue(inputs: JsonObject): ContentIssue? {
+        val lower = rgb(inputs["lower"]); val upper = rgb(inputs["upper"])
+        return when {
+            "lower" in inputs && lower == null -> ContentIssue("lower", "颜色下限需为三个 0–255 的整数")
+            "upper" in inputs && upper == null -> ContentIssue("upper", "颜色上限需为三个 0–255 的整数")
+            lower != null && upper != null && (0..2).any { lower[it] > upper[it] } -> ContentIssue("upper", "颜色上限不能小于下限")
+            "minimumRatio" in inputs && unit(inputs["minimumRatio"]) == null -> ContentIssue("minimumRatio", "比例需为零到一之间的数值")
+            else -> null
+        }
     }
     private fun profileIssue(bundle: TaskBundle, task: TaskDefinition, action: ActionDefinition): String? {
         if (action.bindings.isNotEmpty()) return "视觉配置必须由任务版本明确指定"
@@ -201,6 +235,61 @@ internal class ScreenActions(
             if (inputs.keys != setOf("observation", "template", "minimumScore") || inputs.text("template").isNullOrBlank() || unit(inputs["minimumScore"]) == null)
                 "请指定观察、模板与零到一之间的得分" else null
         },
+        // Numbers are read from one observation (usually a region read). Several different numbers are
+        // ambiguous, values outside the authored range are refused; nothing is guessed or clamped.
+        CapabilityContract(READ_NUMBER, 1, inputTypes = mapOf("observation" to ActionValueType.STRING, "minimumConfidence" to ActionValueType.NUMBER,
+            "minimum" to ActionValueType.NUMBER, "maximum" to ActionValueType.NUMBER), outputTypes = mapOf("value" to ActionValueType.NUMBER),
+            inputHandles = observationHandle,
+            validateKnownInputs = { inputs -> if ("minimumConfidence" in inputs && threshold(inputs) == null) ContentIssue("minimumConfidence", "置信度需为零到一之间的数值") else rangeIssue(inputs) }) { inputs ->
+            if (inputs.keys != setOf("observation", "minimumConfidence", "minimum", "maximum") || threshold(inputs) == null ||
+                integer(inputs["minimum"]) == null || integer(inputs["maximum"]) == null) "请指定观察、置信度和数值范围" else null
+        },
+        CapabilityContract(READ_FRACTION, 1, inputTypes = mapOf("observation" to ActionValueType.STRING, "minimumConfidence" to ActionValueType.NUMBER,
+            "minimum" to ActionValueType.NUMBER, "maximum" to ActionValueType.NUMBER),
+            outputTypes = mapOf("value" to ActionValueType.NUMBER, "total" to ActionValueType.NUMBER), inputHandles = observationHandle,
+            validateKnownInputs = { inputs -> if ("minimumConfidence" in inputs && threshold(inputs) == null) ContentIssue("minimumConfidence", "置信度需为零到一之间的数值") else rangeIssue(inputs) }) { inputs ->
+            if (inputs.keys != setOf("observation", "minimumConfidence", "minimum", "maximum") || threshold(inputs) == null ||
+                integer(inputs["minimum"]) == null || integer(inputs["maximum"]) == null) "请指定观察、置信度和数值范围" else null
+        },
+        // One of several matches by an explicit order and 0-based index (e.g. the second "进攻" from the top).
+        CapabilityContract(SELECT_TEXT, 1, inputTypes = textTypes + mapOf("order" to ActionValueType.STRING, "index" to ActionValueType.NUMBER),
+            outputTypes = mapOf("target" to ActionValueType.STRING), outputHandles = mapOf("target" to TARGET), inputHandles = observationHandle,
+            validateKnownInputs = { inputs -> knownText(inputs) ?: selectIssue(inputs) }) { inputs ->
+            if (inputs.keys != textTypes.keys + setOf("order", "index") || inputs.text("text").isNullOrBlank() || threshold(inputs) == null || selectIssue(inputs) != null ||
+                "order" !in inputs || "index" !in inputs) "请指定观察、文字、置信度、排序与序号" else null
+        },
+        CapabilityContract(SELECT_IMAGE, 1, inputTypes = mapOf("observation" to ActionValueType.STRING, "template" to ActionValueType.STRING,
+            "minimumScore" to ActionValueType.NUMBER, "order" to ActionValueType.STRING, "index" to ActionValueType.NUMBER),
+            outputTypes = mapOf("target" to ActionValueType.STRING), outputHandles = mapOf("target" to TARGET),
+            inputHandles = mapOf("observation" to HandleRequirement(setOf(OBSERVATION), forbiddenAncestors = setOf(REGION))),
+            validateKnownInputs = { inputs -> when {
+                "minimumScore" in inputs && unit(inputs["minimumScore"]) == null -> ContentIssue("minimumScore", "匹配得分需为零到一之间的数值")
+                else -> selectIssue(inputs) } },
+            validateDefinition = { bundle, _, _, action -> when {
+                "template" in action.bindings -> "模板必须由任务版本明确指定"
+                bundle.resources.none { it.id == action.inputs.text("template") } -> "图像选择引用了未声明的模板资源"
+                else -> null } }) { inputs ->
+            if (inputs.keys != setOf("observation", "template", "minimumScore", "order", "index") || unit(inputs["minimumScore"]) == null ||
+                selectIssue(inputs) != null || "order" !in inputs || "index" !in inputs) "请指定观察、模板、得分、排序与序号" else null
+        },
+        // Share of region pixels inside an inclusive RGB box, from the observed pixels (no recognizer).
+        CapabilityContract(MATCH_COLOR, 1, inputTypes = mapOf("region" to ActionValueType.STRING, "lower" to ActionValueType.ARRAY,
+            "upper" to ActionValueType.ARRAY, "minimumRatio" to ActionValueType.NUMBER),
+            outputTypes = mapOf("matched" to ActionValueType.BOOLEAN, "ratio" to ActionValueType.NUMBER), inputHandles = regionHandle,
+            validateKnownInputs = { inputs -> colorIssue(inputs) },
+            validateDefinition = { _, _, _, action -> if (setOf("lower", "upper").any { it in action.bindings }) "颜色范围必须由任务版本明确指定" else null }) { inputs ->
+            if (inputs.keys != setOf("region", "lower", "upper", "minimumRatio") || colorIssue(inputs) != null || rgb(inputs["lower"]) == null ||
+                rgb(inputs["upper"]) == null || unit(inputs["minimumRatio"]) == null) "请指定区域、颜色上下限和比例" else null
+        },
+        // Mean absolute difference inside a region between an earlier observation (allowed from before an
+        // input) and the region's own observation. Read-only: it never feeds an input.
+        CapabilityContract(COMPARE, 1, inputTypes = mapOf("before" to ActionValueType.STRING, "region" to ActionValueType.STRING,
+            "minimumDifference" to ActionValueType.NUMBER), outputTypes = mapOf("changed" to ActionValueType.BOOLEAN, "difference" to ActionValueType.NUMBER),
+            inputHandles = mapOf("before" to HandleRequirement(setOf(OBSERVATION), allowStale = true), "region" to HandleRequirement(setOf(REGION))),
+            validateKnownInputs = { inputs -> if ("minimumDifference" in inputs && unit(inputs["minimumDifference"]) == null)
+                ContentIssue("minimumDifference", "差异阈值需为零到一之间的数值") else null }) { inputs ->
+            if (inputs.keys != setOf("before", "region", "minimumDifference") || unit(inputs["minimumDifference"]) == null) "请指定之前的观察、区域和差异阈值" else null
+        },
         CapabilityContract(DERIVE, 1, inputTypes = mapOf("target" to ActionValueType.STRING) + geometryKeys.associateWith { ActionValueType.NUMBER },
             outputTypes = mapOf("region" to ActionValueType.STRING), outputHandles = mapOf("region" to REGION),
             inputHandles = mapOf("target" to HandleRequirement(setOf(TARGET))),
@@ -248,10 +337,13 @@ internal class ScreenActions(
         val regionDerived: Boolean = false)
     /** A text target, or an image target when [template] is set (then [text] is empty and [minimum] is a score). */
     private data class Target(val observation: Observation, val text: String, val minimum: BigDecimal, val match: RecognizedText,
-        val template: String? = null)
+        val template: String? = null,
+        /** Selected among several matches: re-resolve to the nearest one that has barely moved, not a unique one. */
+        val nearest: Boolean = false)
     /** Offsets from an anchor, kept so an input can re-derive the region on a fresh frame. */
     private data class Derivation(val anchor: Target, val dx: Int, val dy: Int, val width: Int, val height: Int, val referenceWidth: Int, val referenceHeight: Int)
     private data class Region(val observation: Observation, val bounds: TextBounds, val derivation: Derivation)
+    private data class Quad(val matches: List<RecognizedText>, val minimum: BigDecimal, val template: String?, val text: String)
     /** Same geometry for derive and for input-time re-derivation. Null when outside or reflowed. */
     private fun regionBounds(match: RecognizedText, geometry: ScreenGeometry, d: Derivation): TextBounds? {
         val sx = geometry.width.toDouble() / d.referenceWidth; val sy = geometry.height.toDouble() / d.referenceHeight
@@ -387,6 +479,14 @@ internal class ScreenActions(
          * pixels; an evicted frame makes later region requests on it unavailable instead of using a newer one.
          */
         private val frames = LinkedHashMap<FrameStamp, EncodedPixels>()
+        /** Frames from just before the latest input, kept only for read-only before/after comparison. */
+        private val previousFrames = LinkedHashMap<FrameStamp, EncodedPixels>()
+        private val beforeObservations = mutableMapOf<String, Observation>()
+        private fun pixelsFor(observation: Observation) = frames[observation.result.stamp] ?: previousFrames[observation.result.stamp] ?: observation.result.pixels
+        /** Raw RGBA for host-side pixel maths; PNG pixels (test backends) are decoded once. */
+        private fun rgba(pixels: EncodedPixels): EncodedPixels = if (pixels.raw) pixels else
+            android.graphics.BitmapFactory.decodeByteArray(pixels.bytes, 0, pixels.bytes.size).let { bitmap ->
+                try { EncodedPixels.raw(bitmap) } finally { bitmap.recycle() } }
         private fun store(observation: Observation): Observation {
             observation.result.pixels?.let { pixels ->
                 frames.remove(observation.result.stamp); frames[observation.result.stamp] = pixels
@@ -435,6 +535,17 @@ internal class ScreenActions(
             val accepted = when (val result = inspected.values.single()) {
                 is InspectionValue.Text -> result.candidates.filter { it.text == target.text && it.confidence.isFinite() && BigDecimal.valueOf(it.confidence) >= target.minimum }
                 is InspectionValue.Image -> result.matches.filter { BigDecimal.valueOf(it.score) >= target.minimum }.map { RecognizedText("", it.score, it.bounds) }
+            }
+            if (target.nearest) {
+                // A selected target re-resolves to the closest match that has barely moved.
+                val old = target.match.bounds
+                fun centre(b: TextBounds) = (b.left + b.width / 2.0) to (b.top + b.height / 2.0)
+                val (ox, oy) = centre(old)
+                val closest = accepted.minByOrNull { val (x, y) = centre(it.bounds); kotlin.math.hypot(x - ox, y - oy) }
+                    ?: return ActionResult.Unavailable("输入前在原位置附近未能确认目标")
+                val (cx, cy) = centre(closest.bounds)
+                return closest.takeIf { kotlin.math.hypot(cx - ox, cy - oy) <= maxOf(old.width, old.height) }
+                    ?: ActionResult.Unavailable("输入前选中的目标已明显移动")
             }
             return accepted.singleOrNull() ?: ActionResult.Unavailable(if (accepted.isEmpty()) "输入前在原位置附近未能确认目标" else "输入前在原位置附近有多处目标，不能唯一确认")
         }
@@ -559,6 +670,10 @@ internal class ScreenActions(
                     }
                 }
                 CLASSIFY_REGION -> classifyRegion(inputs)
+                READ_NUMBER, READ_FRACTION -> readNumber(action, inputs)
+                SELECT_TEXT, SELECT_IMAGE -> select(action, inputs)
+                MATCH_COLOR -> matchColor(inputs)
+                COMPARE -> compare(inputs)
                 LOCATE_IMAGE -> {
                     val observation = observations[inputs.text("observation")] ?: return ActionResult.Unavailable("本步骤的画面观察不可用")
                     if (observation.regionDerived) return ActionResult.Unavailable("图像定位需要整图观察")
@@ -575,6 +690,78 @@ internal class ScreenActions(
                 }
                 else -> error("未注册的屏幕动作")
             }
+        }
+        private fun readNumber(action: ActionDefinition, inputs: JsonObject): ActionResult {
+            val observation = observations[inputs.text("observation")] ?: return ActionResult.Unavailable("本步骤的画面观察不可用")
+            val minimum = checkNotNull(threshold(inputs)); val low = checkNotNull(integer(inputs["minimum"])); val high = checkNotNull(integer(inputs["maximum"]))
+            val pattern = if (action.capability == READ_NUMBER) integerPattern else fractionPattern
+            val values = observation.result.candidates.filter { it.confidence.isFinite() && BigDecimal.valueOf(it.confidence) >= minimum }
+                .mapNotNull { pattern.matchEntire(normalizedNumber(it.text)) }.map { match ->
+                    if (action.capability == READ_NUMBER) listOf(match.value.toLong()) else listOf(match.groupValues[1].toLong(), match.groupValues[2].toLong())
+                }.distinct()
+            val trace = buildJsonObject { put("kind", action.capability); put("distinctValues", values.size) }
+            val value = values.singleOrNull() ?: return ActionResult.Unavailable(if (values.isEmpty()) "本次画面中没有可读的数值" else "本次画面中有多个不同数值，不能确定", trace)
+            if (value.any { it < low || it > high }) return ActionResult.Unavailable("读到的数值 ${value.joinToString("/")} 超出 $low–$high", trace)
+            return ActionResult.Produced(buildJsonObject {
+                put("value", value[0]); if (action.capability == READ_FRACTION) put("total", value[1])
+            }, buildJsonObject { put("kind", action.capability); put("value", value[0]); if (value.size > 1) put("total", value[1]) })
+        }
+        private suspend fun select(action: ActionDefinition, inputs: JsonObject): ActionResult {
+            val observation = observations[inputs.text("observation")] ?: return ActionResult.Unavailable("本步骤的画面观察不可用")
+            val order = checkNotNull(inputs.text("order")); val index = checkNotNull(integer(inputs["index"]))
+            val (matches, minimum, template, text) = if (action.capability == SELECT_TEXT) {
+                val minimum = checkNotNull(threshold(inputs)); val text = checkNotNull(inputs.text("text"))
+                Quad(observation.result.candidates.filter { it.text == text && it.confidence.isFinite() && BigDecimal.valueOf(it.confidence) >= minimum }, minimum, null, text)
+            } else {
+                if (observation.regionDerived) return ActionResult.Unavailable("图像选择需要整图观察")
+                val template = checkNotNull(inputs.text("template")); val minimum = checkNotNull(unit(inputs["minimumScore"]))
+                val inspected = when (val value = inspectOn(observation, listOf(InspectionRequest.Image(whole(observation), template)))) {
+                    is ActionResult -> return value; else -> value as InspectionResult.Inspected }
+                Quad((inspected.values.single() as InspectionValue.Image).matches.filter { BigDecimal.valueOf(it.score) >= minimum }
+                    .map { RecognizedText("", it.score, it.bounds) }, minimum, template, "")
+            }
+            val sorted = when (order) {
+                "top" -> matches.sortedWith(compareBy({ it.bounds.top }, { it.bounds.left }))
+                "bottom" -> matches.sortedWith(compareBy({ -it.bounds.top }, { it.bounds.left }))
+                "left" -> matches.sortedWith(compareBy({ it.bounds.left }, { it.bounds.top }))
+                else -> matches.sortedWith(compareBy({ -it.bounds.left }, { it.bounds.top }))
+            }
+            val trace = buildJsonObject { put("kind", action.capability); put("matches", matches.size); put("order", order); put("index", index) }
+            val match = sorted.getOrNull(index) ?: return ActionResult.Unavailable("只找到 ${matches.size} 处，没有第 ${index + 1} 处", trace)
+            val token = token(); targets[token] = Target(observation, text, minimum, match, template, nearest = true)
+            return ActionResult.Produced(buildJsonObject { put("target", token) }, buildJsonObject {
+                put("kind", action.capability); put("matches", matches.size); region(match.bounds) })
+        }
+        private fun matchColor(inputs: JsonObject): ActionResult {
+            val region = regions[inputs.text("region")] ?: return ActionResult.Unavailable("本步骤的区域不可用")
+            val pixels = pixelsFor(region.observation)?.let(::rgba) ?: return ActionResult.Unavailable("本次观察的画面像素已释放，需重新观察")
+            val lower = checkNotNull(rgb(inputs["lower"])); val upper = checkNotNull(rgb(inputs["upper"])); val minimum = checkNotNull(unit(inputs["minimumRatio"]))
+            val b = region.bounds; var inside = 0; var total = 0
+            for (y in b.top until b.top + b.height step 2) for (x in b.left until b.left + b.width step 2) {
+                val i = (y * pixels.width + x) * 4
+                val r = pixels.bytes[i].toInt() and 255; val g = pixels.bytes[i + 1].toInt() and 255; val bl = pixels.bytes[i + 2].toInt() and 255
+                total++; if (r in lower[0]..upper[0] && g in lower[1]..upper[1] && bl in lower[2]..upper[2]) inside++
+            }
+            val ratio = if (total == 0) 0.0 else inside.toDouble() / total
+            return ActionResult.Produced(buildJsonObject { put("matched", BigDecimal.valueOf(ratio) >= minimum); put("ratio", ratio) },
+                buildJsonObject { put("kind", MATCH_COLOR); region(b); put("ratio", ratio); put("sampled", total) })
+        }
+        private fun compare(inputs: JsonObject): ActionResult {
+            val before = observations[inputs.text("before")] ?: beforeObservations[inputs.text("before")] ?: return ActionResult.Unavailable("之前的观察不可用")
+            val region = regions[inputs.text("region")] ?: return ActionResult.Unavailable("本步骤的区域不可用")
+            val old = pixelsFor(before)?.let(::rgba) ?: return ActionResult.Unavailable("之前观察的画面像素已释放")
+            val new = pixelsFor(region.observation)?.let(::rgba) ?: return ActionResult.Unavailable("本次观察的画面像素已释放，需重新观察")
+            if (old.width != new.width || old.height != new.height) return ActionResult.Unavailable("前后画面尺寸不同，不能比较")
+            val b = region.bounds; var sum = 0L; var count = 0
+            for (y in b.top until b.top + b.height step 2) for (x in b.left until b.left + b.width step 2) {
+                val i = (y * new.width + x) * 4
+                for (c in 0..2) sum += kotlin.math.abs((old.bytes[i + c].toInt() and 255) - (new.bytes[i + c].toInt() and 255))
+                count += 3
+            }
+            val difference = if (count == 0) 0.0 else sum.toDouble() / (count * 255.0)
+            val minimum = checkNotNull(unit(inputs["minimumDifference"]))
+            return ActionResult.Produced(buildJsonObject { put("changed", BigDecimal.valueOf(difference) >= minimum); put("difference", difference) },
+                buildJsonObject { put("kind", COMPARE); region(b); put("difference", difference) })
         }
         private suspend fun derive(inputs: JsonObject): ActionResult {
             val target = targets[inputs.text("target")] ?: return ActionResult.Unavailable("本步骤的锚点目标不可用")
@@ -711,7 +898,9 @@ internal class ScreenActions(
                 if (invocation.admission != DeviceActionWriteResult.Recorded) return ActionResult.Unavailable(
                     (admission as? RuntimeCommandResult.Rejected)?.message ?: "未取得新的持久化动作许可")
                 if (!permitted(attempt.ticket)) return ActionResult.Interrupted
-                observations.clear(); targets.clear(); regions.clear(); frames.clear()
+                beforeObservations.clear(); beforeObservations.putAll(observations)
+                observations.clear(); targets.clear(); regions.clear()
+                previousFrames.clear(); previousFrames.putAll(frames); frames.clear()
                 val channel = bridge.openInput(attempt.ticket, permitted) ?: return if (!permitted(attempt.ticket)) ActionResult.Interrupted
                     else ActionResult.Unavailable("输入通道当前不可用")
                 invocation.channel = channel

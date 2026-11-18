@@ -329,3 +329,7 @@ core 新增有上限的 `until` 程序节点：循环执行，直到循环体顶
 - 按“发布前不兼容”约定，删除 Room 迁移代码，结构变化时直接重建数据库。
 
 模拟器完整回归（全新安装）207 项中 2 项失败：资源用例因新的去重行为而改写，悬浮窗用例重跑通过；两个测试类再次运行 13 项全部通过。详见[数据结构审视](data-structure-review.md)。
+
+## 读数、选择、颜色与画面对比动作（2026-11-18）
+
+新增 `screen.readNumber`、`screen.readFraction`、`screen.selectText`、`screen.selectImage`、`screen.matchColor`、`screen.compareFrames`。core 的句柄规则增加仅供只读比较使用的 `allowStale`。契约测试和模拟器运行时测试覆盖读分数、选第 2 个同名目标并点击、颜色占比、点击前后差异；`selectImage` 只有契约校验，都未在实际游戏画面上使用。详见[区域与图像状态动作](region-actions.md)。

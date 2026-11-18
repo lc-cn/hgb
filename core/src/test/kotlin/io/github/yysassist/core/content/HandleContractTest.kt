@@ -105,4 +105,16 @@ class HandleContractTest {
         val text = codec.write(steps(read, act("v", verify, "observation" to "read.observation")))
         assertFalse(text.contains("visionProfiles"))
     }
+
+    @Test fun onlyAnExplicitlyStaleAllowedInputMayReferToAHandleFromBeforeAnInput() {
+        val compare = CapabilityContract("k.compare", 1, inputTypes = mapOf("before" to ActionValueType.STRING, "after" to ActionValueType.STRING),
+            outputTypes = mapOf("changed" to ActionValueType.BOOLEAN),
+            inputHandles = mapOf("before" to HandleRequirement(setOf("k.obs"), allowStale = true), "after" to HandleRequirement(setOf("k.obs"))), validateInputs = ok)
+        val codec = BundleCodec(listOf(observe, locate, tap, verify, compare))
+        val diff = ActionDefinition("diff", "k.compare", 1, JsonObject(emptyMap()), mapOf(
+            "before" to ActionInputBinding.Output("read", "observation"), "after" to ActionInputBinding.Output("after", "observation")))
+        assertEquals(emptyList<ContentIssue>(), codec.validate(steps(read, find, act("tap", tap, "target" to "find.target"), after, diff, check)))
+        val staleAfter = diff.copy(bindings = mapOf("before" to ActionInputBinding.Output("read", "observation"), "after" to ActionInputBinding.Output("read", "observation")))
+        assertTrue(codec.validate(steps(read, find, act("tap", tap, "target" to "find.target"), after, staleAfter, check)).any { it.reason.contains("失效") })
+    }
 }

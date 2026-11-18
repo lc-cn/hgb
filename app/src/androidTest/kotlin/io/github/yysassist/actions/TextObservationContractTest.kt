@@ -289,4 +289,36 @@ class TextObservationContractTest {
             assertTrue(absent.toString(), codec.validate(programmed(nodes(read, classify.copy(inputs = buildJsonObject { put("states", bad) }), verify))).isNotEmpty())
         }
     }
+
+    @Test fun numbersSelectionColorAndComparisonAreExplicit() {
+        val number = ActionDefinition("number", ScreenActions.READ_FRACTION, 1, buildJsonObject {
+            put("minimumConfidence", 0.8); put("minimum", 0); put("maximum", 999) }, mapOf("observation" to ActionInputBinding.Output("read", "observation")))
+        assertTrue(codec.validate(input(listOf(read, number, verify))).toString(), codec.validate(input(listOf(read, number, verify))).isEmpty())
+        for (bad in listOf(buildJsonObject { put("minimumConfidence", 0.8); put("minimum", 5); put("maximum", 1) },
+            buildJsonObject { put("minimumConfidence", 0.8); put("minimum", -1); put("maximum", 9) },
+            buildJsonObject { put("minimumConfidence", 0.8); put("minimum", 0) }))
+            assertTrue(bad.toString(), codec.validate(input(listOf(read, number.copy(inputs = bad), verify))).isNotEmpty())
+        val pick = ActionDefinition("pick", ScreenActions.SELECT_TEXT, 1, buildJsonObject {
+            put("text", "进攻"); put("minimumConfidence", 0.8); put("order", "top"); put("index", 1) }, mapOf("observation" to ActionInputBinding.Output("read", "observation")))
+        val press = tap.copy(bindings = mapOf("target" to ActionInputBinding.Output("pick", "target")))
+        assertTrue(codec.validate(input(listOf(read, pick, press, after, finalProof))).isEmpty())
+        for ((key, value) in listOf("order" to JsonPrimitive("middle"), "index" to JsonPrimitive(-1), "index" to JsonPrimitive(50)))
+            assertTrue(key, codec.validate(input(listOf(read, pick.copy(inputs = JsonObject(pick.inputs + (key to value))), press, after, finalProof))).isNotEmpty())
+        val color = ActionDefinition("color", ScreenActions.MATCH_COLOR, 1, buildJsonObject {
+            put("lower", buildJsonArray { add(200); add(0); add(0) }); put("upper", buildJsonArray { add(255); add(60); add(60) }); put("minimumRatio", 0.3)
+        }, mapOf("region" to ActionInputBinding.Output("derive", "region")))
+        assertTrue(codec.validate(input(listOf(read, locate, derive, color, verify))).isEmpty())
+        for (bad in listOf(JsonObject(color.inputs + ("lower" to buildJsonArray { add(256); add(0); add(0) })),
+            JsonObject(color.inputs + ("upper" to buildJsonArray { add(100); add(60); add(60) })), JsonObject(color.inputs - "minimumRatio")))
+            assertTrue(bad.toString(), codec.validate(input(listOf(read, locate, derive, color.copy(inputs = bad), verify))).isNotEmpty())
+        // Before/after comparison may reach back across the input; nothing else may.
+        val afterLocate = locate.copy(id = "afterLocate", bindings = mapOf("observation" to ActionInputBinding.Output("after", "observation")))
+        val afterRegion = derive.copy(id = "afterRegion", bindings = mapOf("target" to ActionInputBinding.Output("afterLocate", "target")))
+        val diff = ActionDefinition("diff", ScreenActions.COMPARE, 1, buildJsonObject { put("minimumDifference", 0.05) }, mapOf(
+            "before" to ActionInputBinding.Output("read", "observation"), "region" to ActionInputBinding.Output("afterRegion", "region")))
+        assertTrue(codec.validate(input(listOf(read, locate, tap, after, afterLocate, afterRegion, diff, finalProof))).toString(),
+            codec.validate(input(listOf(read, locate, tap, after, afterLocate, afterRegion, diff, finalProof))).isEmpty())
+        val staleRegion = diff.copy(bindings = mapOf("before" to ActionInputBinding.Output("read", "observation"), "region" to ActionInputBinding.Output("derive", "region")))
+        assertTrue(codec.validate(input(listOf(read, locate, derive, tap, after, staleRegion, finalProof))).any { it.reason.contains("失效") })
+    }
 }

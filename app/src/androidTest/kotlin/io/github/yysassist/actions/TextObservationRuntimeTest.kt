@@ -61,6 +61,9 @@ class TextObservationRuntimeTest {
         var dragPixels: Float? = null
         /** Claim only when the press lands inside this blank area (tap-outside dismissal). */
         var blankClaim: RectF? = null
+        /** Extra fixed texts (text, left, baseline) and an optional solid red box, drawn every frame. */
+        var extras: List<Triple<String, Float, Float>> = emptyList()
+        var redBox: RectF? = null
         var downPoint: PointF? = null
         var upPoint: PointF? = null
         var heldMillis: Long? = null
@@ -75,6 +78,8 @@ class TextObservationRuntimeTest {
             canvas.drawText(text(), textLeft, textBaseline, paint)
             if (duplicate) canvas.drawText("领取物资", 90f, 650f, paint)
             if (bothStates) canvas.drawText("已领取", 90f, 800f, paint)
+            extras.forEach { (text, x, y) -> canvas.drawText(text, x, y, paint) }
+            redBox?.let { canvas.drawRect(it, Paint().apply { color = Color.rgb(230, 20, 20) }) }
         }
         override fun onTouchEvent(event: MotionEvent): Boolean {
             touches++
@@ -494,6 +499,69 @@ class TextObservationRuntimeTest {
         assertTrue(state.deviceActions.isEmpty())
         assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
         assertTrue(state.toString(), (state.facts.map { it.detail } + state.unresolved.map { it.reason }).any { it.contains("文字，不点击") })
+    }
+    /** Replaces the step with [actions]; read/after/verify keep their prepared definitions. */
+    private fun steps(vararg extra: (Map<String, ActionDefinition>) -> List<ActionDefinition>): (TaskBundle) -> TaskBundle = { value ->
+        val step = value.tasks.first().steps.single(); val by = step.actions.associateBy { it.id }
+        value.copy(tasks = value.tasks.map { it.copy(steps = listOf(step.copy(actions = extra.flatMap { f -> f(by) }))) })
+    }
+    private fun out(action: String, field: String) = ActionInputBinding.Output(action, field)
+    @Test fun aFractionIsReadOnceAndRangeChecked(): Unit = runBlocking {
+        withContext(Dispatchers.Main) { surface.extras = listOf(Triple("12/30", 90f, 1000f)); surface.invalidate() }
+        val outputs = mutableMapOf<String, JsonObject>()
+        prepare("12/30", onActionFinished = { action, result -> (result as? ActionResult.Produced)?.let { outputs[action.id] = it.outputs } },
+            transform = steps({ by -> listOf(by.getValue("read"), ActionDefinition("number", ScreenActions.READ_FRACTION, 1, buildJsonObject {
+                put("minimumConfidence", 0.7); put("minimum", 0); put("maximum", 999) }, mapOf("observation" to out("read", "observation"))),
+                ActionDefinition("verify", ScreenActions.EXPECT, 1, buildJsonObject { put("text", "12/30"); put("minimumConfidence", 0.7) },
+                    mapOf("observation" to out("read", "observation")))) }))
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        assertTrue(state.toString(), state.unresolved.isEmpty())
+        assertEquals(12, outputs.getValue("number").getValue("value").jsonPrimitive.int)
+        assertEquals(30, outputs.getValue("number").getValue("total").jsonPrimitive.int)
+    }
+    @Test fun theSecondOfTwoEqualLabelsIsSelectedAndPressed(): Unit = runBlocking {
+        val width = withContext(Dispatchers.Main) { surface.width }
+        withContext(Dispatchers.Main) {
+            surface.extras = listOf(Triple("进攻", 90f, 1000f), Triple("进攻", 90f, 1300f))
+            surface.blankClaim = RectF(0f, 1180f, width.toFloat(), 1340f); surface.invalidate()
+        }
+        prepare("已领取", withInput = true, transform = steps({ by -> listOf(by.getValue("read"),
+            ActionDefinition("pick", ScreenActions.SELECT_TEXT, 1, buildJsonObject {
+                put("text", "进攻"); put("minimumConfidence", 0.7); put("order", "top"); put("index", 1) }, mapOf("observation" to out("read", "observation"))),
+            ActionDefinition("tap", ScreenActions.TAP, 1, buildJsonObject { put("durationMs", 80) }, mapOf("target" to out("pick", "target"))),
+            by.getValue("after"), by.getValue("verify")) }))
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        assertTrue(state.toString(), state.unresolved.isEmpty())
+        withContext(Dispatchers.Main) { assertEquals(1, surface.downs); assertTrue(surface.lastDownY!! in 1180f..1340f) }
+    }
+    @Test fun colorShareAndBeforeAfterDifferenceAreMeasuredFromObservedPixels(): Unit = runBlocking {
+        withContext(Dispatchers.Main) { surface.redBox = RectF(90f, 480f, 390f, 600f); surface.invalidate() }
+        val outputs = mutableMapOf<String, JsonObject>()
+        fun region(id: String, anchor: String) = ActionDefinition(id, ScreenActions.DERIVE, 1, buildJsonObject {
+            put("dx", -150); put("dy", 40); put("width", 300); put("height", 150); put("referenceWidth", 1080); put("referenceHeight", 2400)
+        }, mapOf("target" to out(anchor, "target")))
+        val geometry = withContext(Dispatchers.Main) { surface.rootView.width to surface.rootView.height }
+        prepare("已领取", withInput = true, onActionFinished = { action, result -> (result as? ActionResult.Produced)?.let { outputs[action.id] = it.outputs } },
+            transform = { value -> steps({ by -> listOf(by.getValue("read"), by.getValue("locate"),
+                region("box", "locate").let { it.copy(inputs = JsonObject(it.inputs + mapOf("referenceWidth" to JsonPrimitive(geometry.first), "referenceHeight" to JsonPrimitive(geometry.second)))) },
+                ActionDefinition("red", ScreenActions.MATCH_COLOR, 1, buildJsonObject {
+                    put("lower", buildJsonArray { add(200); add(0); add(0) }); put("upper", buildJsonArray { add(255); add(60); add(60) }); put("minimumRatio", 0.3)
+                }, mapOf("region" to out("box", "region"))),
+                by.getValue("tap"), by.getValue("after"),
+                ActionDefinition("doneLabel", ScreenActions.LOCATE, 1, buildJsonObject { put("text", "已领取"); put("minimumConfidence", 0.7) },
+                    mapOf("observation" to out("after", "observation"))),
+                region("label", "doneLabel").let { it.copy(inputs = JsonObject(it.inputs + mapOf("dy" to JsonPrimitive(-110), "height" to JsonPrimitive(120),
+                    "referenceWidth" to JsonPrimitive(geometry.first), "referenceHeight" to JsonPrimitive(geometry.second)))) },
+                ActionDefinition("diff", ScreenActions.COMPARE, 1, buildJsonObject { put("minimumDifference", 0.02) },
+                    mapOf("before" to out("read", "observation"), "region" to out("label", "region"))),
+                by.getValue("verify")) })(value) })
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        assertTrue(state.toString(), state.unresolved.isEmpty())
+        assertTrue(outputs.getValue("red").toString(), outputs.getValue("red").getValue("matched").jsonPrimitive.boolean)
+        assertTrue(outputs.getValue("diff").toString(), outputs.getValue("diff").getValue("changed").jsonPrimitive.boolean)
     }
     @Test fun aSwipeEndingOffscreenIsRefusedBeforeAnyIntent(): Unit = runBlocking {
         val width = withContext(Dispatchers.Main) { surface.rootView.width }; val height = withContext(Dispatchers.Main) { surface.rootView.height }
