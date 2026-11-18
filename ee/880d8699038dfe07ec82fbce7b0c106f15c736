@@ -1,0 +1,48 @@
+app/src/androidTest/kotlin/io/github/yysassist/actions/DailyGiftDraft.kt
+  s_fae32e7f0efe76::t_1c0d3f0db83183 38-56,60
+core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt
+  s_fae32e7f0efe76::t_0a50ec6e22203a 107-108
+app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt
+  s_fae32e7f0efe76::t_70448f976a0ae4 28,172-182,229-242,430,466,468-470,536-547,549-553,562-564
+  s_fae32e7f0efe76::t_bd4a4bf7bde3ce 548,554-558
+  s_fae32e7f0efe76::t_f342597a2aef3f 559-561
+  s_fae32e7f0efe76::t_50a941b236c1cf 565
+app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationRuntimeTest.kt
+  s_fae32e7f0efe76::t_efee75658b4a91 490
+  s_fae32e7f0efe76::t_a2a546c5f0f772 62-63,89,465-489,491-494,496
+  s_fae32e7f0efe76::t_f1eceb2e1a7a47 495
+app/src/debug/kotlin/io/github/yysassist/debug/ReplayDevice.kt
+  s_fae32e7f0efe76::t_223ccdb1d30f50 1-56
+app/src/debug/kotlin/io/github/yysassist/debug/LocalTaskTrigger.kt
+  s_fae32e7f0efe76::t_92f26d4a223aa3 33,46,52-53,62-65,75-78,91
+app/src/androidTest/kotlin/io/github/yysassist/actions/DailyGiftReplayTest.kt
+  s_fae32e7f0efe76::t_b6448ce377083c 40-43,56-63,127-128,141-143,149
+core/src/test/kotlin/io/github/yysassist/core/content/HandleContractTest.kt
+  s_fae32e7f0efe76::t_0a50ec6e22203a 68-80
+tools/qa/stage_daily_gift_draft.py
+  s_fae32e7f0efe76::t_4e4161022ede49 41-64,84,93,135-154
+core/src/main/kotlin/io/github/yysassist/core/content/StepProgram.kt
+  s_fae32e7f0efe76::t_0a50ec6e22203a 87-88
+app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationContractTest.kt
+  s_fae32e7f0efe76::t_a2a546c5f0f772 244-264
+docs/development/implementation-status.md
+  s_fae32e7f0efe76::t_886f4684d986e3 304-307
+docs/development/region-actions.md
+  s_fae32e7f0efe76::t_673fdb79d695a4 42-43,87-103
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ee880d8699038dfe07ec82fbce7b0c106f15c736",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
