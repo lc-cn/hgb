@@ -1,0 +1,41 @@
+app/src/main/kotlin/io/github/yysassist/storage/AssistDatabase.kt
+  s_fae32e7f0efe76::t_795e0d906fac73 50-69,131-132,137,154-159,162
+app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_795e0d906fac73 13,59-60,69,71
+app/src/debug/kotlin/io/github/yysassist/debug/LocalTaskTrigger.kt
+  s_fae32e7f0efe76::t_795e0d906fac73 65,92-95
+core/src/main/kotlin/io/github/yysassist/core/execution/ActionProvider.kt
+  s_fae32e7f0efe76::t_795e0d906fac73 32-43
+core/src/main/kotlin/io/github/yysassist/core/execution/StepWorker.kt
+  s_fae32e7f0efe76::t_795e0d906fac73 27,116,121-132
+app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt
+  s_fae32e7f0efe76::t_795e0d906fac73 435-438,452,454-455,459-461,463-464,466-469,473,578-579,596
+core/src/test/kotlin/io/github/yysassist/core/execution/StepProgramTest.kt
+  s_fae32e7f0efe76::t_795e0d906fac73 58-78
+app/schemas/io.github.yysassist.storage.AssistDatabase/5.json
+  s_fae32e7f0efe76::t_25dfc574fd3d19 1-340
+app/src/androidTest/kotlin/io/github/yysassist/storage/ActionTraceLogTest.kt
+  s_fae32e7f0efe76::t_634fbf82edc0e4 1-59
+app/src/main/kotlin/io/github/yysassist/storage/ActionTraceLog.kt
+  s_fae32e7f0efe76::t_6224d3757c5b3c 1-31
+docs/development/action-traces.md
+  s_fae32e7f0efe76::t_47ce404bd6e4ba 1-41
+docs/development/implementation-status.md
+  s_fae32e7f0efe76::t_fc1f15428a1fe6 312-315
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "275668830897f88f8b4efd778aaff94724703fe8",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
