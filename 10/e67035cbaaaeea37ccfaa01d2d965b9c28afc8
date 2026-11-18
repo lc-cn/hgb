@@ -1,0 +1,56 @@
+app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt
+  s_fae32e7f0efe76::t_7719688d79b7c3 28,44,58-59,61-65,70,76,86,89,92-96,109,114-119,124,127-130,139,150,188
+docs/development/README.md
+  s_fae32e7f0efe76::t_de9cb830083c08 13-14,69
+docs/design/ui-v6.md
+  s_fae32e7f0efe76::t_de9cb830083c08 1-30
+app/src/main/kotlin/io/github/yysassist/ui/TaskConfigurationPage.kt
+  s_fae32e7f0efe76::t_7719688d79b7c3 35-40,42-43,54,66-77
+app/src/main/kotlin/io/github/yysassist/ui/RunStatusBar.kt
+  s_fae32e7f0efe76::t_7719688d79b7c3 1-109
+app/src/androidTest/kotlin/io/github/yysassist/ui/TaskConfigurationPageTest.kt
+  s_fae32e7f0efe76::t_7719688d79b7c3 99
+  s_fae32e7f0efe76::t_36d842d69b8e55 67-75
+app/src/main/kotlin/io/github/yysassist/ui/SurfaceControls.kt
+  s_fae32e7f0efe76::t_7719688d79b7c3 1-66
+app/src/main/kotlin/io/github/yysassist/ui/ExecutionControls.kt
+  s_fae32e7f0efe76::t_7719688d79b7c3 135
+core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt
+  s_fae32e7f0efe76::t_7719688d79b7c3 94-97,232-235
+core/src/test/kotlin/io/github/yysassist/core/content/ConfigurationValidatorTest.kt
+  s_fae32e7f0efe76::t_36d842d69b8e55 12-21
+app/src/main/kotlin/io/github/yysassist/ui/SettingsPage.kt
+  s_fae32e7f0efe76::t_0ef500902ce054 82-84,109
+  s_fae32e7f0efe76::t_7719688d79b7c3 1-81,85-108,110-184
+app/src/main/kotlin/io/github/yysassist/ui/RunHistoryPage.kt
+  s_fae32e7f0efe76::t_7719688d79b7c3 1-90
+app/src/main/kotlin/io/github/yysassist/ui/ConfigurationFields.kt
+  s_fae32e7f0efe76::t_7719688d79b7c3 85-86,91-94
+  s_fae32e7f0efe76::t_52683bcef7ba50 95
+app/src/androidTest/kotlin/io/github/yysassist/ui/ExecutionControlsTest.kt
+  s_fae32e7f0efe76::t_36d842d69b8e55 171-212
+app/src/main/kotlin/io/github/yysassist/ui/TaskListPage.kt
+  s_fae32e7f0efe76::t_7719688d79b7c3 1-200
+app/src/main/kotlin/io/github/yysassist/ui/AssistIcons.kt
+  s_fae32e7f0efe76::t_7719688d79b7c3 22-30
+app/src/main/kotlin/io/github/yysassist/ui/NotificationAccess.kt
+  s_fae32e7f0efe76::t_7719688d79b7c3 36-41,43
+app/src/main/kotlin/io/github/yysassist/ui/GlassControls.kt
+  s_fae32e7f0efe76::t_7719688d79b7c3 38,42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "10e67035cbaaaeea37ccfaa01d2d965b9c28afc8",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
