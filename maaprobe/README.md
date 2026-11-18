@@ -49,3 +49,16 @@ adb -s "$MAA_PROBE_SERIAL" shell am instrument -w -r \
 ```
 
 The invalid ONNX case intentionally has a correct declared digest, reproduces the real upstream SIGABRT only in the child, and verifies an explicit subsequent valid call. The debug block case enters a non-returning C++ wait, then verifies an independent stop. These are not mixed with the old `allowCorruptMaaModels` host-terminating experiment. They do not prove production executor survival or game-result recovery.
+
+## Region and graphic-state experiment
+
+`MaaRegionNative` (library `yys_maa_region_probe`) is a probe-only JNI entry that runs OCR, TemplateMatch or ColorMatch with an explicit ROI in the same MaaFramework session; templates are injected in memory via `MaaResourceOverrideImage`. The production `vision` library is not changed. `MaaRegionStateExperimentTest` is skipped by default. To run it on private frames:
+
+```sh
+python3 tools/qa/prepare_region_experiment.py
+./gradlew -PincludePrivateRegionExperiment=true :maaprobe:assembleDebug :maaprobe:assembleDebugAndroidTest
+adb -s "$MAA_PROBE_SERIAL" shell am instrument -w -r -e class io.github.yysassist.maaprobe.MaaRegionStateExperimentTest \
+  -e includePrivateRegionExperiment true io.github.yysassist.maaprobe.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+**TemplateMatch terminates the process with SIGILL on Apple-silicon-hosted AVDs** (guest advertises `sve2` without `sve`; OpenCV KleidiCV selects SVE2). Use a device without that mismatch. Rebuild without the property afterwards so the local test APK has no private frames. Results and limits: [region-state evidence](../docs/development/build-evidence/region-state/README.md).

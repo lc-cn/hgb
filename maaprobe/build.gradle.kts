@@ -8,6 +8,7 @@ val maaModelPins = ((JsonSlurper().parse(maaLock) as Map<*, *>)["models"] as Map
 android {
     namespace = "io.github.yysassist.maaprobe"
     compileSdk { version = release(37) }
+    ndkVersion = "27.1.12297006"
     buildFeatures { buildConfig = true }
     defaultConfig {
         applicationId = "io.github.yysassist.maaprobe"
@@ -16,6 +17,8 @@ android {
         versionCode = 1
         versionName = "0.1-maa-probe"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk { abiFilters.add("arm64-v8a") }
+        externalNativeBuild { cmake { arguments.addAll(listOf("-DMAA_ROOT=${preparedMaa.path}", "-DANDROID_STL=c++_static", "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON")) } }
         listOf("det.onnx" to "DETECTOR_SHA256", "rec.onnx" to "RECOGNIZER_SHA256", "keys.txt" to "DICTIONARY_SHA256").forEach { (name, field) ->
             val pin = maaModelPins.map { it as Map<*, *> }.single { it["path"] == name }
             buildConfigField("String", field, "\"${pin["sha256"]}\"")
@@ -24,6 +27,10 @@ android {
     sourceSets.getByName("main").assets.directories.add(preparedMaa.resolve("assets").path)
     if (providers.gradleProperty("includePrivateVisionSamples").orNull == "true")
         sourceSets.getByName("androidTest").assets.directories.add(rootProject.file(".local/vision-poc/private-test-assets").path)
+    // Probe-only region/graphic-state experiment; private frames/templates never enter Git.
+    if (providers.gradleProperty("includePrivateRegionExperiment").orNull == "true")
+        sourceSets.getByName("androidTest").assets.directories.add(rootProject.file(".local/vision-poc/region-experiment-assets").path)
+    externalNativeBuild { cmake { path = file("src/main/cpp/CMakeLists.txt"); version = "3.22.1" } }
     // Preserve upstream bytes for this experiment's artifact identity checks.
     packaging { jniLibs.keepDebugSymbols.add("**/*.so") }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }

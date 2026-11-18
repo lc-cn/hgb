@@ -1,0 +1,1660 @@
+{
+ "date": "2026-11-18",
+ "baseCommit": "06312eb",
+ "authorization": "User approved the offline region/graphic-state experiment on existing private frames; no game input, no Release.",
+ "devices": {
+  "emulator": {
+   "avd": "yys-assist-dev",
+   "sdk": 36,
+   "result": "Process crashed (SIGILL) in OpenCV KleidiCV sve2 float_conversion during the first TemplateMatch; guest /proc/cpuinfo lists sve2 without sve on an Apple M5 host. No measurements recorded from this run."
+  },
+  "phone": {
+   "model": "SM-G9910",
+   "sdk": 35,
+   "abi": "arm64-v8a",
+   "cpuFeaturesIncludeSve": false,
+   "instrumentation": "OK (1 test)",
+   "foregroundBeforeAndAfter": "game client unchanged; no input sent"
+  }
+ },
+ "engine": "MaaFramework-5.16.1-ONNX-CPU-converted-v6-small",
+ "internetPermission": false,
+ "installedArtifacts": {
+  "maaprobe-debug.apk": "2bee183aabe492c605b8846f4f2e71e1f6cd8c425162065c08be2996a63e47ae",
+  "maaprobe-debug-androidTest.apk (private assets)": "5a67ec42d0e79774170a66204ff511e7664d419015fe340b40a170b669820b2b"
+ },
+ "frames": {
+  "count": 5,
+  "note": "Only SHA-256 and human-observed state; images stay in ignored storage.",
+  "list-heldout.png": {
+   "sha256": "fc3fdc77c8488917c34e8cef4818f0cd838e7fd8a0e4ccec3d20a494c78eb8fc",
+   "pixelIdenticalToListBeforeInsideAllCardRois": true
+  }
+ },
+ "uniqueEvidence": {
+  "listCardRoisIdenticalAcrossThreeListFramesExceptCard0After": true,
+  "jadeTemplate": {
+   "uniquePositives": 10,
+   "uniqueNegatives": 2,
+   "reportedPositives": 24,
+   "reportedNegatives": 3
+  },
+  "stampTemplate": {
+   "nonCircularPositives": 0
+  },
+  "redColor": {
+   "uniquePositives": 1
+  }
+ },
+ "templates": {
+  "jade.png": {
+   "frame": "list-after.png",
+   "rect": [
+    576,
+    449,
+    36,
+    43
+   ],
+   "sha256": "24c4a14a2ee916fcf00a91bf914a0706aec64ea0fb42f4a3890838ab153be91a"
+  },
+  "stamp.png": {
+   "frame": "details-claimed.png",
+   "rect": [
+    660,
+    481,
+    181,
+    112
+   ],
+   "sha256": "047b1bda8d776711804e6d9b8f2d840c30c00754af36dfe3a8debdabcec1c326"
+  }
+ },
+ "summary": {
+  "jadeTemplate": {
+   "positives": 24,
+   "negatives": 3,
+   "minPositive": 0.549714,
+   "maxNegative": 0.278235,
+   "separable": true
+  },
+  "stampTemplate": {
+   "positives": 0,
+   "negatives": 27,
+   "minPositive": null,
+   "maxNegative": 0.267852,
+   "separable": false
+  },
+  "redColor": {
+   "positives": 1,
+   "negatives": 27,
+   "minPositive": 3855,
+   "maxNegative": 8258,
+   "separable": false
+  },
+  "allRepetitionsIdentical": true
+ },
+ "anchors": [
+  {
+   "frame": "list-before.png",
+   "text": "每日礼包",
+   "exactCandidates": 1,
+   "anchorIoU": 0.6857142857142857,
+   "derived": [
+    {
+     "name": "button",
+     "insideFrame": true,
+     "handRoiIoU": 0.7898305084745763,
+     "checks": {
+      "jade": {
+       "hit": true,
+       "candidates": 1,
+       "bestScore": 0.278237
+      },
+      "ocr": {
+       "hit": true,
+       "candidates": 1,
+       "textCount": 1,
+       "anyText": true
+      }
+     }
+    }
+   ]
+  },
+  {
+   "frame": "list-after.png",
+   "text": "每日礼包",
+   "exactCandidates": 1,
+   "anchorIoU": 0.6857142857142857,
+   "derived": [
+    {
+     "name": "button",
+     "insideFrame": true,
+     "handRoiIoU": 0.7898305084745763,
+     "checks": {
+      "jade": {
+       "hit": true,
+       "candidates": 1,
+       "bestScore": 1
+      },
+      "ocr": {
+       "hit": true,
+       "candidates": 1,
+       "textCount": 1,
+       "anyText": true
+      }
+     }
+    }
+   ]
+  },
+  {
+   "frame": "list-heldout.png",
+   "text": "每日礼包",
+   "exactCandidates": 1,
+   "anchorIoU": 0.6857142857142857,
+   "derived": [
+    {
+     "name": "button",
+     "insideFrame": true,
+     "handRoiIoU": 0.7898305084745763,
+     "checks": {
+      "jade": {
+       "hit": true,
+       "candidates": 1,
+       "bestScore": 0.278237
+      },
+      "ocr": {
+       "hit": true,
+       "candidates": 1,
+       "textCount": 1,
+       "anyText": true
+      }
+     }
+    }
+   ]
+  },
+  {
+   "frame": "details-claimed.png",
+   "text": "御行达摩的赠礼",
+   "exactCandidates": 1,
+   "anchorIoU": 0.8052588331963846,
+   "derived": [
+    {
+     "name": "center",
+     "insideFrame": true,
+     "handRoiIoU": 0.9167483732953026,
+     "checks": {
+      "red": {
+       "hit": true,
+       "candidates": 1,
+       "maxCount": 3855
+      },
+      "stamp": {
+       "hit": true,
+       "candidates": 1,
+       "bestScore": 1
+      }
+     }
+    },
+    {
+     "name": "price",
+     "insideFrame": true,
+     "handRoiIoU": 0.8461538461538461,
+     "checks": {
+      "jade": {
+       "hit": true,
+       "candidates": 1,
+       "bestScore": 0.174149
+      },
+      "ocr": {
+       "hit": true,
+       "candidates": 1,
+       "textCount": 1,
+       "anyText": true
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "cases": [
+  {
+   "id": "list-before.png:card0:jade",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.278235
+   }
+  },
+  {
+   "id": "list-before.png:card0:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "expectedExact": true,
+    "expectedJoined": true,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-before.png:card0:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 602
+   }
+  },
+  {
+   "id": "list-before.png:card0:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.221788
+   }
+  },
+  {
+   "id": "list-before.png:card1:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.994648
+   }
+  },
+  {
+   "id": "list-before.png:card1:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 2,
+    "textCount": 2,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-before.png:card1:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 2350
+   }
+  },
+  {
+   "id": "list-before.png:card1:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.168618
+   }
+  },
+  {
+   "id": "list-before.png:card2:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.998251
+   }
+  },
+  {
+   "id": "list-before.png:card2:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-before.png:card2:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 3366
+   }
+  },
+  {
+   "id": "list-before.png:card2:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.24296
+   }
+  },
+  {
+   "id": "list-before.png:card3:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.999736
+   }
+  },
+  {
+   "id": "list-before.png:card3:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-before.png:card3:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 8258
+   }
+  },
+  {
+   "id": "list-before.png:card3:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.254431
+   }
+  },
+  {
+   "id": "list-before.png:card4:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.982585
+   }
+  },
+  {
+   "id": "list-before.png:card4:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-before.png:card4:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 5643
+   }
+  },
+  {
+   "id": "list-before.png:card4:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.255963
+   }
+  },
+  {
+   "id": "list-before.png:card5:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.959505
+   }
+  },
+  {
+   "id": "list-before.png:card5:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-before.png:card5:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 957
+   }
+  },
+  {
+   "id": "list-before.png:card5:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.257026
+   }
+  },
+  {
+   "id": "list-before.png:card6:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.977284
+   }
+  },
+  {
+   "id": "list-before.png:card6:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-before.png:card6:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 401
+   }
+  },
+  {
+   "id": "list-before.png:card6:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.161472
+   }
+  },
+  {
+   "id": "list-before.png:card7:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.971241
+   }
+  },
+  {
+   "id": "list-before.png:card7:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-before.png:card7:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 574
+   }
+  },
+  {
+   "id": "list-before.png:card7:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.267852
+   }
+  },
+  {
+   "id": "list-after.png:card0:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": true,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 1
+   }
+  },
+  {
+   "id": "list-after.png:card0:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 2,
+    "textCount": 2,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-after.png:card0:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 1464
+   }
+  },
+  {
+   "id": "list-after.png:card0:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.185151
+   }
+  },
+  {
+   "id": "list-after.png:card1:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.994648
+   }
+  },
+  {
+   "id": "list-after.png:card1:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 2,
+    "textCount": 2,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-after.png:card1:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 2350
+   }
+  },
+  {
+   "id": "list-after.png:card1:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.168618
+   }
+  },
+  {
+   "id": "list-after.png:card2:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.998251
+   }
+  },
+  {
+   "id": "list-after.png:card2:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-after.png:card2:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 3366
+   }
+  },
+  {
+   "id": "list-after.png:card2:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.24296
+   }
+  },
+  {
+   "id": "list-after.png:card3:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.999736
+   }
+  },
+  {
+   "id": "list-after.png:card3:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-after.png:card3:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 8258
+   }
+  },
+  {
+   "id": "list-after.png:card3:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.254431
+   }
+  },
+  {
+   "id": "list-after.png:card4:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.982585
+   }
+  },
+  {
+   "id": "list-after.png:card4:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-after.png:card4:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 5643
+   }
+  },
+  {
+   "id": "list-after.png:card4:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.255963
+   }
+  },
+  {
+   "id": "list-after.png:card5:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.959505
+   }
+  },
+  {
+   "id": "list-after.png:card5:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-after.png:card5:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 957
+   }
+  },
+  {
+   "id": "list-after.png:card5:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.257026
+   }
+  },
+  {
+   "id": "list-after.png:card6:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.977284
+   }
+  },
+  {
+   "id": "list-after.png:card6:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-after.png:card6:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 401
+   }
+  },
+  {
+   "id": "list-after.png:card6:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.161472
+   }
+  },
+  {
+   "id": "list-after.png:card7:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.971241
+   }
+  },
+  {
+   "id": "list-after.png:card7:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-after.png:card7:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 574
+   }
+  },
+  {
+   "id": "list-after.png:card7:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.267852
+   }
+  },
+  {
+   "id": "list-heldout.png:card0:jade",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.278235
+   }
+  },
+  {
+   "id": "list-heldout.png:card0:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "expectedExact": true,
+    "expectedJoined": true,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-heldout.png:card0:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 602
+   }
+  },
+  {
+   "id": "list-heldout.png:card0:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.221788
+   }
+  },
+  {
+   "id": "list-heldout.png:card1:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.994648
+   }
+  },
+  {
+   "id": "list-heldout.png:card1:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 2,
+    "textCount": 2,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-heldout.png:card1:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 2350
+   }
+  },
+  {
+   "id": "list-heldout.png:card1:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.168618
+   }
+  },
+  {
+   "id": "list-heldout.png:card2:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.998251
+   }
+  },
+  {
+   "id": "list-heldout.png:card2:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-heldout.png:card2:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 3366
+   }
+  },
+  {
+   "id": "list-heldout.png:card2:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.24296
+   }
+  },
+  {
+   "id": "list-heldout.png:card3:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.999736
+   }
+  },
+  {
+   "id": "list-heldout.png:card3:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-heldout.png:card3:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 8258
+   }
+  },
+  {
+   "id": "list-heldout.png:card3:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.254431
+   }
+  },
+  {
+   "id": "list-heldout.png:card4:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.982585
+   }
+  },
+  {
+   "id": "list-heldout.png:card4:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-heldout.png:card4:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 5643
+   }
+  },
+  {
+   "id": "list-heldout.png:card4:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.255963
+   }
+  },
+  {
+   "id": "list-heldout.png:card5:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.959505
+   }
+  },
+  {
+   "id": "list-heldout.png:card5:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-heldout.png:card5:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 957
+   }
+  },
+  {
+   "id": "list-heldout.png:card5:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.257026
+   }
+  },
+  {
+   "id": "list-heldout.png:card6:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.977284
+   }
+  },
+  {
+   "id": "list-heldout.png:card6:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-heldout.png:card6:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 401
+   }
+  },
+  {
+   "id": "list-heldout.png:card6:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.161472
+   }
+  },
+  {
+   "id": "list-heldout.png:card7:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.971241
+   }
+  },
+  {
+   "id": "list-heldout.png:card7:button-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "anyText": true
+   }
+  },
+  {
+   "id": "list-heldout.png:card7:art-red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 574
+   }
+  },
+  {
+   "id": "list-heldout.png:card7:art-stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.267852
+   }
+  },
+  {
+   "id": "details:col0:jade",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.149639
+   }
+  },
+  {
+   "id": "details:col0:price-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "expectedExact": true,
+    "expectedJoined": true,
+    "anyText": true
+   }
+  },
+  {
+   "id": "details:col0:red",
+   "type": "ColorMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 3855
+   }
+  },
+  {
+   "id": "details:col0:stamp",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": true,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.999999
+   }
+  },
+  {
+   "id": "reward:col0:stamp",
+   "type": "TemplateMatch",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.183623
+   }
+  },
+  {
+   "id": "details:col1:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.834091
+   }
+  },
+  {
+   "id": "details:col1:price-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 3,
+    "textCount": 3,
+    "expectedExact": true,
+    "expectedJoined": false,
+    "anyText": true
+   }
+  },
+  {
+   "id": "details:col1:red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "maxCount": 1089
+   }
+  },
+  {
+   "id": "details:col1:stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.256262
+   }
+  },
+  {
+   "id": "reward:col1:stamp",
+   "type": "TemplateMatch",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": false,
+    "candidates": 0,
+    "bestScore": 0
+   }
+  },
+  {
+   "id": "details:col2:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.586845
+   }
+  },
+  {
+   "id": "details:col2:price-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "expectedExact": false,
+    "expectedJoined": false,
+    "anyText": true
+   }
+  },
+  {
+   "id": "details:col2:red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": false,
+    "candidates": 1,
+    "maxCount": 0
+   }
+  },
+  {
+   "id": "details:col2:stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.144025
+   }
+  },
+  {
+   "id": "reward:col2:stamp",
+   "type": "TemplateMatch",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": false,
+    "candidates": 0,
+    "bestScore": 0
+   }
+  },
+  {
+   "id": "details:col3:jade",
+   "type": "TemplateMatch",
+   "expected": true,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.549714
+   }
+  },
+  {
+   "id": "details:col3:price-ocr",
+   "type": "OCR",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "textCount": 1,
+    "expectedExact": false,
+    "expectedJoined": false,
+    "anyText": true
+   }
+  },
+  {
+   "id": "details:col3:red",
+   "type": "ColorMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": false,
+    "candidates": 1,
+    "maxCount": 0
+   }
+  },
+  {
+   "id": "details:col3:stamp",
+   "type": "TemplateMatch",
+   "expected": false,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.162308
+   }
+  },
+  {
+   "id": "reward:col3:stamp",
+   "type": "TemplateMatch",
+   "expected": null,
+   "circular": false,
+   "repetitionsIdentical": true,
+   "result": {
+    "hit": true,
+    "candidates": 1,
+    "bestScore": 0.174869
+   }
+  }
+ ],
+ "cleanup": {
+  "phonePackagesRemoved": [
+   "io.github.yysassist.maaprobe",
+   "io.github.yysassist.maaprobe.test"
+  ],
+  "emulatorTestPackageRemoved": true,
+  "privateDetailsDeletedLocally": true
+ }
+}
