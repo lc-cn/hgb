@@ -115,7 +115,17 @@ internal fun ConfigurationFieldView(field: ConfigurationField, value: JsonElemen
                 }
                 val choices = (value as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.content }.orEmpty()
                 val single = field.widget == FieldWidget.SINGLE_CHOICE
-                FlowRow(Modifier.fillMaxWidth().then(if (single) Modifier.selectableGroup() else Modifier),
+                if (!single) Column(Modifier.fillMaxWidth()) {
+                    field.options.forEach { option ->
+                        val selected = option.value in choices
+                        Row(Modifier.fillMaxWidth().heightIn(min = UiSpace.hit).toggleable(selected, enabled, Role.Checkbox, onValueChange = {
+                            change(JsonArray((if (selected) choices - option.value else choices + option.value).map(::JsonPrimitive)))
+                        }), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+                            Checkbox(selected, null, enabled = enabled)
+                            Text(option.label)
+                        }
+                    }
+                } else FlowRow(Modifier.fillMaxWidth().then(if (single) Modifier.selectableGroup() else Modifier),
                     horizontalArrangement = Arrangement.spacedBy(UiSpace.gap), verticalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
                     field.options.forEach { option ->
                         val selected = if (single) value == JsonPrimitive(option.value) else option.value in choices

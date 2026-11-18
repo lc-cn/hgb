@@ -4,6 +4,7 @@ import android.accessibilityservice.GestureDescription
 import io.github.yysassist.RuntimeCommandResult
 import io.github.yysassist.core.content.*
 import io.github.yysassist.core.execution.*
+import io.github.yysassist.core.model.ExecutionContext
 import io.github.yysassist.device.*
 import io.github.yysassist.vision.*
 import kotlinx.coroutines.*
@@ -19,6 +20,8 @@ internal class ScreenActions(
     private val journal: (suspend (ExecutorCommand) -> RuntimeCommandResult)? = null,
     /** Posts a text-only local notification; false when notifications are not allowed. */
     private val notifier: ((String, String) -> Boolean)? = null,
+    /** Text of every completed observation, for passive tasks; must return at once and is never stored. */
+    private val textObserved: ((ExecutionContext, List<String>) -> Unit)? = null,
 ) : ActionProvider {
     companion object {
         const val READ = "screen.readText"; const val EXPECT = "screen.expectText"
@@ -38,6 +41,7 @@ internal class ScreenActions(
         const val OBSERVATION = "screen.observation"; const val TARGET = "screen.target"; const val REGION = "screen.region"
         private const val MAX_STATES = 8; private const val MAX_TEMPLATES = 16; private const val MAX_OFFSET = 100_000
         private const val RETAINED_FRAMES = 2
+        private const val TRIGGER_CONFIDENCE = 0.6
     }
     private fun JsonObject.text(key: String) = (get(key) as? JsonPrimitive)?.takeIf { it.isString }?.content
     private fun unit(value: JsonElement?): BigDecimal? = (value as? JsonPrimitive)?.takeUnless { it.isString }?.content
@@ -458,6 +462,8 @@ internal class ScreenActions(
             if (result.version != bundle.version || result.stamp !== frame.stamp)
                 return Acquisition.Problem(ActionResult.Unavailable("观察期间目标画面已变化"))
             bridge.validateObservation(result.stamp)?.let { return Acquisition.Problem(ActionResult.Unavailable(deviceReason(it))) }
+            textObserved?.let { listener -> runCatching { listener(attempt.run.request.context,
+                result.candidates.filter { it.confidence.isFinite() && it.confidence >= TRIGGER_CONFIDENCE }.map { it.text }) } }
             return Acquisition.Ready(Observation(bridge, result, models))
         }
     }

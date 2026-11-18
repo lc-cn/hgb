@@ -15,9 +15,12 @@ fun validateConfiguration(task: TaskDefinition, values: JsonObject): List<Conten
     }
     task.fields.forEach { field ->
         fun invalid(reason: String) { add(ContentIssue(field.id, reason)) }
+        // A hidden second-level setting keeps its value but does not apply.
+        if (!field.isVisible(values)) return@forEach
+        val passiveSwitch = task.trigger?.enabledBy == field.id
         val value = values[field.id]
         if (value == null || value == JsonNull) {
-            if (field.required) invalid("请填写${field.label}")
+            if (field.required && !passiveSwitch) invalid("请填写${field.label}")
             return@forEach
         }
         when (field.widget) {
@@ -30,7 +33,7 @@ fun validateConfiguration(task: TaskDefinition, values: JsonObject): List<Conten
                 if (choices == null || choices.any { item -> item !is JsonPrimitive || !item.isString || field.options.none { it.value == item.content } })
                     invalid("请使用有效的多选项")
                 else if (choices.distinct().size != choices.size) invalid("选项不能重复")
-                else if (field.required && choices.isEmpty()) invalid("请至少选择一项")
+                else if (field.required && choices.isEmpty() && !passiveSwitch) invalid("请至少选择一项")
             }
             FieldWidget.NUMBER, FieldWidget.RANGE -> {
                 val number = (value as? JsonPrimitive)?.decimalOrNull()

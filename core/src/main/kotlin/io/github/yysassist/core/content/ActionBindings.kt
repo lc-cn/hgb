@@ -28,6 +28,7 @@ internal fun ConfigurationField.valueType(): ActionValueType = when (widget) {
     FieldWidget.NUMBER, FieldWidget.RANGE -> ActionValueType.NUMBER
     FieldWidget.MULTI_CHOICE -> ActionValueType.ARRAY
     FieldWidget.DATE_RANGE -> ActionValueType.OBJECT
+    FieldWidget.SWITCH -> ActionValueType.BOOLEAN
     else -> ActionValueType.STRING
 }
 
@@ -62,6 +63,7 @@ internal fun actionBindingIssues(task: TaskDefinition, action: ActionDefinition,
                 val field = task.fields.singleOrNull { it.id == source.fieldId }
                 if (field == null) add("引用的配置字段不存在")
                 else if (!field.required) add("动作引用的配置字段必须显式声明为必填")
+                else if (field.visibleWhen != null) add("动作不能引用按条件显示的配置字段")
                 field?.valueType()
             }
             is ActionInputBinding.Output -> {
