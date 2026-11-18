@@ -1,0 +1,35 @@
+maaprobe/src/androidTest/kotlin/io/github/yysassist/maaprobe/MaaRegionStateExperimentTest.kt
+  s_fae32e7f0efe76::t_3832de15494b7e 52,54-57,79-80
+app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt
+  s_fae32e7f0efe76::t_3a31f18b708222 28,74-79,187-202,248-250,357-359,372-386,444-445,447,498-511,564,599,603
+app/src/main/kotlin/io/github/yysassist/vision/TextObservation.kt
+  s_fae32e7f0efe76::t_3a31f18b708222 30,37
+app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationContractTest.kt
+  s_fae32e7f0efe76::t_dd114546a11d35 265-291
+app/src/main/kotlin/io/github/yysassist/vision/MaaTextBackend.kt
+  s_fae32e7f0efe76::t_3a31f18b708222 187,191,193
+tools/qa/stage_daily_gift_draft.py
+  s_fae32e7f0efe76::t_d81aab0161bf7c 65-104,131-133,135,138-140,147,170-184,214-232
+tools/qa/prepare_navigation_experiment.py
+  s_fae32e7f0efe76::t_3832de15494b7e 1-63
+docs/development/implementation-status.md
+  s_fae32e7f0efe76::t_bb62c5e9f2d3ef 308-311
+docs/development/region-actions.md
+  s_fae32e7f0efe76::t_5ba016a0be6a4a 44-47,108-124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8305af348f8ce444541028bcf374e54f5511d0e3",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
