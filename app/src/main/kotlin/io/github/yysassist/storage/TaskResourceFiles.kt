@@ -70,8 +70,14 @@ class TaskResourceFiles(private val root: File) {
         Files.createDirectories(staging.toPath())
         val prepared = Prepared(Files.createDirectory(File(staging, UUID.randomUUID().toString()).toPath()).toFile(), resources)
         try {
+            val present = mutableSetOf<String>()
             resources.forEach { resource ->
                 currentCoroutineContext().ensureActive()
+                // Content-addressed: a blob already verified from an earlier version (e.g. the same OCR
+                // models) is not downloaded again. publish() re-checks it before the version is committed.
+                if (resource.sha256 in present || runCatching { checkFile(blob(resource.sha256), resource, hash = true) }.isSuccess) {
+                    present += resource.sha256; return@forEach
+                }
                 val file = File(prepared.directory, resource.assetName)
                 FileOutputStream(file).use { output ->
                     val hash = MessageDigest.getInstance("SHA-256")
@@ -92,6 +98,7 @@ class TaskResourceFiles(private val root: File) {
                     output.fd.sync()
                 }
                 if (!file.setReadOnly()) throw IOException("资源暂存文件无法设为只读")
+                present += resource.sha256
             }
             return prepared
         } catch (failure: Throwable) {

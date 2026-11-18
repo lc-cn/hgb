@@ -28,6 +28,8 @@ class MaaProcessCall(
     private val imageRead: ParcelFileDescriptor,
     private val nativeBlock: Boolean = false,
     private val inspection: MaaInspection? = null,
+    /** Non-null when imageRead carries raw RGBA pixels of this size instead of PNG. */
+    private val rawSize: Pair<Int, Int>? = null,
     private val onQuiet: () -> Unit,
 ) {
     companion object {
@@ -138,6 +140,9 @@ class MaaProcessCall(
         private set
     var quietEvidence: String? = null
         private set
+    /** Child-reported timings for the delivered result (diagnostics only). */
+    @Volatile var childTimings: Map<String, Long> = emptyMap()
+        private set
     private var current: Link? = null
     private var submitted = false
     private var accepted = false
@@ -212,6 +217,7 @@ class MaaProcessCall(
                     data.putLong("$key.bytes", template.bytes); data.putString("$key.sha256", template.sha256)
                 }
             }
+            rawSize?.let { (width, height) -> require(width > 0 && height > 0); data.putInt("imageWidth", width); data.putInt("imageHeight", height) }
             data.putParcelable("image", imageRead)
             // From this point a failed IPC delivery is uncertain, not proof the child never used FDs.
             submitted = true
@@ -244,6 +250,7 @@ class MaaProcessCall(
                     requestProcessStop(); return
                 }
                 reading = true
+                childTimings = listOf("imageReadMs", "nativeMs").associateWith { data.getLong(it, -1) } + ("imageBytes" to data.getInt("imageBytes", -1).toLong())
                 reader.execute {
                     val outcome = try {
                         val bytes = ParcelFileDescriptor.AutoCloseInputStream(result).use { it.readBytes() }

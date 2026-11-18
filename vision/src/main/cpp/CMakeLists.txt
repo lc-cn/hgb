@@ -4,6 +4,8 @@ add_library(MaaFramework SHARED IMPORTED)
 set_target_properties(MaaFramework PROPERTIES IMPORTED_LOCATION "${MAA_ROOT}/jniLibs/${ANDROID_ABI}/libMaaFramework.so")
 add_library(yys_maa SHARED MaaOcr.cpp)
 target_compile_features(yys_maa PRIVATE cxx_std_17)
+# Pixel conversion runs on every observation; keep it optimized in debug builds too.
+target_compile_options(yys_maa PRIVATE -O2)
 target_include_directories(yys_maa PRIVATE "${MAA_ROOT}/include")
 target_link_libraries(yys_maa PRIVATE MaaFramework)
 set_target_properties(yys_maa PROPERTIES CXX_VISIBILITY_PRESET hidden)

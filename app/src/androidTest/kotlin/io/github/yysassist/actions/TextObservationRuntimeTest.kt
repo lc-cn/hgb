@@ -277,6 +277,7 @@ class TextObservationRuntimeTest {
     /** Same real subprocess protocol. Only the first call deliberately enters the debug C++ wait. */
     private inner class FirstNativeBlock : TextBackend {
         override val modelContract = MaaTextBackend.CONTRACT
+        override val rawPixels = true // Same pixel transport as the real backend it delegates to.
         private val normal = MaaTextBackend(context)
         val first = CompletableFuture<MaaProcessCall>()
         @Volatile var calls = 0
@@ -290,7 +291,7 @@ class TextObservationRuntimeTest {
             val names = mapOf("det.onnx" to "detector", "rec.onnx" to "recognizer", "keys.txt" to "dictionary")
             val files = names.mapValues { (_, role) -> models.getValue(role).let { MaaModelFile(it.file, it.bytes, it.sha256) } }
             val quiet = CompletableFuture<Unit>()
-            val call = MaaProcessCall(context, files, imageRead, nativeBlock = true) {
+            val call = MaaProcessCall(context, files, imageRead, nativeBlock = true, rawSize = width to height) {
                 try { onQuiet() } finally { quiet.complete(Unit) }
             }
             first.complete(call)
@@ -512,6 +513,18 @@ class TextObservationRuntimeTest {
         assertTrue(state.unresolved.single().reason, state.unresolved.single().reason.contains("唯一"))
         assertTrue(state.deviceActions.isEmpty()); assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
         assertFalse(state.facts.any { it.type == "task-completed" || it.type == "task-failed" })
+    }
+    @Test fun aTargetThatMovedFarFromItsWindowIsNotPressed(): Unit = runBlocking {
+        // Re-resolution searches only near the previous position; a far move is not chased across the screen.
+        prepare("已领取", withInput = true, onActionFinished = { action, _ ->
+            if (action.capability == ScreenActions.LOCATE) withContext(Dispatchers.Main) {
+                surface.textLeft = 90f; surface.textBaseline = surface.height - 120f; surface.invalidate()
+            }
+        })
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.unresolved.isNotEmpty() || it.facts.any { fact -> fact.type == "task-completed" } } }
+        assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
+        assertTrue(state.toString(), state.unresolved.any { it.reason.contains("原位置附近") })
     }
     @Test fun inputReobservesAMovedTargetRatherThanUsingTheOldCoordinates(): Unit = runBlocking {
         prepare("已领取", withInput = true, onActionFinished = { action, _ ->

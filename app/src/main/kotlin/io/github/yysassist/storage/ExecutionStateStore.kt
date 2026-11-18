@@ -6,7 +6,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 
-data class LoadedExecutorState(val revision: Long, val encodedState: String) {
+data class LoadedExecutorState(val revision: Long, val encodedState: String, val lastFactId: Long = 0) {
     /** Restores recorded control state only; startup/recovery decisions belong to the host. */
     fun decode(): TaskExecutor = TaskExecutor.fromEncodedState(encodedState)
 }
@@ -76,6 +76,12 @@ class ExecutionStateStore(private val database: AssistDatabase, private val libr
         val revision = Math.addExact(before.revision, 1)
         val payload = prepared.encodeState()
         database.executorState().save(ExecutorStateEntity(revision = revision, payload = payload, digest = TaskVersionLibrary.sha256(payload)))
+        // Same transaction: history gains exactly the facts this transition added to the state.
+        database.executionFacts().insert(snapshot.facts.filter { it.id > before.lastFactId }.map { fact ->
+            ExecutionFactEntity(factId = fact.id, runId = fact.runId, type = fact.type, taskId = fact.taskId, detail = fact.detail,
+                taskName = fact.taskName, contextJson = Json.encodeToString(io.github.yysassist.core.model.ExecutionContext.serializer(), fact.context),
+                packageVersion = fact.packageVersion, occurredAt = fact.occurredAtEpochMillis)
+        })
         revision
     }
 
@@ -89,6 +95,6 @@ class ExecutionStateStore(private val database: AssistDatabase, private val libr
             throw CorruptExecutionState("执行状态摘要不匹配，原数据保留")
         val restored = try { TaskExecutor.fromEncodedState(row.payload) }
         catch (_: IllegalArgumentException) { throw CorruptExecutionState("执行状态格式无效，原数据保留") }
-        return LoadedExecutorState(row.revision, restored.encodeState())
+        return LoadedExecutorState(row.revision, restored.encodeState(), restored.state.value.facts.maxOfOrNull { it.id } ?: 0)
     }
 }

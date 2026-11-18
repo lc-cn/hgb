@@ -29,6 +29,7 @@ internal class ScreenActions(
         /** Handle kinds. Region-derived observations keep REGION in their lineage. */
         const val OBSERVATION = "screen.observation"; const val TARGET = "screen.target"; const val REGION = "screen.region"
         private const val MAX_STATES = 8; private const val MAX_TEMPLATES = 16; private const val MAX_OFFSET = 100_000
+        private const val RETAINED_FRAMES = 2
     }
     private fun JsonObject.text(key: String) = (get(key) as? JsonPrimitive)?.takeIf { it.isString }?.content
     private fun unit(value: JsonElement?): BigDecimal? = (value as? JsonPrimitive)?.takeUnless { it.isString }?.content
@@ -295,6 +296,26 @@ internal class ScreenActions(
         return message + listOfNotNull(value.detail).plus(value.diagnostics).takeIf { it.isNotEmpty() }
             ?.joinToString("；", "（", "）").orEmpty()
     }
+    /**
+     * A fresh frame for an input, without whole-frame recognition: the target is then re-resolved only in
+     * a window around its previous position. Same admission, foreground and frame-validity checks.
+     */
+    private suspend fun snapshot(attempt: StepAttempt, bundle: TaskBundle, bridge: ObservationDevice, packageName: String, models: OcrModelReferences): Acquisition {
+        if (!permitted(attempt.ticket)) return Acquisition.Problem(ActionResult.Interrupted)
+        val capture = bridge.capture(packageName)
+        if (!permitted(attempt.ticket)) {
+            (capture as? FrameResult.Ready)?.frame?.close()
+            return Acquisition.Problem(ActionResult.Interrupted)
+        }
+        if (capture is FrameResult.Unavailable) return Acquisition.Problem(ActionResult.Unavailable(
+            deviceReason(capture.reason) + (capture.platformCode?.let { "（截图错误 $it）" } ?: "")))
+        check(capture is FrameResult.Ready)
+        capture.frame.use { frame ->
+            val pixels = try { observer().pixelsOf(frame) } catch (_: Exception) { return Acquisition.Problem(ActionResult.Unavailable("截图编码失败")) }
+            bridge.validateObservation(frame.stamp)?.let { return Acquisition.Problem(ActionResult.Unavailable(deviceReason(it))) }
+            return Acquisition.Ready(Observation(bridge, TextReadResult.Observed(frame.stamp, bundle.version, "", emptyList(), pixels = pixels), models))
+        }
+    }
     private suspend fun observe(attempt: StepAttempt, bundle: TaskBundle, bridge: ObservationDevice, packageName: String, models: OcrModelReferences): Acquisition {
         if (!permitted(attempt.ticket)) return Acquisition.Problem(ActionResult.Interrupted)
         val capture = bridge.capture(packageName)
@@ -316,6 +337,14 @@ internal class ScreenActions(
             bridge.validateObservation(result.stamp)?.let { return Acquisition.Problem(ActionResult.Unavailable(deviceReason(it))) }
             return Acquisition.Ready(Observation(bridge, result, models))
         }
+    }
+    /** Window around a previous target where an input re-resolves it on a fresh frame. */
+    private fun window(bounds: TextBounds, geometry: ScreenGeometry): TextBounds {
+        val margin = maxOf(bounds.width, bounds.height) + 160
+        val left = (bounds.left - margin).coerceAtLeast(0); val top = (bounds.top - margin).coerceAtLeast(0)
+        val right = (bounds.left + bounds.width + margin).coerceAtMost(geometry.width)
+        val bottom = (bounds.top + bounds.height + margin).coerceAtMost(geometry.height)
+        return TextBounds(left, top, right - left, bottom - top)
     }
     private fun uniqueTarget(observation: Observation, text: String, minimum: BigDecimal): RecognizedText? {
         val matches = observation.result.candidates.filter { it.text == text && it.confidence.isFinite() && BigDecimal.valueOf(it.confidence) >= minimum }
@@ -352,13 +381,27 @@ internal class ScreenActions(
         private val observations = mutableMapOf<String, Observation>()
         private val targets = mutableMapOf<String, Target>()
         private val regions = mutableMapOf<String, Region>()
+        /**
+         * Pixels of stored observations, by frame, kept for at most [RETAINED_FRAMES] frames (about 10MB each
+         * as raw RGBA). Observations themselves keep only recognized text, so targets and regions do not pin
+         * pixels; an evicted frame makes later region requests on it unavailable instead of using a newer one.
+         */
+        private val frames = LinkedHashMap<FrameStamp, EncodedPixels>()
+        private fun store(observation: Observation): Observation {
+            observation.result.pixels?.let { pixels ->
+                frames.remove(observation.result.stamp); frames[observation.result.stamp] = pixels
+                while (frames.size > RETAINED_FRAMES) frames.remove(frames.keys.first())
+            }
+            return observation.copy(result = observation.result.copy(pixels = null))
+        }
         private fun token() = UUID.randomUUID().toString()
         /** Region requests on the pixels already observed; the frame must still be current. */
         private suspend fun inspect(region: Region, requests: List<InspectionRequest>): Any = inspectOn(region.observation, requests)
         /** Requests on an observation's own pixels; the frame must still be current. */
         private suspend fun inspectOn(observation: Observation, requests: List<InspectionRequest>): Any {
             observation.bridge.validateObservation(observation.result.stamp)?.let { return ActionResult.Unavailable(deviceReason(it)) }
-            val pixels = observation.result.pixels ?: return ActionResult.Unavailable("本次观察未保留可复查的画面")
+            val pixels = frames[observation.result.stamp] ?: observation.result.pixels
+                ?: return ActionResult.Unavailable("本次观察的画面像素已释放，需重新观察")
             val result = observer().inspect(bundle.version, observation.models, observation.result.stamp, pixels, requests) { permitted(attempt.ticket) }
             currentCoroutineContext().ensureActive()
             if (!permitted(attempt.ticket) || result == InspectionResult.Interrupted) return ActionResult.Interrupted
@@ -380,10 +423,21 @@ internal class ScreenActions(
             return accepted.singleOrNull()?.let { RecognizedText("", it.score, it.bounds) }
                 ?: ActionResult.Unavailable(if (accepted.isEmpty()) "本次画面中没有达到得分的图像目标" else "本次画面中有 ${accepted.size} 处图像达到得分，不能唯一定位")
         }
-        /** Re-resolves a target on a fresh frame: text by exact unique text, image by unique template match. */
-        private suspend fun resolve(target: Target, fresh: Observation): Any = if (target.template == null)
-            uniqueTarget(fresh, target.text, target.minimum) ?: ActionResult.Unavailable("输入前不能唯一确认目标文字")
-            else uniqueImage(fresh, target.template, target.minimum)
+        /**
+         * Re-resolves a target on a fresh snapshot inside a window around its previous position: text by
+         * exact text, image by template. Exactly one match in the window is required; whole-frame
+         * uniqueness was established when the target was located in this input phase.
+         */
+        private suspend fun resolve(target: Target, fresh: Observation): Any {
+            val area = window(target.match.bounds, fresh.result.stamp.geometry)
+            val request = if (target.template == null) InspectionRequest.Text(area) else InspectionRequest.Image(area, target.template)
+            val inspected = when (val value = inspectOn(fresh, listOf(request))) { is ActionResult -> return value; else -> value as InspectionResult.Inspected }
+            val accepted = when (val result = inspected.values.single()) {
+                is InspectionValue.Text -> result.candidates.filter { it.text == target.text && it.confidence.isFinite() && BigDecimal.valueOf(it.confidence) >= target.minimum }
+                is InspectionValue.Image -> result.matches.filter { BigDecimal.valueOf(it.score) >= target.minimum }.map { RecognizedText("", it.score, it.bounds) }
+            }
+            return accepted.singleOrNull() ?: ActionResult.Unavailable(if (accepted.isEmpty()) "输入前在原位置附近未能确认目标" else "输入前在原位置附近有多处目标，不能唯一确认")
+        }
         private val invocations = mutableListOf<Invocation>()
         private var businessEvidence: StepOutcome.Completed? = null
         private var terminalAction: String? = null
@@ -431,11 +485,12 @@ internal class ScreenActions(
                     when (val acquired = observe(attempt, bundle, bridge, profile.packageName, models)) {
                         is Acquisition.Problem -> acquired.result
                         is Acquisition.Ready -> {
-                            val token = UUID.randomUUID().toString(); observations[token] = acquired.value
+                            val token = UUID.randomUUID().toString(); observations[token] = store(acquired.value)
                             val geometry = acquired.value.result.stamp.geometry
                             ActionResult.Produced(buildJsonObject { put("observation", token) }, buildJsonObject {
                                 put("kind", READ); put("candidates", acquired.value.result.candidates.size)
-                                put("frame", buildJsonArray { add(geometry.width); add(geometry.height) }) })
+                                put("frame", buildJsonArray { add(geometry.width); add(geometry.height) })
+                                put("timings", buildJsonObject { acquired.value.result.timings.forEach { (k, v) -> put(k, v) } }) })
                         }
                     }
                 }
@@ -485,7 +540,7 @@ internal class ScreenActions(
                             val values = (inspected as InspectionResult.Inspected).values.single() as InspectionValue.Text
                             val derived = region.observation.copy(regionDerived = true,
                                 result = region.observation.result.copy(candidates = values.candidates, diagnostics = inspected.diagnostics))
-                            val token = token(); observations[token] = derived
+                            val token = token(); observations[token] = store(derived)
                             ActionResult.Produced(buildJsonObject { put("observation", token) },
                                 buildJsonObject { put("kind", READ_REGION); region(region.bounds); put("candidates", values.candidates.size) })
                         }
@@ -566,7 +621,7 @@ internal class ScreenActions(
             val bridge = target.observation.bridge as? InputDevicePort ?: return ActionResult.Unavailable("当前观察来源未提供输入所有权")
             if (journal == null) return ActionResult.Unavailable("未连接持久化执行器")
             // Resolve the semantic target again inside the input action; do not click old coordinates.
-            val fresh = when (val acquired = observe(attempt, bundle, bridge, checkNotNull(target.observation.result.stamp.packageName), target.observation.models)) {
+            val fresh = when (val acquired = snapshot(attempt, bundle, bridge, checkNotNull(target.observation.result.stamp.packageName), target.observation.models)) {
                 is Acquisition.Problem -> return acquired.result
                 is Acquisition.Ready -> acquired.value
             }
@@ -603,7 +658,7 @@ internal class ScreenActions(
             if (anchor.observation.regionDerived) return ActionResult.Unavailable("区域内定位的锚点不能用于输入")
             val bridge = anchor.observation.bridge as? InputDevicePort ?: return ActionResult.Unavailable("当前观察来源未提供输入所有权")
             if (journal == null) return ActionResult.Unavailable("未连接持久化执行器")
-            val fresh = when (val acquired = observe(attempt, bundle, bridge, checkNotNull(anchor.observation.result.stamp.packageName), anchor.observation.models)) {
+            val fresh = when (val acquired = snapshot(attempt, bundle, bridge, checkNotNull(anchor.observation.result.stamp.packageName), anchor.observation.models)) {
                 is Acquisition.Problem -> return acquired.result
                 is Acquisition.Ready -> acquired.value
             }
@@ -631,7 +686,7 @@ internal class ScreenActions(
             val observation = observations[inputs.text("observation")] ?: return ActionResult.Unavailable("本步骤的画面观察不可用")
             val bridge = observation.bridge as? InputDevicePort ?: return ActionResult.Unavailable("当前观察来源未提供输入所有权")
             if (journal == null) return ActionResult.Unavailable("未连接持久化执行器")
-            val fresh = when (val acquired = observe(attempt, bundle, bridge, checkNotNull(observation.result.stamp.packageName), observation.models)) {
+            val fresh = when (val acquired = snapshot(attempt, bundle, bridge, checkNotNull(observation.result.stamp.packageName), observation.models)) {
                 is Acquisition.Problem -> return acquired.result
                 is Acquisition.Ready -> acquired.value
             }
@@ -656,7 +711,7 @@ internal class ScreenActions(
                 if (invocation.admission != DeviceActionWriteResult.Recorded) return ActionResult.Unavailable(
                     (admission as? RuntimeCommandResult.Rejected)?.message ?: "未取得新的持久化动作许可")
                 if (!permitted(attempt.ticket)) return ActionResult.Interrupted
-                observations.clear(); targets.clear(); regions.clear()
+                observations.clear(); targets.clear(); regions.clear(); frames.clear()
                 val channel = bridge.openInput(attempt.ticket, permitted) ?: return if (!permitted(attempt.ticket)) ActionResult.Interrupted
                     else ActionResult.Unavailable("输入通道当前不可用")
                 invocation.channel = channel

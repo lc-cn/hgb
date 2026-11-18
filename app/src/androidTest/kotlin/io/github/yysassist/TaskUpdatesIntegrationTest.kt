@@ -134,15 +134,14 @@ class TaskUpdatesIntegrationTest {
     }
 
     @Test fun sameReleaseResourcesReachTheVersionLeaseAndBadDownloadsNeverRegisterANewVersion() = runBlocking {
-        fun enqueueResources(version: String, model: String) {
-            val expected = "fixture-model"
+        fun enqueueResources(version: String, model: String, expected: String = "fixture-model", serve: Boolean = true) {
             val digest = TaskVersionLibrary.sha256(expected)
             val body = content(version).replace("\"targets\":", "\"resources\":[{\"id\":\"det\",\"assetName\":\"det.onnx\",\"bytes\":${expected.length},\"sha256\":\"$digest\"}],\"targets\":")
             server.enqueue(MockResponse().setBody("""{"tag_name":"$version","draft":false,"prerelease":false,"assets":[
               {"id":42,"name":"task-bundle.json","state":"uploaded","size":${body.toByteArray().size},"digest":"sha256:${TaskVersionLibrary.sha256(body)}"},
               {"id":43,"name":"det.onnx","state":"uploaded","size":${expected.length},"digest":"sha256:$digest"}]}"""))
             server.enqueue(MockResponse().setBody(body))
-            server.enqueue(MockResponse().setBody(model))
+            if (serve) server.enqueue(MockResponse().setBody(model))
         }
         enqueueResources("one", "fixture-model"); updates.pullLatest(); finished()
         assertNull(library.snapshot().activeVersion)
@@ -151,11 +150,19 @@ class TaskUpdatesIntegrationTest {
         assertEquals("/repos/test/tasks/releases/latest", server.takeRequest().path)
         assertEquals("/repos/test/tasks/releases/assets/42", server.takeRequest().path)
         assertEquals("/repos/test/tasks/releases/assets/43", server.takeRequest().path)
-        enqueueResources("two", "wrong-content"); updates.pullLatest()
+        // A new resource whose download does not match its digest never registers the version.
+        enqueueResources("two", "wrong-content", expected = "fixture-model-2"); updates.pullLatest()
         withTimeout(10_000) { updates.pull.filterIsInstance<TaskPullState.Failure>().first() }
         assertNull(database.taskVersions().version("two"))
         assertEquals("one", library.activeCatalog()!!.version)
         assertEquals("two", library.snapshot().latestVersion) // Remote pointer known, incomplete local version not ready.
         assertTrue(File(resources, "staging").listFiles()!!.isEmpty())
+        repeat(3) { server.takeRequest() }
+        // A resource already stored under its digest is reused, not downloaded again.
+        enqueueResources("three", "unused", serve = false); updates.pullLatest(); finished()
+        assertNotNull(database.taskVersions().version("three"))
+        assertEquals("/repos/test/tasks/releases/latest", server.takeRequest().path)
+        assertEquals("/repos/test/tasks/releases/assets/42", server.takeRequest().path)
+        assertNull(server.takeRequest(500, java.util.concurrent.TimeUnit.MILLISECONDS))
     }
 }

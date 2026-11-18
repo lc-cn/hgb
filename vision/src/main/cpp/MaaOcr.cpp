@@ -42,7 +42,10 @@ struct Session {
         auto image = std::unique_ptr<MaaImageBuffer, decltype(&MaaImageBufferDestroy)>(MaaImageBufferCreate(), MaaImageBufferDestroy);
         require(image && MaaImageBufferSetEncoded(image.get(), png.data(), png.size()), "Maa image buffer rejected");
         require(MaaImageBufferWidth(image.get()) > 0 && MaaImageBufferHeight(image.get()) > 0, "Maa image decode failed");
-        auto task = MaaTaskerPostRecognition(tasker.get(), "OCR", "{}", image.get());
+        return recognizeImage(image.get());
+    }
+    std::string recognizeImage(const MaaImageBuffer* image) {
+        auto task = MaaTaskerPostRecognition(tasker.get(), "OCR", "{}", image);
         require(task != MaaInvalidId, "Maa recognition submission rejected");
         auto status = MaaTaskerWait(tasker.get(), task);
         require(status == MaaStatus_Succeeded, "Maa recognition transport did not succeed");
@@ -76,11 +79,14 @@ struct Session {
     }
     /** One region request on caller-supplied pixels. Only OCR and TemplateMatch are reachable. */
     std::string inspect(const std::string& type, const std::string& param, std::vector<uint8_t>& png) {
-        require(type == "OCR" || type == "TemplateMatch", "Unsupported Maa recognition type");
         auto image = std::unique_ptr<MaaImageBuffer, decltype(&MaaImageBufferDestroy)>(MaaImageBufferCreate(), MaaImageBufferDestroy);
         require(image && MaaImageBufferSetEncoded(image.get(), png.data(), png.size()), "Maa image buffer rejected");
         require(MaaImageBufferWidth(image.get()) > 0 && MaaImageBufferHeight(image.get()) > 0, "Maa image decode failed");
-        auto task = MaaTaskerPostRecognition(tasker.get(), type.c_str(), param.c_str(), image.get());
+        return inspectImage(type, param, image.get());
+    }
+    std::string inspectImage(const std::string& type, const std::string& param, const MaaImageBuffer* image) {
+        require(type == "OCR" || type == "TemplateMatch", "Unsupported Maa recognition type");
+        auto task = MaaTaskerPostRecognition(tasker.get(), type.c_str(), param.c_str(), image);
         require(task != MaaInvalidId, "Maa recognition submission rejected");
         auto status = MaaTaskerWait(tasker.get(), task);
         require(status == MaaStatus_Succeeded, "Maa recognition transport did not succeed");
@@ -107,6 +113,25 @@ struct Session {
         return result;
     }
 };
+using ImagePtr = std::unique_ptr<MaaImageBuffer, decltype(&MaaImageBufferDestroy)>;
+/**
+ * Raw RGBA (Android ARGB_8888 memory order) to the BGR 8UC3 buffer Maa expects. No encode/decode.
+ * The BGR bytes live as long as the buffer in case the buffer refers to them instead of copying.
+ */
+struct RawImage {
+    std::vector<uint8_t> bgr;
+    ImagePtr image{nullptr, MaaImageBufferDestroy};
+};
+std::unique_ptr<RawImage> rawImage(const std::vector<uint8_t>& rgba, int width, int height) {
+    require(width > 0 && height > 0 && rgba.size() == static_cast<size_t>(width) * height * 4, "Raw image size mismatch");
+    auto raw = std::make_unique<RawImage>();
+    raw->bgr.resize(static_cast<size_t>(width) * height * 3);
+    for (size_t i = 0, j = 0; i < rgba.size(); i += 4, j += 3) { raw->bgr[j] = rgba[i + 2]; raw->bgr[j + 1] = rgba[i + 1]; raw->bgr[j + 2] = rgba[i]; }
+    raw->image.reset(MaaImageBufferCreate());
+    require(raw->image && MaaImageBufferSetRawData(raw->image.get(), raw->bgr.data(), width, height, 16 /* CV_8UC3 */), "Maa raw image rejected");
+    require(MaaImageBufferWidth(raw->image.get()) == width && MaaImageBufferHeight(raw->image.get()) == height, "Maa raw image size changed");
+    return raw;
+}
 std::vector<uint8_t> bytes(JNIEnv* env, jbyteArray encoded) {
     auto count = env->GetArrayLength(encoded);
     require(count > 0, "Empty encoded image");
@@ -183,6 +208,30 @@ Java_io_github_yysassist_vision_maa_MaaNative_inspectRaw(JNIEnv* env, jobject, j
         require(handle != 0, "Maa session closed");
         auto png = bytes(env, encoded);
         auto text = reinterpret_cast<Session*>(handle)->inspect(utf(env, type), utf(env, param), png);
+        auto result = env->NewByteArray(static_cast<jsize>(text.size()));
+        if (result) env->SetByteArrayRegion(result, 0, static_cast<jsize>(text.size()), reinterpret_cast<const jbyte*>(text.data()));
+        return result;
+    } catch (const std::exception& error) { fail(env, error); return nullptr; }
+}
+
+extern "C" JNIEXPORT jbyteArray JNICALL
+Java_io_github_yysassist_vision_maa_MaaNative_recognizePixels(JNIEnv* env, jobject, jlong handle, jbyteArray rgba, jint width, jint height) {
+    try {
+        require(handle != 0, "Maa session closed");
+        auto image = rawImage(bytes(env, rgba), width, height);
+        auto text = reinterpret_cast<Session*>(handle)->recognizeImage(image->image.get());
+        auto result = env->NewByteArray(static_cast<jsize>(text.size()));
+        if (result) env->SetByteArrayRegion(result, 0, static_cast<jsize>(text.size()), reinterpret_cast<const jbyte*>(text.data()));
+        return result;
+    } catch (const std::exception& error) { fail(env, error); return nullptr; }
+}
+
+extern "C" JNIEXPORT jbyteArray JNICALL
+Java_io_github_yysassist_vision_maa_MaaNative_inspectPixels(JNIEnv* env, jobject, jlong handle, jstring type, jstring param, jbyteArray rgba, jint width, jint height) {
+    try {
+        require(handle != 0, "Maa session closed");
+        auto image = rawImage(bytes(env, rgba), width, height);
+        auto text = reinterpret_cast<Session*>(handle)->inspectImage(utf(env, type), utf(env, param), image->image.get());
         auto result = env->NewByteArray(static_cast<jsize>(text.size()));
         if (result) env->SetByteArrayRegion(result, 0, static_cast<jsize>(text.size()), reinterpret_cast<const jbyte*>(text.data()));
         return result;

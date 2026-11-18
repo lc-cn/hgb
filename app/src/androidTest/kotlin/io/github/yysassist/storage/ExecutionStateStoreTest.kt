@@ -59,6 +59,20 @@ class ExecutionStateStoreTest {
     }
     private suspend fun verified(): TaskExecutor = store.load().decode().also { commit(it, ExecutorCommand.VerifyContext(identity)) }
 
+    @Test fun historyReceivesEachNewFactOnceInTheSameTransaction() = runBlocking {
+        val executor = verified()
+        commit(executor, ExecutorCommand.Enqueue("submit", request()))
+        val step = executor.state.value.activeTicket!!
+        commit(executor, ExecutorCommand.StepSettled(step, StepOutcome.Completed("ok"), StepOutcome.Interrupted))
+        val expected = executor.state.value.facts.filter { it.id > 0 }
+        val stored = database.executionFacts().page(100, 0).reversed()
+        assertEquals(expected.map { it.id }, stored.map { it.factId })
+        assertEquals(expected.map { it.type }, stored.map { it.type })
+        // A transition without new facts adds nothing; reopening keeps history.
+        commit(executor, ExecutorCommand.ReadinessChanged)
+        database.close(); database = AssistDatabase.open(context, name)
+        assertEquals(expected.size, database.executionFacts().count())
+    }
     @Test fun progressAndVersionReferencesCommitTogetherAndSurviveDatabaseReopen() = runBlocking {
         val executor = verified()
         val prepared = executor.prepare(ExecutorCommand.Enqueue("submit", request()))
@@ -162,30 +176,5 @@ class ExecutionStateStoreTest {
         catch (_: CorruptExecutionState) { }
         assertEquals("UNRESOLVED", database.taskVersions().reference("executor-run/88")!!.reason)
         assertNull(database.executorState().get())
-    }
-    @Test fun schemaTwoMigrationPreservesRulesAndUnresolvedVersionReferences() = runBlocking {
-        database.close(); context.deleteDatabase(name)
-        val schema = Json.parseToJsonElement(InstrumentationRegistry.getInstrumentation().context.assets
-            .open("io.github.yysassist.storage.AssistDatabase/2.json").bufferedReader().use { it.readText() }).jsonObject.getValue("database").jsonObject
-        val text = codec.write(bundle("v1"))
-        SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(name), null).use { old ->
-            schema.getValue("entities").jsonArray.forEach { element ->
-                val entity = element.jsonObject
-                old.execSQL(entity.getValue("createSql").jsonPrimitive.content.replace("${'$'}{TABLE_NAME}", entity.getValue("tableName").jsonPrimitive.content))
-                entity["indices"]?.jsonArray.orEmpty().forEach { index -> old.execSQL(index.jsonObject.getValue("createSql").jsonPrimitive.content.replace("${'$'}{TABLE_NAME}", entity.getValue("tableName").jsonPrimitive.content)) }
-            }
-            schema.getValue("setupQueries").jsonArray.forEach { old.execSQL(it.jsonPrimitive.content) }
-            old.execSQL("INSERT INTO task_versions VALUES (?, ?, ?, ?, ?, ?)", arrayOf<Any>("v1", TaskVersionLibrary.sha256(text), text, "2026-11-16T00:00:00Z", "旧版", 1))
-            old.execSQL("INSERT INTO task_version_selection VALUES (1, 'v1', 'v1')")
-            old.execSQL("INSERT INTO task_version_references VALUES ('legacy-unknown', 'v1', 'UNRESOLVED')")
-            old.execSQL("INSERT INTO task_configurations VALUES ('fixture-app', 'daily', '{\"amount\":9}', '[]', 8, 'v1', 'digest')")
-            old.version = 2
-        }
-        database = AssistDatabase.open(context, name); library = TaskVersionLibrary(database, codec); store = ExecutionStateStore(database, library)
-        assertEquals(0, store.load().revision)
-        assertEquals(8, database.taskConfigurations().get("fixture-app", "daily")!!.revision)
-        assertEquals("{\"amount\":9}", database.taskConfigurations().get("fixture-app", "daily")!!.valuesJson)
-        assertEquals("UNRESOLVED", database.taskVersions().reference("legacy-unknown")!!.reason)
-        assertEquals("v1", library.snapshot().activeVersion)
     }
 }

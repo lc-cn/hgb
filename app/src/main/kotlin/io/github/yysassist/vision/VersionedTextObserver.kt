@@ -25,11 +25,16 @@ internal class VersionedTextObserver(private val library: TaskVersionLibrary, pr
         if (!permitted()) return@withContext TextReadResult.Interrupted
         if (frame.bitmap.isRecycled || frame.bitmap.width != frame.stamp.geometry.width || frame.bitmap.height != frame.stamp.geometry.height)
             return@withContext TextReadResult.Unavailable(TextReadProblem.FRAME_INVALID)
-        var encoded: ByteArray? = null
+        var encoded: EncodedPixels? = null
+        var encodeMillis = -1L
+        val started = android.os.SystemClock.elapsedRealtime()
         val outcome = run(version, models, emptyList(), permitted, write = { output ->
             // Retained so region requests later in this attempt inspect exactly these pixels.
-            val bytes = ByteArrayOutputStream().also { check(frame.bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) { "PNG encoding rejected" } }.toByteArray()
-            encoded = bytes; output.write(bytes)
+            val encodeStarted = android.os.SystemClock.elapsedRealtime()
+            val pixels = if (backend.rawPixels) EncodedPixels.raw(frame.bitmap) else EncodedPixels(ByteArrayOutputStream().also {
+                check(frame.bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) { "PNG encoding rejected" } }.toByteArray(), frame.bitmap.width, frame.bitmap.height)
+            encodeMillis = android.os.SystemClock.elapsedRealtime() - encodeStarted
+            encoded = pixels; output.write(pixels.bytes)
         }) { inputs, _, read, onQuiet -> backend.start(inputs, read, frame.bitmap.width, frame.bitmap.height, onQuiet) }
         when (outcome) {
             Outcome.Interrupted -> TextReadResult.Interrupted
@@ -37,19 +42,25 @@ internal class VersionedTextObserver(private val library: TaskVersionLibrary, pr
             is Outcome.Done -> when (val result = outcome.value) {
                 is BackendTextResult.Unavailable -> TextReadResult.Unavailable(result.problem, result.detail, result.diagnostics)
                 is BackendTextResult.Observed -> TextReadResult.Observed(frame.stamp, outcome.version, outcome.bundleDigest, result.candidates,
-                    result.diagnostics, encoded?.let { EncodedPixels(it, frame.bitmap.width, frame.bitmap.height) })
+                    result.diagnostics, encoded,
+                    result.timings + mapOf("encodeMs" to encodeMillis, "observeMs" to android.os.SystemClock.elapsedRealtime() - started))
             }
         }
     }
+
+    /** Pixels of a captured frame in the form the backend expects, without running recognition. */
+    fun pixelsOf(frame: ScreenFrame): EncodedPixels = if (backend.rawPixels) EncodedPixels.raw(frame.bitmap) else EncodedPixels(
+        ByteArrayOutputStream().also { check(frame.bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) }.toByteArray(), frame.bitmap.width, frame.bitmap.height)
 
     /** Region requests over pixels already observed in this attempt; never takes a new capture. */
     suspend fun inspect(version: String, models: OcrModelReferences, stamp: FrameStamp, pixels: EncodedPixels,
         requests: List<InspectionRequest>, permitted: () -> Boolean = { true }): InspectionResult = withContext(Dispatchers.IO) {
         if (!permitted()) return@withContext InspectionResult.Interrupted
-        if (pixels.width != stamp.geometry.width || pixels.height != stamp.geometry.height || requests.isEmpty())
+        if (pixels.width != stamp.geometry.width || pixels.height != stamp.geometry.height || requests.isEmpty() || pixels.raw != backend.rawPixels)
             return@withContext InspectionResult.Unavailable(TextReadProblem.FRAME_INVALID)
         val templates = requests.filterIsInstance<InspectionRequest.Image>().map { it.template }.distinct()
-        val outcome = run(version, models, templates, permitted, write = { it.write(pixels.png) }) { inputs, templateInputs, read, onQuiet ->
+        val started = android.os.SystemClock.elapsedRealtime()
+        val outcome = run(version, models, templates, permitted, write = { it.write(pixels.bytes) }) { inputs, templateInputs, read, onQuiet ->
             backend.inspect(inputs, templateInputs, requests, read, pixels.width, pixels.height, onQuiet)
         }
         when (outcome) {
@@ -58,7 +69,8 @@ internal class VersionedTextObserver(private val library: TaskVersionLibrary, pr
             is Outcome.Done -> when (val result = outcome.value) {
                 is BackendInspectionResult.Unavailable -> InspectionResult.Unavailable(result.problem, result.detail, result.diagnostics)
                 is BackendInspectionResult.Inspected -> if (outcome.version != version) InspectionResult.Unavailable(TextReadProblem.RESOURCE_UNAVAILABLE)
-                    else InspectionResult.Inspected(stamp, outcome.version, result.values, result.diagnostics)
+                    else InspectionResult.Inspected(stamp, outcome.version, result.values, result.diagnostics,
+                        result.timings + ("inspectMs" to android.os.SystemClock.elapsedRealtime() - started))
             }
         }
     }

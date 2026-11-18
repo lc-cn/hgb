@@ -98,31 +98,6 @@ class TaskConfigurationRepositoryTest {
         assertEquals(JsonPrimitive("保留原值"), repository.open(a).values["note"])
     }
 
-    @Test fun schemaOneMigrationPreservesVersionSelectionAndUnresolvedReference() = runBlocking {
-        database.close(); context.deleteDatabase(name)
-        val schema = InstrumentationRegistry.getInstrumentation().context.assets
-            .open("io.github.yysassist.storage.AssistDatabase/1.json").bufferedReader().use { Json.parseToJsonElement(it.readText()).jsonObject["database"]!!.jsonObject }
-        val path = context.getDatabasePath(name); path.parentFile!!.mkdirs()
-        SQLiteDatabase.openOrCreateDatabase(path, null).use { old ->
-            schema["entities"]!!.jsonArray.forEach { element ->
-                val entity = element.jsonObject; val table = entity["tableName"]!!.jsonPrimitive.content
-                old.execSQL(entity["createSql"]!!.jsonPrimitive.content.replace("\${TABLE_NAME}", table))
-                entity["indices"]?.jsonArray.orEmpty().forEach { old.execSQL(it.jsonObject["createSql"]!!.jsonPrimitive.content.replace("\${TABLE_NAME}", table)) }
-            }
-            schema["setupQueries"]!!.jsonArray.forEach { old.execSQL(it.jsonPrimitive.content) }
-            val text = codec.write(bundle("legacy"))
-            old.execSQL("INSERT INTO task_versions VALUES (?, ?, ?, ?, ?, ?)", arrayOf<Any>("legacy", TaskVersionLibrary.sha256(text), text, "2026-11-16T00:00:00Z", "迁移前", 1))
-            old.execSQL("INSERT INTO task_version_selection VALUES (1, 'legacy', 'legacy')")
-            old.execSQL("INSERT INTO task_version_references VALUES ('old-run', 'legacy', 'UNRESOLVED')")
-            old.version = 1
-        }
-        open()
-        assertEquals("legacy", library.snapshot().activeVersion)
-        assertEquals(1, library.snapshot().versions.single().referenceCount)
-        assertTrue(repository.open(a).values.isEmpty())
-        assertEquals(0L, repository.open(a).revision)
-    }
-
     @Test fun editorPreservesUnsavedInputWhenReloadCannotFindTheTask() = runBlocking {
         install(bundle("one"))
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)

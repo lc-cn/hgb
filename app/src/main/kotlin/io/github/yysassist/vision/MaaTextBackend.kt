@@ -12,7 +12,7 @@ import java.util.concurrent.Executors
 
 internal data class ModelInput(val file: File, val bytes: Long, val sha256: String)
 internal sealed interface BackendTextResult {
-    data class Observed(val candidates: List<RecognizedText>, val diagnostics: List<String> = emptyList()) : BackendTextResult
+    data class Observed(val candidates: List<RecognizedText>, val diagnostics: List<String> = emptyList(), val timings: Map<String, Long> = emptyMap()) : BackendTextResult
     data class Unavailable(val problem: TextReadProblem, val detail: String? = null, val diagnostics: List<String> = emptyList()) : BackendTextResult
 }
 internal interface BackendCall<T> {
@@ -22,11 +22,13 @@ internal interface BackendCall<T> {
 }
 internal interface TextBackendCall : BackendCall<BackendTextResult>
 internal sealed interface BackendInspectionResult {
-    data class Inspected(val values: List<InspectionValue>, val diagnostics: List<String> = emptyList()) : BackendInspectionResult
+    data class Inspected(val values: List<InspectionValue>, val diagnostics: List<String> = emptyList(), val timings: Map<String, Long> = emptyMap()) : BackendInspectionResult
     data class Unavailable(val problem: TextReadProblem, val detail: String? = null, val diagnostics: List<String> = emptyList()) : BackendInspectionResult
 }
 internal interface TextBackend {
     val modelContract: String
+    /** True when image descriptors carry raw RGBA (see EncodedPixels.raw) instead of PNG. */
+    val rawPixels: Boolean get() = false
     /** Adopts imageRead and onQuiet together; errors after adoption are delivered through the call. */
     fun start(models: Map<String, ModelInput>, imageRead: ParcelFileDescriptor, width: Int, height: Int, onQuiet: () -> Unit): TextBackendCall
     /** Same adoption rule. templates are keyed by the resource id named in each image request. */
@@ -47,6 +49,7 @@ internal interface TextBackend {
 internal class MaaTextBackend(private val context: Context) : TextBackend {
     companion object { const val CONTRACT = "maa.ppocr.v1"; private val decoder = Executors.newCachedThreadPool() }
     override val modelContract = CONTRACT
+    override val rawPixels = true
     override fun start(models: Map<String, ModelInput>, imageRead: ParcelFileDescriptor, width: Int, height: Int, onQuiet: () -> Unit): TextBackendCall {
         val quiet = CompletableFuture<Unit>()
         fun release() { try { onQuiet() } finally { quiet.complete(Unit) } }
@@ -60,7 +63,7 @@ internal class MaaTextBackend(private val context: Context) : TextBackend {
         }
         val roles = mapOf("det.onnx" to "detector", "rec.onnx" to "recognizer", "keys.txt" to "dictionary")
         val files = roles.mapValues { (_, role) -> models.getValue(role).let { MaaModelFile(it.file, it.bytes, it.sha256) } }
-        val call = try { MaaProcessCall(context, files, imageRead, onQuiet = ::release) }
+        val call = try { MaaProcessCall(context, files, imageRead, rawSize = width to height, onQuiet = ::release) }
         catch (error: Exception) {
             try { imageRead.close() } finally { release() }
             return completed(BackendTextResult.Unavailable(TextReadProblem.ENGINE_UNAVAILABLE, error.javaClass.simpleName), quiet)
@@ -73,7 +76,7 @@ internal class MaaTextBackend(private val context: Context) : TextBackend {
             }
             val diagnostics = call.cleanupErrors.getNow(emptyList())
             when (decoded) {
-                is BackendTextResult.Observed -> decoded.copy(diagnostics = diagnostics)
+                is BackendTextResult.Observed -> decoded.copy(diagnostics = diagnostics, timings = call.childTimings)
                 is BackendTextResult.Unavailable -> decoded.copy(diagnostics = diagnostics)
             }
         }, decoder)
@@ -117,7 +120,7 @@ internal class MaaTextBackend(private val context: Context) : TextBackend {
         val roles = mapOf("det.onnx" to "detector", "rec.onnx" to "recognizer", "keys.txt" to "dictionary")
         val files = roles.mapValues { (_, role) -> models.getValue(role).let { MaaModelFile(it.file, it.bytes, it.sha256) } }
         val templateFiles = transport.entries.associate { (id, name) -> name to templates.getValue(id).let { MaaModelFile(it.file, it.bytes, it.sha256) } }
-        val call = try { MaaProcessCall(context, files, imageRead, inspection = MaaInspection(payload, templateFiles), onQuiet = ::release) }
+        val call = try { MaaProcessCall(context, files, imageRead, inspection = MaaInspection(payload, templateFiles), rawSize = width to height, onQuiet = ::release) }
         catch (error: Exception) {
             try { imageRead.close() } finally { release() }
             return object : BackendCall<BackendInspectionResult> {
@@ -135,7 +138,7 @@ internal class MaaTextBackend(private val context: Context) : TextBackend {
             }
             val diagnostics = call.cleanupErrors.getNow(emptyList())
             when (decoded) {
-                is BackendInspectionResult.Inspected -> decoded.copy(diagnostics = diagnostics)
+                is BackendInspectionResult.Inspected -> decoded.copy(diagnostics = diagnostics, timings = call.childTimings)
                 is BackendInspectionResult.Unavailable -> decoded.copy(diagnostics = diagnostics)
             }
         }, decoder)

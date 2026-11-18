@@ -35,25 +35,4 @@ class ActionTraceLogTest {
             assertTrue(kept.size.toString(), kept.size <= 50 + 49 + 1 && kept.size < 450)
         } finally { scope.cancel(); database.close() }
     }
-    @Test fun schemaFourMigratesAndKeepsExistingTables(): Unit = runBlocking {
-        val schema = Json.parseToJsonElement(InstrumentationRegistry.getInstrumentation().context.assets
-            .open("io.github.yysassist.storage.AssistDatabase/4.json").bufferedReader().use { it.readText() }).jsonObject.getValue("database").jsonObject
-        SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(name), null).use { old ->
-            schema.getValue("entities").jsonArray.forEach { element ->
-                val entity = element.jsonObject; val table = entity.getValue("tableName").jsonPrimitive.content
-                old.execSQL(entity.getValue("createSql").jsonPrimitive.content.replace("${'$'}{TABLE_NAME}", table))
-                entity["indices"]?.jsonArray.orEmpty().forEach { old.execSQL(it.jsonObject.getValue("createSql").jsonPrimitive.content.replace("${'$'}{TABLE_NAME}", table)) }
-            }
-            schema.getValue("setupQueries").jsonArray.forEach { old.execSQL(it.jsonPrimitive.content) }
-            old.execSQL("INSERT INTO executor_state VALUES (1, 3, '{}', 'digest')")
-            old.version = 4
-        }
-        val database = AssistDatabase.open(context, name)
-        try {
-            assertEquals(3L, database.executorState().get()!!.revision)
-            database.actionTraces().insert(ActionTraceEntity(runId = 1, generation = 1, taskId = "t", stepId = "s", actionId = "a",
-                capability = "screen.tap", contractVersion = 1, result = "PRODUCED", reason = null, traceJson = null, elapsedMillis = 3, recordedAt = 4))
-            assertEquals(1, database.actionTraces().forRun(1).size)
-        } finally { database.close() }
-    }
 }

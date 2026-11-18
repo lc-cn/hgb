@@ -1,8 +1,6 @@
 package io.github.yysassist.storage
 
 import androidx.room.*
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
 import android.content.Context
 
 /** Immutable JSON includes resource identities; verified blobs are published before this ready marker. */
@@ -46,6 +44,24 @@ data class TaskConfigurationEntity(
 
 @Entity(tableName = "executor_state")
 data class ExecutorStateEntity(@PrimaryKey val id: Int = 1, val revision: Long, val payload: String, val digest: String)
+
+/**
+ * Append-only execution history. The executor state keeps only recent facts; this keeps them all.
+ * [factId] is the executor's id (restarts if the state is ever reset), so rows use their own key.
+ */
+@Entity(tableName = "execution_facts", indices = [Index("runId"), Index("occurredAt")])
+data class ExecutionFactEntity(
+    @PrimaryKey(autoGenerate = true) val seq: Long = 0, val factId: Long, val runId: Long, val type: String, val taskId: String?, val detail: String,
+    val taskName: String, val contextJson: String, val packageVersion: String, val occurredAt: Long,
+)
+
+@Dao
+interface ExecutionFactDao {
+    @Insert suspend fun insert(facts: List<ExecutionFactEntity>)
+    @Query("SELECT * FROM execution_facts ORDER BY seq DESC LIMIT :limit OFFSET :offset")
+    suspend fun page(limit: Int, offset: Int): List<ExecutionFactEntity>
+    @Query("SELECT COUNT(*) FROM execution_facts") suspend fun count(): Int
+}
 
 /** Diagnostic action evidence (regions, scores, digests, seeds). Not part of execution state; pruned. */
 @Entity(tableName = "action_traces", indices = [Index("runId")])
@@ -129,36 +145,21 @@ interface TaskVersionDao {
 }
 
 @Database(entities = [TaskVersionEntity::class, TaskVersionSelection::class, TaskVersionReference::class, TaskConfigurationEntity::class,
-    ExecutorStateEntity::class, ActionTraceEntity::class], version = 5, exportSchema = true)
+    ExecutorStateEntity::class, ActionTraceEntity::class, ExecutionFactEntity::class], version = 6, exportSchema = true)
 abstract class AssistDatabase : RoomDatabase() {
     abstract fun taskVersions(): TaskVersionDao
     abstract fun taskConfigurations(): TaskConfigurationDao
     abstract fun executorState(): ExecutorStateDao
     abstract fun actionTraces(): ActionTraceDao
+    abstract fun executionFacts(): ExecutionFactDao
     companion object {
-        val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE IF NOT EXISTS `task_configurations` (`targetId` TEXT NOT NULL, `taskId` TEXT NOT NULL, `valuesJson` TEXT NOT NULL, `schemaJson` TEXT NOT NULL, `revision` INTEGER NOT NULL, `validatedVersion` TEXT NOT NULL, `validatedDigest` TEXT NOT NULL, PRIMARY KEY(`targetId`, `taskId`))")
-            }
-        }
-        val MIGRATION_2_3 = object : Migration(2, 3) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE IF NOT EXISTS `executor_state` (`id` INTEGER NOT NULL, `revision` INTEGER NOT NULL, `payload` TEXT NOT NULL, `digest` TEXT NOT NULL, PRIMARY KEY(`id`))")
-            }
-        }
-        val MIGRATION_3_4 = object : Migration(3, 4) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE `task_versions` ADD COLUMN `cached` INTEGER NOT NULL DEFAULT 1")
-            }
-        }
-        val MIGRATION_4_5 = object : Migration(4, 5) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("CREATE TABLE IF NOT EXISTS `action_traces` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `runId` INTEGER NOT NULL, `generation` INTEGER NOT NULL, `taskId` TEXT NOT NULL, `stepId` TEXT NOT NULL, `actionId` TEXT NOT NULL, `capability` TEXT NOT NULL, `contractVersion` INTEGER NOT NULL, `result` TEXT NOT NULL, `reason` TEXT, `traceJson` TEXT, `elapsedMillis` INTEGER NOT NULL, `recordedAt` INTEGER NOT NULL)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS `index_action_traces_runId` ON `action_traces` (`runId`)")
-            }
-        }
+        /**
+         * Not released yet: a schema change rebuilds the database instead of migrating it (see project
+         * convention). Task versions, configurations and the queue are re-created; the GitHub session
+         * lives in its own encrypted file and is not affected.
+         */
         fun open(context: Context, name: String = "assist.db"): AssistDatabase =
             Room.databaseBuilder(context.applicationContext, AssistDatabase::class.java, name)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build()
+                .fallbackToDestructiveMigration(true).fallbackToDestructiveMigrationOnDowngrade(true).build()
     }
 }

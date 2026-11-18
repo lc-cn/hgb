@@ -73,6 +73,8 @@ data class ExecutionFact(
     val context: ExecutionContext,
     val packageVersion: String,
     val occurredAtEpochMillis: Long,
+    /** Monotonic within one executor; 0 for facts stored before ids existed. Used to append history once. */
+    val id: Long = 0,
 )
 @Serializable
 data class ExecutorSnapshot(

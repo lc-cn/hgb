@@ -55,6 +55,10 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
     )
 
     companion object {
+        /** Facts kept in the rewritten state; older history lives in the host's append-only store. */
+        const val FACT_LIMIT = 300
+        const val RECEIPT_LIMIT = 256
+        const val RECENT_RUNS = 20
         private val storedJson = Json { encodeDefaults = true; ignoreUnknownKeys = false }
         /** Reconstructs recorded facts only. This does not resume work or prove old input quiet. */
         fun fromEncodedState(encoded: String, clock: () -> Long = System::currentTimeMillis): TaskExecutor {
@@ -562,7 +566,22 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
     private fun fact(type: String, run: RunProgress, detail: String = "") {
         facts += ExecutionFact(type, run.runId, run.task.id, detail,
             taskName = run.task.name, context = run.request.context,
-            packageVersion = run.request.packageVersion, occurredAtEpochMillis = clock())
+            packageVersion = run.request.packageVersion, occurredAtEpochMillis = clock(),
+            id = (facts.maxOfOrNull { it.id } ?: 0) + 1)
+    }
+    /**
+     * Keeps the state that is rewritten on every transition proportional to live work, not to history:
+     * recent facts (full history is appended elsewhere by id), recent command receipts, and attempts of
+     * live, unknown or recently finished runs (late results of those are still recognized).
+     */
+    private fun compact() {
+        if (facts.size > FACT_LIMIT) facts.subList(0, facts.size - FACT_LIMIT).clear()
+        if (receipts.size > RECEIPT_LIMIT) receipts.keys.take(receipts.size - RECEIPT_LIMIT).forEach(receipts::remove)
+        val keep = (listOfNotNull(current, active?.run) + waiting).map { it.runId }.toMutableSet()
+        keep += unknowns.keys.map { it.runId }
+        pending?.let { keep += it.ticket.runId }
+        keep += attempts.keys.map { it.runId }.distinct().sortedDescending().take(RECENT_RUNS)
+        attempts.keys.filter { it.runId !in keep }.forEach(attempts::remove)
     }
     private inline fun change(block: (MutableList<ExecutorEffect>) -> Unit): List<ExecutorEffect> {
         val effects = mutableListOf<ExecutorEffect>()
@@ -570,7 +589,7 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
         publish()
         return effects
     }
-    private fun publish() { revision++; mutableState.value = snapshot() }
+    private fun publish() { compact(); revision++; mutableState.value = snapshot() }
     private fun snapshot(): ExecutorSnapshot = ExecutorSnapshot(
         context,
         when {

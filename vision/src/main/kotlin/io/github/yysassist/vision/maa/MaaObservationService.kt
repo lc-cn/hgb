@@ -75,6 +75,7 @@ class MaaObservationService : Service() {
         val directory = MaaProcessProtocol.folder(cacheDir, id)
         val sessionDirectory = MaaProcessProtocol.session(cacheDir, Process.myPid())
         var stage = "model-copy"
+        var readMillis = -1L; var nativeMillis = -1L; var imageBytes = 0
         val raw: ByteArray
         try {
             check(directory.mkdirs()) { "Work directory already exists" }
@@ -113,7 +114,9 @@ class MaaObservationService : Service() {
                 check(file.setReadOnly())
             }
             stage = "image-read"
+            val readStarted = SystemClock.elapsedRealtime()
             val image = ParcelFileDescriptor.AutoCloseInputStream(checkNotNull(MaaProcessProtocol.descriptor(data, "image"))).use { it.readBytes() }
+            imageBytes = image.size
             if (data.getBoolean("nativeBlock")) {
                 check(BuildConfig.DEBUG)
                 MaaNative.blockForProbe { reply(destination, MaaProcessProtocol.NATIVE_ENTERED, id) }
@@ -121,12 +124,16 @@ class MaaObservationService : Service() {
             }
             // Manifest-verified data can still be an invalid ONNX program. Let the real native failure
             // happen here, outside the host; never replace it with a healthy empty OCR result.
+            readMillis = SystemClock.elapsedRealtime() - readStarted
             stage = "native-register"
+            val nativeStarted = SystemClock.elapsedRealtime()
             if (!reuse) { sessionHandle = MaaNative.create(sessionDirectory.absolutePath); sessionKey = key }
             val handle = sessionHandle
             stage = "native-recognize"
             raw = run {
-                if (requests == null) MaaNative.recognizeRaw(handle, image)
+                // imageWidth/Height > 0 means the image descriptor carries raw RGBA, not PNG.
+                val width = data.getInt("imageWidth", 0); val height = data.getInt("imageHeight", 0)
+                if (requests == null) { if (width > 0) MaaNative.recognizePixels(handle, image, width, height) else MaaNative.recognizeRaw(handle, image) }
                 else {
                     stage = "native-inspect"
                     templates.forEach { MaaNative.overrideTemplate(handle, it, File(directory, it).readBytes()) }
@@ -138,12 +145,15 @@ class MaaObservationService : Service() {
                         val param = request.getJSONObject("param")
                         if (type == "TemplateMatch") require(param.getJSONArray("template").let { names ->
                             names.length() == 1 && names.getString(0) in templates })
-                        results.put(org.json.JSONObject(MaaNative.inspectRaw(handle, type, param.toString(), image).toString(Charsets.UTF_8)))
+                        val raw = if (width > 0) MaaNative.inspectPixels(handle, type, param.toString(), image, width, height)
+                            else MaaNative.inspectRaw(handle, type, param.toString(), image)
+                        results.put(org.json.JSONObject(raw.toString(Charsets.UTF_8)))
                     }
                     org.json.JSONObject().put("taskStatus", 3000).put("controllerBound", false).put("inspection", results)
                         .toString().toByteArray(Charsets.UTF_8)
                 }
             }
+            nativeMillis = SystemClock.elapsedRealtime() - nativeStarted
         } catch (error: Exception) {
             // Keep error meaning without transmitting file paths, model contents or stack dumps.
             try { reply(destination, MaaProcessProtocol.REJECTED, id, Bundle().apply {
@@ -158,7 +168,9 @@ class MaaObservationService : Service() {
         val result = ParcelFileDescriptor.createPipe()
         try {
             result[0].use { descriptor ->
-                reply(destination, MaaProcessProtocol.RESULT, id, Bundle().apply { putParcelable("result", descriptor) })
+                reply(destination, MaaProcessProtocol.RESULT, id, Bundle().apply { putParcelable("result", descriptor)
+                    // Timing only: image read covers the host's streaming encode; native includes model load when not reused.
+                    putLong("imageReadMs", readMillis); putLong("nativeMs", nativeMillis); putInt("imageBytes", imageBytes) })
             }
             ParcelFileDescriptor.AutoCloseOutputStream(result[1]).use { it.write(raw) }
             // Inputs are closed and native use returned; hand ownership back before announcing quiet.
