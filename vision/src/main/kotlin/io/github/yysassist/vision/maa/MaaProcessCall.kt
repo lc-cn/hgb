@@ -23,6 +23,7 @@ class MaaProcessCall(
     private val models: Map<String, MaaModelFile>,
     private val imageRead: ParcelFileDescriptor,
     private val nativeBlock: Boolean = false,
+    private val inspection: MaaInspection? = null,
     private val onQuiet: () -> Unit,
 ) {
     companion object {
@@ -83,6 +84,10 @@ class MaaProcessCall(
         serial.post {
             try {
                 require(models.keys == MaaProcessProtocol.modelNames.toSet())
+                inspection?.let { value ->
+                    require(value.templates.keys.all { it.matches(MaaProcessProtocol.templateName) })
+                    org.json.JSONArray(value.requests).also { require(it.length() > 0) }
+                }
                 bound = app.bindService(Intent().setComponent(component), Context.BIND_AUTO_CREATE,
                     { runnable -> serial.post(runnable) }, connection)
                 if (!bound) finishUnsubmitted(NoObservation.LOCAL_ERROR)
@@ -111,6 +116,18 @@ class MaaProcessCall(
                 descriptors += descriptor
                 data.putParcelable(name, descriptor)
                 data.putLong("$name.bytes", model.bytes); data.putString("$name.sha256", model.sha256)
+            }
+            inspection?.let { value ->
+                data.putString("requests", value.requests)
+                data.putStringArrayList("templates", ArrayList(value.templates.keys))
+                value.templates.forEach { (name, template) ->
+                    require(template.bytes > 0 && template.sha256.matches(Regex("[0-9a-f]{64}")))
+                    val descriptor = ParcelFileDescriptor.open(template.file, ParcelFileDescriptor.MODE_READ_ONLY)
+                    descriptors += descriptor
+                    val key = MaaProcessProtocol.templateKey(name)
+                    data.putParcelable(key, descriptor)
+                    data.putLong("$key.bytes", template.bytes); data.putString("$key.sha256", template.sha256)
+                }
             }
             data.putParcelable("image", imageRead)
             // From this point a failed IPC delivery is uncertain, not proof the child never used FDs.
@@ -151,7 +168,8 @@ class MaaProcessCall(
                             .onUnmappableCharacter(CodingErrorAction.REPORT).decode(ByteBuffer.wrap(bytes)).toString()
                         val parsed = JSONObject(raw)
                         check(parsed.getInt("taskStatus") == 3000 && !parsed.getBoolean("controllerBound"))
-                        parsed.getBoolean("hit"); parsed.getJSONObject("detail").getJSONArray("all")
+                        if (inspection == null) { parsed.getBoolean("hit"); parsed.getJSONObject("detail").getJSONArray("all") }
+                        else check(parsed.getJSONArray("inspection").length() == org.json.JSONArray(inspection.requests).length())
                         MaaProcessOutcome.Observed(raw, checkNotNull(pid))
                     } catch (_: Exception) { MaaProcessOutcome.Missing(NoObservation.PROTOCOL_ERROR) }
                     serial.post {

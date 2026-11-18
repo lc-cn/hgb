@@ -68,7 +68,60 @@ struct Session {
         // A succeeded Maa task is transport completion; it is not a business success or proof that a no-hit is healthy.
         return result;
     }
+    void overrideTemplate(const std::string& name, std::vector<uint8_t>& png) {
+        auto image = std::unique_ptr<MaaImageBuffer, decltype(&MaaImageBufferDestroy)>(MaaImageBufferCreate(), MaaImageBufferDestroy);
+        require(image && MaaImageBufferSetEncoded(image.get(), png.data(), png.size()), "Maa template buffer rejected");
+        require(MaaImageBufferWidth(image.get()) > 0 && MaaImageBufferHeight(image.get()) > 0, "Maa template decode failed");
+        require(MaaResourceOverrideImage(resource.get(), name.c_str(), image.get()), "Maa template override rejected");
+    }
+    /** One region request on caller-supplied pixels. Only OCR and TemplateMatch are reachable. */
+    std::string inspect(const std::string& type, const std::string& param, std::vector<uint8_t>& png) {
+        require(type == "OCR" || type == "TemplateMatch", "Unsupported Maa recognition type");
+        auto image = std::unique_ptr<MaaImageBuffer, decltype(&MaaImageBufferDestroy)>(MaaImageBufferCreate(), MaaImageBufferDestroy);
+        require(image && MaaImageBufferSetEncoded(image.get(), png.data(), png.size()), "Maa image buffer rejected");
+        require(MaaImageBufferWidth(image.get()) > 0 && MaaImageBufferHeight(image.get()) > 0, "Maa image decode failed");
+        auto task = MaaTaskerPostRecognition(tasker.get(), type.c_str(), param.c_str(), image.get());
+        require(task != MaaInvalidId, "Maa recognition submission rejected");
+        auto status = MaaTaskerWait(tasker.get(), task);
+        require(status == MaaStatus_Succeeded, "Maa recognition transport did not succeed");
+        auto name = std::unique_ptr<MaaStringBuffer, decltype(&MaaStringBufferDestroy)>(MaaStringBufferCreate(), MaaStringBufferDestroy);
+        auto algorithm = std::unique_ptr<MaaStringBuffer, decltype(&MaaStringBufferDestroy)>(MaaStringBufferCreate(), MaaStringBufferDestroy);
+        auto detail = std::unique_ptr<MaaStringBuffer, decltype(&MaaStringBufferDestroy)>(MaaStringBufferCreate(), MaaStringBufferDestroy);
+        require(name && algorithm && detail, "Maa result allocation failed");
+        MaaSize count = 0;
+        require(MaaTaskerGetTaskDetail(tasker.get(), task, name.get(), nullptr, &count, &status) && count == 1, "Maa recognition node count changed");
+        MaaNodeId node = MaaInvalidId;
+        require(MaaTaskerGetTaskDetail(tasker.get(), task, name.get(), &node, &count, &status), "Maa task detail unavailable");
+        MaaRecoId reco = MaaInvalidId;
+        MaaActId action = MaaInvalidId;
+        MaaBool completed = false;
+        require(MaaTaskerGetNodeDetail(tasker.get(), node, name.get(), &reco, &action, &completed) && reco != MaaInvalidId && action == MaaInvalidId, "Maa recognition detail identity changed");
+        MaaBool hit = false;
+        require(MaaTaskerGetRecognitionDetail(tasker.get(), reco, name.get(), algorithm.get(), &hit, nullptr, detail.get(), nullptr, nullptr), "Maa recognition detail unavailable");
+        require(std::string(MaaStringBufferGet(algorithm.get())) == type, "Unexpected Maa recognition algorithm");
+        require(MaaTaskerGetController(tasker.get()) == nullptr, "Unexpected Maa controller");
+        std::string body(MaaStringBufferGet(detail.get()), MaaStringBufferSize(detail.get()));
+        std::string result = std::string("{\"taskStatus\":") + std::to_string(status) + ",\"hit\":" + (hit ? "true" : "false") +
+            ",\"algorithm\":\"" + type + "\",\"detail\":" + (body.empty() ? "null" : body) + "}";
+        require(MaaTaskerClearCache(tasker.get()), "Maa result cache clear failed");
+        return result;
+    }
 };
+std::vector<uint8_t> bytes(JNIEnv* env, jbyteArray encoded) {
+    auto count = env->GetArrayLength(encoded);
+    require(count > 0, "Empty encoded image");
+    std::vector<uint8_t> value(count);
+    env->GetByteArrayRegion(encoded, 0, count, reinterpret_cast<jbyte*>(value.data()));
+    require(!env->ExceptionCheck(), "Image copy failed");
+    return value;
+}
+std::string utf(JNIEnv* env, jstring value) {
+    const char* chars = env->GetStringUTFChars(value, nullptr);
+    require(chars != nullptr, "String copy failed");
+    std::string result(chars);
+    env->ReleaseStringUTFChars(value, chars);
+    return result;
+}
 }
 
 extern "C" JNIEXPORT jstring JNICALL
@@ -113,6 +166,27 @@ Java_io_github_yysassist_vision_maa_MaaNative_recognizeRaw(JNIEnv* env, jobject,
         fail(env, error);
         return nullptr;
     }
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_io_github_yysassist_vision_maa_MaaNative_overrideTemplate(JNIEnv* env, jobject, jlong handle, jstring name, jbyteArray encoded) {
+    try {
+        require(handle != 0, "Maa session closed");
+        auto png = bytes(env, encoded);
+        reinterpret_cast<Session*>(handle)->overrideTemplate(utf(env, name), png);
+    } catch (const std::exception& error) { fail(env, error); }
+}
+
+extern "C" JNIEXPORT jbyteArray JNICALL
+Java_io_github_yysassist_vision_maa_MaaNative_inspectRaw(JNIEnv* env, jobject, jlong handle, jstring type, jstring param, jbyteArray encoded) {
+    try {
+        require(handle != 0, "Maa session closed");
+        auto png = bytes(env, encoded);
+        auto text = reinterpret_cast<Session*>(handle)->inspect(utf(env, type), utf(env, param), png);
+        auto result = env->NewByteArray(static_cast<jsize>(text.size()));
+        if (result) env->SetByteArrayRegion(result, 0, static_cast<jsize>(text.size()), reinterpret_cast<const jbyte*>(text.data()));
+        return result;
+    } catch (const std::exception& error) { fail(env, error); return nullptr; }
 }
 
 extern "C" JNIEXPORT void JNICALL

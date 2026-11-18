@@ -62,11 +62,15 @@ class MaaObservationService : Service() {
         val raw: ByteArray
         try {
             check(directory.mkdirs()) { "Work directory already exists" }
-            MaaProcessProtocol.modelNames.forEach { name ->
-                val length = data.getLong("$name.bytes", -1)
-                val expected = data.getString("$name.sha256")
+            val requests = data.getString("requests")
+            val templates = data.getStringArrayList("templates").orEmpty()
+            require(templates.all { it.matches(MaaProcessProtocol.templateName) } && templates.distinct().size == templates.size)
+            require(requests != null || templates.isEmpty())
+            (MaaProcessProtocol.modelNames.map { it to it } + templates.map { MaaProcessProtocol.templateKey(it) to it }).forEach { (key, name) ->
+                val length = data.getLong("$key.bytes", -1)
+                val expected = data.getString("$key.sha256")
                 require(length > 0 && expected?.matches(Regex("[0-9a-f]{64}")) == true)
-                val descriptor = checkNotNull(MaaProcessProtocol.descriptor(data, name))
+                val descriptor = checkNotNull(MaaProcessProtocol.descriptor(data, key))
                 val file = File(directory, name)
                 val hash = MessageDigest.getInstance("SHA-256")
                 var count = 0L
@@ -96,7 +100,25 @@ class MaaObservationService : Service() {
             stage = "native-register"
             val handle = MaaNative.create(directory.absolutePath)
             stage = "native-recognize"
-            raw = try { MaaNative.recognizeRaw(handle, image) } finally { MaaNative.destroy(handle) }
+            raw = try {
+                if (requests == null) MaaNative.recognizeRaw(handle, image)
+                else {
+                    stage = "native-inspect"
+                    templates.forEach { MaaNative.overrideTemplate(handle, it, File(directory, it).readBytes()) }
+                    val list = org.json.JSONArray(requests); require(list.length() in 1..32)
+                    val results = org.json.JSONArray()
+                    for (index in 0 until list.length()) {
+                        val request = list.getJSONObject(index)
+                        val type = request.getString("type"); require(type == "OCR" || type == "TemplateMatch")
+                        val param = request.getJSONObject("param")
+                        if (type == "TemplateMatch") require(param.getJSONArray("template").let { names ->
+                            names.length() == 1 && names.getString(0) in templates })
+                        results.put(org.json.JSONObject(MaaNative.inspectRaw(handle, type, param.toString(), image).toString(Charsets.UTF_8)))
+                    }
+                    org.json.JSONObject().put("taskStatus", 3000).put("controllerBound", false).put("inspection", results)
+                        .toString().toByteArray(Charsets.UTF_8)
+                }
+            } finally { MaaNative.destroy(handle) }
         } catch (error: Exception) {
             // Keep error meaning without transmitting file paths, model contents or stack dumps.
             try { reply(destination, MaaProcessProtocol.REJECTED, id, Bundle().apply {

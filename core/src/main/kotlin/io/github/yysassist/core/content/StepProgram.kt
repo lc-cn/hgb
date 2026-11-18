@@ -61,6 +61,39 @@ fun sameProgramValue(left: JsonElement, right: JsonElement): Boolean {
         else left == right
 }
 
+/** Handle kinds an action consumed, directly or through the handles it was given. */
+private fun ancestry(action: ActionDefinition, context: ActionFlowContext, contract: (ActionDefinition) -> CapabilityContract?,
+    seen: Set<String> = emptySet()): Set<String> {
+    if (action.id in seen) return emptySet()
+    val definition = contract(action) ?: return emptySet()
+    return definition.inputHandles.keys.flatMap { parameter ->
+        val binding = action.bindings[parameter] as? ActionInputBinding.Output ?: return@flatMap emptyList()
+        val source = context.previous[binding.actionId] ?: return@flatMap emptyList()
+        listOfNotNull(contract(source)?.outputHandles?.get(binding.field)) + ancestry(source, context, contract, seen + action.id)
+    }.toSet()
+}
+
+/** Generic handle rules: typed source, still fresh, permitted lineage, and no leaking into plain values. */
+internal fun handleIssues(action: ActionDefinition, definition: CapabilityContract, context: ActionFlowContext,
+    contract: (ActionDefinition) -> CapabilityContract?): List<String> = buildList {
+    definition.inputHandles.forEach { (parameter, need) ->
+        val binding = action.bindings[parameter] as? ActionInputBinding.Output
+        if (binding == null) { add("观察、目标或区域只能引用本步骤前序动作的输出"); return@forEach }
+        val source = context.previous[binding.actionId] ?: return@forEach // reported by binding checks
+        val kind = contract(source)?.outputHandles?.get(binding.field)
+        when {
+            kind == null || kind !in need.kinds -> add("引用的输出不是此参数所需的观察、目标或区域")
+            source.id !in context.freshOutputs -> add("引用的观察、目标或区域产生于可能的输入之前，已失效")
+            (ancestry(source, context, contract) + kind).intersect(need.forbiddenAncestors).isNotEmpty() -> add("引用的句柄来源不允许用于此动作")
+        }
+    }
+    action.bindings.forEach { (parameter, binding) ->
+        if (binding !is ActionInputBinding.Output || parameter in definition.inputHandles) return@forEach
+        val source = context.previous[binding.actionId] ?: return@forEach
+        if (contract(source)?.outputHandles?.containsKey(binding.field) == true) add("观察、目标或区域不能作为普通参数传递")
+    }
+}
+
 /** A bounded abstract state, not a list of all branch paths or an unrolling of repeat counts. */
 private enum class Proof { NONE, VERIFIED, UNVERIFIED }
 private data class Flow(val context: ActionFlowContext, val proofs: Set<Proof>)
@@ -86,6 +119,7 @@ internal fun programIssues(bundle: TaskBundle, task: TaskDefinition, step: StepD
                     else {
                         val previous = flow.context.previous.mapNotNull { (id, a) -> contract(a)?.let { id to it } }.toMap()
                         actionBindingIssues(task, action, definition, previous).forEach { issue(location, it) }
+                        handleIssues(action, definition, flow.context, ::contract).forEach { issue(location, it) }
                         definition.validateDefinition(bundle, task, flow.context, action)?.let { issue(location, it) }
                         val proofs = when {
                             definition.role == ActionRole.VERIFICATION -> flow.proofs.map {
@@ -103,6 +137,8 @@ internal fun programIssues(bundle: TaskBundle, task: TaskDefinition, step: StepD
                     val type = source?.let { binding -> flow.context.previous[binding.actionId]?.let(::contract)?.outputTypes?.get(binding.field) }
                     if (type !in setOf(ActionValueType.STRING, ActionValueType.NUMBER, ActionValueType.BOOLEAN))
                         issue(location, "分支必须引用本块前序动作的字符串、布尔或数值输出")
+                    if (source != null && flow.context.previous[source.actionId]?.let(::contract)?.outputHandles?.containsKey(source.field) == true)
+                        issue(location, "分支不能比较观察、目标或区域句柄")
                     if (node.cases.isEmpty()) issue(location, "分支缺少明确值")
                     node.cases.forEachIndexed { caseIndex, case ->
                         if (primitiveType(case.equals) != type || primitiveType(case.equals) == null) issue(location, "分支值类型不匹配")

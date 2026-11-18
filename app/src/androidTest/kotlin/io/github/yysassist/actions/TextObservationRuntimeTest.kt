@@ -56,6 +56,13 @@ class TextObservationRuntimeTest {
         var textLeft = 90f
         var textBaseline = 400f
         var lastDownY: Float? = null
+        /** Optional claim rules: a long hold, or a drag of at least this many pixels downward. */
+        var holdMillis: Long? = null
+        var dragPixels: Float? = null
+        var downPoint: PointF? = null
+        var upPoint: PointF? = null
+        var heldMillis: Long? = null
+        var moves = 0
         private var downOnTarget = false
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; textSize = 72f }
         private fun text() = if (claimed) "已领取" else "领取物资"
@@ -70,9 +77,19 @@ class TextObservationRuntimeTest {
         override fun onTouchEvent(event: MotionEvent): Boolean {
             touches++
             if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                downs++; lastDownY = event.y; downOnTarget = targetBounds().contains(event.x, event.y)
+                downs++; lastDownY = event.y; downOnTarget = targetBounds().contains(event.x, event.y); downPoint = PointF(event.x, event.y)
             }
-            if (event.actionMasked == MotionEvent.ACTION_UP && downOnTarget && targetBounds().contains(event.x, event.y)) { claimed = true; invalidate() }
+            if (event.actionMasked == MotionEvent.ACTION_MOVE) moves++
+            if (event.actionMasked == MotionEvent.ACTION_UP) {
+                upPoint = PointF(event.x, event.y); heldMillis = event.eventTime - event.downTime
+                val hold = holdMillis; val drag = dragPixels
+                val accepted = when {
+                    drag != null -> downOnTarget && event.y - downPoint!!.y >= drag
+                    hold != null -> downOnTarget && targetBounds().contains(event.x, event.y) && heldMillis!! >= hold
+                    else -> downOnTarget && targetBounds().contains(event.x, event.y)
+                }
+                if (accepted) { claimed = true; invalidate() }
+            }
             return true
         }
     }
@@ -115,6 +132,7 @@ class TextObservationRuntimeTest {
         withInput: Boolean = false, durationMs: Long = 80,
         submit: suspend (ExecutorCommand) -> RuntimeCommandResult = { runtime.submit(it).await() },
         onActionFinished: suspend (ActionDefinition, ActionResult) -> Unit = { _, _ -> },
+        input: (ActionDefinition) -> ActionDefinition = { it },
         transform: (TaskBundle) -> TaskBundle = { it }) {
         lateinit var observer: VersionedTextObserver
         val provider = ScreenActions({ observer }, { runtime.permitsInput(it) }, device, submit)
@@ -139,22 +157,22 @@ class TextObservationRuntimeTest {
                 TaskResource(id, id, bytes.size.toLong(), MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) })
             }
         }
-        val read = ActionDefinition("read", ScreenActions.READ, 1, buildJsonObject {
-            put("packageName", context.packageName); put("detector", "det.onnx"); put("recognizer", "rec.onnx"); put("dictionary", "keys.txt")
-        })
+        val read = ActionDefinition("read", ScreenActions.READ, 2, buildJsonObject { put("profile", "own") })
         val verify = ActionDefinition("verify", ScreenActions.EXPECT, 1,
             buildJsonObject { put("text", expected); put("minimumConfidence", 0.75) },
             mapOf("observation" to ActionInputBinding.Output(if (withInput) "after" else "read", "observation")))
         val locate = ActionDefinition("locate", ScreenActions.LOCATE, 1,
             buildJsonObject { put("text", "领取物资"); put("minimumConfidence", 0.75) },
             mapOf("observation" to ActionInputBinding.Output("read", "observation")))
-        val tap = ActionDefinition("tap", ScreenActions.TAP, 1, buildJsonObject { put("durationMs", durationMs) },
-            mapOf("target" to ActionInputBinding.Output("locate", "target")))
+        val tap = input(ActionDefinition("tap", ScreenActions.TAP, 1, buildJsonObject { put("durationMs", durationMs) },
+            mapOf("target" to ActionInputBinding.Output("locate", "target"))))
         val task = TaskDefinition(address.taskId, address.targetId, "自有画面核对", "tools", 1,
             steps = listOf(StepDefinition("read", "观察后核对", if (withInput) listOf(read, locate, tap, read.copy(id = "after"), verify) else listOf(read, verify))))
         val target = TargetProfile(address.targetId, "测试画面", listOf(context.packageName), IdentityPolicy.NONE, listOf(TaskCategory("tools", "工具")))
         val bundle = transform(TaskBundle(1, "text-runtime", "2026-11-16T00:00:00Z", "独立画面夹具",
-            listOf(task, task.copy(id = "read-next", name = "后续自有画面核对")), listOf(target), resources))
+            listOf(task, task.copy(id = "read-next", name = "后续自有画面核对")), listOf(target), resources,
+            listOf(VisionProfile("own", address.targetId, context.packageName, MaaTextBackend.CONTRACT,
+                mapOf("detector" to "det.onnx", "recognizer" to "rec.onnx", "dictionary" to "keys.txt")))))
         val text = codec.write(bundle)
         assertEquals(VersionChange.Applied, library.install(text, bundle.version, TaskVersionLibrary.sha256(text)) { resource, output ->
             if (!corrupt) instrumentation.context.assets.open("maa-model/${resource.id}").use { it.copyTo(output) }
@@ -380,6 +398,41 @@ class TextObservationRuntimeTest {
         assertEquals(DeviceActionDelivery.COMPLETED, state.deviceActions.single().receipt!!.delivery)
         assertEquals(0, library.snapshot().versions.single().referenceCount)
         assertEquals(state.deviceActions, ExecutionStateStore(database!!, library).load().decode().state.value.deviceActions)
+    }
+    @Test fun longPressHoldsTheReresolvedTargetForTheDeclaredDuration(): Unit = runBlocking {
+        withContext(Dispatchers.Main) { surface.holdMillis = 600 }
+        prepare("已领取", withInput = true, input = { it.copy(capability = ScreenActions.LONG_PRESS, inputs = buildJsonObject { put("durationMs", 900) }) })
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        assertTrue(state.toString(), state.unresolved.isEmpty())
+        withContext(Dispatchers.Main) { assertEquals(1, surface.downs); assertTrue("held=${surface.heldMillis}", surface.heldMillis!! >= 800) }
+        assertEquals(ScreenActions.LONG_PRESS, state.deviceActions.single().intent.capability)
+        assertEquals(DeviceActionDelivery.COMPLETED, state.deviceActions.single().receipt!!.delivery)
+    }
+    @Test fun swipeDragsFromTheReresolvedTargetByTheScaledOffsetInOneStroke(): Unit = runBlocking {
+        withContext(Dispatchers.Main) { surface.dragPixels = 150f }
+        val width = withContext(Dispatchers.Main) { surface.rootView.width }; val height = withContext(Dispatchers.Main) { surface.rootView.height }
+        prepare("已领取", withInput = true, input = { it.copy(capability = ScreenActions.SWIPE, inputs = buildJsonObject {
+            put("durationMs", 400); put("dx", 0); put("dy", 300); put("referenceWidth", width); put("referenceHeight", height) }) })
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        assertTrue(state.toString(), state.unresolved.isEmpty())
+        withContext(Dispatchers.Main) {
+            assertEquals(1, surface.downs); assertTrue(surface.moves > 0)
+            val travelled = surface.upPoint!!.y - surface.downPoint!!.y
+            assertTrue("travelled=$travelled", travelled in 250f..350f)
+            assertTrue(kotlin.math.abs(surface.upPoint!!.x - surface.downPoint!!.x) < 5f)
+        }
+        assertEquals(ScreenActions.SWIPE, state.deviceActions.single().intent.capability)
+    }
+    @Test fun aSwipeEndingOffscreenIsRefusedBeforeAnyIntent(): Unit = runBlocking {
+        val width = withContext(Dispatchers.Main) { surface.rootView.width }; val height = withContext(Dispatchers.Main) { surface.rootView.height }
+        prepare("已领取", withInput = true, input = { it.copy(capability = ScreenActions.SWIPE, inputs = buildJsonObject {
+            put("durationMs", 400); put("dx", 0); put("dy", -5000); put("referenceWidth", width); put("referenceHeight", height) }) })
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.unresolved.isNotEmpty() || it.facts.any { fact -> fact.type == "task-completed" } } }
+        assertTrue(state.deviceActions.isEmpty())
+        assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
     }
     @Test fun duplicateTextNeverCreatesAnInputIntentOrTouchesTheSurface(): Unit = runBlocking {
         withContext(Dispatchers.Main) { surface.duplicate = true; surface.invalidate() }

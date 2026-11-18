@@ -18,9 +18,14 @@ fun interface ActionSession {
     /** Input programs must implement independent quiet and retained business evidence. */
     suspend fun revoke(): InputStopObservation = InputStopObservation.Unconfirmed("动作提供者未实现输入交接")
 }
+/**
+ * trace is optional structured evidence about how a result was reached (regions, scores, resource
+ * digests). It must not contain pixels, recognized private text or account values. The format is
+ * defined by the producing capability; persistence is not yet wired and nothing may depend on it.
+ */
 sealed interface ActionResult {
     data object Interrupted : ActionResult
-    data class Produced(val outputs: JsonObject) : ActionResult
-    data class Verified(val outputs: JsonObject, val evidence: String) : ActionResult
-    data class Unavailable(val reason: String) : ActionResult
+    data class Produced(val outputs: JsonObject, val trace: JsonObject? = null) : ActionResult
+    data class Verified(val outputs: JsonObject, val evidence: String, val trace: JsonObject? = null) : ActionResult
+    data class Unavailable(val reason: String, val trace: JsonObject? = null) : ActionResult
 }

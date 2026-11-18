@@ -3,6 +3,7 @@ package io.github.yysassist.actions
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.yysassist.core.content.*
 import io.github.yysassist.core.execution.BuiltInStepWorkFactory
+import io.github.yysassist.vision.MaaTextBackend
 import kotlinx.serialization.json.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -12,25 +13,29 @@ import org.junit.runner.RunWith
 class TextObservationContractTest {
     private val factory = BuiltInStepWorkFactory(ScreenActions({ error("Static validation must not observe") }, { false }))
     private val codec = BundleCodec(factory.contracts)
-    private val read = ActionDefinition("read", ScreenActions.READ, 1, buildJsonObject {
-        put("packageName", "test.fixture"); put("detector", "det"); put("recognizer", "rec"); put("dictionary", "keys")
-    })
+    private val read = ActionDefinition("read", ScreenActions.READ, 2, buildJsonObject { put("profile", "ocr") })
+    private val profile = VisionProfile("ocr", "fixture", "test.fixture", MaaTextBackend.CONTRACT,
+        mapOf("detector" to "det", "recognizer" to "rec", "dictionary" to "keys"))
     private val verify = ActionDefinition("verify", ScreenActions.EXPECT, 1,
         buildJsonObject { put("text", "领取物资"); put("minimumConfidence", 0.75) },
         mapOf("observation" to ActionInputBinding.Output("read", "observation")))
     private val bundle = TaskBundle(1, "v1", "2026-11-16T00:00:00Z", "", listOf(TaskDefinition("read", "fixture", "只读核对", "tools", 1,
         steps = listOf(StepDefinition("step", "核对", listOf(read, verify))))),
         listOf(TargetProfile("fixture", "夹具", listOf("test.fixture"), IdentityPolicy.NONE, listOf(TaskCategory("tools", "工具")))),
-        listOf("det", "rec", "keys").map { TaskResource(it, "$it.bin", 1, "a".repeat(64)) })
+        listOf("det", "rec", "keys", "jade").map { TaskResource(it, "$it.bin", 1, "a".repeat(64)) }, listOf(profile))
     private fun actions(read: ActionDefinition = this.read, verify: ActionDefinition = this.verify) = bundle.copy(tasks = bundle.tasks.map {
         it.copy(steps = listOf(it.steps.single().copy(actions = listOf(read, verify))))
     })
     @Test fun completeVersionDefinesModelsPackageThresholdAndObservationProvenance() {
         assertEquals(BundleReadResult.Valid(bundle), codec.read(codec.write(bundle)))
     }
-    @Test fun missingModelAndUnrelatedPackageCannotBeEnabled() {
+    @Test fun missingModelUnrelatedPackageOrUnknownProfileCannotBeEnabled() {
         assertTrue(codec.validate(bundle.copy(resources = emptyList())).isNotEmpty())
-        assertTrue(codec.validate(actions(read.copy(inputs = JsonObject(read.inputs + ("packageName" to JsonPrimitive("other.app")))))).isNotEmpty())
+        assertTrue(codec.validate(bundle.copy(visionProfiles = listOf(profile.copy(packageName = "other.app")))).isNotEmpty())
+        assertTrue(codec.validate(bundle.copy(visionProfiles = listOf(profile.copy(models = profile.models - "dictionary")))).isNotEmpty())
+        assertTrue(codec.validate(bundle.copy(visionProfiles = listOf(profile.copy(recognizer = "other.v1")))).isNotEmpty())
+        assertTrue(codec.validate(actions(read.copy(inputs = buildJsonObject { put("profile", "missing") }))).isNotEmpty())
+        assertTrue(codec.validate(actions(read.copy(contractVersion = 1))).isNotEmpty())
     }
     @Test fun aLiteralOrOtherActionCannotInventAnObservationToken() {
         val literal = verify.copy(inputs = JsonObject(verify.inputs + ("observation" to JsonPrimitive("invented"))), bindings = emptyMap())
@@ -114,7 +119,7 @@ class TextObservationContractTest {
         assertTrue(codec.validate(programmed(nodes(read, classify) + branch(nodes(locate, tap), emptyList()) + nodes(verify))).isNotEmpty())
         // A bad resource in either case is checked before the program is enabled.
         assertTrue(codec.validate(programmed(nodes(read, classify) + branch(nodes(verify), nodes(after.copy(inputs =
-            JsonObject(after.inputs + ("detector" to JsonPrimitive("missing")))), finalProof)))).isNotEmpty())
+            buildJsonObject { put("profile", "missing") }), finalProof)))).isNotEmpty())
         val inside = nodes(read, classify) + branch(nodes(locate, tap, after, finalProof), nodes(verify.copy(id = "already")))
         assertTrue(codec.validate(programmed(inside)).isEmpty())
         assertTrue(codec.validate(programmed(nodes(read, classify) + branch(nodes(locate, tap, after, finalProof), emptyList()))).isNotEmpty())
@@ -134,5 +139,86 @@ class TextObservationContractTest {
         }
         assertTrue(codec.validate(programmed(nodes(read, classify, verify))).isEmpty())
         assertTrue(codec.validate(programmed(nodes(read, locate, tap, classify, after, finalProof))).isNotEmpty())
+    }
+
+    // Region actions: anchor -> region -> region text / image evidence, all from one fresh observation.
+    private val derive = ActionDefinition("derive", ScreenActions.DERIVE, 1, buildJsonObject {
+        put("dx", -120); put("dy", 195); put("width", 240); put("height", 55); put("referenceWidth", 2400); put("referenceHeight", 1080)
+    }, mapOf("target" to ActionInputBinding.Output("locate", "target")))
+    private val regionRead = ActionDefinition("regionRead", ScreenActions.READ_REGION, 1, JsonObject(emptyMap()),
+        mapOf("region" to ActionInputBinding.Output("derive", "region")))
+    private val regionProof = verify.copy(id = "regionProof", bindings = mapOf("observation" to ActionInputBinding.Output("regionRead", "observation")))
+    private val match = ActionDefinition("match", ScreenActions.MATCH, 1, buildJsonObject { put("template", "jade"); put("minimumScore", 0.45) },
+        mapOf("region" to ActionInputBinding.Output("derive", "region")))
+    private fun regionClassify(states: JsonArray) = ActionDefinition("state", ScreenActions.CLASSIFY_REGION, 1, buildJsonObject { put("states", states) },
+        mapOf("region" to ActionInputBinding.Output("derive", "region")))
+    private val dailyStates = buildJsonArray {
+        add(buildJsonObject { put("id", "claimable")
+            put("text", buildJsonArray { add(buildJsonObject { put("text", "领取"); put("minimumConfidence", 0.8) }) })
+            put("absent", buildJsonArray { add(buildJsonObject { put("template", "jade"); put("minimumScore", 0.45) }) }) })
+        add(buildJsonObject { put("id", "paid")
+            put("present", buildJsonArray { add(buildJsonObject { put("template", "jade"); put("minimumScore", 0.45) }) }) })
+    }
+    @Test fun regionEvidenceChainsFromOneFreshObservation() {
+        assertTrue(codec.validate(programmed(nodes(read, locate, derive, regionRead, regionProof))).toString(),
+            codec.validate(programmed(nodes(read, locate, derive, regionRead, regionProof))).isEmpty())
+        val classified = nodes(read, locate, derive, regionClassify(dailyStates)) + ProgramNode.Branch(ActionInputBinding.Output("state", "state"),
+            listOf(ProgramCase(JsonPrimitive("claimable"), nodes(locate.copy(id = "button"), tap.copy(bindings = mapOf("target" to
+                ActionInputBinding.Output("button", "target"))), after, finalProof)), ProgramCase(JsonPrimitive("paid"), nodes(verify.copy(id = "seen")))))
+        assertTrue(codec.validate(programmed(classified)).toString(), codec.validate(programmed(classified)).isEmpty())
+        assertTrue(codec.validate(programmed(nodes(read, locate, derive, match, verify))).isEmpty())
+    }
+    @Test fun regionGeometryAndTemplatesAreExplicitAndDeclared() {
+        for ((key, value) in listOf("width" to JsonPrimitive(0), "dx" to JsonPrimitive(1.5), "referenceHeight" to JsonPrimitive("1080"), "dy" to JsonPrimitive(200_000)))
+            assertTrue(key, codec.validate(programmed(nodes(read, locate, derive.copy(inputs = JsonObject(derive.inputs + (key to value))), verify))).isNotEmpty())
+        val configured = derive.copy(inputs = JsonObject(derive.inputs - "dx"), bindings = derive.bindings + ("dx" to ActionInputBinding.Configuration("dx")))
+        assertTrue(codec.validate(programmed(nodes(read, locate, configured, verify))).isNotEmpty())
+        assertTrue(codec.validate(programmed(nodes(read, locate, derive, match.copy(inputs = buildJsonObject { put("template", "missing"); put("minimumScore", 0.5) }), verify))).isNotEmpty())
+        assertTrue(codec.validate(programmed(nodes(read, locate, derive, match.copy(inputs = buildJsonObject { put("template", "jade"); put("minimumScore", 1.5) }), verify))).isNotEmpty())
+    }
+    @Test fun regionStatesNeedExplicitConditionsAndDeclaredTemplates() {
+        val empty = buildJsonArray { add(buildJsonObject { put("id", "x") }) }
+        val duplicate = buildJsonArray { repeat(2) { add(dailyStates[1]) } }
+        val missing = buildJsonArray { add(buildJsonObject { put("id", "x")
+            put("present", buildJsonArray { add(buildJsonObject { put("template", "missing"); put("minimumScore", 0.5) }) }) }) }
+        val unknownKey = buildJsonArray { add(JsonObject(dailyStates[1].jsonObject + ("else" to JsonPrimitive(true)))) }
+        for (states in listOf(JsonArray(emptyList()), empty, duplicate, missing, unknownKey))
+            assertTrue(states.toString(), codec.validate(programmed(nodes(read, locate, derive, regionClassify(states), verify))).isNotEmpty())
+    }
+    @Test fun regionHandlesCannotBeInventedReusedAfterInputOrClicked() {
+        val invented = regionRead.copy(inputs = buildJsonObject { put("region", "invented") }, bindings = emptyMap())
+        assertTrue(codec.validate(programmed(nodes(read, locate, derive, invented, verify))).isNotEmpty())
+        // A region from before a click is stale afterwards.
+        val stale = nodes(read, locate, derive, tap, after, regionRead, regionProof, finalProof)
+        assertTrue(codec.validate(programmed(stale)).any { it.reason.contains("失效") })
+        // A target found inside a region cannot be clicked: input re-resolves on a new full frame.
+        val inside = locate.copy(id = "inside", bindings = mapOf("observation" to ActionInputBinding.Output("regionRead", "observation")))
+        val click = tap.copy(bindings = mapOf("target" to ActionInputBinding.Output("inside", "target")))
+        assertTrue(codec.validate(programmed(nodes(read, locate, derive, regionRead, inside, click, after, finalProof))).any { it.reason.contains("来源") })
+        // An observation token is not a region.
+        val wrong = regionRead.copy(bindings = mapOf("region" to ActionInputBinding.Output("read", "observation")))
+        assertTrue(codec.validate(programmed(nodes(read, wrong, verify))).isNotEmpty())
+    }
+
+    @Test fun longPressAndSwipeAreInputsWithExplicitGeometryAndFullFrameTargets() {
+        val press = tap.copy(id = "tap", capability = ScreenActions.LONG_PRESS, inputs = buildJsonObject { put("durationMs", 800) })
+        assertTrue(codec.validate(input(listOf(read, locate, press, after, finalProof))).isEmpty())
+        assertTrue(factory.contracts.single { it.id == ScreenActions.LONG_PRESS }.sendsDeviceInput)
+        val swipe = tap.copy(id = "tap", capability = ScreenActions.SWIPE, inputs = buildJsonObject {
+            put("durationMs", 300); put("dx", 0); put("dy", -400); put("referenceWidth", 2400); put("referenceHeight", 1080) })
+        assertTrue(codec.validate(input(listOf(read, locate, swipe, after, finalProof))).toString(), codec.validate(input(listOf(read, locate, swipe, after, finalProof))).isEmpty())
+        // Both still need a fresh post-input proof.
+        assertTrue(codec.validate(input(listOf(read, locate, swipe))).isNotEmpty())
+        for ((key, value) in listOf("dy" to JsonPrimitive(0), "dx" to JsonPrimitive(1.5), "referenceWidth" to JsonPrimitive(0), "durationMs" to JsonPrimitive(0))) {
+            val bad = swipe.copy(inputs = JsonObject(swipe.inputs + (key to value) + if (key == "dy") mapOf("dx" to JsonPrimitive(0)) else emptyMap()))
+            assertTrue(key, codec.validate(input(listOf(read, locate, bad, after, finalProof))).isNotEmpty())
+        }
+        val configured = swipe.copy(inputs = JsonObject(swipe.inputs - "dy"), bindings = swipe.bindings + ("dy" to ActionInputBinding.Configuration("dy")))
+        assertTrue(codec.validate(input(listOf(read, locate, configured, after, finalProof))).isNotEmpty())
+        val inside = locate.copy(id = "inside", bindings = mapOf("observation" to ActionInputBinding.Output("regionRead", "observation")))
+        for (gesture in listOf(press, swipe)) {
+            val fromRegion = gesture.copy(bindings = mapOf("target" to ActionInputBinding.Output("inside", "target")))
+            assertTrue(codec.validate(programmed(nodes(read, locate, derive, regionRead, inside, fromRegion, after, finalProof))).isNotEmpty())
+        }
     }
 }

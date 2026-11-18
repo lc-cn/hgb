@@ -1,6 +1,6 @@
 # 区域关联与图形状态动作提案
 
-2026-11-18，基于 `06312eb` 和[区域／图形状态离线实验](../development/build-evidence/region-state/README.md)。**待用户确认，未实现。** 当前 App 不能加载下文字段；示例只说明合同形态，不是可安装任务或游戏默认值。
+2026-11-18，基于 `06312eb` 和[区域／图形状态离线实验](../development/build-evidence/region-state/README.md)。**用户已确认三类都实施，已实现**，实际合同与差异见[区域与图像状态动作](../development/region-actions.md)（区域文字读取改为独立动作 `screen.readRegionText`，`screen.readText` 升为 v2）。示例值不是游戏默认值。
 
 ## 要解决的缺口
 

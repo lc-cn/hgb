@@ -18,7 +18,15 @@ data class TaskBundle(
     val tasks: List<TaskDefinition>,
     val targets: List<TargetProfile>,
     val resources: List<TaskResource> = emptyList(),
+    /** Declared once per target, referenced by screen actions instead of repeating package and models. */
+    val visionProfiles: List<VisionProfile> = emptyList(),
 )
+/**
+ * Which package to capture and which recognizer resources to use for one target. The APK owns the
+ * meaning of [recognizer] and the required [models] roles; core only checks references.
+ */
+@Serializable
+data class VisionProfile(val id: String, val targetId: String, val packageName: String, val recognizer: String, val models: Map<String, String>)
 /** Data attachments from the same Release, never executable capabilities or arbitrary URLs. */
 @Serializable
 data class TaskResource(val id: String, val assetName: String, val bytes: Long, val sha256: String)
@@ -93,18 +101,34 @@ sealed interface BundleReadResult {
 
 /** Capabilities are supplied by the APK; a bundle cannot register a new capability. */
 enum class ActionRole { UTILITY, OBSERVATION, VERIFICATION }
+/**
+ * An input that must receive an APK-owned per-attempt handle (an observation, target or region).
+ * Handles only flow through output bindings, expire at the next possible device input, and carry
+ * their lineage: [forbiddenAncestors] rejects a handle derived, at any depth, from those kinds.
+ */
+data class HandleRequirement(val kinds: Set<String>, val forbiddenAncestors: Set<String> = emptySet())
 data class CapabilityContract(
     val id: String, val version: Int,
     val inputTypes: Map<String, ActionValueType> = emptyMap(),
     val outputTypes: Map<String, ActionValueType> = emptyMap(),
     val role: ActionRole = ActionRole.UTILITY,
     val sendsDeviceInput: Boolean = false,
+    /** Output field -> handle kind. Handle fields are STRING tokens with no meaning outside one attempt. */
+    val outputHandles: Map<String, String> = emptyMap(),
+    /** Input parameter -> accepted handles. Literals and configuration can never supply these. */
+    val inputHandles: Map<String, HandleRequirement> = emptyMap(),
     /** Validate only present values; unresolved outputs are never replaced by fake placeholders. */
     val validateKnownInputs: (JsonObject) -> ContentIssue? = { null },
     val validateDefinition: (TaskBundle, TaskDefinition, ActionFlowContext, ActionDefinition) -> String? = { _, _, _, _ -> null },
     val validateInputs: (JsonObject) -> String?,
 )
 class BundleCodec(private val capabilities: List<CapabilityContract>) {
+    init {
+        capabilities.forEach { contract ->
+            require(contract.outputHandles.all { (field, kind) -> kind.isNotBlank() && contract.outputTypes[field] == ActionValueType.STRING }) { "句柄输出必须是字符串" }
+            require(contract.inputHandles.all { (field, need) -> need.kinds.isNotEmpty() && contract.inputTypes[field] == ActionValueType.STRING }) { "句柄参数必须是字符串" }
+        }
+    }
     private val json = Json { ignoreUnknownKeys = false; isLenient = false; coerceInputValues = false }
 
     fun read(text: String): BundleReadResult {
@@ -151,6 +175,16 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
         }
         if (bundle.resources.groupBy { it.sha256 }.values.any { resources -> resources.map { it.bytes }.distinct().size != 1 })
             issue("resources", "相同摘要的资源长度不一致")
+        if (bundle.visionProfiles.map { it.id }.distinct().size != bundle.visionProfiles.size) issue("visionProfiles", "视觉配置身份重复")
+        bundle.visionProfiles.forEach { profile ->
+            val location = "visionProfile/${profile.id}"
+            if (profile.id.isBlank() || profile.recognizer.isBlank()) issue(location, "缺少视觉配置身份或识别合同")
+            val target = bundle.targets.find { it.id == profile.targetId }
+            if (target == null) issue(location, "视觉配置的目标应用未声明")
+            else if (profile.packageName !in target.androidPackages) issue(location, "截图包名不属于目标应用")
+            if (profile.models.isEmpty() || profile.models.values.any { id -> bundle.resources.none { it.id == id } })
+                issue(location, "视觉配置引用了未声明的模型资源")
+        }
         if (bundle.targets.isEmpty()) issue("targets", "缺少目标应用")
         if (bundle.targets.map { it.id }.distinct().size != bundle.targets.size) issue("targets", "目标应用身份重复")
         bundle.targets.forEach { target ->

@@ -1,5 +1,7 @@
 # 只读观察动作接入
 
+> 2026-11-18：`screen.readText` 已升为 v2，只接受任务包 `visionProfiles` 中的 `profile`；下文 v1 字段为历史记录。观察／目标的引用规则改由 core 的类型化句柄统一校验，见[区域与图像状态动作](region-actions.md)。
+
 2026-11-16 接入，2026-11-17 完成当前源码的构建及专用模拟器回归。`screen.readText`／`screen.expectText` 已接入唯一执行链，尚无游戏领取结果，M2／M3／M4 保持进行中。[验证证据](build-evidence/observation-actions/README.md)分别记录回归、原故障、安装摘要及尚未验证的边界。
 
 此文记录只读接入检查点。后续同一接口已扩展为 `ActionProvider`，新增定位／点击及输入静默合同见[屏幕定位与输入](screen-input-actions.md)，没有另保留一套只读执行器。

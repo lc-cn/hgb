@@ -20,12 +20,18 @@ internal object MaaProcessProtocol {
     }
     @Suppress("DEPRECATION") // Typed overload is API33; probe contract still supports API30.
     fun descriptor(data: Bundle, name: String): ParcelFileDescriptor? = data.getParcelable<android.os.Parcelable>(name) as? ParcelFileDescriptor
+    /** Template names are host-assigned (t0.png, t1.png ...), never resource ids or paths. */
+    val templateName = Regex("t[0-9]{1,2}\\.png")
+    fun templateKey(name: String) = "template:$name"
     fun closeInputs(data: Bundle) {
         (modelNames + "image").forEach { descriptor(data, it)?.close() }
+        data.getStringArrayList("templates")?.forEach { descriptor(data, templateKey(it))?.close() }
     }
 }
 
 data class MaaModelFile(val file: File, val bytes: Long, val sha256: String)
+/** Region requests on the same pixels: JSON array of {type: OCR|TemplateMatch, param: object}. */
+data class MaaInspection(val requests: String, val templates: Map<String, MaaModelFile>)
 enum class NoObservation { CANCELLED, PROCESS_DIED, REJECTED, BUSY, LOCAL_ERROR, PROTOCOL_ERROR }
 sealed interface MaaProcessOutcome {
     /** Native observation transport completed; hit=false is still not a business absence decision. */
