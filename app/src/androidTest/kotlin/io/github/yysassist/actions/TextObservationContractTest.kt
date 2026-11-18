@@ -241,4 +241,25 @@ class TextObservationContractTest {
         assertTrue(codec.validate(input(listOf(read, back, back.copy(id = "again"), after, finalProof))).any { it.reason.contains("失效") })
         assertTrue(codec.validate(input(listOf(read, back.copy(inputs = buildJsonObject { put("x", 1) }), after, finalProof))).isNotEmpty())
     }
+
+    @Test fun tapRegionNeedsAFullFrameAnchorExplicitGuardAndLaterProof() {
+        val press = ActionDefinition("press", ScreenActions.TAP_REGION, 1, buildJsonObject { put("durationMs", 80); put("requireNoText", true) },
+            mapOf("region" to ActionInputBinding.Output("derive", "region")))
+        assertTrue(codec.validate(input(listOf(read, locate, derive, press, after, finalProof))).toString(),
+            codec.validate(input(listOf(read, locate, derive, press, after, finalProof))).isEmpty())
+        assertTrue(factory.contracts.single { it.id == ScreenActions.TAP_REGION }.sendsDeviceInput)
+        assertTrue(codec.validate(input(listOf(read, locate, derive, press))).isNotEmpty())
+        for (bad in listOf(buildJsonObject { put("durationMs", 80) }, buildJsonObject { put("durationMs", 80); put("requireNoText", "true") },
+            buildJsonObject { put("durationMs", 0); put("requireNoText", true) }))
+            assertTrue(bad.toString(), codec.validate(input(listOf(read, locate, derive, press.copy(inputs = bad), after, finalProof))).isNotEmpty())
+        val configured = press.copy(inputs = buildJsonObject { put("durationMs", 80) }, bindings = press.bindings + ("requireNoText" to ActionInputBinding.Configuration("guard")))
+        assertTrue(codec.validate(input(listOf(read, locate, derive, configured, after, finalProof))).isNotEmpty())
+        // A region whose anchor was found inside another region cannot be replayed on a fresh frame.
+        val inside = locate.copy(id = "inside", bindings = mapOf("observation" to ActionInputBinding.Output("regionRead", "observation")))
+        val nested = derive.copy(id = "nested", bindings = mapOf("target" to ActionInputBinding.Output("inside", "target")))
+        val pressNested = press.copy(bindings = mapOf("region" to ActionInputBinding.Output("nested", "region")))
+        assertTrue(codec.validate(programmed(nodes(read, locate, derive, regionRead, inside, nested, pressNested, after, finalProof))).any { it.reason.contains("来源") })
+        // A region from before an earlier input is stale.
+        assertTrue(codec.validate(input(listOf(read, locate, derive, tap, press, after, finalProof))).any { it.reason.contains("失效") })
+    }
 }

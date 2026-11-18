@@ -25,6 +25,7 @@ internal class ScreenActions(
         const val DERIVE = "screen.deriveRegion"; const val READ_REGION = "screen.readRegionText"
         const val MATCH = "screen.matchImage"; const val CLASSIFY_REGION = "screen.classifyRegion"
         const val LONG_PRESS = "screen.longPress"; const val SWIPE = "screen.swipe"; const val BACK = "screen.back"
+        const val TAP_REGION = "screen.tapRegion"
         /** Handle kinds. Region-derived observations keep REGION in their lineage. */
         const val OBSERVATION = "screen.observation"; const val TARGET = "screen.target"; const val REGION = "screen.region"
         private const val MAX_STATES = 8; private const val MAX_TEMPLATES = 16; private const val MAX_OFFSET = 100_000
@@ -168,6 +169,17 @@ internal class ScreenActions(
             outputTypes = mapOf("delivered" to ActionValueType.BOOLEAN), sendsDeviceInput = true, inputHandles = observationHandle) { inputs ->
             if (inputs.keys != setOf("observation") || inputs.text("observation").isNullOrBlank()) "请指定观察" else null
         },
+        // Taps the centre of an anchor-derived region (e.g. blank space outside a dialog). The anchor
+        // and offsets are replayed on a fresh frame; requireNoText refuses a region that shows any text.
+        CapabilityContract(TAP_REGION, 1, inputTypes = mapOf("region" to ActionValueType.STRING, "durationMs" to ActionValueType.NUMBER,
+            "requireNoText" to ActionValueType.BOOLEAN), outputTypes = mapOf("delivered" to ActionValueType.BOOLEAN), sendsDeviceInput = true,
+            inputHandles = mapOf("region" to HandleRequirement(setOf(REGION), forbiddenAncestors = setOf(REGION))),
+            validateKnownInputs = { inputs -> if ("durationMs" in inputs && duration(inputs) == null)
+                ContentIssue("durationMs", "手势时长需为平台允许的正整数毫秒") else null },
+            validateDefinition = { _, _, _, action -> if ("requireNoText" in action.bindings) "空白检查必须由任务版本明确指定" else null }) { inputs ->
+            if (inputs.keys != setOf("region", "durationMs", "requireNoText") || inputs.text("region").isNullOrBlank() || duration(inputs) == null ||
+                (inputs["requireNoText"] as? JsonPrimitive)?.takeUnless { it.isString }?.booleanOrNull == null) "请指定区域、手势时长及是否要求区域无文字" else null
+        },
         CapabilityContract(DERIVE, 1, inputTypes = mapOf("target" to ActionValueType.STRING) + geometryKeys.associateWith { ActionValueType.NUMBER },
             outputTypes = mapOf("region" to ActionValueType.STRING), outputHandles = mapOf("region" to REGION),
             inputHandles = mapOf("target" to HandleRequirement(setOf(TARGET))),
@@ -214,7 +226,20 @@ internal class ScreenActions(
     private data class Observation(val bridge: ObservationDevice, val result: TextReadResult.Observed, val models: OcrModelReferences,
         val regionDerived: Boolean = false)
     private data class Target(val observation: Observation, val text: String, val minimum: BigDecimal, val match: RecognizedText)
-    private data class Region(val observation: Observation, val bounds: TextBounds)
+    /** Offsets from an anchor, kept so an input can re-derive the region on a fresh frame. */
+    private data class Derivation(val anchor: Target, val dx: Int, val dy: Int, val width: Int, val height: Int, val referenceWidth: Int, val referenceHeight: Int)
+    private data class Region(val observation: Observation, val bounds: TextBounds, val derivation: Derivation)
+    /** Same geometry for derive and for input-time re-derivation. Null when outside or reflowed. */
+    private fun regionBounds(match: RecognizedText, geometry: ScreenGeometry, d: Derivation): TextBounds? {
+        val sx = geometry.width.toDouble() / d.referenceWidth; val sy = geometry.height.toDouble() / d.referenceHeight
+        if (kotlin.math.abs(sx / sy - 1.0) > 0.01) return null
+        val anchor = match.bounds
+        val centre = anchor.left + anchor.width / 2.0; val bottom = (anchor.top + anchor.height).toDouble()
+        val bounds = TextBounds(kotlin.math.round(centre + d.dx * sx).toInt(), kotlin.math.round(bottom + d.dy * sy).toInt(),
+            kotlin.math.round(d.width * sx).toInt(), kotlin.math.round(d.height * sy).toInt())
+        return bounds.takeIf { it.left >= 0 && it.top >= 0 && it.width > 0 && it.height > 0 &&
+            it.left.toLong() + it.width <= geometry.width && it.top.toLong() + it.height <= geometry.height }
+    }
     private class Invocation(val intent: DeviceActionIntent) {
         var admission: DeviceActionWriteResult? = null
         var channel: DeviceInputChannel? = null
@@ -402,6 +427,7 @@ internal class ScreenActions(
                 }
                 TAP, LONG_PRESS, SWIPE -> gesture(action, inputs)
                 BACK -> back(action, inputs)
+                TAP_REGION -> tapRegion(action, inputs)
                 DERIVE -> derive(inputs)
                 READ_REGION -> {
                     val region = regions[inputs.text("region")] ?: return ActionResult.Unavailable("本步骤的区域不可用")
@@ -437,18 +463,11 @@ internal class ScreenActions(
             val target = targets[inputs.text("target")] ?: return ActionResult.Unavailable("本步骤的锚点目标不可用")
             target.observation.bridge.validateObservation(target.observation.result.stamp)?.let { return ActionResult.Unavailable(deviceReason(it)) }
             val value = { key: String -> checkNotNull(integer(inputs[key])) }
-            val geometry = target.observation.result.stamp.geometry
-            val sx = geometry.width.toDouble() / value("referenceWidth"); val sy = geometry.height.toDouble() / value("referenceHeight")
+            val derivation = Derivation(target, value("dx"), value("dy"), value("width"), value("height"), value("referenceWidth"), value("referenceHeight"))
             // Offsets are authored on one layout. A different aspect ratio may reflow the UI, so do not stretch.
-            if (kotlin.math.abs(sx / sy - 1.0) > 0.01) return ActionResult.Unavailable("当前画面比例与区域参考尺寸不同")
-            val anchor = target.match.bounds
-            val centre = anchor.left + anchor.width / 2.0; val bottom = (anchor.top + anchor.height).toDouble()
-            val bounds = TextBounds(kotlin.math.round(centre + value("dx") * sx).toInt(), kotlin.math.round(bottom + value("dy") * sy).toInt(),
-                kotlin.math.round(value("width") * sx).toInt(), kotlin.math.round(value("height") * sy).toInt())
-            if (bounds.left < 0 || bounds.top < 0 || bounds.width <= 0 || bounds.height <= 0 ||
-                bounds.left.toLong() + bounds.width > geometry.width || bounds.top.toLong() + bounds.height > geometry.height)
-                return ActionResult.Unavailable("由锚点推出的区域超出画面")
-            val token = token(); regions[token] = Region(target.observation, bounds)
+            val bounds = regionBounds(target.match, target.observation.result.stamp.geometry, derivation)
+                ?: return ActionResult.Unavailable("由锚点推出的区域超出画面，或画面比例与参考尺寸不同")
+            val token = token(); regions[token] = Region(target.observation, bounds, derivation)
             return ActionResult.Produced(buildJsonObject { put("region", token) }, buildJsonObject { put("kind", DERIVE); region(bounds) })
         }
         private suspend fun classifyRegion(inputs: JsonObject): ActionResult {
@@ -513,6 +532,36 @@ internal class ScreenActions(
             return deliver(action, bridge, trace, trace?.let { "滑动种子 ${it["seed"]}，时长 ${it["durationMs"]}ms，采样点 ${it["points"]}" }) {
                 it.gestureCall(fresh.result.stamp, points, gestureMillis)
             }
+        }
+        private suspend fun tapRegion(action: ActionDefinition, inputs: JsonObject): ActionResult {
+            val region = regions[inputs.text("region")] ?: return ActionResult.Unavailable("本步骤的区域不可用")
+            val anchor = region.derivation.anchor
+            if (anchor.observation.regionDerived) return ActionResult.Unavailable("区域内定位的锚点不能用于输入")
+            val bridge = anchor.observation.bridge as? InputDevicePort ?: return ActionResult.Unavailable("当前观察来源未提供输入所有权")
+            if (journal == null) return ActionResult.Unavailable("未连接持久化执行器")
+            val fresh = when (val acquired = observe(attempt, bundle, bridge, checkNotNull(anchor.observation.result.stamp.packageName), anchor.observation.models)) {
+                is Acquisition.Problem -> return acquired.result
+                is Acquisition.Ready -> acquired.value
+            }
+            val match = uniqueTarget(fresh, anchor.text, anchor.minimum) ?: return ActionResult.Unavailable("输入前不能唯一确认锚点文字")
+            val bounds = regionBounds(match, fresh.result.stamp.geometry, region.derivation) ?: return ActionResult.Unavailable("输入前推出的区域超出画面")
+            var trace = buildJsonObject { put("kind", TAP_REGION); region(bounds) }
+            if ((inputs["requireNoText"] as JsonPrimitive).boolean) {
+                val inspected = when (val value = inspect(Region(fresh, bounds, region.derivation), listOf(InspectionRequest.Text(bounds)))) {
+                    is ActionResult -> return value
+                    else -> value as InspectionResult.Inspected
+                }
+                val candidates = (inspected.values.single() as InspectionValue.Text).candidates
+                // A detector box with nothing recognized is not text; any recognized character, at any
+                // confidence, still refuses the press.
+                val found = candidates.filter { it.text.isNotBlank() }
+                trace = buildJsonObject { put("kind", TAP_REGION); region(bounds); put("emptyDetections", candidates.size - found.size) }
+                if (found.isNotEmpty()) return ActionResult.Unavailable(
+                    "目标区域（${bounds.left},${bounds.top},${bounds.width}×${bounds.height}）内识别到 ${found.size} 处文字，不点击：" +
+                        found.joinToString("、") { "「${it.text}」%.2f".format(it.confidence) }, trace)
+            }
+            val point = ScreenPoint(bounds.left + bounds.width / 2f, bounds.top + bounds.height / 2f)
+            return deliver(action, bridge, trace, null) { it.gestureCall(fresh.result.stamp, listOf(point), checkNotNull(duration(inputs))) }
         }
         private suspend fun back(action: ActionDefinition, inputs: JsonObject): ActionResult {
             val observation = observations[inputs.text("observation")] ?: return ActionResult.Unavailable("本步骤的画面观察不可用")

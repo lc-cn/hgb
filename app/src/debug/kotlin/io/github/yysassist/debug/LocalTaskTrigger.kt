@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * adb shell am broadcast -n <pkg>/.debug.LocalTaskTrigger -a io.github.yysassist.debug.RUN_LOCAL_TASK \
  *   --es target <targetId> --es task <taskId>
  * Result: /sdcard/Android/data/<pkg>/files/debug-task/result.json
+ * With --ez replay true and a staged replay.json, the screen is a ReplayDevice: no real capture or input.
  */
 class LocalTaskTrigger : BroadcastReceiver() {
     companion object {
@@ -42,12 +43,14 @@ class LocalTaskTrigger : BroadcastReceiver() {
         if (intent.action != ACTION || Application.getProcessName() != context.packageName) return
         val target = intent.getStringExtra("target") ?: return
         val task = intent.getStringExtra("task") ?: return
+        val replay = intent.getBooleanExtra("replay", false)
         val staged = context.getExternalFilesDir("debug-task") ?: return
         val result = File(staged, "result.json")
         if (!running.compareAndSet(false, true)) { result.writeText(JSONObject().put("error", "already-running").toString(2)); return }
         val app = context.applicationContext
         scope.launch {
-            val report = JSONObject().put("target", target).put("task", task).put("startedAtEpochMillis", System.currentTimeMillis())
+            val replayDevice = if (replay) ReplayDevice(staged) else null
+            val report = JSONObject().put("target", target).put("task", task).put("replay", replay).put("startedAtEpochMillis", System.currentTimeMillis())
             val name = "debug-trigger.db"; val folder = File(app.noBackupFilesDir, "debug-trigger")
             app.deleteDatabase(name); folder.deleteRecursively()
             val database = AssistDatabase.open(app, name)
@@ -56,8 +59,10 @@ class LocalTaskTrigger : BroadcastReceiver() {
                 result.writeText(report.put("phase", "installing").toString(2))
                 lateinit var runtime: ExecutionRuntime
                 lateinit var observer: VersionedTextObserver
-                val factory = BuiltInStepWorkFactory(ScreenActions({ observer }, { runtime.permitsInput(it) },
-                    journal = { command -> runtime.submit(command).await() }))
+                val actions = if (replayDevice != null) ScreenActions({ observer }, { runtime.permitsInput(it) }, { replayDevice },
+                    journal = { command -> runtime.submit(command).await() })
+                    else ScreenActions({ observer }, { runtime.permitsInput(it) }, journal = { command -> runtime.submit(command).await() })
+                val factory = BuiltInStepWorkFactory(actions)
                 val library = TaskVersionLibrary(database, BundleCodec(factory.contracts), TaskResourceFiles(folder))
                 observer = VersionedTextObserver(library, MaaTextBackend(app))
                 val text = File(staged, "task-bundle.json").readText()
@@ -67,7 +72,10 @@ class LocalTaskTrigger : BroadcastReceiver() {
                     File(staged, resource.assetName).inputStream().use { it.copyTo(output) }
                 } == VersionChange.Applied) { "任务包安装失败" }
                 check(library.activate(bundle.version) == VersionChange.Applied) { "任务包启用失败" }
-                runtime = ExecutionRuntime(ExecutionStateStore(database, library), library, TaskAdmissionRepository(database, library),
+                // A replay has no real screen to wait for; a live run waits for the real device as usual.
+                runtime = if (replayDevice != null) ExecutionRuntime(ExecutionStateStore(database, library), library,
+                    TaskAdmissionRepository(database, library), factory, runScope)
+                else ExecutionRuntime(ExecutionStateStore(database, library), library, TaskAdmissionRepository(database, library),
                     factory, runScope, startReadiness = DeviceExecutionReadiness(factory.contracts))
                 withTimeout(10_000) { runtime.status.first { it == RuntimeStatus.Ready } }
                 result.writeText(report.put("phase", "running").toString(2))
@@ -80,6 +88,7 @@ class LocalTaskTrigger : BroadcastReceiver() {
                     .put("deviceActions", JSONArray(state.deviceActions.map { record -> JSONObject()
                         .put("capability", record.intent.capability).put("actionId", record.intent.actionId)
                         .put("delivery", record.receipt?.delivery?.name).put("evidence", record.receipt?.evidence) }))
+                replayDevice?.let { report.put("replayInputs", JSONArray(it.inputs)) }
             } catch (error: Throwable) {
                 report.put("phase", "failed").put("errorType", error.javaClass.simpleName).put("error", error.message)
             } finally {

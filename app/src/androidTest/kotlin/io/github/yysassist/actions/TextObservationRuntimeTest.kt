@@ -59,6 +59,8 @@ class TextObservationRuntimeTest {
         /** Optional claim rules: a long hold, or a drag of at least this many pixels downward. */
         var holdMillis: Long? = null
         var dragPixels: Float? = null
+        /** Claim only when the press lands inside this blank area (tap-outside dismissal). */
+        var blankClaim: RectF? = null
         var downPoint: PointF? = null
         var upPoint: PointF? = null
         var heldMillis: Long? = null
@@ -84,6 +86,7 @@ class TextObservationRuntimeTest {
                 upPoint = PointF(event.x, event.y); heldMillis = event.eventTime - event.downTime
                 val hold = holdMillis; val drag = dragPixels
                 val accepted = when {
+                    blankClaim != null -> blankClaim!!.contains(event.x, event.y) && blankClaim!!.contains(downPoint!!.x, downPoint!!.y)
                     drag != null -> downOnTarget && event.y - downPoint!!.y >= drag
                     hold != null -> downOnTarget && targetBounds().contains(event.x, event.y) && heldMillis!! >= hold
                     else -> downOnTarget && targetBounds().contains(event.x, event.y)
@@ -458,6 +461,38 @@ class TextObservationRuntimeTest {
         assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
         assertEquals(ScreenActions.BACK, state.deviceActions.single().intent.capability)
         assertEquals(DeviceActionDelivery.COMPLETED, state.deviceActions.single().receipt!!.delivery)
+    }
+    private fun regionProgram(requireNoText: Boolean, dx: Int, dy: Int, width: Int, height: Int, w: Int, h: Int): (TaskBundle) -> TaskBundle = { value ->
+        val steps = value.tasks.first().steps.single()
+        val read = steps.actions.first { it.id == "read" }; val locate = steps.actions.first { it.id == "locate" }
+        val after = steps.actions.first { it.id == "after" }; val verify = steps.actions.first { it.id == "verify" }
+        val derive = ActionDefinition("derive", ScreenActions.DERIVE, 1, buildJsonObject {
+            put("dx", dx); put("dy", dy); put("width", width); put("height", height); put("referenceWidth", w); put("referenceHeight", h)
+        }, mapOf("target" to ActionInputBinding.Output("locate", "target")))
+        val press = ActionDefinition("tap", ScreenActions.TAP_REGION, 1, buildJsonObject { put("durationMs", 80); put("requireNoText", requireNoText) },
+            mapOf("region" to ActionInputBinding.Output("derive", "region")))
+        value.copy(tasks = value.tasks.map { it.copy(steps = listOf(steps.copy(actions = listOf(read, locate, derive, press, after, verify)))) })
+    }
+    @Test fun tapRegionPressesBlankSpaceDerivedFromAFreshAnchor(): Unit = runBlocking {
+        val width = withContext(Dispatchers.Main) { surface.width }; val height = withContext(Dispatchers.Main) { surface.height }
+        // Blank area below the anchor text; the surface claims only when pressed there.
+        withContext(Dispatchers.Main) { surface.blankClaim = RectF(0f, 520f, width.toFloat(), 680f) }
+        prepare("已领取", withInput = true, transform = regionProgram(true, -100, 120, 200, 140, width, height))
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        assertTrue(state.toString(), state.unresolved.isEmpty())
+        withContext(Dispatchers.Main) { assertEquals(1, surface.downs); assertTrue(surface.lastDownY!! in 520f..680f) }
+        assertEquals(ScreenActions.TAP_REGION, state.deviceActions.single().intent.capability)
+    }
+    @Test fun tapRegionRefusesARegionThatShowsText(): Unit = runBlocking {
+        val width = withContext(Dispatchers.Main) { surface.width }; val height = withContext(Dispatchers.Main) { surface.height }
+        // A region around the anchor itself contains text: no intent, no touch.
+        prepare("已领取", withInput = true, transform = regionProgram(true, -150, -120, 300, 160, width, height))
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.unresolved.isNotEmpty() || it.facts.any { fact -> fact.type == "task-completed" } } }
+        assertTrue(state.deviceActions.isEmpty())
+        assertEquals(0, withContext(Dispatchers.Main) { surface.downs })
+        assertTrue(state.toString(), (state.facts.map { it.detail } + state.unresolved.map { it.reason }).any { it.contains("文字，不点击") })
     }
     @Test fun aSwipeEndingOffscreenIsRefusedBeforeAnyIntent(): Unit = runBlocking {
         val width = withContext(Dispatchers.Main) { surface.rootView.width }; val height = withContext(Dispatchers.Main) { surface.rootView.height }

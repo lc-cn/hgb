@@ -37,7 +37,10 @@ class DailyGiftReplayTest {
     private lateinit var library: TaskVersionLibrary
 
     /** Scripted frames. Only a gesture whose single point lies in [claimButton] advances to [afterTap]. */
-    private class ReplayDevice(private var frame: Bitmap, private val claimButton: RectF?, private val afterTap: Bitmap?) : InputDevicePort {
+    private class ReplayDevice(private var frame: Bitmap, private val claimButton: RectF?, private val afterTap: Bitmap?,
+        private val afterReward: Bitmap? = null, private val afterDetails: Bitmap? = null) : InputDevicePort {
+        /** Blank space left of the reward and details panels on the captures. */
+        private val outside = RectF(360f, 480f, 480f, 600f)
         var token = Any()
         val gestures = mutableListOf<List<ScreenPoint>>()
         var backs = 0
@@ -50,7 +53,14 @@ class DailyGiftReplayTest {
                 override suspend fun execute(): GestureResult {
                     gestures += points
                     val point = points.singleOrNull()
-                    if (claimButton != null && afterTap != null && point != null && claimButton.contains(point.x, point.y)) { frame = afterTap; token = Any() }
+                    val next = when {
+                        point == null -> null
+                        frame === afterTap && outside.contains(point.x, point.y) -> afterReward
+                        frame === afterReward && outside.contains(point.x, point.y) -> afterDetails
+                        claimButton != null && claimButton.contains(point.x, point.y) && frame !== afterTap && frame !== afterReward -> afterTap
+                        else -> null
+                    }
+                    if (next != null) { frame = next; token = Any() }
                     return GestureResult.Completed.also { last = it }
                 }
                 override suspend fun observeAfterRevoke(): GestureResult? = last
@@ -114,7 +124,8 @@ class DailyGiftReplayTest {
     }
     private suspend fun run(start: String, afterTap: String? = null): StepOutcome {
         // The free button in list frames: card 0 button ROI measured on the captures.
-        device = ReplayDevice(frame(start), RectF(488f, 445f, 728f, 500f), afterTap?.let(::frame))
+        device = ReplayDevice(frame(start), RectF(488f, 445f, 728f, 500f), afterTap?.let(::frame),
+            afterTap?.let { frame("details-claimed.png") }, afterTap?.let { frame("list-after.png") })
         return withTimeout(120_000) { factory.create(attempt(), content).execute() }
     }
     private fun templateUnsupported() = CpuFeatures.inconsistentSve()
@@ -127,14 +138,15 @@ class DailyGiftReplayTest {
             assertTrue(device!!.gestures.isEmpty()); assertTrue(journal.isEmpty()); return@runBlocking
         }
         assertTrue(outcome.toString(), outcome is StepOutcome.Completed)
-        assertEquals(1, device!!.gestures.size)
-        assertEquals(listOf(ScreenActions.TAP), journal.filterIsInstance<ExecutorCommand.RecordDeviceAction>().map { it.intent.capability })
+        assertEquals(3, device!!.gestures.size)
+        assertEquals(listOf(ScreenActions.TAP, ScreenActions.TAP_REGION, ScreenActions.TAP_REGION),
+            journal.filterIsInstance<ExecutorCommand.RecordDeviceAction>().map { it.intent.capability })
     }
     @Test fun theSameStateFromAnotherSessionIsAlsoClaimable(): Unit = runBlocking {
         val outcome = run("list-heldout.png", afterTap = "reward.png")
         if (templateUnsupported()) { assertTrue(device!!.gestures.isEmpty()); return@runBlocking }
         assertTrue(outcome.toString(), outcome is StepOutcome.Completed)
-        assertEquals(1, device!!.gestures.size)
+        assertEquals(3, device!!.gestures.size)
     }
     @Test fun aPaidOfferCompletesWithoutAnyInput(): Unit = runBlocking {
         val outcome = run("list-after.png")

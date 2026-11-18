@@ -35,10 +35,29 @@ internal fun dailyGiftBundle(models: List<TaskResource>, jade: ByteArray, identi
     val after = read.copy(id = "after")
     val reward = ActionDefinition("reward", ScreenActions.EXPECT, 1, buildJsonObject { put("text", "获得奖励"); put("minimumConfidence", 0.8) },
         mapOf("observation" to out("after", "observation")))
+    // Close the reward, then the details, by tapping blank space left of each panel. Both regions are
+    // re-derived from their anchor on a fresh frame and refused if any text appears inside.
+    val rewardAnchor = ActionDefinition("rewardAnchor", ScreenActions.LOCATE, 1, buildJsonObject { put("text", "获得奖励"); put("minimumConfidence", 0.8) },
+        mapOf("observation" to out("after", "observation")))
+    fun outside(id: String, anchorId: String, dx: Int, dy: Int) = ActionDefinition(id, ScreenActions.DERIVE, 1, buildJsonObject {
+        put("dx", dx); put("dy", dy); put("width", 120); put("height", 120); put("referenceWidth", 2400); put("referenceHeight", 1080)
+    }, mapOf("target" to out(anchorId, "target")))
+    fun close(id: String, regionId: String) = ActionDefinition(id, ScreenActions.TAP_REGION, 1, buildJsonObject {
+        put("durationMs", 80); put("requireNoText", true) }, mapOf("region" to out(regionId, "region")))
+    fun pause(id: String) = ActionDefinition(id, "control.wait", 1, buildJsonObject { put("durationMs", 1500) })
+    val detailsRead = read.copy(id = "detailsRead")
+    val detailsAnchor = ActionDefinition("detailsAnchor", ScreenActions.LOCATE, 1, buildJsonObject { put("text", "御行达摩的赠礼"); put("minimumConfidence", 0.8) },
+        mapOf("observation" to out("detailsRead", "observation")))
+    val listRead = read.copy(id = "listRead")
+    val backOnList = ActionDefinition("backOnList", ScreenActions.EXPECT, 1, buildJsonObject { put("text", "新手符咒包"); put("minimumConfidence", 0.8) },
+        mapOf("observation" to out("listRead", "observation")))
+    val dismiss = listOf(rewardAnchor, outside("rewardOutside", "rewardAnchor", -842, 65), close("closeReward", "rewardOutside"), pause("afterReward"),
+        detailsRead, detailsAnchor, outside("detailsOutside", "detailsAnchor", -392, 145), close("closeDetails", "detailsOutside"), pause("afterDetails"),
+        listRead, backOnList)
     val listed = ActionDefinition("listed", ScreenActions.EXPECT, 1, buildJsonObject { put("text", "每日礼包"); put("minimumConfidence", 0.8) },
         mapOf("observation" to out("read", "observation")))
     val program = listOf(read, anchor, button, state).map(ProgramNode::Action) + ProgramNode.Branch(out("state", "state"), listOf(
-        ProgramCase(JsonPrimitive("claimable"), listOf(claim, tap, settle, after, reward).map(ProgramNode::Action)),
+        ProgramCase(JsonPrimitive("claimable"), (listOf(claim, tap, settle, after, reward) + dismiss).map(ProgramNode::Action)),
         ProgramCase(JsonPrimitive("paid"), listOf(ProgramNode.Action(listed)))))
     val task = TaskDefinition("daily-gift", "onmyoji", "领取每日礼包", "daily", 10, steps = listOf(StepDefinition("claim", "领取免费每日礼包", program = program)))
     val target = TargetProfile("onmyoji", "阴阳师", listOf(game), identity, listOf(TaskCategory("daily", "日常")))

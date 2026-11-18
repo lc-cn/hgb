@@ -104,7 +104,8 @@ enum class ActionRole { UTILITY, OBSERVATION, VERIFICATION }
 /**
  * An input that must receive an APK-owned per-attempt handle (an observation, target or region).
  * Handles only flow through output bindings, expire at the next possible device input, and carry
- * their lineage: [forbiddenAncestors] rejects a handle derived, at any depth, from those kinds.
+ * their lineage: [forbiddenAncestors] rejects a handle derived, at any depth, from those kinds (the
+ * handle's own kind is not part of its lineage).
  */
 data class HandleRequirement(val kinds: Set<String>, val forbiddenAncestors: Set<String> = emptySet())
 data class CapabilityContract(

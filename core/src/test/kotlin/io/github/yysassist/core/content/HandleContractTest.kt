@@ -65,6 +65,19 @@ class HandleContractTest {
         // The same region-derived observation is still fine for read-only verification.
         assertEquals(emptyList<ContentIssue>(), codec.validate(steps(read, find, region, inner, act("v", verify, "observation" to "inner.observation"))))
     }
+    @Test fun ownKindIsNotLineageButDeeperRegionsAre() {
+        val tapRegion = CapabilityContract("k.tapRegion", 1, inputTypes = mapOf("region" to ActionValueType.STRING), sendsDeviceInput = true,
+            inputHandles = mapOf("region" to HandleRequirement(setOf("k.region"), forbiddenAncestors = setOf("k.region"))), validateInputs = ok)
+        val codec = BundleCodec(listOf(observe, derive, readRegion, locate, verify, tapRegion))
+        val region = act("region", derive, "target" to "find.target")
+        val press = ActionDefinition("press", "k.tapRegion", 1, JsonObject(emptyMap()), mapOf("region" to ActionInputBinding.Output("region", "region")))
+        assertEquals(emptyList<ContentIssue>(), codec.validate(steps(read, find, region, press, after, check)))
+        val inner = act("inner", readRegion, "region" to "region.region")
+        val nestedTarget = act("nestedTarget", locate, "observation" to "inner.observation")
+        val nested = act("nested", derive, "target" to "nestedTarget.target")
+        val pressNested = press.copy(bindings = mapOf("region" to ActionInputBinding.Output("nested", "region")))
+        assertTrue(codec.validate(steps(read, find, region, inner, nestedTarget, nested, pressNested, after, check)).any { it.reason.contains("来源") })
+    }
     @Test fun handlesNeverLeakIntoPlainParametersOrBranches() {
         assertTrue(codec.validate(steps(read, act("p", plain, "text" to "read.observation"), check.copy(id = "c2",
             bindings = mapOf("observation" to ActionInputBinding.Output("read", "observation"))))).any { it.reason.contains("普通参数") })

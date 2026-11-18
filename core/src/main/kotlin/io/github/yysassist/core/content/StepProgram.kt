@@ -84,7 +84,8 @@ internal fun handleIssues(action: ActionDefinition, definition: CapabilityContra
         when {
             kind == null || kind !in need.kinds -> add("引用的输出不是此参数所需的观察、目标或区域")
             source.id !in context.freshOutputs -> add("引用的观察、目标或区域产生于可能的输入之前，已失效")
-            (ancestry(source, context, contract) + kind).intersect(need.forbiddenAncestors).isNotEmpty() -> add("引用的句柄来源不允许用于此动作")
+            // Lineage only: a region handle may itself be required while region-derived sources are refused.
+            ancestry(source, context, contract).intersect(need.forbiddenAncestors).isNotEmpty() -> add("引用的句柄来源不允许用于此动作")
         }
     }
     action.bindings.forEach { (parameter, binding) ->
