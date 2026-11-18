@@ -98,6 +98,20 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                                             ?: return StepOutcome.Unknown("本次输出未能匹配唯一分支")
                                         executeBlock(selected.program, outputs.toMutableMap(), atEnd)?.let { return it }
                                     }
+                                    is ProgramNode.Until -> {
+                                        val maximum = untilMaximum(node.maximum, configuration)
+                                        var reached = false
+                                        var iteration = 0L
+                                        while (iteration < maximum) {
+                                            yield()
+                                            val local = outputs.toMutableMap()
+                                            // The final iteration is unknown in advance; no iteration retains completion.
+                                            executeBlock(node.program, local, false)?.let { return it }
+                                            if (sameProgramValue(resolveProgramValue(node.value, configuration, local), node.equals)) { reached = true; break }
+                                            iteration++
+                                        }
+                                        if (!reached) return StepOutcome.Unknown("循环达到上限 $maximum 次，条件仍未成立")
+                                    }
                                     is ProgramNode.Repeat -> {
                                         val count = repeatCount(node.count, configuration)
                                         var index = 0L

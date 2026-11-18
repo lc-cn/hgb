@@ -76,6 +76,55 @@ class StepProgramTest {
         assertTrue(failing.create(attempt(value), value).execute() is StepOutcome.Completed)
     }
 
+    private fun counter(stopAt: Int): Pair<ActionProvider, () -> Int> {
+        var calls = 0
+        val provider = object : ActionProvider {
+            override val contracts = listOf(CapabilityContract("fixture.count", 1,
+                outputTypes = mapOf("ready" to ActionValueType.BOOLEAN), validateInputs = { null }))
+            override fun open(attempt: StepAttempt, bundle: TaskBundle) = ActionSession { _, _ ->
+                calls++; ActionResult.Produced(buildJsonObject { put("ready", calls >= stopAt) })
+            }
+        }
+        return provider to { calls }
+    }
+    private val probe = ActionDefinition("probe", "fixture.count", 1, JsonObject(emptyMap()))
+    private fun until(maximum: JsonElement, value: ActionInputBinding = ActionInputBinding.Output("probe", "ready"), body: List<ProgramNode> =
+        listOf(ProgramNode.Action(probe), wait("pause", 1))) = ProgramNode.Until(value, JsonPrimitive(true), maximum, body)
+
+    @Test fun untilStopsAsSoonAsTheConditionHoldsAndNeverTreatsTheLimitAsSuccess() = runTest {
+        val (early, earlyCalls) = counter(stopAt = 2)
+        val loop = bundle(listOf(until(JsonPrimitive(5))))
+        val codec = BundleCodec(BuiltInStepWorkFactory(early).contracts)
+        assertEquals(emptyList<ContentIssue>(), codec.validate(loop))
+        assertTrue(BuiltInStepWorkFactory(early).create(attempt(loop), loop).execute() is StepOutcome.Completed)
+        assertEquals(2, earlyCalls())
+        val (never, neverCalls) = counter(stopAt = 100)
+        val outcome = BuiltInStepWorkFactory(never).create(attempt(loop), loop).execute()
+        assertTrue(outcome.toString(), outcome is StepOutcome.Unknown && outcome.reason.contains("上限"))
+        assertEquals(5, neverCalls())
+    }
+    @Test fun untilConditionAndLimitAreExplicitAndLocal() {
+        val (provider, _) = counter(1)
+        val codec = BundleCodec(BuiltInStepWorkFactory(provider).contracts)
+        for (bad in listOf(JsonPrimitive(0), JsonPrimitive(-1), JsonPrimitive(1.5), JsonPrimitive(10_001), JsonPrimitive("3")))
+            assertTrue(bad.toString(), codec.validate(bundle(listOf(until(bad)))).isNotEmpty())
+        // The condition must come from a top-level action of the loop body, not from outside or a branch.
+        val outside = bundle(listOf(ProgramNode.Action(probe.copy(id = "before")), until(JsonPrimitive(3), ActionInputBinding.Output("before", "ready"))))
+        assertTrue(codec.validate(outside).any { it.reason.contains("循环条件") })
+        val inBranch = until(JsonPrimitive(3), body = listOf(wait("first", 1), select(ProgramCase(JsonPrimitive(1), listOf(ProgramNode.Action(probe))))))
+        assertTrue(codec.validate(bundle(listOf(inBranch))).any { it.reason.contains("循环条件") })
+        val wrongType = ProgramNode.Until(ActionInputBinding.Output("probe", "ready"), JsonPrimitive("yes"), JsonPrimitive(3), listOf(ProgramNode.Action(probe)))
+        assertTrue(codec.validate(bundle(listOf(wrongType))).any { it.reason.contains("类型") })
+        // Body outputs do not escape the loop.
+        val escape = bundle(listOf(until(JsonPrimitive(3)), ProgramNode.Action(ActionDefinition("after", "control.wait", 1, JsonObject(emptyMap()),
+            mapOf("durationMs" to ActionInputBinding.Output("pause", "durationMs"))))))
+        assertTrue(codec.validate(escape).any { it.reason.contains("前序") })
+        // A configured limit must be required, numeric and at least one.
+        val configured = until(buildJsonObject { put("type", "configuration"); put("fieldId", "limit") })
+        assertTrue(codec.validate(bundle(listOf(configured), listOf(ConfigurationField("limit", "Limit", FieldWidget.NUMBER, true, minimum = JsonPrimitive(1))))).isEmpty())
+        assertTrue(codec.validate(bundle(listOf(configured), listOf(ConfigurationField("limit", "Limit", FieldWidget.NUMBER, true, minimum = JsonPrimitive(0))))).isNotEmpty())
+    }
+
     @Test fun allCasesAndZeroCountBodiesAreValidatedAndIdsAreStepWide() {
         val bad = wait("bad").let { it.copy(action = it.action.copy(capability = "unknown")) }
         for (nodes in listOf(

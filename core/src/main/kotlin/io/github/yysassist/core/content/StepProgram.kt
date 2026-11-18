@@ -14,6 +14,12 @@ sealed interface ProgramNode {
     data class Branch(val value: ActionInputBinding, val cases: List<ProgramCase>) : ProgramNode
     @Serializable @SerialName("repeat")
     data class Repeat(val count: JsonElement, val program: List<ProgramNode>) : ProgramNode
+    /**
+     * Runs [program] until [value] (an output of one of its own top-level actions) equals [equals], at
+     * most [maximum] times. Reaching the maximum is never success: the step becomes unknown.
+     */
+    @Serializable @SerialName("until")
+    data class Until(val value: ActionInputBinding, val equals: JsonPrimitive, val maximum: JsonElement, val program: List<ProgramNode>) : ProgramNode
 }
 @Serializable
 data class ProgramCase(val equals: JsonPrimitive, val program: List<ProgramNode>)
@@ -27,12 +33,22 @@ private fun List<ProgramNode>.allActions(): List<ActionDefinition> = flatMap { n
     is ProgramNode.Action -> listOf(node.action)
     is ProgramNode.Branch -> node.cases.flatMap { it.program.allActions() }
     is ProgramNode.Repeat -> node.program.allActions()
+    is ProgramNode.Until -> node.program.allActions()
 } }
 internal fun List<ProgramNode>.repeats(): List<ProgramNode.Repeat> = flatMap { node -> when (node) {
     is ProgramNode.Action -> emptyList()
     is ProgramNode.Branch -> node.cases.flatMap { it.program.repeats() }
     is ProgramNode.Repeat -> listOf(node) + node.program.repeats()
+    is ProgramNode.Until -> node.program.repeats()
 } }
+internal fun List<ProgramNode>.untils(): List<ProgramNode.Until> = flatMap { node -> when (node) {
+    is ProgramNode.Action -> emptyList()
+    is ProgramNode.Branch -> node.cases.flatMap { it.program.untils() }
+    is ProgramNode.Repeat -> node.program.untils()
+    is ProgramNode.Until -> listOf(node) + node.program.untils()
+} }
+/** Loop bound: a literal or required numeric configuration, at least one. */
+fun untilMaximum(value: JsonElement, configuration: JsonObject): Long = repeatCount(value, configuration).also { require(it in 1..10_000) }
 
 fun resolveProgramValue(source: ActionInputBinding, configuration: JsonObject, outputs: Map<String, JsonObject>): JsonElement = when (source) {
     is ActionInputBinding.Configuration -> requireNotNull(configuration[source.fieldId]) { "配置引用不可用" }
@@ -149,6 +165,30 @@ internal fun programIssues(bundle: TaskBundle, task: TaskDefinition, step: StepD
                     if (ends.isNotEmpty()) flow = Flow(flow.context.copy(freshOutputs =
                         ends.fold(flow.context.freshOutputs) { fresh, end -> fresh.intersect(end.context.freshOutputs) }),
                         ends.flatMap { it.proofs }.toSet())
+                }
+                is ProgramNode.Until -> {
+                    val fieldId = repeatConfiguration(node.maximum)
+                    val field = task.fields.singleOrNull { it.id == fieldId }
+                    val literal = if (node.maximum is JsonObject) null else runCatching { untilMaximum(node.maximum, JsonObject(emptyMap())) }.getOrNull()
+                    if (fieldId == null && literal == null || node.maximum is JsonObject && (field == null || !field.required ||
+                            field.valueType() != ActionValueType.NUMBER || field.minimum?.decimalOrNull()?.let { it >= BigDecimal.ONE } != true))
+                        issue(location, "循环上限需为 1–10000 的整数，或最小值不小于 1 的必填数值配置")
+                    if (node.program.isEmpty()) issue(location, "循环体不能为空")
+                    val source = node.value as? ActionInputBinding.Output
+                    val producer = source?.let { s -> node.program.filterIsInstance<ProgramNode.Action>().map { it.action }.singleOrNull { it.id == s.actionId } }
+                    val type = producer?.let(::contract)?.outputTypes?.get(source.field)
+                    if (producer == null || type !in setOf(ActionValueType.STRING, ActionValueType.NUMBER, ActionValueType.BOOLEAN))
+                        issue(location, "循环条件必须引用循环体顶层动作的字符串、布尔或数值输出")
+                    else if (producer.let(::contract)?.outputHandles?.containsKey(source.field) == true) issue(location, "循环条件不能比较观察、目标或区域句柄")
+                    if (type != null && primitiveType(node.equals) != type) issue(location, "循环条件值类型不匹配")
+                    // Every iteration starts from the outer flow with earlier-iteration locals discarded.
+                    val first = block(node.program, flow, "$location/until")
+                    val reentry = Flow(flow.context.copy(freshOutputs = flow.context.freshOutputs.intersect(first.context.freshOutputs)), first.proofs)
+                    val mayRepeat = literal?.let { it > 1 } ?: true
+                    val next = if (mayRepeat && reentry != flow) block(node.program, reentry, "$location/until") else first
+                    val possible = if (mayRepeat) listOf(first, next) else listOf(first)
+                    flow = Flow(flow.context.copy(freshOutputs = possible.fold(flow.context.freshOutputs) { fresh, end -> fresh.intersect(end.context.freshOutputs) }),
+                        possible.flatMap { it.proofs }.toSet())
                 }
                 is ProgramNode.Repeat -> {
                     val fieldId = repeatConfiguration(node.count)

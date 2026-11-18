@@ -87,6 +87,10 @@ internal fun configuredActionIssues(task: TaskDefinition, values: JsonObject, co
             if (runCatching { repeatCount(repeat.count, values) }.isFailure)
                 add(ContentIssue(repeatConfiguration(repeat.count) ?: "step/${step.id}", "重复次数需为明确的非负整数且不能溢出"))
         }
+        step.nodes().untils().forEach { loop ->
+            if (runCatching { untilMaximum(loop.maximum, values) }.isFailure)
+                add(ContentIssue(repeatConfiguration(loop.maximum) ?: "step/${step.id}", "循环上限需为 1–10000 的整数"))
+        }
         step.actionDefinitions().forEach actionLoop@ { action ->
         val contract = contracts.singleOrNull { it.id == action.capability && it.version == action.contractVersion }
         val fields = action.bindings.values.filterIsInstance<ActionInputBinding.Configuration>().map { it.fieldId }.distinct()
