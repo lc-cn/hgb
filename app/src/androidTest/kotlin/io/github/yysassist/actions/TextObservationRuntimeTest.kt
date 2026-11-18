@@ -459,8 +459,11 @@ class TextObservationRuntimeTest {
                 override fun handleOnBackPressed() { surface.claimed = true; surface.invalidate() }
             })
         }
+        // Like a real task, allow the page to redraw after the key before observing the result.
         prepare("已领取", withInput = true, input = { it.copy(capability = ScreenActions.BACK, inputs = JsonObject(emptyMap()),
-            bindings = mapOf("observation" to ActionInputBinding.Output("read", "observation"))) })
+            bindings = mapOf("observation" to ActionInputBinding.Output("read", "observation"))) },
+            transform = steps({ by -> listOf(by.getValue("read"), by.getValue("locate"), by.getValue("tap"),
+                ActionDefinition("settle", "control.wait", 1, buildJsonObject { put("durationMs", 800) }), by.getValue("after"), by.getValue("verify")) }))
         runtime.enqueueTask(address).await()
         val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
         assertTrue(state.toString(), state.unresolved.isEmpty())
@@ -562,6 +565,34 @@ class TextObservationRuntimeTest {
         assertTrue(state.toString(), state.unresolved.isEmpty())
         assertTrue(outputs.getValue("red").toString(), outputs.getValue("red").getValue("matched").jsonPrimitive.boolean)
         assertTrue(outputs.getValue("diff").toString(), outputs.getValue("diff").getValue("changed").jsonPrimitive.boolean)
+    }
+    @Test fun aLaunchStepOpensTheTargetFromTheBackgroundAndProvesItByObservation(): Unit = runBlocking {
+        val outputs = mutableMapOf<String, JsonObject>()
+        prepare("工作台", onActionFinished = { action, result -> (result as? ActionResult.Produced)?.let { outputs[action.id] = it.outputs } },
+            transform = steps({ by -> listOf(
+                ActionDefinition("launch", ScreenActions.LAUNCH, 1, buildJsonObject { put("profile", "own") }),
+                ActionDefinition("await", ScreenActions.AWAIT_FOREGROUND, 1, buildJsonObject { put("profile", "own"); put("timeoutMs", 15000) }),
+                ActionDefinition("settle", "control.wait", 1, buildJsonObject { put("durationMs", 2500) }),
+                by.getValue("read"), by.getValue("verify")) }))
+        shell("input keyevent KEYCODE_HOME")
+        val bridge = GameAccessibilityService.connection.value!!.bridge
+        withTimeout(10_000) { while (bridge.availability(setOf(context.packageName)) != DeviceAvailability.WRONG_FOREGROUND) delay(30) }
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(45_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        assertTrue(state.toString(), state.unresolved.isEmpty())
+        assertEquals(ScreenActions.LAUNCH, state.deviceActions.single().intent.capability)
+        assertTrue(outputs.getValue("await").getValue("foreground").jsonPrimitive.boolean)
+    }
+    @Test fun waitingForATargetThatNeverArrivesEndsUnknownWithoutInput(): Unit = runBlocking {
+        prepare("工作台", transform = { value -> steps({ by -> listOf(
+            ActionDefinition("await", ScreenActions.AWAIT_FOREGROUND, 1, buildJsonObject { put("profile", "other"); put("timeoutMs", 800) }),
+            by.getValue("read"), by.getValue("verify")) })(value).copy(
+                targets = value.targets.map { it.copy(androidPackages = it.androidPackages + "com.android.settings") },
+                visionProfiles = value.visionProfiles + value.visionProfiles.single().copy(id = "other", packageName = "com.android.settings")) })
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.unresolved.isNotEmpty() || it.facts.any { fact -> fact.type == "task-completed" } } }
+        assertTrue(state.toString(), state.unresolved.any { it.reason.contains("仍未到前台") })
+        assertTrue(state.deviceActions.isEmpty())
     }
     @Test fun aSwipeEndingOffscreenIsRefusedBeforeAnyIntent(): Unit = runBlocking {
         val width = withContext(Dispatchers.Main) { surface.rootView.width }; val height = withContext(Dispatchers.Main) { surface.rootView.height }

@@ -69,6 +69,10 @@ class DailyGiftReplayTest {
                 override suspend fun execute(): GestureResult { backs++; return GestureResult.Completed.also { last = it } }
                 override suspend fun observeAfterRevoke(): GestureResult? = last
             }
+            override fun launchCall(packageName: String) = object : InputGestureCall {
+                override suspend fun execute(): GestureResult = GestureResult.Completed.also { last = it }
+                override suspend fun observeAfterRevoke(): GestureResult? = last
+            }
             override suspend fun revoke(): InputDrain = last?.let { InputDrain.Terminal(it) } ?: InputDrain.NoInFlightGesture
         }
     }
@@ -93,10 +97,10 @@ class DailyGiftReplayTest {
         name = "replay-${UUID.randomUUID()}.db"; folder = File(context.noBackupFilesDir, name)
         database = AssistDatabase.open(context, name)
         lateinit var observer: VersionedTextObserver
-        val actions = ScreenActions({ observer }, { true }, { device }) { command ->
+        val actions = ScreenActions({ observer }, { true }, { device }, journal = { command ->
             journal += command
             RuntimeCommandResult.Applied(ExecutorReply.DeviceActionRecorded(DeviceActionWriteResult.Recorded))
-        }
+        })
         factory = BuiltInStepWorkFactory(actions)
         val codec = BundleCodec(factory.contracts)
         library = TaskVersionLibrary(database!!, codec, TaskResourceFiles(folder))

@@ -11,6 +11,7 @@ import io.github.yysassist.core.content.TaskRepository
 import io.github.yysassist.storage.AssistDatabase
 import io.github.yysassist.storage.TaskVersionLibrary
 import io.github.yysassist.storage.ActionTraceLog
+import io.github.yysassist.actions.LocalNotifier
 import io.github.yysassist.storage.TaskResourceFiles
 import java.io.File
 import io.github.yysassist.storage.TaskConfigurationRepository
@@ -68,7 +69,7 @@ class AssistApplication : Application() {
         val database = AssistDatabase.open(this)
         actionTraces = ActionTraceLog(database, scope)
         val workers = BuiltInStepWorkFactory(ScreenActions({ textObserver }, { executor.permitsInput(it) },
-            journal = { command -> executor.submit(command).await() }), actionTraces)
+            journal = { command -> executor.submit(command).await() }, notifier = LocalNotifier(this)::post), actionTraces)
         val library = TaskVersionLibrary(database, BundleCodec(workers.contracts), TaskResourceFiles(File(noBackupFilesDir, "task-resources")))
         textObserver = VersionedTextObserver(library, MaaTextBackend(this))
         executor = ExecutionRuntime(ExecutionStateStore(database, library), library,

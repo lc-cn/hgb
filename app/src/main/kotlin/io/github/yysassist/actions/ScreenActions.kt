@@ -17,6 +17,8 @@ internal class ScreenActions(
     private val permitted: (AttemptTicket) -> Boolean,
     private val device: () -> ObservationDevice? = { GameAccessibilityService.connection.value?.bridge },
     private val journal: (suspend (ExecutorCommand) -> RuntimeCommandResult)? = null,
+    /** Posts a text-only local notification; false when notifications are not allowed. */
+    private val notifier: ((String, String) -> Boolean)? = null,
 ) : ActionProvider {
     companion object {
         const val READ = "screen.readText"; const val EXPECT = "screen.expectText"
@@ -29,6 +31,8 @@ internal class ScreenActions(
         const val READ_NUMBER = "screen.readNumber"; const val READ_FRACTION = "screen.readFraction"
         const val SELECT_TEXT = "screen.selectText"; const val SELECT_IMAGE = "screen.selectImage"
         const val MATCH_COLOR = "screen.matchColor"; const val COMPARE = "screen.compareFrames"
+        const val LAUNCH = "app.launch"; const val AWAIT_FOREGROUND = "app.awaitForeground"; const val NOTIFY = "notify.local"
+        private const val MAX_FOREGROUND_WAIT_MS = 120_000L; private const val FOREGROUND_POLL_MS = 500L
         private val ORDERS = setOf("top", "bottom", "left", "right")
         /** Handle kinds. Region-derived observations keep REGION in their lineage. */
         const val OBSERVATION = "screen.observation"; const val TARGET = "screen.target"; const val REGION = "screen.region"
@@ -124,6 +128,9 @@ internal class ScreenActions(
         if (parsed.flatMap { (it.present + it.absent).map(ImageCondition::template) }.distinct().size > MAX_TEMPLATES) return null
         return parsed
     }
+    private fun foregroundWait(inputs: JsonObject): Long? = try {
+        (inputs["timeoutMs"] as? JsonPrimitive)?.takeUnless { it.isString }?.content?.toBigDecimalOrNull()?.longValueExact()?.takeIf { it in 1..MAX_FOREGROUND_WAIT_MS }
+    } catch (_: ArithmeticException) { null }
     private fun selectIssue(inputs: JsonObject): ContentIssue? = when {
         "order" in inputs && inputs.text("order") !in ORDERS -> ContentIssue("order", "排序需为 top、bottom、left 或 right")
         "index" in inputs && integer(inputs["index"])?.takeIf { it in 0..49 } == null -> ContentIssue("index", "序号需为 0–49 的整数")
@@ -289,6 +296,30 @@ internal class ScreenActions(
             validateKnownInputs = { inputs -> if ("minimumDifference" in inputs && unit(inputs["minimumDifference"]) == null)
                 ContentIssue("minimumDifference", "差异阈值需为零到一之间的数值") else null }) { inputs ->
             if (inputs.keys != setOf("before", "region", "minimumDifference") || unit(inputs["minimumDifference"]) == null) "请指定之前的观察、区域和差异阈值" else null
+        },
+        // Requests the game named by the version's vision profile. A request is not arrival: the platform can
+        // silently block background starts, so a later observation has to prove what is on screen.
+        CapabilityContract(LAUNCH, 1, inputTypes = mapOf("profile" to ActionValueType.STRING), outputTypes = mapOf("delivered" to ActionValueType.BOOLEAN),
+            sendsDeviceInput = true, startsTarget = true,
+            validateDefinition = { bundle, task, _, action -> profileIssue(bundle, task, action) }) { inputs ->
+            if (inputs.keys != setOf("profile") || inputs.text("profile").isNullOrBlank()) "请指定视觉配置" else null
+        },
+        CapabilityContract(AWAIT_FOREGROUND, 1, inputTypes = mapOf("profile" to ActionValueType.STRING, "timeoutMs" to ActionValueType.NUMBER),
+            outputTypes = mapOf("foreground" to ActionValueType.BOOLEAN),
+            validateKnownInputs = { inputs -> if ("timeoutMs" in inputs && foregroundWait(inputs) == null)
+                ContentIssue("timeoutMs", "等待时长需为 1–120000 的整数毫秒") else null },
+            validateDefinition = { bundle, task, _, action -> if ("profile" in action.bindings) "视觉配置必须由任务版本明确指定" else
+                profileIssue(bundle, task, action.copy(bindings = emptyMap())) }) { inputs ->
+            if (inputs.keys != setOf("profile", "timeoutMs") || inputs.text("profile").isNullOrBlank() || foregroundWait(inputs) == null) "请指定视觉配置和等待时长" else null
+        },
+        // Text only, never a screenshot. A disallowed notification is reported, not a task failure.
+        CapabilityContract(NOTIFY, 1, inputTypes = mapOf("title" to ActionValueType.STRING, "text" to ActionValueType.STRING),
+            outputTypes = mapOf("delivered" to ActionValueType.BOOLEAN),
+            validateKnownInputs = { inputs -> when {
+                "title" in inputs && inputs.text("title").let { it.isNullOrBlank() || it.length > 64 } -> ContentIssue("title", "标题需为 1–64 个字符")
+                "text" in inputs && inputs.text("text").let { it.isNullOrBlank() || it.length > 240 } -> ContentIssue("text", "正文需为 1–240 个字符")
+                else -> null } }) { inputs ->
+            if (inputs.keys != setOf("title", "text") || inputs.text("title").isNullOrBlank() || inputs.text("text").isNullOrBlank()) "请指定通知标题和正文" else null
         },
         CapabilityContract(DERIVE, 1, inputTypes = mapOf("target" to ActionValueType.STRING) + geometryKeys.associateWith { ActionValueType.NUMBER },
             outputTypes = mapOf("region" to ActionValueType.STRING), outputHandles = mapOf("region" to REGION),
@@ -672,6 +703,12 @@ internal class ScreenActions(
                 CLASSIFY_REGION -> classifyRegion(inputs)
                 READ_NUMBER, READ_FRACTION -> readNumber(action, inputs)
                 SELECT_TEXT, SELECT_IMAGE -> select(action, inputs)
+                LAUNCH -> launch(action, inputs)
+                AWAIT_FOREGROUND -> awaitForeground(inputs)
+                NOTIFY -> {
+                    val delivered = notifier?.invoke(checkNotNull(inputs.text("title")), checkNotNull(inputs.text("text"))) == true
+                    ActionResult.Produced(buildJsonObject { put("delivered", delivered) }, buildJsonObject { put("kind", NOTIFY); put("delivered", delivered) })
+                }
                 MATCH_COLOR -> matchColor(inputs)
                 COMPARE -> compare(inputs)
                 LOCATE_IMAGE -> {
@@ -868,6 +905,26 @@ internal class ScreenActions(
             }
             val point = ScreenPoint(bounds.left + bounds.width / 2f, bounds.top + bounds.height / 2f)
             return deliver(action, bridge, trace, null) { it.gestureCall(fresh.result.stamp, listOf(point), checkNotNull(duration(inputs))) }
+        }
+        private suspend fun launch(action: ActionDefinition, inputs: JsonObject): ActionResult {
+            val bridge = device() as? InputDevicePort ?: return ActionResult.Unavailable("未连接无障碍服务，不能启动目标应用")
+            if (journal == null) return ActionResult.Unavailable("未连接持久化执行器")
+            val profile = bundle.visionProfiles.single { it.id == inputs.text("profile") }
+            return deliver(action, bridge, buildJsonObject { put("kind", LAUNCH); put("package", profile.packageName) }, null) { it.launchCall(profile.packageName) }
+        }
+        private suspend fun awaitForeground(inputs: JsonObject): ActionResult {
+            val bridge = device() ?: return ActionResult.Unavailable("未连接无障碍服务，不能确认前台应用")
+            val profile = bundle.visionProfiles.single { it.id == inputs.text("profile") }
+            val timeout = checkNotNull(foregroundWait(inputs)); val started = android.os.SystemClock.elapsedRealtime()
+            while (true) {
+                if (!permitted(attempt.ticket)) return ActionResult.Interrupted
+                val state = bridge.availability(setOf(profile.packageName))
+                val waited = android.os.SystemClock.elapsedRealtime() - started
+                val trace = buildJsonObject { put("kind", AWAIT_FOREGROUND); put("waitedMs", waited); put("state", state.name) }
+                if (state == DeviceAvailability.READY) return ActionResult.Produced(buildJsonObject { put("foreground", true) }, trace)
+                if (waited >= timeout) return ActionResult.Unavailable("等待 ${timeout}ms 后目标应用仍未到前台（${state.name}）", trace)
+                delay(minOf(FOREGROUND_POLL_MS, timeout - waited))
+            }
         }
         private suspend fun back(action: ActionDefinition, inputs: JsonObject): ActionResult {
             val observation = observations[inputs.text("observation")] ?: return ActionResult.Unavailable("本步骤的画面观察不可用")

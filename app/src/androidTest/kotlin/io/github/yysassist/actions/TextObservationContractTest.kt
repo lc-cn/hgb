@@ -321,4 +321,22 @@ class TextObservationContractTest {
         val staleRegion = diff.copy(bindings = mapOf("before" to ActionInputBinding.Output("read", "observation"), "region" to ActionInputBinding.Output("derive", "region")))
         assertTrue(codec.validate(input(listOf(read, locate, derive, tap, after, staleRegion, finalProof))).any { it.reason.contains("失效") })
     }
+
+    @Test fun launchNeedsALaterProofAndWaitsAndNotificationsAreBounded() {
+        val launch = ActionDefinition("launch", ScreenActions.LAUNCH, 1, buildJsonObject { put("profile", "ocr") })
+        val await = ActionDefinition("await", ScreenActions.AWAIT_FOREGROUND, 1, buildJsonObject { put("profile", "ocr"); put("timeoutMs", 30000) })
+        assertTrue(codec.validate(input(listOf(launch, await, after, finalProof))).toString(), codec.validate(input(listOf(launch, await, after, finalProof))).isEmpty())
+        val contract = factory.contracts.single { it.id == ScreenActions.LAUNCH }
+        assertTrue(contract.sendsDeviceInput && contract.startsTarget)
+        // Requesting a launch proves nothing by itself.
+        assertTrue(codec.validate(input(listOf(launch, await))).isNotEmpty())
+        assertTrue(codec.validate(input(listOf(launch.copy(inputs = buildJsonObject { put("profile", "missing") }), after, finalProof))).isNotEmpty())
+        for (value in listOf(JsonPrimitive(0), JsonPrimitive(120001), JsonPrimitive(1.5)))
+            assertTrue(value.toString(), codec.validate(input(listOf(launch, await.copy(inputs = JsonObject(await.inputs + ("timeoutMs" to value))), after, finalProof))).isNotEmpty())
+        val notify = ActionDefinition("notify", ScreenActions.NOTIFY, 1, buildJsonObject { put("title", "完成"); put("text", "今日礼包已领取") })
+        assertTrue(codec.validate(input(listOf(read, notify, verify))).isEmpty())
+        for (bad in listOf(buildJsonObject { put("title", ""); put("text", "x") }, buildJsonObject { put("title", "x".repeat(65)); put("text", "x") },
+            buildJsonObject { put("title", "x"); put("text", "y".repeat(241)) }, buildJsonObject { put("title", "x") }))
+            assertTrue(bad.toString(), codec.validate(input(listOf(read, notify.copy(inputs = bad), verify))).isNotEmpty())
+    }
 }

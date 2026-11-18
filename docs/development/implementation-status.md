@@ -333,3 +333,7 @@ core 新增有上限的 `until` 程序节点：循环执行，直到循环体顶
 ## 读数、选择、颜色与画面对比动作（2026-11-18）
 
 新增 `screen.readNumber`、`screen.readFraction`、`screen.selectText`、`screen.selectImage`、`screen.matchColor`、`screen.compareFrames`。core 的句柄规则增加仅供只读比较使用的 `allowStale`。契约测试和模拟器运行时测试覆盖读分数、选第 2 个同名目标并点击、颜色占比、点击前后差异；`selectImage` 只有契约校验，都未在实际游戏画面上使用。详见[区域与图像状态动作](region-actions.md)。
+
+## 启动游戏与本机通知动作（2026-11-18）
+
+新增 `app.launch`、`app.awaitForeground`、`notify.local`。启动只是请求，到达前台和画面内容都要由后续动作证明；只有步骤开头的启动动作可以在目标不在前台时开始。模拟器验证了从桌面启动并核对，以及等待超时为无法确认。通知的实际显示和真机后台启动游戏尚未验证；通知权限界面尚未实现。

@@ -51,6 +51,7 @@ internal class ReplayDevice(private val folder: File) : InputDevicePort {
             if (next != null) { current = next; token = Any() }
         }
         override fun backCall(stamp: FrameStamp) = call { inputs += "back on $current -> unchanged" }
+        override fun launchCall(packageName: String) = call { inputs += "launch $packageName on $current -> unchanged" }
         override suspend fun revoke(): InputDrain = last?.let { InputDrain.Terminal(it) } ?: InputDrain.NoInFlightGesture
     }
 }

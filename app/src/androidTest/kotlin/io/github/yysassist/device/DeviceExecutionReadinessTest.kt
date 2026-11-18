@@ -17,6 +17,7 @@ class DeviceExecutionReadinessTest {
         CapabilityContract("fixture.utility", 1, validateInputs = { null }),
         CapabilityContract("fixture.read", 1, role = ActionRole.OBSERVATION, validateInputs = { null }),
         CapabilityContract("fixture.input", 1, sendsDeviceInput = true, validateInputs = { null }),
+        CapabilityContract("fixture.launch", 1, sendsDeviceInput = true, startsTarget = true, validateInputs = { null }),
     )
     private fun fixture(capability: String): Pair<StepAttempt, TaskBundle> {
         val context = ExecutionContext("fixture", Principal.Anonymous)
@@ -41,6 +42,18 @@ class DeviceExecutionReadinessTest {
             fixture(id).let { (attempt, bundle) -> assertTrue(readiness.check(attempt, bundle) is StepStartCondition.Waiting) }
         }
         assertEquals(2, checks)
+    }
+    @Test fun onlyAStepThatOpensWithALaunchMayStartWhileTheTargetIsInTheBackground(): Unit = runBlocking {
+        var state = DeviceAvailability.WRONG_FOREGROUND
+        val readiness = DeviceExecutionReadiness(contracts, availability = { state }, changes = emptyFlow())
+        fixture("fixture.launch").let { (attempt, bundle) ->
+            assertEquals(StepStartCondition.Ready, readiness.check(attempt, bundle))
+            // The service and a lit screen are still required.
+            state = DeviceAvailability.DISCONNECTED; assertTrue(readiness.check(attempt, bundle) is StepStartCondition.Waiting)
+            state = DeviceAvailability.DISPLAY_UNAVAILABLE; assertTrue(readiness.check(attempt, bundle) is StepStartCondition.Waiting)
+        }
+        state = DeviceAvailability.WRONG_FOREGROUND
+        fixture("fixture.input").let { (attempt, bundle) -> assertTrue(readiness.check(attempt, bundle) is StepStartCondition.Waiting) }
     }
     @Test fun anUnconfirmedPlatformLookupDoesNotPretendTheTargetIsKnownToBeInTheBackground(): Unit = runBlocking {
         val readiness = DeviceExecutionReadiness(contracts, availability = { DeviceAvailability.UNCONFIRMED }, changes = emptyFlow())

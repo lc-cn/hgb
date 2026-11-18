@@ -44,6 +44,8 @@ internal sealed interface FrameResult {
 internal interface ObservationDevice {
     suspend fun capture(expectedPackage: String): FrameResult
     suspend fun validateObservation(stamp: FrameStamp): DeviceRejection?
+    /** Whether one of these packages currently has focus; no capture and no side effect. */
+    suspend fun availability(expectedPackages: Set<String>): DeviceAvailability = DeviceAvailability.READY
 }
 internal sealed interface GestureResult {
     data object Completed : GestureResult
@@ -67,6 +69,8 @@ internal interface DeviceInputChannel {
     fun gestureCall(stamp: FrameStamp, points: List<ScreenPoint>, durationMillis: Long): InputGestureCall
     /** System back key, under the same ownership, foreground and screen checks as a gesture. */
     fun backCall(stamp: FrameStamp): InputGestureCall
+    /** Requests the package's launcher entry. Completed means requested, not that the app came to front. */
+    fun launchCall(packageName: String): InputGestureCall
     suspend fun revoke(): InputDrain
 }
 internal interface InputDevicePort : ObservationDevice {
@@ -106,7 +110,7 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
     override suspend fun capture(expectedPackage: String): FrameResult = captureScreen(expectedPackage)
     suspend fun checkScreen(): FrameResult = captureScreen(null)
     /** Query app focus, not the last touched overlay. Potential remote node lookup stays off Main. */
-    suspend fun availability(expectedPackages: Set<String>): DeviceAvailability {
+    override suspend fun availability(expectedPackages: Set<String>): DeviceAvailability {
         val epoch = withContext(Dispatchers.Main.immediate) { connection.takeIf { connected } }
             ?: return DeviceAvailability.DISCONNECTED
         val focusedPackage = withContext(Dispatchers.IO) { focusedApplicationPackage() }
@@ -302,6 +306,33 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
             }
         override fun gestureCall(stamp: FrameStamp, points: List<ScreenPoint>, durationMillis: Long): InputGestureCall =
             GestureCall(stamp, points.toList(), durationMillis)
+
+        override fun launchCall(packageName: String): InputGestureCall = object : InputGestureCall {
+            private var started = false
+            private var dispatched: GestureResult? = null // Main Looper owns this evidence.
+            override suspend fun execute(): GestureResult {
+                synchronized(this) { check(!started) { "启动调用不可重复执行" }; started = true }
+                return withContext(NonCancellable + Dispatchers.Main.immediate) {
+                    val reason = when {
+                        !connected || connection !== admittedConnection -> DeviceRejection.DISCONNECTED
+                        closed || owner !== this@InputSession || !permitsInput(ticket) -> DeviceRejection.NOT_OWNER
+                        pending != null -> DeviceRejection.BUSY
+                        else -> null
+                    }
+                    if (reason != null) return@withContext GestureResult.Rejected(reason)
+                    // Already in front: reopening could disturb the current page, so nothing is sent.
+                    if (foreground() == packageName) return@withContext GestureResult.Completed.also { dispatched = it }
+                    val intent = service.packageManager.getLaunchIntentForPackage(packageName)
+                        ?: return@withContext GestureResult.Rejected(DeviceRejection.PLATFORM_REJECTED).also { dispatched = it }
+                    try { service.startActivity(intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)); GestureResult.Completed }
+                    catch (_: android.content.ActivityNotFoundException) { GestureResult.Rejected(DeviceRejection.PLATFORM_REJECTED) }
+                    catch (_: SecurityException) { GestureResult.Rejected(DeviceRejection.PLATFORM_REJECTED) }
+                        .also { dispatched = it }
+                }
+            }
+            override suspend fun observeAfterRevoke(): GestureResult? =
+                withContext(Dispatchers.Main.immediate) { check(closed) { "须先关闭输入通道" }; dispatched }
+        }
 
         override fun backCall(stamp: FrameStamp): InputGestureCall = object : InputGestureCall {
             private var started = false

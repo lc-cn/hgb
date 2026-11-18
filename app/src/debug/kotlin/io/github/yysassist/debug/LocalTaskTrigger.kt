@@ -61,7 +61,8 @@ class LocalTaskTrigger : BroadcastReceiver() {
                 lateinit var observer: VersionedTextObserver
                 val actions = if (replayDevice != null) ScreenActions({ observer }, { runtime.permitsInput(it) }, { replayDevice },
                     journal = { command -> runtime.submit(command).await() })
-                    else ScreenActions({ observer }, { runtime.permitsInput(it) }, journal = { command -> runtime.submit(command).await() })
+                    else ScreenActions({ observer }, { runtime.permitsInput(it) }, journal = { command -> runtime.submit(command).await() },
+                        notifier = io.github.yysassist.actions.LocalNotifier(app)::post)
                 val factory = BuiltInStepWorkFactory(actions, ActionTraceLog(database, runScope))
                 val library = TaskVersionLibrary(database, BundleCodec(factory.contracts), TaskResourceFiles(folder))
                 observer = VersionedTextObserver(library, MaaTextBackend(app))

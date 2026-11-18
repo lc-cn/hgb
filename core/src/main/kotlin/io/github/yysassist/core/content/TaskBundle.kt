@@ -116,6 +116,8 @@ data class CapabilityContract(
     val outputTypes: Map<String, ActionValueType> = emptyMap(),
     val role: ActionRole = ActionRole.UTILITY,
     val sendsDeviceInput: Boolean = false,
+    /** As a step's first action, the step may start while the target app is not yet in front. */
+    val startsTarget: Boolean = false,
     /** Output field -> handle kind. Handle fields are STRING tokens with no meaning outside one attempt. */
     val outputHandles: Map<String, String> = emptyMap(),
     /** Input parameter -> accepted handles. Literals and configuration can never supply these. */
