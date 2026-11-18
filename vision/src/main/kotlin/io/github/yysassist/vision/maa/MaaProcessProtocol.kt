@@ -13,7 +13,11 @@ internal object MaaProcessProtocol {
     const val REJECTED = 12
     const val BUSY = 13
     const val NATIVE_ENTERED = 14
+    /** Sent after a RESULT was fully written, inputs closed and ownership released: native use is quiet. */
+    const val IDLE = 15
     val modelNames = listOf("det.onnx", "rec.onnx", "keys.txt")
+    /** Loaded-model copy for one child process; reused while model digests stay the same. */
+    fun session(cache: File, pid: Int): File = File(cache, "maa-process/session-$pid")
     fun folder(cache: File, id: String): File {
         require(id.matches(Regex("[0-9a-f-]{36}")))
         return File(cache, "maa-process/$id")

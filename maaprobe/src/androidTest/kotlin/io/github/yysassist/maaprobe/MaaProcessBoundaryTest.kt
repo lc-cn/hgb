@@ -93,9 +93,14 @@ class MaaProcessBoundaryTest {
         val child = call.acceptedPid.get(30, TimeUnit.SECONDS)
         assertNotEquals(hostPid, child)
         assertEquals(1, quiet.get())
-        assertEquals("binder-death", call.quietEvidence)
-        assertNotNull(call.binderDeathObservedAt)
-        assertTrue(quietAt.get() >= call.binderDeathObservedAt!!)
+        // A healthy observation keeps the child for reuse; every failure still ends it.
+        if (result is MaaProcessOutcome.Observed) {
+            assertEquals("child-idle", call.quietEvidence); assertNull(call.binderDeathObservedAt)
+        } else {
+            assertEquals("binder-death", call.quietEvidence)
+            assertNotNull(call.binderDeathObservedAt)
+            assertTrue(quietAt.get() >= call.binderDeathObservedAt!!)
+        }
         outcomes.put(JSONObject().put("case", name).put("hostPid", hostPid).put("childPid", child)
             .put("outcome", when (result) { is MaaProcessOutcome.Observed -> "observed"; is MaaProcessOutcome.Missing -> result.reason.name })
             .put("binderDeathObservedAt", call.binderDeathObservedAt).put("quietAt", quietAt.get()).put("quietCallbacks", quiet.get()))
@@ -122,6 +127,28 @@ class MaaProcessBoundaryTest {
             if (!text) assertEquals(0, parsed.getJSONObject("detail").getJSONArray("all").length())
             record(if (text) "positive" else "healthy-blank", call, result, quiet, at)
         }
+    }
+
+    @Test fun healthyChildIsReusedUntilIdleReleaseAndThenReplaced() {
+        val models = models()
+        val first = call(models, image()); assertTrue(first.completion.get(30, TimeUnit.SECONDS) is MaaProcessOutcome.Observed)
+        val start = SystemClock.elapsedRealtimeNanos()
+        val second = call(models, image(false)); assertTrue(second.completion.get(30, TimeUnit.SECONDS) is MaaProcessOutcome.Observed)
+        val warmMs = (SystemClock.elapsedRealtimeNanos() - start) / 1_000_000
+        assertEquals(first.acceptedPid.get(), second.acceptedPid.get())
+        assertEquals("child-idle", second.quietEvidence)
+        MaaProcessCall.releaseIdle()
+        val third = call(models, image()); assertTrue(third.completion.get(30, TimeUnit.SECONDS) is MaaProcessOutcome.Observed)
+        assertNotEquals(second.acceptedPid.get(), third.acceptedPid.get())
+        val previous = MaaProcessCall.idleMillis
+        try {
+            MaaProcessCall.idleMillis = 300
+            val fourth = call(models, image()); fourth.completion.get(30, TimeUnit.SECONDS)
+            Thread.sleep(1_500)
+            val fifth = call(models, image()); assertTrue(fifth.completion.get(30, TimeUnit.SECONDS) is MaaProcessOutcome.Observed)
+            assertNotEquals(fourth.acceptedPid.get(), fifth.acceptedPid.get())
+        } finally { MaaProcessCall.idleMillis = previous }
+        outcomes.put(JSONObject().put("case", "reuse").put("warmObservationMs", warmMs))
     }
 
     @Test fun mismatchedModelAndInvalidImageReturnNoObservationInsteadOfAnEmptyHit() {

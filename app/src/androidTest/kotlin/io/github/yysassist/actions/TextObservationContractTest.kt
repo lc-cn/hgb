@@ -205,7 +205,8 @@ class TextObservationContractTest {
         assertTrue(codec.validate(input(listOf(read, locate, press, after, finalProof))).isEmpty())
         assertTrue(factory.contracts.single { it.id == ScreenActions.LONG_PRESS }.sendsDeviceInput)
         val swipe = tap.copy(id = "tap", capability = ScreenActions.SWIPE, inputs = buildJsonObject {
-            put("durationMs", 300); put("dx", 0); put("dy", -400); put("referenceWidth", 2400); put("referenceHeight", 1080) })
+            put("durationMs", 300); put("dx", 0); put("dy", -400); put("referenceWidth", 2400); put("referenceHeight", 1080)
+            put("variation", buildJsonObject { put("startJitter", 0.3); put("curve", 0.1); put("durationJitter", 0.2); put("points", 12) }) })
         assertTrue(codec.validate(input(listOf(read, locate, swipe, after, finalProof))).toString(), codec.validate(input(listOf(read, locate, swipe, after, finalProof))).isEmpty())
         // Both still need a fresh post-input proof.
         assertTrue(codec.validate(input(listOf(read, locate, swipe))).isNotEmpty())
@@ -213,6 +214,14 @@ class TextObservationContractTest {
             val bad = swipe.copy(inputs = JsonObject(swipe.inputs + (key to value) + if (key == "dy") mapOf("dx" to JsonPrimitive(0)) else emptyMap()))
             assertTrue(key, codec.validate(input(listOf(read, locate, bad, after, finalProof))).isNotEmpty())
         }
+        val variation = swipe.inputs.getValue("variation").jsonObject
+        for (bad in listOf(JsonObject(variation - "curve"), JsonObject(variation + ("curve" to JsonPrimitive(0.8))),
+            JsonObject(variation + ("points" to JsonPrimitive(1))), JsonObject(variation + ("seed" to JsonPrimitive(1.5))),
+            JsonObject(variation + ("extra" to JsonPrimitive(1)))))
+            assertTrue(bad.toString(), codec.validate(input(listOf(read, locate, swipe.copy(inputs = JsonObject(swipe.inputs + ("variation" to bad))), after, finalProof))).isNotEmpty())
+        assertTrue(codec.validate(input(listOf(read, locate, swipe.copy(inputs = JsonObject(swipe.inputs - "variation")), after, finalProof))).isNotEmpty())
+        val seeded = swipe.copy(inputs = JsonObject(swipe.inputs + ("variation" to JsonObject(variation + ("seed" to JsonPrimitive(42))))))
+        assertTrue(codec.validate(input(listOf(read, locate, seeded, after, finalProof))).isEmpty())
         val configured = swipe.copy(inputs = JsonObject(swipe.inputs - "dy"), bindings = swipe.bindings + ("dy" to ActionInputBinding.Configuration("dy")))
         assertTrue(codec.validate(input(listOf(read, locate, configured, after, finalProof))).isNotEmpty())
         val inside = locate.copy(id = "inside", bindings = mapOf("observation" to ActionInputBinding.Output("regionRead", "observation")))

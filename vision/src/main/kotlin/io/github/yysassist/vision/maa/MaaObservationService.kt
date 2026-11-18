@@ -11,15 +11,29 @@ import java.io.IOException
 import java.security.MessageDigest
 import java.util.concurrent.Executors
 
-/** Single-use bound process: main Looper owns stop, while native code runs on a separate worker. */
+/**
+ * Reusable bound process: one request at a time. Main Looper owns stop; native code runs on one worker.
+ * A request that completed normally releases ownership and announces IDLE; any rejection keeps
+ * ownership until STOP or death, because native state after a failure is not trusted for reuse.
+ */
 class MaaObservationService : Service() {
     private val worker = Executors.newSingleThreadExecutor()
+    private val main = Handler(Looper.getMainLooper())
+    /** Worker-thread only: loaded Maa session and the model digests it was created from. */
+    private var sessionHandle = 0L
+    private var sessionKey: String? = null
     private val endpoint = Messenger(Handler(Looper.getMainLooper()) { receive(it); true })
     private var ownerId: String? = null
     private var ownerBinder: IBinder? = null
+    private var ownerReply: Messenger? = null
     private val ownerDeath = IBinder.DeathRecipient { terminateSelf() }
     private fun childProcess() = Application.getProcessName() == "$packageName:maa_ocr"
     private fun terminateSelf() { if (childProcess()) Process.killProcess(Process.myPid()) }
+    override fun onCreate() {
+        super.onCreate()
+        // A killed predecessor cannot clean its loaded-model copy; only this process uses the folder now.
+        if (childProcess()) File(cacheDir, "maa-process").listFiles { file -> file.name.startsWith("session-") }?.forEach { it.deleteRecursively() }
+    }
     override fun onBind(intent: Intent): IBinder? = if (childProcess()) endpoint.binder else null
     override fun onUnbind(intent: Intent): Boolean { terminateSelf(); return false }
     override fun onDestroy() { worker.shutdownNow(); terminateSelf(); super.onDestroy() }
@@ -43,6 +57,7 @@ class MaaObservationService : Service() {
             ownerId = id
             ownerBinder = reply.binder
             reply.binder.linkToDeath(ownerDeath, 0)
+            ownerReply = reply
             reply(reply, MaaProcessProtocol.ACCEPTED, id)
             worker.execute { observe(id, data, reply) }
         } catch (_: Exception) {
@@ -58,6 +73,7 @@ class MaaObservationService : Service() {
 
     private fun observe(id: String, data: Bundle, destination: Messenger) {
         val directory = MaaProcessProtocol.folder(cacheDir, id)
+        val sessionDirectory = MaaProcessProtocol.session(cacheDir, Process.myPid())
         var stage = "model-copy"
         val raw: ByteArray
         try {
@@ -66,12 +82,20 @@ class MaaObservationService : Service() {
             val templates = data.getStringArrayList("templates").orEmpty()
             require(templates.all { it.matches(MaaProcessProtocol.templateName) } && templates.distinct().size == templates.size)
             require(requests != null || templates.isEmpty())
-            (MaaProcessProtocol.modelNames.map { it to it } + templates.map { MaaProcessProtocol.templateKey(it) to it }).forEach { (key, name) ->
+            val key = MaaProcessProtocol.modelNames.joinToString("|") { "${data.getLong("$it.bytes", -1)}:${data.getString("$it.sha256")}" }
+            val reuse = sessionHandle != 0L && key == sessionKey && !data.getBoolean("nativeBlock")
+            if (!reuse) {
+                if (sessionHandle != 0L) { MaaNative.destroy(sessionHandle); sessionHandle = 0L; sessionKey = null }
+                sessionDirectory.deleteRecursively(); check(sessionDirectory.mkdirs()) { "Session directory unavailable" }
+            }
+            val copies = (if (reuse) emptyList() else MaaProcessProtocol.modelNames.map { Triple(it, it, sessionDirectory) }) +
+                templates.map { Triple(MaaProcessProtocol.templateKey(it), it, directory) }
+            copies.forEach { (key, name, folder) ->
                 val length = data.getLong("$key.bytes", -1)
                 val expected = data.getString("$key.sha256")
                 require(length > 0 && expected?.matches(Regex("[0-9a-f]{64}")) == true)
                 val descriptor = checkNotNull(MaaProcessProtocol.descriptor(data, key))
-                val file = File(directory, name)
+                val file = File(folder, name)
                 val hash = MessageDigest.getInstance("SHA-256")
                 var count = 0L
                 ParcelFileDescriptor.AutoCloseInputStream(descriptor).use { input ->
@@ -98,9 +122,10 @@ class MaaObservationService : Service() {
             // Manifest-verified data can still be an invalid ONNX program. Let the real native failure
             // happen here, outside the host; never replace it with a healthy empty OCR result.
             stage = "native-register"
-            val handle = MaaNative.create(directory.absolutePath)
+            if (!reuse) { sessionHandle = MaaNative.create(sessionDirectory.absolutePath); sessionKey = key }
+            val handle = sessionHandle
             stage = "native-recognize"
-            raw = try {
+            raw = run {
                 if (requests == null) MaaNative.recognizeRaw(handle, image)
                 else {
                     stage = "native-inspect"
@@ -118,7 +143,7 @@ class MaaObservationService : Service() {
                     org.json.JSONObject().put("taskStatus", 3000).put("controllerBound", false).put("inspection", results)
                         .toString().toByteArray(Charsets.UTF_8)
                 }
-            } finally { MaaNative.destroy(handle) }
+            }
         } catch (error: Exception) {
             // Keep error meaning without transmitting file paths, model contents or stack dumps.
             try { reply(destination, MaaProcessProtocol.REJECTED, id, Bundle().apply {
@@ -136,6 +161,14 @@ class MaaObservationService : Service() {
                 reply(destination, MaaProcessProtocol.RESULT, id, Bundle().apply { putParcelable("result", descriptor) })
             }
             ParcelFileDescriptor.AutoCloseOutputStream(result[1]).use { it.write(raw) }
+            // Inputs are closed and native use returned; hand ownership back before announcing quiet.
+            main.post {
+                if (ownerId != id) return@post
+                ownerBinder?.let { try { it.unlinkToDeath(ownerDeath, 0) } catch (_: NoSuchElementException) { } }
+                val destination = ownerReply
+                ownerId = null; ownerBinder = null; ownerReply = null
+                try { destination?.let { reply(it, MaaProcessProtocol.IDLE, id) } } catch (_: RemoteException) { terminateSelf() }
+            }
         } catch (_: Exception) {
             // Delivery/close failure is not evidence the result was never delivered. Do not issue a
             // contradictory REJECTED terminal response; host retains any already received result FD.

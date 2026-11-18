@@ -46,6 +46,19 @@ internal class ScreenActions(
     private val textTypes = mapOf("observation" to ActionValueType.STRING, "text" to ActionValueType.STRING, "minimumConfidence" to ActionValueType.NUMBER)
     private val geometryKeys = listOf("dx", "dy", "width", "height", "referenceWidth", "referenceHeight")
     private val swipeKeys = listOf("dx", "dy", "referenceWidth", "referenceHeight")
+    /** Explicit, reproducible path variation. Every field is authored; only seed may be left to the App. */
+    private data class Variation(val startJitter: Double, val curve: Double, val durationJitter: Double, val points: Int, val seed: Long?)
+    private fun variation(value: JsonElement?): Variation? {
+        val o = value as? JsonObject ?: return null
+        if (!o.keys.containsAll(setOf("startJitter", "curve", "durationJitter", "points")) ||
+            !setOf("startJitter", "curve", "durationJitter", "points", "seed").containsAll(o.keys)) return null
+        fun fraction(key: String, max: Double) = (o[key] as? JsonPrimitive)?.takeUnless { it.isString }?.content?.toBigDecimalOrNull()
+            ?.takeIf { it >= BigDecimal.ZERO && it <= BigDecimal.valueOf(max) }?.toDouble()
+        val seed = if ("seed" in o) try { (o["seed"] as? JsonPrimitive)?.takeUnless { it.isString }?.content?.toBigDecimalOrNull()?.longValueExact() ?: return null }
+            catch (_: ArithmeticException) { return null } else null
+        return Variation(fraction("startJitter", 1.0) ?: return null, fraction("curve", 0.5) ?: return null,
+            fraction("durationJitter", 0.5) ?: return null, integer(o["points"])?.takeIf { it in 2..32 } ?: return null, seed)
+    }
     private fun knownText(inputs: JsonObject): ContentIssue? = when {
         "text" in inputs && inputs.text("text").isNullOrBlank() -> ContentIssue("text", "核对文字不能为空")
         "minimumConfidence" in inputs && threshold(inputs) == null -> ContentIssue("minimumConfidence", "置信度需为零到一之间的数值")
@@ -132,20 +145,22 @@ internal class ScreenActions(
             if (inputs.keys != setOf("target", "durationMs") || inputs.text("target").isNullOrBlank() || duration(inputs) == null)
                 "请明确指定定位目标及按住时长" else null
         },
-        CapabilityContract(SWIPE, 1, inputTypes = mapOf("target" to ActionValueType.STRING, "durationMs" to ActionValueType.NUMBER) +
-            swipeKeys.associateWith { ActionValueType.NUMBER },
+        CapabilityContract(SWIPE, 1, inputTypes = mapOf("target" to ActionValueType.STRING, "durationMs" to ActionValueType.NUMBER,
+            "variation" to ActionValueType.OBJECT) + swipeKeys.associateWith { ActionValueType.NUMBER },
             outputTypes = mapOf("delivered" to ActionValueType.BOOLEAN), sendsDeviceInput = true,
             inputHandles = mapOf("target" to HandleRequirement(setOf(TARGET), forbiddenAncestors = setOf(REGION))),
             validateKnownInputs = { inputs -> when {
                 "durationMs" in inputs && duration(inputs) == null -> ContentIssue("durationMs", "滑动时长需为平台允许的正整数毫秒")
+                "variation" in inputs && variation(inputs["variation"]) == null -> ContentIssue("variation",
+                    "变化参数需明确给出 startJitter(0–1)、curve(0–0.5)、durationJitter(0–0.5)、points(2–32)，seed 可选且为整数")
                 else -> swipeKeys.firstOrNull { key -> key in inputs && integer(inputs[key]).let { value ->
                     value == null || (if (key.startsWith("d")) value !in -MAX_OFFSET..MAX_OFFSET else value !in 1..MAX_OFFSET) } }
                     ?.let { ContentIssue(it, "滑动位移需为整数，参考尺寸需为正整数") }
                     ?: if (integer(inputs["dx"]) == 0 && integer(inputs["dy"]) == 0) ContentIssue("dx", "滑动位移不能为零") else null
             } },
-            validateDefinition = { _, _, _, action -> if (swipeKeys.any { it in action.bindings }) "滑动位移必须由任务版本明确指定" else null }) { inputs ->
-            if (inputs.keys != setOf("target", "durationMs") + swipeKeys || inputs.text("target").isNullOrBlank() || duration(inputs) == null ||
-                swipeKeys.any { integer(inputs[it]) == null }) "请明确指定起点目标、位移、参考尺寸及滑动时长" else null
+            validateDefinition = { _, _, _, action -> if ((swipeKeys + "variation").any { it in action.bindings }) "滑动位移与变化参数必须由任务版本明确指定" else null }) { inputs ->
+            if (inputs.keys != setOf("target", "durationMs", "variation") + swipeKeys || inputs.text("target").isNullOrBlank() || duration(inputs) == null ||
+                swipeKeys.any { integer(inputs[it]) == null } || variation(inputs["variation"]) == null) "请明确指定起点目标、位移、参考尺寸、滑动时长及变化参数" else null
         },
         CapabilityContract(DERIVE, 1, inputTypes = mapOf("target" to ActionValueType.STRING) + geometryKeys.associateWith { ActionValueType.NUMBER },
             outputTypes = mapOf("region" to ActionValueType.STRING), outputHandles = mapOf("region" to REGION),
@@ -199,6 +214,8 @@ internal class ScreenActions(
         var channel: DeviceInputChannel? = null
         var call: InputGestureCall? = null
         var settlement: InputStopObservation? = null
+        /** Persisted with the receipt so a varied gesture can be replayed exactly (e.g. the swipe seed). */
+        var detail: String? = null
     }
     private sealed interface Acquisition {
         data class Ready(val value: Observation) : Acquisition
@@ -254,6 +271,24 @@ internal class ScreenActions(
         return match.takeIf { bounds.left >= 0 && bounds.top >= 0 && bounds.width > 0 && bounds.height > 0 &&
             bounds.left.toLong() + bounds.width <= geometry.width && bounds.top.toLong() + bounds.height <= geometry.height }
     }
+    /**
+     * Start jitters inside the target box, the end keeps the authored offset from that start, and the
+     * path bends along a quadratic curve whose side and depth come from the seed. Same seed, same path.
+     */
+    private fun swipePath(centre: ScreenPoint, target: TextBounds, dx: Float, dy: Float, shape: Variation, seed: Long): List<ScreenPoint> {
+        val random = java.util.Random(seed)
+        fun spread() = (random.nextDouble() * 2 - 1).toFloat()
+        val start = ScreenPoint(centre.x + spread() * shape.startJitter.toFloat() * target.width / 2f,
+            centre.y + spread() * shape.startJitter.toFloat() * target.height / 2f)
+        val end = ScreenPoint(start.x + dx, start.y + dy)
+        val length = kotlin.math.hypot(dx, dy)
+        val bend = spread() * shape.curve.toFloat() * length
+        val control = ScreenPoint((start.x + end.x) / 2f - dy / length * bend, (start.y + end.y) / 2f + dx / length * bend)
+        return (0 until shape.points).map { index ->
+            val t = index.toFloat() / (shape.points - 1); val u = 1 - t
+            ScreenPoint(u * u * start.x + 2 * u * t * control.x + t * t * end.x, u * u * start.y + 2 * u * t * control.y + t * t * end.y)
+        }
+    }
     private fun inspectReason(value: InspectionResult.Unavailable) =
         readReason(TextReadResult.Unavailable(value.problem, value.detail, value.diagnostics))
     private fun JsonObjectBuilder.region(bounds: TextBounds) = put("region", buildJsonArray { add(bounds.left); add(bounds.top); add(bounds.width); add(bounds.height) })
@@ -304,7 +339,7 @@ internal class ScreenActions(
                     DeviceActionDelivery.COMPLETED -> "平台完成回调"
                     DeviceActionDelivery.CANCELLED -> "平台取消回调"
                     DeviceActionDelivery.UNCONFIRMED -> "平台输入状态未确认"
-                }
+                } + invocation.detail?.let { "（$it）" }.orEmpty()
                 val saved = journal!!(ExecutorCommand.RecordDeviceActionReceipt(attempt.ticket, invocation.intent.id, DeviceActionReceipt(delivery, evidence)))
                 if (saved.writeResult() !in listOf(DeviceActionWriteResult.Recorded, DeviceActionWriteResult.AlreadyRecorded))
                     InputStopObservation.Unconfirmed("动作回执未能持久确认")
@@ -449,18 +484,28 @@ internal class ScreenActions(
             }
             val match = uniqueTarget(fresh, target.text, target.minimum) ?: return ActionResult.Unavailable("输入前不能唯一确认目标文字")
             val bounds = match.bounds
-            val start = ScreenPoint(bounds.left + bounds.width / 2f, bounds.top + bounds.height / 2f)
-            val points = if (action.capability != SWIPE) listOf(start) else {
+            val centre = ScreenPoint(bounds.left + bounds.width / 2f, bounds.top + bounds.height / 2f)
+            var gestureMillis = checkNotNull(duration(inputs))
+            var trace: JsonObject? = null
+            val points = if (action.capability != SWIPE) listOf(centre) else {
                 val geometry = fresh.result.stamp.geometry
                 val sx = geometry.width.toFloat() / checkNotNull(integer(inputs["referenceWidth"]))
                 val sy = geometry.height.toFloat() / checkNotNull(integer(inputs["referenceHeight"]))
                 if (kotlin.math.abs(sx / sy - 1f) > 0.01f) return ActionResult.Unavailable("当前画面比例与滑动参考尺寸不同")
-                val end = ScreenPoint(start.x + checkNotNull(integer(inputs["dx"])) * sx, start.y + checkNotNull(integer(inputs["dy"])) * sy)
-                if (end.x < 0 || end.y < 0 || end.x >= geometry.width || end.y >= geometry.height) return ActionResult.Unavailable("滑动终点超出画面")
-                listOf(start, end)
+                val shape = checkNotNull(variation(inputs["variation"]))
+                val seed = shape.seed ?: java.security.SecureRandom().nextLong()
+                val path = swipePath(centre, bounds, checkNotNull(integer(inputs["dx"])) * sx, checkNotNull(integer(inputs["dy"])) * sy, shape, seed)
+                if (path.any { it.x < 0 || it.y < 0 || it.x >= geometry.width || it.y >= geometry.height }) return ActionResult.Unavailable("滑动路径超出画面")
+                gestureMillis = java.util.Random(seed xor 0x5DEECE66DL).let { random ->
+                    (gestureMillis * (1 + (random.nextDouble() * 2 - 1) * shape.durationJitter)).toLong().coerceIn(1, GestureDescription.getMaxGestureDuration())
+                }
+                trace = buildJsonObject { put("kind", SWIPE); put("seed", seed); put("points", path.size); put("durationMs", gestureMillis)
+                    put("start", buildJsonArray { add(path.first().x); add(path.first().y) }); put("end", buildJsonArray { add(path.last().x); add(path.last().y) }) }
+                path
             }
             val invocation = Invocation(DeviceActionIntent(UUID.randomUUID().toString(), attempt.ticket, action.id,
                 action.capability, action.contractVersion, UUID.randomUUID().toString()))
+            invocation.detail = trace?.let { "滑动种子 ${it["seed"]}，时长 ${it["durationMs"]}ms，采样点 ${it["points"]}" }
             invocations += invocation; businessEvidence = null
             suspend fun dispatch(): ActionResult {
                 // Cancellation cannot lose whether this accepted command committed. It never opens input.
@@ -477,10 +522,10 @@ internal class ScreenActions(
                 val channel = bridge.openInput(attempt.ticket, permitted) ?: return if (!permitted(attempt.ticket)) ActionResult.Interrupted
                     else ActionResult.Unavailable("输入通道当前不可用")
                 invocation.channel = channel
-                val call = channel.gestureCall(fresh.result.stamp, points, checkNotNull(duration(inputs)))
+                val call = channel.gestureCall(fresh.result.stamp, points, gestureMillis)
                 invocation.call = call
                 return when (val result = call.execute()) {
-                    GestureResult.Completed -> ActionResult.Produced(buildJsonObject { put("delivered", true) })
+                    GestureResult.Completed -> ActionResult.Produced(buildJsonObject { put("delivered", true) }, trace)
                     is GestureResult.Rejected -> if (!permitted(attempt.ticket)) ActionResult.Interrupted else ActionResult.Unavailable(deviceReason(result.reason))
                     GestureResult.Cancelled -> ActionResult.Unavailable("平台取消了手势，业务结果尚未核对")
                     GestureResult.Unconfirmed -> ActionResult.Unavailable("平台输入状态未确认")

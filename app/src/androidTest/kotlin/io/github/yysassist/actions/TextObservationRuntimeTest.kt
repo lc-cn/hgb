@@ -413,7 +413,8 @@ class TextObservationRuntimeTest {
         withContext(Dispatchers.Main) { surface.dragPixels = 150f }
         val width = withContext(Dispatchers.Main) { surface.rootView.width }; val height = withContext(Dispatchers.Main) { surface.rootView.height }
         prepare("已领取", withInput = true, input = { it.copy(capability = ScreenActions.SWIPE, inputs = buildJsonObject {
-            put("durationMs", 400); put("dx", 0); put("dy", 300); put("referenceWidth", width); put("referenceHeight", height) }) })
+            put("durationMs", 400); put("dx", 0); put("dy", 300); put("referenceWidth", width); put("referenceHeight", height)
+            put("variation", buildJsonObject { put("startJitter", 0); put("curve", 0); put("durationJitter", 0); put("points", 2) }) }) })
         runtime.enqueueTask(address).await()
         val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
         assertTrue(state.toString(), state.unresolved.isEmpty())
@@ -425,10 +426,29 @@ class TextObservationRuntimeTest {
         }
         assertEquals(ScreenActions.SWIPE, state.deviceActions.single().intent.capability)
     }
+    @Test fun aSeededVariedSwipeBendsWithinBoundsAndRecordsItsSeed(): Unit = runBlocking {
+        withContext(Dispatchers.Main) { surface.dragPixels = 150f }
+        val width = withContext(Dispatchers.Main) { surface.rootView.width }; val height = withContext(Dispatchers.Main) { surface.rootView.height }
+        val traces = mutableListOf<JsonObject>()
+        prepare("已领取", withInput = true, onActionFinished = { action, result ->
+            if (action.capability == ScreenActions.SWIPE) (result as? ActionResult.Produced)?.trace?.let { traces += it } },
+            input = { it.copy(capability = ScreenActions.SWIPE, inputs = buildJsonObject {
+                put("durationMs", 500); put("dx", 0); put("dy", 300); put("referenceWidth", width); put("referenceHeight", height)
+                put("variation", buildJsonObject { put("startJitter", 0.5); put("curve", 0.2); put("durationJitter", 0.2); put("points", 16); put("seed", 7) }) }) })
+        runtime.enqueueTask(address).await()
+        val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
+        assertTrue(state.toString(), state.unresolved.isEmpty())
+        val trace = traces.single()
+        assertEquals(7L, trace.getValue("seed").jsonPrimitive.long); assertEquals(16, trace.getValue("points").jsonPrimitive.int)
+        assertTrue(trace.getValue("durationMs").jsonPrimitive.long in 400L..600L)
+        withContext(Dispatchers.Main) { assertTrue(surface.moves > 2) }
+        assertTrue(state.deviceActions.single().receipt!!.evidence.contains("滑动种子 7"))
+    }
     @Test fun aSwipeEndingOffscreenIsRefusedBeforeAnyIntent(): Unit = runBlocking {
         val width = withContext(Dispatchers.Main) { surface.rootView.width }; val height = withContext(Dispatchers.Main) { surface.rootView.height }
         prepare("已领取", withInput = true, input = { it.copy(capability = ScreenActions.SWIPE, inputs = buildJsonObject {
-            put("durationMs", 400); put("dx", 0); put("dy", -5000); put("referenceWidth", width); put("referenceHeight", height) }) })
+            put("durationMs", 400); put("dx", 0); put("dy", -5000); put("referenceWidth", width); put("referenceHeight", height)
+            put("variation", buildJsonObject { put("startJitter", 0); put("curve", 0); put("durationJitter", 0); put("points", 2) }) }) })
         runtime.enqueueTask(address).await()
         val state = withTimeout(30_000) { runtime.state.first { it.unresolved.isNotEmpty() || it.facts.any { fact -> fact.type == "task-completed" } } }
         assertTrue(state.deviceActions.isEmpty())
