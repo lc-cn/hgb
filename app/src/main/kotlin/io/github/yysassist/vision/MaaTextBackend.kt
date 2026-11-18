@@ -184,13 +184,13 @@ internal object MaaTextDecoder {
                 }
                 is InspectionRequest.Image -> {
                     require(item.getString("algorithm") == "TemplateMatch")
-                    val scores = (0 until all.length()).map { i ->
+                    val matches = (0 until all.length()).map { i ->
                         val match = all.getJSONObject(i); val box = match.getJSONArray("box"); require(box.length() == 4)
                         require(inside(box.int(0), box.int(1), box.int(2), box.int(3)) && box.int(2) > 0 && box.int(3) > 0)
                         val score = match.get("score"); require(score is Number)
-                        score.toDouble().also { require(it.isFinite() && it in -1.0..1.0) }
+                        ImageMatch(TextBounds(box.int(0), box.int(1), box.int(2), box.int(3)), score.toDouble().also { require(it.isFinite() && it in -1.0..1.0) })
                     }
-                    InspectionValue.Image((scores.maxOrNull() ?: 0.0).coerceAtLeast(0.0))
+                    InspectionValue.Image((matches.maxOfOrNull { it.score } ?: 0.0).coerceAtLeast(0.0), matches)
                 }
             }
         })

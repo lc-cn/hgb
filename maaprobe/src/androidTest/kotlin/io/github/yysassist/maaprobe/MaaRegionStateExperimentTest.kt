@@ -49,9 +49,12 @@ class MaaRegionStateExperimentTest {
             assertEquals(PackageManager.PERMISSION_DENIED, context.packageManager.checkPermission(Manifest.permission.INTERNET, app))
         val folder = context.filesDir.resolve("maa-probe").also { it.mkdirs() }
         val privateOut = folder.resolve("region-private-details.json").also { it.delete() }
-        val output = folder.resolve("region-experiment.json")
+        val output = folder.resolve("${arguments.getString("regionSpec") ?: "region-experiment"}.json")
         val assets = instrumentation.context.assets
-        val spec = assets.open("region-experiment/spec.json").bufferedReader().use { JSONObject(it.readText()) }
+        // Spec folder is selectable (e.g. -e regionSpec navigation); frames and spec live together.
+        val folderName = arguments.getString("regionSpec") ?: "region-experiment"
+        require(folderName.matches(Regex("[a-z-]+")))
+        val spec = assets.open("$folderName/spec.json").bufferedReader().use { JSONObject(it.readText()) }
         val models = context.assets.open("model-manifest.json").bufferedReader().use { JSONObject(it.readText()) }
         val modelFolder = folder.resolve("region-model-${UUID.randomUUID()}").also { it.mkdirs() }
         val report = JSONObject().put("runId", UUID.randomUUID().toString()).put("sdk", Build.VERSION.SDK_INT)
@@ -73,8 +76,8 @@ class MaaRegionStateExperimentTest {
             val frames = mutableMapOf<String, ByteArray>(); val sizes = mutableMapOf<String, Pair<Int, Int>>()
             val frameSpec = spec.getJSONObject("frames")
             frameSpec.keys().forEach { name ->
-                require(name.matches(Regex("[a-z-]+\\.png")))
-                val bytes = assets.open("region-experiment/$name").use { it.readBytes() }
+                require(name.matches(Regex("[a-z0-9-]+\\.png")))
+                val bytes = assets.open("$folderName/$name").use { it.readBytes() }
                 assertEquals(frameSpec.getJSONObject(name).getString("sha256"), sha(bytes))
                 frames[name] = bytes
                 BitmapFactory.decodeByteArray(bytes, 0, bytes.size).also { sizes[name] = it.width to it.height; it.recycle() }

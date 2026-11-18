@@ -27,10 +27,11 @@ internal sealed interface InspectionRequest {
 internal sealed interface InspectionValue {
     data class Text(val candidates: List<RecognizedText>) : InspectionValue
     /** Best normalized correlation inside the region; 0.0 when no candidate was reported. */
-    data class Image(val bestScore: Double) : InspectionValue
+    data class Image(val bestScore: Double, val matches: List<ImageMatch> = emptyList()) : InspectionValue
 }
 internal sealed interface InspectionResult {
     data object Interrupted : InspectionResult
     data class Inspected(val stamp: FrameStamp, val version: String, val values: List<InspectionValue>, val diagnostics: List<String> = emptyList()) : InspectionResult
     data class Unavailable(val problem: TextReadProblem, val detail: String? = null, val diagnostics: List<String> = emptyList()) : InspectionResult
 }
+internal data class ImageMatch(val bounds: TextBounds, val score: Double)

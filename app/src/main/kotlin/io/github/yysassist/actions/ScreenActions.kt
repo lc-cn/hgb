@@ -25,7 +25,7 @@ internal class ScreenActions(
         const val DERIVE = "screen.deriveRegion"; const val READ_REGION = "screen.readRegionText"
         const val MATCH = "screen.matchImage"; const val CLASSIFY_REGION = "screen.classifyRegion"
         const val LONG_PRESS = "screen.longPress"; const val SWIPE = "screen.swipe"; const val BACK = "screen.back"
-        const val TAP_REGION = "screen.tapRegion"
+        const val TAP_REGION = "screen.tapRegion"; const val LOCATE_IMAGE = "screen.locateImage"
         /** Handle kinds. Region-derived observations keep REGION in their lineage. */
         const val OBSERVATION = "screen.observation"; const val TARGET = "screen.target"; const val REGION = "screen.region"
         private const val MAX_STATES = 8; private const val MAX_TEMPLATES = 16; private const val MAX_OFFSET = 100_000
@@ -71,8 +71,12 @@ internal class ScreenActions(
         val states = inputs["states"] as? JsonArray ?: return false
         if (states.isEmpty()) return false
         val definitions = states.map { it as? JsonObject ?: return false }
-        return definitions.all { state -> state.keys == setOf("id", "text", "minimumConfidence") &&
-            !state.text("id").isNullOrBlank() && !state.text("text").isNullOrBlank() && threshold(state) != null } &&
+        // Optional "absent": texts that must not be recognized (at their own confidence) for the state to hold.
+        fun absent(state: JsonObject): Boolean = state["absent"]?.let { value -> (value as? JsonArray)?.let { list ->
+            list.isNotEmpty() && list.all { (it as? JsonObject)?.let { c -> c.keys == setOf("text", "minimumConfidence") &&
+                !c.text("text").isNullOrBlank() && threshold(c) != null } == true } } == true } ?: true
+        return definitions.all { state -> (state.keys == setOf("id", "text", "minimumConfidence") || state.keys == setOf("id", "text", "minimumConfidence", "absent")) &&
+            !state.text("id").isNullOrBlank() && !state.text("text").isNullOrBlank() && threshold(state) != null && absent(state) } &&
             definitions.map { it.text("id") }.distinct().size == definitions.size
     }
     /** Parsed classifyRegion states, or null when any part is not explicit. */
@@ -180,6 +184,22 @@ internal class ScreenActions(
             if (inputs.keys != setOf("region", "durationMs", "requireNoText") || inputs.text("region").isNullOrBlank() || duration(inputs) == null ||
                 (inputs["requireNoText"] as? JsonPrimitive)?.takeUnless { it.isString }?.booleanOrNull == null) "请指定区域、手势时长及是否要求区域无文字" else null
         },
+        // A clickable target found by a unique template match in the whole frame (icons without text).
+        // Inputs re-run the same match on a fresh frame; a region-derived observation is not accepted.
+        CapabilityContract(LOCATE_IMAGE, 1, inputTypes = mapOf("observation" to ActionValueType.STRING, "template" to ActionValueType.STRING,
+            "minimumScore" to ActionValueType.NUMBER), outputTypes = mapOf("target" to ActionValueType.STRING), outputHandles = mapOf("target" to TARGET),
+            inputHandles = mapOf("observation" to HandleRequirement(setOf(OBSERVATION), forbiddenAncestors = setOf(REGION))),
+            validateKnownInputs = { inputs -> when {
+                "template" in inputs && inputs.text("template").isNullOrBlank() -> ContentIssue("template", "模板资源不能为空")
+                "minimumScore" in inputs && unit(inputs["minimumScore"]) == null -> ContentIssue("minimumScore", "匹配得分需为零到一之间的数值")
+                else -> null } },
+            validateDefinition = { bundle, _, _, action -> when {
+                "template" in action.bindings -> "模板必须由任务版本明确指定"
+                bundle.resources.none { it.id == action.inputs.text("template") } -> "图像定位引用了未声明的模板资源"
+                else -> null } }) { inputs ->
+            if (inputs.keys != setOf("observation", "template", "minimumScore") || inputs.text("template").isNullOrBlank() || unit(inputs["minimumScore"]) == null)
+                "请指定观察、模板与零到一之间的得分" else null
+        },
         CapabilityContract(DERIVE, 1, inputTypes = mapOf("target" to ActionValueType.STRING) + geometryKeys.associateWith { ActionValueType.NUMBER },
             outputTypes = mapOf("region" to ActionValueType.STRING), outputHandles = mapOf("region" to REGION),
             inputHandles = mapOf("target" to HandleRequirement(setOf(TARGET))),
@@ -225,7 +245,9 @@ internal class ScreenActions(
     /** regionDerived marks candidates read inside a region; such observations are never re-resolved for input. */
     private data class Observation(val bridge: ObservationDevice, val result: TextReadResult.Observed, val models: OcrModelReferences,
         val regionDerived: Boolean = false)
-    private data class Target(val observation: Observation, val text: String, val minimum: BigDecimal, val match: RecognizedText)
+    /** A text target, or an image target when [template] is set (then [text] is empty and [minimum] is a score). */
+    private data class Target(val observation: Observation, val text: String, val minimum: BigDecimal, val match: RecognizedText,
+        val template: String? = null)
     /** Offsets from an anchor, kept so an input can re-derive the region on a fresh frame. */
     private data class Derivation(val anchor: Target, val dx: Int, val dy: Int, val width: Int, val height: Int, val referenceWidth: Int, val referenceHeight: Int)
     private data class Region(val observation: Observation, val bounds: TextBounds, val derivation: Derivation)
@@ -332,8 +354,9 @@ internal class ScreenActions(
         private val regions = mutableMapOf<String, Region>()
         private fun token() = UUID.randomUUID().toString()
         /** Region requests on the pixels already observed; the frame must still be current. */
-        private suspend fun inspect(region: Region, requests: List<InspectionRequest>): Any {
-            val observation = region.observation
+        private suspend fun inspect(region: Region, requests: List<InspectionRequest>): Any = inspectOn(region.observation, requests)
+        /** Requests on an observation's own pixels; the frame must still be current. */
+        private suspend fun inspectOn(observation: Observation, requests: List<InspectionRequest>): Any {
             observation.bridge.validateObservation(observation.result.stamp)?.let { return ActionResult.Unavailable(deviceReason(it)) }
             val pixels = observation.result.pixels ?: return ActionResult.Unavailable("本次观察未保留可复查的画面")
             val result = observer().inspect(bundle.version, observation.models, observation.result.stamp, pixels, requests) { permitted(attempt.ticket) }
@@ -346,6 +369,21 @@ internal class ScreenActions(
             return result
         }
         private fun digest(id: String) = bundle.resources.single { it.id == id }.sha256
+        private fun whole(observation: Observation) = observation.result.stamp.geometry.let { TextBounds(0, 0, it.width, it.height) }
+        /** Exactly one template match at or above [minimum] in the whole frame, else the reason. */
+        private suspend fun uniqueImage(observation: Observation, template: String, minimum: BigDecimal): Any {
+            val inspected = when (val value = inspectOn(observation, listOf(InspectionRequest.Image(whole(observation), template)))) {
+                is ActionResult -> return value
+                else -> value as InspectionResult.Inspected
+            }
+            val accepted = (inspected.values.single() as InspectionValue.Image).matches.filter { BigDecimal.valueOf(it.score) >= minimum }
+            return accepted.singleOrNull()?.let { RecognizedText("", it.score, it.bounds) }
+                ?: ActionResult.Unavailable(if (accepted.isEmpty()) "本次画面中没有达到得分的图像目标" else "本次画面中有 ${accepted.size} 处图像达到得分，不能唯一定位")
+        }
+        /** Re-resolves a target on a fresh frame: text by exact unique text, image by unique template match. */
+        private suspend fun resolve(target: Target, fresh: Observation): Any = if (target.template == null)
+            uniqueTarget(fresh, target.text, target.minimum) ?: ActionResult.Unavailable("输入前不能唯一确认目标文字")
+            else uniqueImage(fresh, target.template, target.minimum)
         private val invocations = mutableListOf<Invocation>()
         private var businessEvidence: StepOutcome.Completed? = null
         private var terminalAction: String? = null
@@ -403,9 +441,10 @@ internal class ScreenActions(
                     observation.bridge.validateObservation(observation.result.stamp)?.let { return ActionResult.Unavailable(deviceReason(it)) }
                     if (!permitted(attempt.ticket)) return ActionResult.Interrupted
                     if (action.capability == CLASSIFY) {
+                        fun seen(condition: JsonObject) = observation.result.candidates.any { it.text == condition.text("text") &&
+                            it.confidence.isFinite() && BigDecimal.valueOf(it.confidence) >= checkNotNull(threshold(condition)) }
                         val matches = inputs.getValue("states").jsonArray.map { it.jsonObject }.filter { state ->
-                            observation.result.candidates.any { it.text == state.text("text") && it.confidence.isFinite() &&
-                                BigDecimal.valueOf(it.confidence) >= checkNotNull(threshold(state)) }
+                            seen(state) && (state["absent"] as? JsonArray).orEmpty().none { seen(it.jsonObject) }
                         }
                         if (matches.size != 1) return ActionResult.Unavailable(if (matches.isEmpty())
                             "本次画面未能确认任何声明状态" else "本次画面同时命中多个声明状态")
@@ -456,6 +495,20 @@ internal class ScreenActions(
                     }
                 }
                 CLASSIFY_REGION -> classifyRegion(inputs)
+                LOCATE_IMAGE -> {
+                    val observation = observations[inputs.text("observation")] ?: return ActionResult.Unavailable("本步骤的画面观察不可用")
+                    if (observation.regionDerived) return ActionResult.Unavailable("图像定位需要整图观察")
+                    val template = checkNotNull(inputs.text("template")); val minimum = checkNotNull(unit(inputs["minimumScore"]))
+                    when (val value = uniqueImage(observation, template, minimum)) {
+                        is ActionResult -> value
+                        else -> {
+                            val match = value as RecognizedText
+                            val token = token(); targets[token] = Target(observation, "", minimum, match, template)
+                            ActionResult.Produced(buildJsonObject { put("target", token) }, buildJsonObject {
+                                put("kind", LOCATE_IMAGE); region(match.bounds); put("score", match.confidence); put("templateSha256", digest(template)) })
+                        }
+                    }
+                }
                 else -> error("未注册的屏幕动作")
             }
         }
@@ -508,7 +561,7 @@ internal class ScreenActions(
                 is Acquisition.Problem -> return acquired.result
                 is Acquisition.Ready -> acquired.value
             }
-            val match = uniqueTarget(fresh, target.text, target.minimum) ?: return ActionResult.Unavailable("输入前不能唯一确认目标文字")
+            val match = when (val value = resolve(target, fresh)) { is ActionResult -> return value; else -> value as RecognizedText }
             val bounds = match.bounds
             val centre = ScreenPoint(bounds.left + bounds.width / 2f, bounds.top + bounds.height / 2f)
             var gestureMillis = checkNotNull(duration(inputs))
@@ -543,11 +596,11 @@ internal class ScreenActions(
                 is Acquisition.Problem -> return acquired.result
                 is Acquisition.Ready -> acquired.value
             }
-            val match = uniqueTarget(fresh, anchor.text, anchor.minimum) ?: return ActionResult.Unavailable("输入前不能唯一确认锚点文字")
+            val match = when (val value = resolve(anchor, fresh)) { is ActionResult -> return value; else -> value as RecognizedText }
             val bounds = regionBounds(match, fresh.result.stamp.geometry, region.derivation) ?: return ActionResult.Unavailable("输入前推出的区域超出画面")
             var trace = buildJsonObject { put("kind", TAP_REGION); region(bounds) }
             if ((inputs["requireNoText"] as JsonPrimitive).boolean) {
-                val inspected = when (val value = inspect(Region(fresh, bounds, region.derivation), listOf(InspectionRequest.Text(bounds)))) {
+                val inspected = when (val value = inspectOn(fresh, listOf(InspectionRequest.Text(bounds)))) {
                     is ActionResult -> return value
                     else -> value as InspectionResult.Inspected
                 }

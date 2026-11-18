@@ -262,4 +262,31 @@ class TextObservationContractTest {
         // A region from before an earlier input is stale.
         assertTrue(codec.validate(input(listOf(read, locate, derive, tap, press, after, finalProof))).any { it.reason.contains("失效") })
     }
+
+    @Test fun imageTargetsAreUniqueTemplateMatchesOnAFullFrameAndCanBeClicked() {
+        val icon = ActionDefinition("icon", ScreenActions.LOCATE_IMAGE, 1, buildJsonObject { put("template", "jade"); put("minimumScore", 0.9) },
+            mapOf("observation" to ActionInputBinding.Output("read", "observation")))
+        val press = tap.copy(bindings = mapOf("target" to ActionInputBinding.Output("icon", "target")))
+        assertTrue(codec.validate(input(listOf(read, icon, press, after, finalProof))).toString(), codec.validate(input(listOf(read, icon, press, after, finalProof))).isEmpty())
+        // An image target can anchor a region too.
+        val near = derive.copy(bindings = mapOf("target" to ActionInputBinding.Output("icon", "target")))
+        assertTrue(codec.validate(input(listOf(read, icon, near, regionRead, regionProof))).isEmpty())
+        for (bad in listOf(buildJsonObject { put("template", "missing"); put("minimumScore", 0.9) }, buildJsonObject { put("template", "jade"); put("minimumScore", 1.2) },
+            buildJsonObject { put("template", "jade") }))
+            assertTrue(bad.toString(), codec.validate(input(listOf(read, icon.copy(inputs = bad), press, after, finalProof))).isNotEmpty())
+        val fromRegion = icon.copy(bindings = mapOf("observation" to ActionInputBinding.Output("regionRead", "observation")))
+        assertTrue(codec.validate(programmed(nodes(read, locate, derive, regionRead, fromRegion, verify))).any { it.reason.contains("来源") })
+    }
+    @Test fun classifyStatesMayRequireAbsentTextButStayExplicit() {
+        val states = buildJsonArray {
+            add(buildJsonObject { put("id", "dialog"); put("text", "下载"); put("minimumConfidence", 0.8) })
+            add(buildJsonObject { put("id", "shop"); put("text", "礼包屋"); put("minimumConfidence", 0.8)
+                put("absent", buildJsonArray { add(buildJsonObject { put("text", "下载"); put("minimumConfidence", 0.8) }) }) })
+        }
+        assertTrue(codec.validate(programmed(nodes(read, classify.copy(inputs = buildJsonObject { put("states", states) }), verify))).isEmpty())
+        for (absent in listOf(JsonArray(emptyList()), buildJsonArray { add(buildJsonObject { put("text", "下载") }) }, JsonPrimitive("下载"))) {
+            val bad = buildJsonArray { add(JsonObject(states[1].jsonObject + ("absent" to absent))) }
+            assertTrue(absent.toString(), codec.validate(programmed(nodes(read, classify.copy(inputs = buildJsonObject { put("states", bad) }), verify))).isNotEmpty())
+        }
+    }
 }
