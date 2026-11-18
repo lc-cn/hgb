@@ -2,5 +2,10 @@
     <application>
         <service android:name=".vision.ApplicationStartupProbeService"
             android:exported="false" android:process=":maa_ocr" />
+        <!-- Debug only: shell (adb) holds DUMP; ordinary apps cannot send this. -->
+        <receiver android:name=".debug.LocalTaskTrigger" android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter><action android:name="io.github.yysassist.debug.RUN_LOCAL_TASK" /></intent-filter>
+        </receiver>
     </application>
 </manifest>
