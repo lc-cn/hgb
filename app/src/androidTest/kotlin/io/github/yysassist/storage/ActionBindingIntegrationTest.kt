@@ -62,11 +62,11 @@ class ActionBindingIntegrationTest {
         assertTrue(save(-1) is ConfigurationSaveResult.Invalid)
         assertEquals(valid.snapshot, configurations.open(address))
         val draft = TaskAdmissionRepository(database, library).task(address)
-        assertEquals(values(12), Json.parseToJsonElement(draft.task.configurationJson))
+        assertEquals(values(12), Json.parseToJsonElement(draft.tasks.single().configurationJson))
         val decimal = JsonObject(mapOf("milliseconds" to Json.parseToJsonElement("12.00")))
         assertTrue(configurations.save(configurations.open(address), decimal) is ConfigurationSaveResult.Saved)
         assertEquals(decimal, configurations.open(address).values)
-        assertEquals(decimal, Json.parseToJsonElement(TaskAdmissionRepository(database, library).task(address).task.configurationJson))
+        assertEquals(decimal, Json.parseToJsonElement(TaskAdmissionRepository(database, library).task(address).tasks.single().configurationJson))
     }
 
     @Test fun corruptedSavedArgumentsCannotBypassAdmissionOrTheStateTransaction(): Unit = runBlocking {

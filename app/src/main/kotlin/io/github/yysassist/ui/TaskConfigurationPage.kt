@@ -2,13 +2,22 @@ package io.github.yysassist.ui
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import io.github.yysassist.core.content.ConfigurationField
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -19,7 +28,7 @@ import kotlinx.serialization.json.JsonElement
 internal fun TaskConfigurationPage(state: TaskEditorState, wide: Boolean, reload: () -> Unit,
     change: (String, JsonElement) -> Unit, save: () -> Unit) {
     when (state) {
-        TaskEditorState.Loading -> Box(Modifier.fillMaxSize(), androidx.compose.ui.Alignment.Center) { CircularProgressIndicator() }
+        TaskEditorState.Loading -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
         is TaskEditorState.Failure -> Column(Modifier.padding(UiSpace.page)) {
             Text(state.message, color = MaterialTheme.colorScheme.error)
             TextButton(onClick = reload) { Text("重新读取") }
@@ -32,8 +41,23 @@ internal fun TaskConfigurationPage(state: TaskEditorState, wide: Boolean, reload
                     if (field.recommended != null && state.values[field.id] == null) change(field.id, field.recommended!!)
                 }
             }
+            val tabs = state.snapshot.task.fields.mapNotNull { it.tab }.distinct()
+            var tabName by rememberSaveable(state.snapshot.address.taskId) { mutableStateOf(tabs.firstOrNull()) }
             Column(Modifier.fillMaxSize().imePadding()) {
-                ConfigurationFields(state, landscape, Modifier.weight(1f).fillMaxWidth(), change, reload)
+                if (tabs.size > 1) Row(Modifier.padding(start = UiSpace.medium, end = UiSpace.medium, top = UiSpace.medium).fillMaxWidth()
+                    .clip(RoundedCornerShape(UiSpace.medium)).background(MaterialTheme.colorScheme.surfaceContainer)
+                    .border(UiSpace.hairline, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(UiSpace.medium)).padding(3.dp).selectableGroup(),
+                    horizontalArrangement = Arrangement.spacedBy(UiSpace.tiny)) {
+                    tabs.forEach { tab ->
+                        val active = tab == tabName
+                        Box(Modifier.weight(1f).heightIn(min = UiSpace.hit).clip(RoundedCornerShape(9.dp))
+                            .background(if (active) MaterialTheme.colorScheme.primary else Color.Transparent)
+                            .selectable(active, role = Role.Tab) { tabName = tab }, Alignment.Center) {
+                            Text(tab, color = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium)
+                        }
+                    }
+                }
+                ConfigurationFields(state, state.snapshot.task.fields.filter { tabs.size < 2 || it.tab == tabName }, landscape, Modifier.weight(1f).fillMaxWidth(), change, reload)
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(horizontal = UiSpace.medium, vertical = 10.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -52,7 +76,7 @@ internal fun TaskConfigurationPage(state: TaskEditorState, wide: Boolean, reload
 }
 
 @Composable
-private fun ConfigurationFields(state: TaskEditorState.Ready, landscape: Boolean, modifier: Modifier,
+private fun ConfigurationFields(state: TaskEditorState.Ready, shown: List<ConfigurationField>, landscape: Boolean, modifier: Modifier,
     change: (String, JsonElement) -> Unit, reload: () -> Unit) {
     LazyColumn(modifier, contentPadding = PaddingValues(UiSpace.medium), verticalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
         state.message?.let { message -> item {
@@ -65,7 +89,7 @@ private fun ConfigurationFields(state: TaskEditorState.Ready, landscape: Boolean
             Text("部分原设置与当前任务版本不兼容，原值已保留，可在任务更新中切换版本。", color = MaterialTheme.colorScheme.error)
         }
         if (state.snapshot.task.fields.isEmpty()) item { Text("此任务无需额外设置", color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        items(state.snapshot.task.fields.groupBy { it.section }.toList(), key = { it.first ?: "" }) { (section, fields) ->
+        items(shown.groupBy { it.section }.toList(), key = { it.first ?: "" }) { (section, fields) ->
             section?.let { SectionLabel(it) }
             AssistCard {
                 fields.chunked(if (landscape) 2 else 1).forEachIndexed { index, row ->
@@ -73,7 +97,7 @@ private fun ConfigurationFields(state: TaskEditorState.Ready, landscape: Boolean
                     Row(Modifier.fillMaxWidth().padding(UiSpace.medium), horizontalArrangement = Arrangement.spacedBy(UiSpace.section)) {
                         row.forEach { field ->
                             Box(Modifier.weight(1f)) {
-                                ConfigurationFieldView(field, state.values[field.id], state.issues.filter { it.location == field.id }, !state.saving, landscape) { change(field.id, it) }
+                                ConfigurationFieldView(field, state.values[field.id], state.issues.filter { it.location == field.id }, !state.saving && !field.readOnly, landscape) { change(field.id, it) }
                             }
                         }
                         if (landscape && row.size == 1) Spacer(Modifier.weight(1f))

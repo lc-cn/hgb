@@ -71,10 +71,11 @@ class ExecutionControlsTest {
                         if (home) ExecutionWorkbench(state, status, wide, { runtime.submit(ExecutorCommand.Pause) },
                             { id, mode -> runtime.submit(id?.let { ExecutorCommand.ResumeCurrent(it, mode) } ?: ExecutorCommand.Resume(mode)) },
                             { runtime.submit(ExecutorCommand.Remove(it)) }, { state.current?.let { runtime.submit(ExecutorCommand.StopCurrent(it.runId)) } })
-                        else TaskCenter(VersionCatalogState.Ready(catalog), state, status, { runtime.enqueueTask(it) },
-                            { runtime.submit(ExecutorCommand.PauseCurrent(it)) }, { runtime.submit(ExecutorCommand.StopCurrent(it)) },
-                            { id, mode -> runtime.submit(ExecutorCommand.ResumeCurrent(id, mode)) }, {}, {}, {})
+                        else TaskCenter(VersionCatalogState.Ready(catalog), state, status, { runtime.enqueueTask(it) }, {}, {}, {})
                     }
+                    if (!home && runStatusVisible(state, status)) RunStatusBar(state, status, {}, { runtime.submit(ExecutorCommand.Pause) },
+                        { id, mode -> runtime.submit(id?.let { ExecutorCommand.ResumeCurrent(it, mode) } ?: ExecutorCommand.Resume(mode)) },
+                        { state.current?.let { runtime.submit(ExecutorCommand.StopCurrent(it.runId)) } })
                 }
             } }
         }
@@ -93,8 +94,8 @@ class ExecutionControlsTest {
         show(wide)
         compose.onNodeWithContentDescription("加入队列：等待一").performClick()
         compose.waitUntil(5_000) { runtime.status.value is RuntimeStatus.Waiting }
-        compose.onNodeWithContentDescription("暂停：等待一")
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "等待中"))
+        compose.onNodeWithText("等待中").assertIsDisplayed()
+        compose.onNodeWithContentDescription("暂停运行").assertIsEnabled()
         compose.onNodeWithText("工作台").performClick()
         compose.onNodeWithText("等待目标应用回到前台").assertIsDisplayed()
         compose.onNodeWithContentDescription("暂停：队列").assertIsEnabled()
@@ -110,16 +111,18 @@ class ExecutionControlsTest {
     @Test fun waitingIsVisibleAndCanBePausedInLandscape() = waitingControls(true)
     @Test fun queuedRowsDisableEnqueueAndPausedRowsOfferTheTwoRealRecoveryModes() {
         show(); addBoth()
-        compose.onNodeWithContentDescription("加入队列：等待二").assertIsNotEnabled()
+        compose.onNodeWithContentDescription("加入队列：等待二").assertDoesNotExist()
+        compose.onNodeWithText("队列中").assertIsDisplayed()
         val old = runtime.state.value.activeTicket
-        compose.onNodeWithContentDescription("暂停：等待一").performClick(); wait { it.phase == ExecutorPhase.PAUSED }
-        compose.onNodeWithContentDescription("继续：等待一").performClick()
+        compose.onNodeWithContentDescription("暂停运行").performClick(); wait { it.phase == ExecutorPhase.PAUSED }
+        compose.onNodeWithContentDescription("继续运行").performClick()
         compose.onNodeWithText("重新开始当前任务").performClick(); wait { it.phase == ExecutorPhase.RUNNING && it.activeTicket != old }
         screenshot("task-controls-portrait")
     }
-    @Test fun longPressStopsOnlyTheCurrentAndDoesNotAlsoEnqueueAnotherRound() {
+    @Test fun stoppingFromTheStatusBarEndsOnlyTheCurrentAndDoesNotEnqueueAnotherRound() {
         show(); addBoth()
-        compose.onNodeWithContentDescription("暂停：等待一").performTouchInput { longClick() }
+        compose.onNodeWithContentDescription("停止当前任务").performClick()
+        compose.onNodeWithText("停止").performClick()
         wait { it.phase == ExecutorPhase.PAUSED && it.current == null }
         assertEquals(listOf("two"), runtime.state.value.waiting.map { it.task.id })
         compose.onNodeWithText("工作台").performClick()
@@ -156,7 +159,7 @@ class ExecutionControlsTest {
         val catalog = runBlocking { library.snapshot() }
         compose.setContent { val state by runtime.state.collectAsState(); AssistTheme(ThemeMode.LIGHT) { Surface {
             TaskCenter(VersionCatalogState.Ready(catalog), state, RuntimeStatus.Ready,
-                { runtime.enqueueTask(it) }, {}, {}, { _, _ -> }, {}, {}, { edited = it },
+                { runtime.enqueueTask(it) }, {}, {}, { edited = it },
                 FloatingPreferencesState.Ready(FloatingSettings(true, emptySet(), null, null)), { favorite = it })
         } } }
         compose.onNodeWithContentDescription("设为常用：等待一").performClick()
@@ -173,7 +176,7 @@ class ExecutionControlsTest {
     private fun showList() {
         val catalog = runBlocking { library.snapshot() }
         compose.setContent { val state by runtime.state.collectAsState(); AssistTheme(ThemeMode.LIGHT) { Surface(Modifier.fillMaxSize()) {
-            TaskCenter(VersionCatalogState.Ready(catalog), state, RuntimeStatus.Ready, { runtime.enqueueTask(it) }, {}, {}, { _, _ -> }, {}, {}, {},
+            TaskCenter(VersionCatalogState.Ready(catalog), state, RuntimeStatus.Ready, { runtime.enqueueTask(it) }, {}, {}, {},
                 FloatingPreferencesState.Ready(FloatingSettings(true, setOf(TaskAddress("fixture", "two")), null, null)), {})
         } } }
     }

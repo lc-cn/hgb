@@ -95,6 +95,10 @@ data class ConfigurationField(
     val options: List<FieldOption> = emptyList(),
     /** Heading under which the settings page groups this field. */
     val section: String? = null,
+    /** Optional page within the settings screen, for tasks with two distinct halves. */
+    val tab: String? = null,
+    /** Shown for information; the user cannot change it. */
+    val readOnly: Boolean = false,
     /** One line explaining the field on the settings page. */
     val description: String? = null,
     /** Suggested value offered by the settings page; never applied without the user saving it. */

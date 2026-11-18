@@ -22,6 +22,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.yysassist.*
 import io.github.yysassist.core.execution.*
+import io.github.yysassist.core.content.IdentityPolicy
+import io.github.yysassist.core.model.ExecutionContext
+import io.github.yysassist.core.model.Principal
+import io.github.yysassist.plans.PlanSubmission
+import io.github.yysassist.storage.ActiveTaskContent
 import io.github.yysassist.storage.TaskAddress
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -48,6 +53,11 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
     val scope = rememberCoroutineScope()
     var selected by rememberSaveable { mutableStateOf(Page.TASKS.name) }
     var detail by rememberSaveable { mutableStateOf<String?>(null) }
+    var favoritesRequest by rememberSaveable { mutableIntStateOf(0) }
+    val plans by application.plans.plans.collectAsState()
+    var editPlanId by rememberSaveable { mutableStateOf<String?>(null) }
+    var planTask by rememberSaveable { mutableStateOf<String?>(null) }
+    var choosePlanFor by remember { mutableStateOf<TaskAddress?>(null) }
     var editTarget by rememberSaveable { mutableStateOf<String?>(null) }
     var editTask by rememberSaveable { mutableStateOf<String?>(null) }
     val address = editTarget?.let { target -> editTask?.let { TaskAddress(target, it) } }
@@ -60,6 +70,7 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
     LaunchedEffect(application.floating) { application.floating.messages.collect { snackbar.showSnackbar(it) } }
     LaunchedEffect(application.executor) { application.executor.messages.collect { snackbar.showSnackbar(it) } }
     val page = Page.valueOf(selected)
+    val activeBundle = ((versions as? VersionCatalogState.Ready)?.catalog?.activeContent as? ActiveTaskContent.Available)?.bundle
     BackHandler(detail != null || page != Page.TASKS) {
         if (detail != null) detail = null else selected = Page.TASKS.name
     }
@@ -69,6 +80,13 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
     }
     val stopCurrent = { executor.current?.let { application.executor.submit(ExecutorCommand.StopCurrent(it.runId)) }; Unit }
     AssistTheme(mode) {
+        choosePlanFor?.let { address ->
+            val candidates = plans.orEmpty().filter { it.context.targetId == address.targetId && address.taskId !in it.taskIds }
+            AlertDialog(onDismissRequest = { choosePlanFor = null }, title = { Text("加入计划") }, text = { Column {
+                candidates.forEach { plan -> TextButton({ choosePlanFor = null; scope.launch { application.plans.addTask(plan, address.taskId); snackbar.showSnackbar("已加入「${plan.name}」") } }) { Text(plan.name) } }
+                TextButton({ choosePlanFor = null; editPlanId = null; planTask = address.taskId; detail = "新建计划" }) { Text("新建计划") }
+            } }, confirmButton = {}, dismissButton = { TextButton({ choosePlanFor = null }) { Text("取消") } })
+        }
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
                 val wide = maxWidth >= UiSpace.wide
@@ -86,6 +104,8 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
                                 TextButton(enabled = pull !is TaskPullState.Fetching, onClick = application.taskUpdates::pullLatest) {
                                     Text(if (pull is TaskPullState.Fetching) "拉取中" else "拉取")
                                 }
+                            } else if (page == Page.PLANS && detail == null && !plans.isNullOrEmpty()) {
+                                IconButton(onClick = { editPlanId = null; planTask = null; detail = "新建计划" }) { Icon(AssistIcons.Plus, "新建计划") }
                             } else if (detail == "GitHub" && github is GitHubSessionState.Connected) {
                                 TextButton(enabled = !(github as GitHubSessionState.Connected).checking, onClick = application.github::checkAccount) { Text("检查") }
                             }
@@ -98,6 +118,15 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
                                 "运行记录" -> if (runtimeStatus == RuntimeStatus.Loading) Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
                                     else if (runtimeStatus is RuntimeStatus.Failure) EmptyContent("运行记录暂不可用", (runtimeStatus as RuntimeStatus.Failure).message)
                                     else RunHistoryPage(executor)
+                                "运行与数据" -> DataUsagePage(executor)
+                                "新建计划", "编辑计划" -> PlanEditorPage(plans?.firstOrNull { it.id == editPlanId }.takeIf { detail == "编辑计划" }, planTask, activeBundle, { name, targetId, schedule, taskIds ->
+                                    val existing = plans?.firstOrNull { it.id == editPlanId }.takeIf { detail == "编辑计划" }
+                                    val target = activeBundle?.targets?.firstOrNull { it.id == targetId }
+                                    val context = existing?.context ?: if (target?.identityPolicy == IdentityPolicy.NONE) ExecutionContext(targetId, Principal.Anonymous)
+                                        else executor.context?.takeIf { it.targetId == targetId }
+                                    if (context == null) scope.launch { snackbar.showSnackbar("请先核对当前账号，计划会绑定到该账号") }
+                                    else scope.launch { application.plans.save(existing, name, context, schedule, taskIds); detail = null; selected = Page.PLANS.name }
+                                }, { plans?.firstOrNull { it.id == editPlanId }?.let { plan -> scope.launch { application.plans.delete(plan); detail = null } } })
                                 "GitHub" -> GitHubAccountPage(github, wide, application.github::signIn, application.github::cancelSignIn,
                                     application.github::signOut, { detail = "任务更新" })
                                 "任务更新" -> TaskVersionsPage(versions, pull, versionOperation, application.taskUpdates::reloadCatalog,
@@ -108,19 +137,22 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
                                 else -> when (page) {
                                     Page.TASKS -> TaskCenter(versions, executor, runtimeStatus,
                                         { application.executor.enqueueTask(it) },
-                                        { application.executor.submit(ExecutorCommand.PauseCurrent(it)) },
-                                        { application.executor.submit(ExecutorCommand.StopCurrent(it)) },
-                                        { id, resume -> application.executor.submit(ExecutorCommand.ResumeCurrent(id, resume)) },
                                         application.taskUpdates::reloadCatalog, { detail = "任务更新" }, edit = {
                                         editTarget = it.targetId; editTask = it.taskId; detail = "任务配置"
-                                    }, favorites = floating, toggleFavorite = application.floating::toggle, openHistory = { detail = "运行记录" })
-                                    Page.PLANS -> EmptyContent("暂无计划", "取得任务并保存配置后，可组合执行计划。")
+                                    }, favorites = floating, toggleFavorite = application.floating::toggle, openHistory = { detail = "运行记录" }, favoritesRequest = favoritesRequest, addToPlan = { choosePlanFor = it })
+                                    Page.PLANS -> PlansPage(plans, executor, activeBundle, application.plans::nextRun,
+                                        { plan, enabled -> scope.launch { application.plans.setEnabled(plan, enabled) } },
+                                        { plan -> scope.launch { (application.plans.runNow(plan) as? PlanSubmission.Rejected)?.let { snackbar.showSnackbar(it.reason) } } },
+                                        { plan -> editPlanId = plan.id; planTask = null; detail = "编辑计划" },
+                                        { editPlanId = null; planTask = null; detail = "新建计划" })
                                     Page.SETTINGS -> SettingsPage(appearance, mode, { item ->
                                         scope.launch {
                                             try { application.appearance.setTheme(item) }
                                             catch (_: IOException) { snackbar.showSnackbar("主题设置保存失败") }
                                         }
-                                    }, versions, github, floating, application.floating::setVisible, application.floating::reload) { detail = it }
+                                    }, versions, github, floating, application.floating::setVisible, application.floating::setAutoDock, application.floating::reload) {
+                                        if (it == "常用") { favoritesRequest++; selected = Page.TASKS.name } else detail = it
+                                    }
                                 }
                             }
                             SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))

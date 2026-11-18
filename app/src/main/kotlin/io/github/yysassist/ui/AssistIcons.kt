@@ -29,6 +29,7 @@ object AssistIcons {
     val Star = glyph("Star", "M12 2L15 8.5L22 9.5L17 14.5L18.5 22L12 18.5L5.5 22L7 14.5L2 9.5L9 8.5Z")
     val Play = glyph("Play", "M7 4L20 12L7 20Z")
     val Bell = glyph("Bell", "M5 17V9A7 7 0 0 1 19 9V17L21 19H3Z M9 22H15")
+    val Plus = glyph("Plus", "M12 5V19 M5 12H19")
     val Stop = glyph("Stop", "M6 6H18V18H6Z")
     val Search = glyph("Search", "M18 11A7 7 0 1 1 4 11A7 7 0 1 1 18 11Z M16 16L21 21")
     val Sliders = glyph("Sliders", "M3 7H13 M19 7H21 M3 17H5 M11 17H21 M18 7A2.500 2.500 0 1 1 13 7A2.500 2.500 0 1 1 18 7Z M11 17A2.500 2.500 0 1 1 6 17A2.500 2.500 0 1 1 11 17Z")

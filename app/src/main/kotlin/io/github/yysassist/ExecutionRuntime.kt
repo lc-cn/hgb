@@ -43,7 +43,8 @@ class ExecutionRuntime(
 ) {
     private sealed interface Message {
         data class Command(val command: ExecutorCommand, val reply: CompletableDeferred<RuntimeCommandResult>) : Message
-        data class AddTask(val address: TaskAddress, val commandId: String, val reply: CompletableDeferred<RuntimeCommandResult>) : Message
+        data class Add(val candidate: suspend () -> TaskAdmissionDraft, val required: ExecutionContext?, val commandId: String,
+            val reply: CompletableDeferred<RuntimeCommandResult>) : Message
         data class Admission(val candidate: TaskAdmissionDraft?, val context: ExecutionContext?, val commandId: String,
             val reply: CompletableDeferred<RuntimeCommandResult>, val failure: String?) : Message
         data class Bound(val ticket: AttemptTicket, val binding: Job, val bundle: TaskBundle?, val condition: StepStartCondition,
@@ -92,7 +93,10 @@ class ExecutionRuntime(
 
     fun submit(command: ExecutorCommand): RuntimeReceipt = receipt { Message.Command(command, it) }
     fun enqueueTask(address: TaskAddress, commandId: String = UUID.randomUUID().toString()): RuntimeReceipt =
-        receipt { Message.AddTask(address, commandId, it) }
+        receipt { Message.Add({ admission.task(address) }, null, commandId, it) }
+    /** Submits one round of a plan; [context] is the account the plan belongs to, never the current one by default. */
+    fun enqueuePlan(planId: String, name: String, context: ExecutionContext, taskIds: List<String>, commandId: String): RuntimeReceipt =
+        receipt { Message.Add({ admission.plan(planId, name, context.targetId, taskIds) }, context, commandId, it) }
     fun readinessChanged() { readinessRevision.update { it + 1 }; commands.trySend(Message.Readiness) }
     /** Read-only candidate assessment; admission still rechecks config/version/context at execution. */
     suspend fun assessStart(address: TaskAddress): TaskStartAvailability = withContext(Dispatchers.IO) {
@@ -119,7 +123,7 @@ class ExecutionRuntime(
     }
     private fun response(message: Message): CompletableDeferred<RuntimeCommandResult>? = when (message) {
         is Message.Command -> message.reply
-        is Message.AddTask -> message.reply
+        is Message.Add -> message.reply
         is Message.Admission -> message.reply
         else -> null
     }
@@ -159,15 +163,16 @@ class ExecutionRuntime(
         }
         when (message) {
             is Message.Command -> completeCommand(message.command, message.reply)
-            is Message.AddTask -> {
+            is Message.Add -> {
                 scope.launch(Dispatchers.IO) {
                     val ready = try {
-                    val candidate = admission.task(message.address)
+                    val candidate = message.candidate()
                     val context = when (candidate.target.identityPolicy) {
                         IdentityPolicy.NONE -> ExecutionContext(candidate.target.id, Principal.Anonymous)
                         else -> state.value.context?.takeIf { it.targetId == candidate.target.id }
                             ?: throw ExecutionStateRejected("请先核对当前账号")
                     }
+                    if (message.required != null && message.required != context) throw ExecutionStateRejected("当前账号不是此计划所属账号")
                     if (!contextReadiness.verified(candidate.target, context)) throw ExecutionStateRejected("请先核对当前账号")
                     Message.Admission(candidate, context, message.commandId, message.reply, null)
                     } catch (cancelled: CancellationException) { throw cancelled }

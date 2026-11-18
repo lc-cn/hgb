@@ -7,6 +7,9 @@ import android.content.Intent
 import android.util.Log
 import io.github.yysassist.AssistApplication
 import io.github.yysassist.core.content.*
+import io.github.yysassist.core.model.ExecutionContext
+import io.github.yysassist.core.model.Principal
+import io.github.yysassist.core.plan.PlanSchedule
 import io.github.yysassist.storage.TaskVersionLibrary
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +22,7 @@ import kotlinx.serialization.json.JsonPrimitive
  * Debug builds only, for looking at the interface on an emulator. Installs a task list whose steps only
  * wait, so nothing touches a game. Protected by android.permission.DUMP: only the shell can send it.
  *
- * adb shell am broadcast -n <pkg>/.debug.DemoTaskSeeder -a io.github.yysassist.debug.SEED_DEMO_TASKS
+ * adb shell am broadcast -n <pkg>/.debug.DemoTaskSeeder -a io.github.yysassist.debug.SEED_DEMO_TASKS [--ei planInMinutes 2]
  */
 class DemoTaskSeeder : BroadcastReceiver() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -33,6 +36,12 @@ class DemoTaskSeeder : BroadcastReceiver() {
                 val text = app.taskCodec.write(demoBundle())
                 val installed = app.versionLibrary.install(text, VERSION, TaskVersionLibrary.sha256(text))
                 Log.i(TAG, "install=$installed activate=${app.versionLibrary.activate(VERSION)}")
+                val minutes = intent.getIntExtra("planInMinutes", -1)
+                if (minutes >= 0) {
+                    val at = java.time.LocalTime.now().plusMinutes(minutes.toLong())
+                    app.plans.save(null, "演示计划", ExecutionContext(TARGET, Principal.Anonymous),
+                        PlanSchedule(java.time.DayOfWeek.entries.toSet(), at.hour * 60 + at.minute), listOf("mail", "sign"))
+                }
             } finally { pending.finish() }
         }
     }
@@ -60,19 +69,21 @@ class DemoTaskSeeder : BroadcastReceiver() {
             switch("boost", "使用御魂加成", "加成", false, "运行前开启，任务结束后关闭"),
             number("fail", "连续失败后结束", "失败处理", 1, 10, 1, 3, "避免阵容不足时持续消耗体力"))),
         task("realm", "kekkai", "个人结界突破", "用完突破券后结束"), task("guild", "kekkai", "寮突破", "按寮内开放时间运行"),
-        task("enhance", "soul", "御魂强化", "强化到 +15 · 金币上限 500 万", listOf(
-            choice("star", "星级", "强化对象", "六星", "五星", "六星"), number("level", "目标等级", "强化对象", 3, 15, 3, 15, "达到后停止强化该御魂"),
-            number("gold", "金币上限", "花费上限", 100, 5000, 100, 500, "单位：万，到达后结束任务"))),
-        task("dispose", "soul", "御魂处置", "处置前先确认", listOf(
-            choice("max", "最高星级", "处置范围", "四星", "三星", "四星", "五星"), switch("keep", "保留已强化的御魂", "处置范围", true, "等级高于 +0 的不处置"),
-            switch("confirm", "处置前先确认", "执行方式", true, "先列出将处置的御魂，确认后再执行"))),
+        task("souls", "soul", "御魂强化与处置", "强化到 +15 · 处置前先确认", listOf(
+            choice("star", "星级", "强化对象", "六星", "五星", "六星").copy(tab = "强化"),
+            number("level", "目标等级", "强化对象", 3, 15, 3, 15, "达到后停止强化该御魂").copy(tab = "强化"),
+            number("gold", "金币上限", "花费上限", 100, 5000, 100, 500, "单位：万，到达后结束任务").copy(tab = "强化"),
+            choice("max", "最高星级", "处置范围", "四星", "三星", "四星", "五星").copy(tab = "处置", description = "高于此星级的御魂一律不处置"),
+            switch("keep", "保留已强化的御魂", "处置范围", true, "等级高于 +0 的不处置").copy(tab = "处置"),
+            switch("locked", "保留已锁定的御魂", "处置范围", true, "已锁定的始终不处置").copy(tab = "处置", readOnly = true),
+            switch("confirm", "处置前先确认", "执行方式", true, "先列出将处置的御魂，确认后再执行").copy(tab = "处置"))),
     ), listOf(TargetProfile(TARGET, "阴阳师", listOf("com.netease.onmyoji"), IdentityPolicy.NONE, listOf(
         TaskCategory("base", "运行基础"), TaskCategory("daily", "日常与领取"), TaskCategory("fight", "副本与挑战"),
         TaskCategory("kekkai", "结界与阴阳寮"), TaskCategory("soul", "御魂整理")))))
 
     private companion object {
         const val ACTION = "io.github.yysassist.debug.SEED_DEMO_TASKS"
-        const val VERSION = "demo-2"
+        const val VERSION = "demo-3"
         const val TARGET = "onmyoji"
         const val TAG = "DemoTaskSeeder"
     }

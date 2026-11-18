@@ -59,6 +59,8 @@ class AssistApplication : Application() {
         private set
     lateinit var actionTraces: ActionTraceLog
         private set
+    lateinit var plans: io.github.yysassist.plans.PlanCoordinator
+        private set
     internal lateinit var versionLibrary: TaskVersionLibrary
         private set
     internal lateinit var taskCodec: BundleCodec
@@ -81,6 +83,17 @@ class AssistApplication : Application() {
         executor = ExecutionRuntime(ExecutionStateStore(database, library), library,
             TaskAdmissionRepository(database, library), workers, scope,
             startReadiness = DeviceExecutionReadiness(workers.contracts))
+        plans = io.github.yysassist.plans.PlanCoordinator(io.github.yysassist.storage.PlanRepository(database), { plan, command ->
+            when (val result = executor.enqueuePlan(plan.id, plan.name, plan.context, plan.taskIds, command).await()) {
+                is RuntimeCommandResult.Applied -> when (val enqueued = (result.reply as? io.github.yysassist.core.execution.ExecutorReply.Enqueued)?.result) {
+                    is io.github.yysassist.core.execution.EnqueueResult.Accepted -> io.github.yysassist.plans.PlanSubmission.Accepted(enqueued.runId)
+                    is io.github.yysassist.core.execution.EnqueueResult.Duplicate -> io.github.yysassist.plans.PlanSubmission.Accepted(enqueued.runId)
+                    else -> io.github.yysassist.plans.PlanSubmission.Rejected("计划提交未确认")
+                }
+                is RuntimeCommandResult.Rejected -> io.github.yysassist.plans.PlanSubmission.Rejected(result.message)
+                is RuntimeCommandResult.Unconfirmed -> io.github.yysassist.plans.PlanSubmission.Rejected(result.message)
+            }
+        }, io.github.yysassist.plans.AndroidPlanAlarm(this), scope)
         configurations = TaskConfigurationRepository(database, library)
         taskEditor = TaskConfigurationEditor(configurations, scope)
         val client = OkHttpClient.Builder().proxy(Proxy.NO_PROXY).followSslRedirects(false)

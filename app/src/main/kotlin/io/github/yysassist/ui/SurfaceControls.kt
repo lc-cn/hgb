@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +24,9 @@ import androidx.compose.ui.unit.dp
 
 private val CardShape = RoundedCornerShape(14.dp)
 
+/** The two-pane landscape settings page drops row icons: the category list already orients the reader. */
+internal val LocalSettingTiles = compositionLocalOf { true }
+
 /** The grouped surface shared by task groups, configuration sections and settings. */
 @Composable
 internal fun AssistCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
@@ -33,7 +37,7 @@ internal fun AssistCard(modifier: Modifier = Modifier, content: @Composable Colu
 
 @Composable
 internal fun SectionLabel(text: String, modifier: Modifier = Modifier) {
-    Text(text, modifier.padding(start = UiSpace.gap, top = UiSpace.medium, bottom = UiSpace.tiny).semantics { heading() },
+    Text(text, modifier.padding(start = 10.dp, top = 16.dp, bottom = 6.dp).semantics { heading() },
         color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold,
         style = MaterialTheme.typography.labelLarge)
 }
@@ -55,7 +59,7 @@ internal fun SettingRow(icon: ImageVector, tint: Color, title: String, descripti
         .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
         .padding(horizontal = 14.dp, vertical = UiSpace.gap),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(UiSpace.medium)) {
-        IconTile(icon, tint)
+        if (LocalSettingTiles.current) IconTile(icon, tint)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
             if (!description.isNullOrEmpty()) Text(description, color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -71,7 +75,7 @@ internal fun SettingValue(text: String, color: Color = MaterialTheme.colorScheme
 
 @Composable
 internal fun SmallAction(text: String, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(onClick, enabled = enabled, modifier = Modifier.heightIn(min = UiSpace.hit), shape = RoundedCornerShape(10.dp),
+    Button(onClick, enabled = enabled, modifier = Modifier.height(44.dp), shape = RoundedCornerShape(10.dp),
         contentPadding = PaddingValues(horizontal = 14.dp)) { Text(text, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium) }
 }
 

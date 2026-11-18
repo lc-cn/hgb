@@ -160,7 +160,7 @@ private fun QueueRow(run: RunProgress, current: Boolean, state: ExecutorSnapshot
                 Icon(AssistIcons.Close, null, tint = LocalAssistPalette.current.error)
             }
         }) {
-        ListItem(headlineContent = { Text(if (run.request.ref.kind == SubmissionKind.PLAN) run.request.ref.id else run.task.name,
+        ListItem(headlineContent = { Text(run.request.label ?: run.task.name,
             maxLines = 1, overflow = TextOverflow.Ellipsis) }, supportingContent = {
             Text(if (current && status is RuntimeStatus.Waiting) status.message else if (current) (if (run.request.ref.kind == SubmissionKind.PLAN) "${run.task.name} · " else "") +
                 "第 ${run.stepIndex + 1}/${run.task.stepIds.size} 步" else "优先级 ${run.priority}" + (time?.let { " · $it 入队" } ?: ""),

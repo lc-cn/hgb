@@ -51,10 +51,9 @@ private fun groupIcon(index: Int): ImageVector = GroupIcons[index % GroupIcons.s
 
 @Composable
 internal fun TaskCenter(versions: VersionCatalogState, executor: ExecutorSnapshot, status: RuntimeStatus,
-    enqueue: (TaskAddress) -> Unit, pause: (Long) -> Unit, stop: (Long) -> Unit, resume: (Long, ResumeMode) -> Unit,
-    reload: () -> Unit, updates: () -> Unit, edit: (TaskAddress) -> Unit,
+    enqueue: (TaskAddress) -> Unit, reload: () -> Unit, updates: () -> Unit, edit: (TaskAddress) -> Unit,
     favorites: FloatingPreferencesState = FloatingPreferencesState.Loading, toggleFavorite: (TaskAddress) -> Unit = {},
-    openHistory: () -> Unit = {}) {
+    openHistory: () -> Unit = {}, favoritesRequest: Int = 0, addToPlan: (TaskAddress) -> Unit = {}) {
     @Composable fun plainTitle() = AppHeader("任务", false, {}) {}
     when (versions) {
         VersionCatalogState.Loading -> Column(Modifier.fillMaxSize()) {
@@ -76,15 +75,15 @@ internal fun TaskCenter(versions: VersionCatalogState, executor: ExecutorSnapsho
                 Text(content.message, Modifier.padding(horizontal = UiSpace.page), color = MaterialTheme.colorScheme.error)
                 TextButton(onClick = updates, modifier = Modifier.padding(horizontal = UiSpace.gap)) { Text("任务更新") }
             }
-            is ActiveTaskContent.Available -> TaskBrowser(content.bundle, executor, status, enqueue, pause, stop, resume, edit, favorites, toggleFavorite, openHistory)
+            is ActiveTaskContent.Available -> TaskBrowser(content.bundle, executor, status, enqueue, edit, favorites, toggleFavorite, openHistory, favoritesRequest, addToPlan)
         }
     }
 }
 
 @Composable
 private fun TaskBrowser(bundle: TaskBundle, executor: ExecutorSnapshot, status: RuntimeStatus,
-    enqueue: (TaskAddress) -> Unit, pause: (Long) -> Unit, stop: (Long) -> Unit, resume: (Long, ResumeMode) -> Unit,
-    edit: (TaskAddress) -> Unit, favorites: FloatingPreferencesState, toggleFavorite: (TaskAddress) -> Unit, openHistory: () -> Unit) {
+    enqueue: (TaskAddress) -> Unit, edit: (TaskAddress) -> Unit, favorites: FloatingPreferencesState,
+    toggleFavorite: (TaskAddress) -> Unit, openHistory: () -> Unit, favoritesRequest: Int, addToPlan: (TaskAddress) -> Unit) {
     var query by rememberSaveable { mutableStateOf("") }
     var searching by rememberSaveable { mutableStateOf(false) }
     var onlyFavorites by rememberSaveable { mutableStateOf(false) }
@@ -92,6 +91,7 @@ private fun TaskBrowser(bundle: TaskBundle, executor: ExecutorSnapshot, status: 
     var collapsed by rememberSaveable { mutableStateOf(arrayListOf<String>()) }
     var selectedGroup by rememberSaveable { mutableStateOf<String?>(null) }
     var openMenu by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(favoritesRequest) { if (favoritesRequest > 0) onlyFavorites = true }
     val favoriteSet = (favorites as? FloatingPreferencesState.Ready)?.settings?.favorites.orEmpty()
     val groups = remember(bundle) { taskGroups(bundle) }
     val text = query.trim()
@@ -109,12 +109,13 @@ private fun TaskBrowser(bundle: TaskBundle, executor: ExecutorSnapshot, status: 
     @Composable fun row(task: TaskDefinition) {
         val id = "${task.targetId}/${task.id}"
         TaskRow(task, executor, status, TaskAddress(task.targetId, task.id) in favoriteSet, favorites is FloatingPreferencesState.Ready,
-            openMenu == id, { openMenu = if (openMenu == id) null else id }, enqueue, pause, stop, resume, edit, toggleFavorite, openHistory)
+            openMenu == id, { openMenu = if (openMenu == id) null else id }, enqueue, edit, toggleFavorite, openHistory, addToPlan)
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        if (maxWidth >= UiSpace.wide) Row(Modifier.fillMaxSize()) {
+        // Measured beside the navigation and run panel, so this is narrower than the window breakpoint.
+        if (maxWidth >= 480.dp) Row(Modifier.fillMaxSize()) {
             val current = visible.firstOrNull { it.key == selectedGroup } ?: visible.firstOrNull()
-            Column(Modifier.width(156.dp).fillMaxHeight().padding(UiSpace.gap), verticalArrangement = Arrangement.spacedBy(UiSpace.tiny)) {
+            Column(Modifier.width(148.dp).fillMaxHeight().padding(UiSpace.gap), verticalArrangement = Arrangement.spacedBy(UiSpace.tiny)) {
                 visible.forEach { group ->
                     val selected = group.key == current?.key
                     Row(Modifier.fillMaxWidth().heightIn(min = UiSpace.hit).clip(RoundedCornerShape(10.dp))
@@ -202,7 +203,7 @@ private fun TaskTopBar(title: String, large: Boolean, searching: Boolean, query:
             Box {
                 var menu by remember { mutableStateOf(false) }
                 IconButton(onClick = { menu = true }) { Icon(AssistIcons.Sliders, "视图选项", tint = colors.onSurfaceVariant) }
-                DropdownMenu(menu, { menu = false }, containerColor = colors.surfaceContainerHigh, shape = RoundedCornerShape(14.dp)) {
+                DropdownMenu(menu, { menu = false }, Modifier.width(270.dp), containerColor = colors.surfaceContainerHigh, shape = RoundedCornerShape(14.dp)) {
                     DropdownMenuItem({ Text("只看常用") }, { setOnlyFavorites(!onlyFavorites) }, trailingIcon = { AssistSwitch(onlyFavorites) { setOnlyFavorites(it) } })
                     DropdownMenuItem({ Text("同时只展开一组") }, { setAccordion(!accordion) }, trailingIcon = { AssistSwitch(accordion) { setAccordion(it) } })
                 }
@@ -213,12 +214,11 @@ private fun TaskTopBar(title: String, large: Boolean, searching: Boolean, query:
 
 @Composable
 private fun TaskRow(task: TaskDefinition, executor: ExecutorSnapshot, status: RuntimeStatus, favorite: Boolean, canFavorite: Boolean,
-    menuOpen: Boolean, toggleMenu: () -> Unit, enqueue: (TaskAddress) -> Unit, pause: (Long) -> Unit, stop: (Long) -> Unit,
-    resume: (Long, ResumeMode) -> Unit, edit: (TaskAddress) -> Unit, toggleFavorite: (TaskAddress) -> Unit, openHistory: () -> Unit) {
+    menuOpen: Boolean, toggleMenu: () -> Unit, enqueue: (TaskAddress) -> Unit, edit: (TaskAddress) -> Unit,
+    toggleFavorite: (TaskAddress) -> Unit, openHistory: () -> Unit, addToPlan: (TaskAddress) -> Unit) {
     val address = TaskAddress(task.targetId, task.id)
     val ref = SubmissionRef(SubmissionKind.TASK, task.id)
     val current = executor.current?.let { it.request.context.targetId == task.targetId && it.request.ref == ref } == true
-    val currentId = executor.current?.runId.takeIf { current }
     val queued = executor.waiting.any { it.request.context.targetId == task.targetId && it.request.ref == ref }
     val palette = LocalAssistPalette.current
     Column {
@@ -233,23 +233,16 @@ private fun TaskRow(task: TaskDefinition, executor: ExecutorSnapshot, status: Ru
                 task.description?.let { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
             }
-            if (queued) Box(Modifier.padding(end = UiSpace.tiny)) { TonePill("队列中", palette.warning) }
-            else if (current) Box(Modifier.padding(end = UiSpace.tiny)) {
+            // The running task is controlled from the status bar, so its row only reports state.
+            if (queued) Box(Modifier.padding(end = UiSpace.gap)) { TonePill("队列中", palette.warning) }
+            else if (current) Box(Modifier.padding(end = UiSpace.gap)) {
                 TonePill(if (status is RuntimeStatus.Waiting) "等待中" else if (executor.phase == ExecutorPhase.RUNNING) "运行中" else phaseLabel(executor.phase), palette.blue)
             }
-            key(currentId) {
-                RunActionButton(task.name, current, queued,
-                    status != RuntimeStatus.Loading && status !is RuntimeStatus.Failure &&
-                        (!current || executor.phase in setOf(ExecutorPhase.RUNNING, ExecutorPhase.PAUSED)),
-                    { enqueue(address) }, { currentId?.let(pause) }, { currentId?.let(stop) },
-                    paused = current && executor.phase == ExecutorPhase.PAUSED,
-                    resume = { mode -> currentId?.let { resume(it, mode) } },
-                    currentStateLabel = if (current && status is RuntimeStatus.Waiting) "等待中" else null)
-            }
+            else RunActionButton(task.name, false, false, status != RuntimeStatus.Loading && status !is RuntimeStatus.Failure, { enqueue(address) }, {}, {})
         }
         if (menuOpen) Row(Modifier.padding(start = 48.dp, end = UiSpace.medium, bottom = UiSpace.medium), horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
-            listOf("配置" to { edit(address) }, "运行记录" to openHistory).forEach { (label, action) ->
-                Box(Modifier.heightIn(min = UiSpace.hit).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.surfaceContainer)
+            listOf("配置" to { edit(address) }, "加入计划" to { addToPlan(address) }, "运行记录" to openHistory).forEach { (label, action) ->
+                Box(Modifier.heightIn(min = 40.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.surfaceContainer)
                     .clickable(onClick = action).padding(horizontal = UiSpace.medium), Alignment.Center) {
                     Text(label, style = MaterialTheme.typography.bodyMedium)
                 }

@@ -22,6 +22,8 @@ data class ExecutionRequest(
     val context: ExecutionContext,
     val packageVersion: String,
     val tasks: List<TaskSnapshot>,
+    /** Display name of a plan round; a single task shows its own name. */
+    val label: String? = null,
 )
 @Serializable
 data class RunProgress(

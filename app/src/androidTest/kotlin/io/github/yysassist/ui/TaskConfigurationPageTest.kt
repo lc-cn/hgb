@@ -106,6 +106,13 @@ class TaskConfigurationPageTest {
         compose.runOnIdle { assertEquals("11", values["floor"]!!.jsonPrimitive.content) }
         compose.onNodeWithContentDescription("增加层数").assertIsNotEnabled()
     }
+    @Test fun tabsShowTheirOwnFieldsAndReadOnlyFieldsCannotChange() {
+        show(listOf(ConfigurationField("a", "强化字段", FieldWidget.SWITCH, tab = "强化"),
+            ConfigurationField("b", "处置字段", FieldWidget.SWITCH, tab = "处置", readOnly = true)), JsonObject(mapOf("b" to JsonPrimitive(true))))
+        compose.onNodeWithText("强化字段").assertIsDisplayed(); compose.onNodeWithText("处置字段").assertDoesNotExist()
+        compose.onNodeWithText("处置").performClick()
+        compose.onNodeWithText("处置字段").assertIsDisplayed(); compose.onNodeWithContentDescription("处置字段").assertIsNotEnabled()
+    }
     @Test fun switchFieldStoresARealBoolean() {
         show(listOf(ConfigurationField("boost", "使用加成", FieldWidget.SWITCH, true)), JsonObject(mapOf("boost" to JsonPrimitive(false))))
         compose.onNodeWithContentDescription("使用加成").performClick()

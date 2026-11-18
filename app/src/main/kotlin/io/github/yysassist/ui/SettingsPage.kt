@@ -2,7 +2,9 @@ package io.github.yysassist.ui
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
+import android.net.Uri
 import android.provider.Settings
+import android.text.format.Formatter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,14 +33,20 @@ import io.github.yysassist.*
 import io.github.yysassist.auth.GitHubSessionState
 import io.github.yysassist.device.GameAccessibilityService
 import io.github.yysassist.device.ScreenshotCheck
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import io.github.yysassist.floating.FloatingPreferencesState
+import io.github.yysassist.plans.canUseExactAlarms
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 private class SettingsSection(val name: String, val attention: Boolean = false, val content: @Composable ColumnScope.() -> Unit)
 
 @Composable
 internal fun SettingsPage(appearance: AppearanceState, mode: ThemeMode, setTheme: (ThemeMode) -> Unit, versions: VersionCatalogState,
-    github: GitHubSessionState, floating: FloatingPreferencesState, setFloatingVisible: (Boolean) -> Unit, reloadFloating: () -> Unit,
+    github: GitHubSessionState, floating: FloatingPreferencesState, setFloatingVisible: (Boolean) -> Unit, setAutoDock: (Boolean) -> Unit, reloadFloating: () -> Unit,
     open: (String) -> Unit) {
     val p = LocalAssistPalette.current
     val service by GameAccessibilityService.connection.collectAsState()
@@ -46,9 +54,9 @@ internal fun SettingsPage(appearance: AppearanceState, mode: ThemeMode, setTheme
     val sections = listOf(
         SettingsSection("权限与运行环境", service == null) {
             AccessibilityRow(service != null); RowDivider()
-            NotificationAccessContent(notifications.access, notifications.request, notifications.openSettings); RowDivider(); ScreenshotRow()
+            NotificationAccessContent(notifications.access, notifications.request, notifications.openSettings); RowDivider(); ExactAlarmRow(); RowDivider(); ScreenshotRow()
         },
-        SettingsSection("悬浮球") { FloatingRows(floating, setFloatingVisible, reloadFloating) },
+        SettingsSection("悬浮球") { FloatingRows(floating, setFloatingVisible, setAutoDock, reloadFloating, { open("常用") }) },
         SettingsSection("外观") {
             SettingRow(AssistIcons.Theme, p.rose, "主题", "跟随系统或固定明暗") {
                 Row(Modifier.clip(RoundedCornerShape(UiSpace.medium)).background(MaterialTheme.colorScheme.surfaceContainer)
@@ -88,9 +96,11 @@ internal fun SettingsPage(appearance: AppearanceState, mode: ThemeMode, setTheme
         },
         SettingsSection("数据与诊断") {
             SettingRow(AssistIcons.History, p.orange, "运行记录", "查看每次运行的结果和步骤", { open("运行记录") }) { Chevron() }
+            RowDivider()
+            SettingRow(AssistIcons.Data, p.teal, "运行与数据", "存储占用和诊断信息", { open("运行与数据") }) { Chevron() }
         },
         SettingsSection("关于") {
-            SettingRow(AssistIcons.Info, p.violet, "版本信息") { SettingValue(BuildConfig.VERSION_NAME) }
+            SettingRow(AssistIcons.Info, p.violet, "版本信息", "当前安装的版本") { SettingValue(BuildConfig.VERSION_NAME) }
         },
     )
     var selectedName by rememberSaveable { mutableStateOf(sections.first().name) }
@@ -116,9 +126,8 @@ internal fun SettingsPage(appearance: AppearanceState, mode: ThemeMode, setTheme
             }
             VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(UiSpace.medium)) {
-                ReadinessBanner(service != null, notifications.access)
                 Text(selected.name, Modifier.padding(horizontal = UiSpace.tiny, vertical = UiSpace.gap), style = MaterialTheme.typography.titleMedium)
-                AssistCard(content = selected.content)
+                CompositionLocalProvider(LocalSettingTiles provides false) { AssistCard(content = selected.content) }
             }
         } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())
             .padding(start = UiSpace.medium, end = UiSpace.medium, bottom = UiSpace.medium)) {
@@ -155,6 +164,18 @@ private fun AccessibilityRow(connected: Boolean) {
 }
 
 @Composable
+private fun ExactAlarmRow() {
+    val context = LocalContext.current
+    val p = LocalAssistPalette.current
+    var allowed by remember { mutableStateOf(canUseExactAlarms(context)) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { allowed = canUseExactAlarms(context) }
+    SettingRow(AssistIcons.Calendar, p.gold, "精确定时", if (allowed) "计划按设定时间准时运行" else "未开启时，计划可能晚几分钟运行") {
+        if (allowed) SettingValue("已开启", p.success)
+        else SmallAction("开启") { context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}"))) }
+    }
+}
+
+@Composable
 private fun ScreenshotRow() {
     val p = LocalAssistPalette.current
     val service by GameAccessibilityService.connection.collectAsState()
@@ -175,7 +196,8 @@ private fun ScreenshotRow() {
     }
     val success = result as? ScreenshotCheck.Success
     SettingRow(AssistIcons.Phone, p.teal, "屏幕截图", failure ?: success?.let { "已取得可读取画面 · ${it.width} × ${it.height}" } ?: "检查能否读取当前画面") {
-        SmallAction(if (checking) "检查中" else "检查", service != null && !checking) {
+        if (service == null) SettingValue("未就绪")
+        else SmallAction(if (checking) "检查中" else "检查", !checking) {
             val owner = service ?: return@SmallAction
             checking = true; error = null; result = null
             try {
@@ -193,7 +215,7 @@ private fun ScreenshotRow() {
 }
 
 @Composable
-private fun ColumnScope.FloatingRows(state: FloatingPreferencesState, setVisible: (Boolean) -> Unit, reload: () -> Unit) {
+private fun ColumnScope.FloatingRows(state: FloatingPreferencesState, setVisible: (Boolean) -> Unit, setAutoDock: (Boolean) -> Unit, reload: () -> Unit, openFavorites: () -> Unit) {
     val p = LocalAssistPalette.current
     val service by GameAccessibilityService.connection.collectAsState()
     val failures = remember(service) { service?.floating?.failure ?: kotlinx.coroutines.flow.MutableStateFlow<String?>(null) }
@@ -209,7 +231,43 @@ private fun ColumnScope.FloatingRows(state: FloatingPreferencesState, setVisible
                 else AssistSwitch(state.settings.visible, label = "显示悬浮球", change = setVisible)
             }
             RowDivider()
-            SettingRow(AssistIcons.Star, p.gold, "快捷与常用", "在任务列表点星标添加") { SettingValue("${state.settings.favorites.size} 个") }
+            SettingRow(AssistIcons.Phone, p.blue, "自动吸边", "3 秒不操作后收到屏幕边缘，点一下唤醒") {
+                AssistSwitch(state.settings.autoDock, label = "自动吸边", change = setAutoDock)
+            }
+            RowDivider()
+            SettingRow(AssistIcons.Star, p.gold, "快捷与常用", "选择悬浮球里显示的任务", openFavorites) { SettingValue("${state.settings.favorites.size} 个"); Chevron() }
+        }
+    }
+}
+
+/** Read-only figures measured from this app's own files. */
+@Composable
+internal fun DataUsagePage(state: io.github.yysassist.core.execution.ExecutorSnapshot) {
+    val context = LocalContext.current
+    val p = LocalAssistPalette.current
+    var sizes by remember { mutableStateOf<List<Long>?>(null) }
+    LaunchedEffect(Unit) {
+        sizes = withContext(Dispatchers.IO) {
+            fun size(file: File) = file.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+            listOf(context.databaseList().sumOf { context.getDatabasePath(it).length() },
+                size(File(context.noBackupFilesDir, "task-resources")), size(context.cacheDir))
+        }
+    }
+    fun text(index: Int) = sizes?.get(index)?.let { Formatter.formatShortFileSize(context, it) } ?: "计算中"
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = UiSpace.medium, end = UiSpace.medium, bottom = UiSpace.medium)) {
+        SectionLabel("存储占用")
+        AssistCard {
+            SettingRow(AssistIcons.Data, p.teal, "运行数据库", "任务配置、运行状态和记录") { SettingValue(text(0)) }
+            RowDivider()
+            SettingRow(AssistIcons.Cloud, p.blue, "任务资源", "识别模型和图片素材") { SettingValue(text(1)) }
+            RowDivider()
+            SettingRow(AssistIcons.Phone, p.orange, "缓存", "可由系统自动清理") { SettingValue(text(2)) }
+        }
+        SectionLabel("诊断信息")
+        AssistCard {
+            SettingRow(AssistIcons.History, p.violet, "近期运行事实", "保留在运行状态中的最近记录") { SettingValue("${state.facts.size} 条") }
+            RowDivider()
+            SettingRow(AssistIcons.Info, p.rose, "应用版本") { SettingValue(BuildConfig.VERSION_NAME) }
         }
     }
 }

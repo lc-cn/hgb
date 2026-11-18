@@ -48,7 +48,7 @@ internal class FloatingOverlayWindow(
     @android.annotation.SuppressLint("RtlHardcoded")
     private val params = WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
         WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT).apply {
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, PixelFormat.TRANSLUCENT).apply {
         gravity = Gravity.TOP or Gravity.LEFT
         title = "助手悬浮控制"
         setFitInsetsTypes(0)
@@ -61,7 +61,9 @@ internal class FloatingOverlayWindow(
     private var lastOrientation: Boolean? = null
     private val layer = mutableStateOf(FloatingLayer.BALL)
     private val viewport = mutableStateOf(readViewport())
-    private data class Viewport(val safe: Rect, val wide: Boolean, val density: Float)
+    private val rightSide = mutableStateOf(true)
+    private var idle: Job? = null
+    private data class Viewport(val safe: Rect, val edge: Rect, val wide: Boolean, val density: Float)
     private data class Down(val rawX: Float, val rawY: Float, val windowX: Int, val windowY: Int, var moved: Boolean = false)
     private var down: Down? = null
 
@@ -72,10 +74,9 @@ internal class FloatingOverlayWindow(
         view.setViewTreeLifecycleOwner(this); view.setViewTreeSavedStateRegistryOwner(this); view.setViewTreeViewModelStoreOwner(this)
         view.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         view.setContent {
-            val appearance by app.appearance.state.collectAsState()
             val state by runtime.state.collectAsState(); val status by runtime.status.collectAsState(); val tasks by commonTasks.collectAsState()
             val vp = viewport.value
-            AssistTheme((appearance as? AppearanceState.Ready)?.mode ?: ThemeMode.SYSTEM) {
+            AssistTheme(ThemeMode.DARK) {
                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
                 FloatingSurface(layer.value, state, status, tasks, vp.wide,
                     min(if (vp.wide) FloatingUi.landscapeHeight.value else FloatingUi.portraitHeight.value, vp.safe.height() / vp.density).dp,
@@ -83,8 +84,19 @@ internal class FloatingOverlayWindow(
                     { id -> runtime.submit(id?.let { ExecutorCommand.PauseCurrent(it) } ?: ExecutorCommand.Pause) },
                     { runtime.submit(ExecutorCommand.StopCurrent(it)) },
                     { id, mode -> runtime.submit(id?.let { ExecutorCommand.ResumeCurrent(it, mode) } ?: ExecutorCommand.Resume(mode)) },
-                    ::openApp, ::ballMotion, maxWidth = (vp.safe.width() / vp.density).dp, feedback = feedback.value)
+                    ::openApp, ::ballMotion, maxWidth = (vp.safe.width() / vp.density).dp, feedback = feedback.value,
+                    rightSide = rightSide.value, touched = ::armIdle)
                 }
+            }
+        }
+        // Touching the game outside an open menu closes it; the touch itself still reaches the game.
+        view.setOnTouchListener { _, event ->
+            if (event.actionMasked == MotionEvent.ACTION_OUTSIDE && layer.value in setOf(FloatingLayer.QUICK, FloatingLayer.COMMON)) changeLayer(FloatingLayer.BALL)
+            false
+        }
+        scope.launch {
+            combine(runtime.state, runtime.status) { state, status -> needsAttention(state, status) }.distinctUntilChanged().collect { attention ->
+                if (attention && layer.value == FloatingLayer.DOCKED) changeLayer(FloatingLayer.BALL) else armIdle()
             }
         }
         view.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> if (view.isShown && down == null) place() }
@@ -92,7 +104,7 @@ internal class FloatingOverlayWindow(
             combine(preferences.state, app.mainVisible) { pref, main -> pref to main }.collect { (pref, _) ->
                 settings = (pref as? FloatingPreferencesState.Ready)?.settings
                 if (down == null) anchor = settings?.let { if (viewport.value.wide) it.landscape else it.portrait }
-                updateVisibility(); place()
+                updateVisibility(); place(); armIdle()
             }
         }
         scope.launch { merge(preferences.messages, runtime.messages).collect { feedback.value = it } }
@@ -117,10 +129,11 @@ internal class FloatingOverlayWindow(
         val metrics = manager.maximumWindowMetrics
         val insets = metrics.windowInsets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
         val safe = Rect(metrics.bounds).apply { left += insets.left; top += insets.top; right -= insets.right; bottom -= insets.bottom }
+        val edge = Rect(safe)
         val density = service.resources.displayMetrics.density
-        val edge = (UiSpace.gap.value * density).roundToInt()
-        if (safe.width() > 2 * edge && safe.height() > 2 * edge) safe.inset(edge, edge)
-        return Viewport(safe, metrics.bounds.width() > metrics.bounds.height(), density)
+        val margin = (UiSpace.gap.value * density).roundToInt()
+        if (safe.width() > 2 * margin && safe.height() > 2 * margin) safe.inset(margin, margin)
+        return Viewport(safe, edge, metrics.bounds.width() > metrics.bounds.height(), density)
     }
     private fun updateVisibility() {
         if (closed || mutableFailure.value != null) return
@@ -134,20 +147,42 @@ internal class FloatingOverlayWindow(
     }
     private fun place() {
         if (closed || down != null) return
-        val vp = viewport.value; val size = (FloatingUi.ball.value * vp.density).roundToInt()
-        val ballX = vp.safe.left + (anchor?.x?.let { it * (vp.safe.width() - size).coerceAtLeast(0) }
-            ?: (vp.safe.width() - size).coerceAtLeast(0).toFloat())
-        val ballY = vp.safe.top + (anchor?.y?.let { it * (vp.safe.height() - size).coerceAtLeast(0) }
+        val vp = viewport.value
+        fun px(value: androidx.compose.ui.unit.Dp) = (value.value * vp.density).roundToInt()
+        val ball = px(FloatingUi.ball)
+        val right = (anchor?.x ?: 1f) >= .5f
+        rightSide.value = right
+        val ballY = vp.safe.top + (anchor?.y?.let { it * (vp.safe.height() - ball).coerceAtLeast(0) }
             ?: ((if (vp.wide) FloatingUi.landscapeTop.value else FloatingUi.portraitTop.value) * vp.density))
-        val width = min(vp.safe.width(), (FloatingUi.width(layer.value, vp.wide).value * vp.density).roundToInt())
-        val height = if (layer.value == FloatingLayer.BALL) size else view.height.takeIf { it > size } ?: size
-        val x = if (layer.value == FloatingLayer.BALL) ballX.roundToInt() else (ballX + size - width).roundToInt()
-        val y = if (ballY + height <= vp.safe.bottom) ballY.roundToInt() else (ballY + size - height).roundToInt()
-        val nx = x.coerceIn(vp.safe.left, max(vp.safe.left, vp.safe.right - width))
-        val ny = y.coerceIn(vp.safe.top, max(vp.safe.top, vp.safe.bottom - height))
-        if (params.x != nx || params.y != ny || params.width != width) {
-            params.x = nx; params.y = ny; params.width = width
+        val center = ballY + ball / 2f
+        val width = min(vp.safe.width(), px(FloatingUi.width(layer.value, vp.wide)))
+        val fixedHeight = when (layer.value) {
+            FloatingLayer.DOCKED -> px(FloatingUi.dockHeight); FloatingLayer.BALL -> ball
+            FloatingLayer.QUICK -> px(FloatingUi.fanHeight); FloatingLayer.COMMON -> null
+        }
+        val bounds = if (layer.value == FloatingLayer.DOCKED) vp.edge else vp.safe
+        val height = fixedHeight ?: view.height.takeIf { it > ball } ?: ball
+        val x = if (right) bounds.right - width else bounds.left
+        val y = if (fixedHeight != null) (center - fixedHeight / 2f).roundToInt()
+            else if (ballY + height <= vp.safe.bottom) ballY.roundToInt() else (ballY + ball - height).roundToInt()
+        val ny = y.coerceIn(bounds.top, max(bounds.top, bounds.bottom - height))
+        val layoutHeight = fixedHeight ?: WindowManager.LayoutParams.WRAP_CONTENT
+        if (params.x != x || params.y != ny || params.width != width || params.height != layoutHeight) {
+            params.x = x; params.y = ny; params.width = width; params.height = layoutHeight
             if (attached) updateLayout()
+        }
+    }
+    /** An idle menu folds to the ball, and an idle ball folds to a thin tab on the screen edge. */
+    private fun armIdle() {
+        idle?.cancel()
+        if (layer.value != FloatingLayer.BALL && layer.value != FloatingLayer.QUICK) return
+        idle = scope.launch {
+            delay(IDLE_MILLIS)
+            when {
+                down != null -> armIdle()
+                layer.value == FloatingLayer.QUICK -> changeLayer(FloatingLayer.BALL)
+                settings?.autoDock != false && !needsAttention(runtime.state.value, runtime.status.value) -> changeLayer(FloatingLayer.DOCKED)
+            }
         }
     }
     fun retry() { checkMain(); mutableFailure.value = null; updateVisibility(); place() }
@@ -161,17 +196,19 @@ internal class FloatingOverlayWindow(
         if (view.isAttachedToWindow) try { manager.removeViewImmediate(view) } catch (_: IllegalArgumentException) { }
         attached = false
     }
-    private fun changeLayer(next: FloatingLayer) { feedback.value = null; layer.value = next; down = null; place() }
+    private fun changeLayer(next: FloatingLayer) { feedback.value = null; layer.value = next; down = null; place(); armIdle() }
     private fun ballMotion(event: MotionEvent): Boolean {
         checkMain()
         when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> down = Down(event.rawX, event.rawY, params.x, params.y)
+            MotionEvent.ACTION_DOWN -> { idle?.cancel(); down = Down(event.rawX, event.rawY, params.x, params.y) }
             MotionEvent.ACTION_MOVE -> down?.let { start ->
-                if (event.pointerCount != 1) { down = null; return true }
+                if (event.pointerCount != 1) { down = null; armIdle(); return true }
                 val dx = event.rawX - start.rawX; val dy = event.rawY - start.rawY
                 start.moved = start.moved || hypot(dx, dy) > ViewConfiguration.get(service).scaledTouchSlop
                 if (start.moved) {
                     val bounds = viewport.value.safe; val size = (FloatingUi.ball.value * viewport.value.density).roundToInt()
+                    // Pulling the edge tab wakes it into the ball under the finger.
+                    if (layer.value == FloatingLayer.DOCKED) { layer.value = FloatingLayer.BALL; params.width = size; params.height = size }
                     params.x = (start.windowX + dx).roundToInt().coerceIn(bounds.left, max(bounds.left, bounds.right - size))
                     params.y = (start.windowY + dy).roundToInt().coerceIn(bounds.top, max(bounds.top, bounds.bottom - size))
                     updateLayout()
@@ -181,12 +218,14 @@ internal class FloatingOverlayWindow(
                 val start = down; down = null
                 if (start?.moved == true) {
                     val vp = viewport.value; val size = (FloatingUi.ball.value * vp.density).roundToInt()
-                    val result = FloatingAnchor((params.x - vp.safe.left).toFloat() / (vp.safe.width() - size).coerceAtLeast(1),
-                        (params.y - vp.safe.top).toFloat() / (vp.safe.height() - size).coerceAtLeast(1))
-                    anchor = result; preferences.move(vp.wide, result)
-                } else if (start != null && event.x in 0f..view.width.toFloat() && event.y in 0f..view.height.toFloat()) changeLayer(FloatingLayer.QUICK)
+                    val right = params.x + size / 2 >= vp.safe.centerX()
+                    val result = FloatingAnchor(if (right) 1f else 0f, ((params.y - vp.safe.top).toFloat() / (vp.safe.height() - size).coerceAtLeast(1)).coerceIn(0f, 1f))
+                    anchor = result; preferences.move(vp.wide, result); place(); armIdle()
+                } else if (start != null && event.x in 0f..view.width.toFloat() && event.y in 0f..view.height.toFloat())
+                    changeLayer(if (layer.value == FloatingLayer.DOCKED) FloatingLayer.BALL else FloatingLayer.QUICK)
+                else armIdle()
             }
-            MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_POINTER_DOWN -> down = null
+            MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_POINTER_DOWN -> { down = null; armIdle() }
         }
         return true
     }
@@ -228,4 +267,5 @@ internal class FloatingOverlayWindow(
         registry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY); viewModelStore.clear()
     }
     private fun checkMain() { check(Looper.myLooper() == Looper.getMainLooper()) }
+    private companion object { const val IDLE_MILLIS = 3_000L }
 }

@@ -145,8 +145,9 @@ interface TaskVersionDao {
 }
 
 @Database(entities = [TaskVersionEntity::class, TaskVersionSelection::class, TaskVersionReference::class, TaskConfigurationEntity::class,
-    ExecutorStateEntity::class, ActionTraceEntity::class, ExecutionFactEntity::class], version = 6, exportSchema = true)
+    ExecutorStateEntity::class, ActionTraceEntity::class, PlanEntity::class, ExecutionFactEntity::class], version = 7, exportSchema = true)
 abstract class AssistDatabase : RoomDatabase() {
+    abstract fun plans(): PlanDao
     abstract fun taskVersions(): TaskVersionDao
     abstract fun taskConfigurations(): TaskConfigurationDao
     abstract fun executorState(): ExecutorStateDao

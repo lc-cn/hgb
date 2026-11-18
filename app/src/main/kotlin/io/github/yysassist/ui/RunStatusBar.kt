@@ -51,8 +51,10 @@ private fun RunControls(state: ExecutorSnapshot, status: RuntimeStatus, pause: (
     val primaryEnabled = if (hold) usable && state.phase == ExecutorPhase.PAUSED else usable && (current != null || state.waiting.isNotEmpty())
     val primary = { if (!hold) pause() else if (current != null) chooseResume = true else resume(null, ResumeMode.CONTINUE) }
     if (labelled) {
-        Button(primary, enabled = primaryEnabled, shape = RoundedCornerShape(10.dp), modifier = Modifier.heightIn(min = UiSpace.hit)) { Text(if (hold) "继续" else "暂停") }
-        OutlinedButton({ confirmStop = true }, enabled = usable && current != null, shape = RoundedCornerShape(10.dp), modifier = Modifier.heightIn(min = UiSpace.hit)) { Text("停止") }
+        Row(horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+            Button(primary, Modifier.weight(1f).height(44.dp), primaryEnabled, RoundedCornerShape(10.dp), contentPadding = PaddingValues(0.dp)) { Text(if (hold) "继续" else "暂停") }
+            OutlinedButton({ confirmStop = true }, Modifier.weight(1f).height(44.dp), usable && current != null, RoundedCornerShape(10.dp), contentPadding = PaddingValues(0.dp)) { Text("停止") }
+        }
     } else {
         IconButton(primary, enabled = primaryEnabled) { Icon(if (hold) AssistIcons.PlayFilled else AssistIcons.Pause, if (hold) "继续运行" else "暂停运行") }
         IconButton({ confirmStop = true }, enabled = usable && current != null) { Icon(AssistIcons.Stop, "停止当前任务") }
@@ -97,14 +99,20 @@ internal fun RunStatusPanel(state: ExecutorSnapshot, status: RuntimeStatus, open
     val colors = MaterialTheme.colorScheme
     Surface(onClick = open, modifier = Modifier.width(216.dp).fillMaxHeight(), shape = RectangleShape, color = colors.surfaceContainerHigh) {
         Column(Modifier.padding(UiSpace.medium), verticalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
-            Text(runTitle(state), fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.titleMedium)
+            Text(if (state.manualHold) "已暂停" else "正在运行", color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            Text(runTitle(state), maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleMedium)
+            runProgress(state)?.let { value ->
+                LinearProgressIndicator(progress = { value }, Modifier.fillMaxWidth().height(4.dp), color = LocalAssistPalette.current.blue,
+                    trackColor = colors.surfaceContainer, drawStopIndicator = {}, gapSize = 0.dp)
+            }
             Text(runSummary(state, status), Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                 color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-            runProgress(state)?.let { value -> LinearProgressIndicator(progress = { value }, Modifier.fillMaxWidth()) }
             Column(Modifier.weight(1f)) {
-                state.waiting.take(3).forEach { Text(it.task.name, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
+                state.waiting.take(3).forEachIndexed { index, run ->
+                    HorizontalDivider(color = colors.outlineVariant)
+                    Text("${if (index == 0) "下一个" else "然后"}：${run.task.name}", Modifier.padding(vertical = 6.dp), maxLines = 1,
+                        overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall)
+                }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) { RunControls(state, status, pause, resume, stop, labelled = true) }
         }

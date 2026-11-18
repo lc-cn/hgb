@@ -101,6 +101,9 @@ class FloatingOverlayIntegrationTest {
         val common = floatingTasks(preferences, catalog, runtime, scope!!)
         withContext(Dispatchers.Main) {
             service.floating?.close()
+            // These scenarios drive the ball directly; idle docking has its own scenario.
+            preferences.setAutoDock(false)
+            withTimeout(5_000) { preferences.state.first { it is FloatingPreferencesState.Ready && !it.settings.autoDock } }
             window = FloatingOverlayWindow(service, app, runtime, preferences, common)
             service.bridge.obstruction = window
         }
@@ -137,7 +140,7 @@ class FloatingOverlayIntegrationTest {
         assertTrue("$label click accepted", target.performAction(AccessibilityNodeInfo.ACTION_CLICK))
     }
     private suspend fun common() {
-        click("展开快捷控制"); click("常用", false)
+        click("展开快捷控制"); click("常用")
         waitFor("common heading") { allNodes().any { it.isVisibleToUser && it.text?.toString() == "常用" && it.isHeading } }
         val wide = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         val width = (if (wide) FloatingUi.wideCommonWidth.value else FloatingUi.quickWidth.value) * context.resources.displayMetrics.density
@@ -230,7 +233,7 @@ class FloatingOverlayIntegrationTest {
         common(); click("加入队列：等待一")
         waitFor { runtime.state.value.current?.task?.id == "one" }
         click("加入队列：等待二"); waitFor { runtime.state.value.waiting.size == 1 }
-        assertFalse(node("加入队列：等待二").isEnabled)
+        waitFor { allNodes().none { it.contentDescription?.toString() == "加入队列：等待二" } }
         val old = runtime.state.value.activeTicket
         assertNotNull(old)
         click("暂停：等待一"); waitFor { runtime.state.value.phase == ExecutorPhase.PAUSED }
@@ -245,6 +248,18 @@ class FloatingOverlayIntegrationTest {
         click("继续队列"); waitFor { runtime.state.value.current?.task?.id == "two" && runtime.state.value.phase == ExecutorPhase.RUNNING }
         node("暂停：等待二")
         screenshot("common-light-portrait")
+    }
+    @Test fun anIdleBallDocksToAThinEdgeTabAndATapWakesIt(): Unit = runBlocking {
+        val ball = withContext(Dispatchers.Main) { window!!.frameBounds() }
+        preferences.setAutoDock(true)
+        val density = context.resources.displayMetrics.density
+        waitFor("docked tab") { window!!.frameBounds().width() <= (FloatingUi.dockWidth.value * density).toInt() + 1 }
+        val tab = withContext(Dispatchers.Main) { window!!.frameBounds() }
+        assertTrue("tab is smaller than the ball", tab.width() * tab.height() < ball.width() * ball.height())
+        assertEquals(screenBounds().right, tab.right)
+        click("唤醒悬浮球")
+        waitFor("awake ball") { window!!.frameBounds().width() >= (FloatingUi.ball.value * density).toInt() - 1 }
+        node("展开快捷控制")
     }
     @Test fun commonRowsTrackFavoritesAndTheActiveVersionWithoutSubmittingOrCopyingTasks(): Unit = runBlocking {
         common(); node("加入队列：等待一"); node("加入队列：等待二")
@@ -324,9 +339,9 @@ class FloatingOverlayIntegrationTest {
         val before = app.executor.state.value.facts.count { it.type == "enqueued" }
         mainScenario = ActivityScenario.launch(MainActivity.taskIntent(context, TaskAddress("floating-qa", "one")))
         click("返回", type = AccessibilityWindowInfo.TYPE_APPLICATION)
-        node("任务中心", false, AccessibilityWindowInfo.TYPE_APPLICATION)
+        node("任务", false, AccessibilityWindowInfo.TYPE_APPLICATION)
         mainScenario!!.recreate()
-        node("任务中心", false, AccessibilityWindowInfo.TYPE_APPLICATION)
+        node("任务", false, AccessibilityWindowInfo.TYPE_APPLICATION)
         waitFor { allNodes(AccessibilityWindowInfo.TYPE_APPLICATION).none { it.isVisibleToUser && it.contentDescription?.toString() == "返回" } }
         assertEquals(before, app.executor.state.value.facts.count { it.type == "enqueued" })
     }
