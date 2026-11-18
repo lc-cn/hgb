@@ -6,6 +6,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectableGroup
@@ -306,7 +308,9 @@ private fun EnvironmentPage() {
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     LaunchedEffect(service) { checking = false; result = null; error = null }
-    Column(Modifier.padding(UiSpace.page), verticalArrangement = Arrangement.spacedBy(UiSpace.medium)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(UiSpace.page), verticalArrangement = Arrangement.spacedBy(UiSpace.medium)) {
+        NotificationAccessSection()
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Text("无障碍服务", style = MaterialTheme.typography.titleMedium)
         Text(if (service == null) "尚未授权" else "已授权", color = MaterialTheme.colorScheme.onSurfaceVariant)
         OutlinedButton(onClick = { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }) { Text("打开系统设置") }
