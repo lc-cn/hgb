@@ -432,7 +432,10 @@ internal class ScreenActions(
                         is Acquisition.Problem -> acquired.result
                         is Acquisition.Ready -> {
                             val token = UUID.randomUUID().toString(); observations[token] = acquired.value
-                            ActionResult.Produced(buildJsonObject { put("observation", token) })
+                            val geometry = acquired.value.result.stamp.geometry
+                            ActionResult.Produced(buildJsonObject { put("observation", token) }, buildJsonObject {
+                                put("kind", READ); put("candidates", acquired.value.result.candidates.size)
+                                put("frame", buildJsonArray { add(geometry.width); add(geometry.height) }) })
                         }
                     }
                 }
@@ -446,22 +449,28 @@ internal class ScreenActions(
                         val matches = inputs.getValue("states").jsonArray.map { it.jsonObject }.filter { state ->
                             seen(state) && (state["absent"] as? JsonArray).orEmpty().none { seen(it.jsonObject) }
                         }
+                        val trace = buildJsonObject { put("kind", CLASSIFY); put("matchedStates", buildJsonArray { matches.forEach { add(checkNotNull(it.text("id"))) } }) }
                         if (matches.size != 1) return ActionResult.Unavailable(if (matches.isEmpty())
-                            "本次画面未能确认任何声明状态" else "本次画面同时命中多个声明状态")
-                        return ActionResult.Produced(buildJsonObject { put("state", checkNotNull(matches.single().text("id"))) })
+                            "本次画面未能确认任何声明状态" else "本次画面同时命中多个声明状态", trace)
+                        return ActionResult.Produced(buildJsonObject { put("state", checkNotNull(matches.single().text("id"))) }, trace)
                     }
                     val expected = checkNotNull(inputs.text("text")); val minimum = checkNotNull(threshold(inputs))
                     if (action.capability == LOCATE) {
-                        val match = uniqueTarget(observation, expected, minimum) ?: return ActionResult.Unavailable("本次画面不能唯一定位目标文字")
+                        val match = uniqueTarget(observation, expected, minimum) ?: return ActionResult.Unavailable("本次画面不能唯一定位目标文字",
+                            buildJsonObject { put("kind", LOCATE); put("sameText", observation.result.candidates.count { it.text == expected })
+                                put("aboveMinimum", observation.result.candidates.count { it.text == expected && it.confidence.isFinite() && BigDecimal.valueOf(it.confidence) >= minimum }) })
                         val token = token(); targets[token] = Target(observation, expected, minimum, match)
-                        ActionResult.Produced(buildJsonObject { put("target", token) })
+                        ActionResult.Produced(buildJsonObject { put("target", token) }, buildJsonObject {
+                            put("kind", LOCATE); region(match.bounds); put("confidence", match.confidence) })
                     } else {
-                        if (observation.result.candidates.none { it.text == expected && it.confidence.isFinite() && BigDecimal.valueOf(it.confidence) >= minimum })
-                            return ActionResult.Unavailable("本次画面中未能确认目标文字")
+                        val best = observation.result.candidates.filter { it.text == expected && it.confidence.isFinite() }.maxOfOrNull { it.confidence }
+                        val trace = buildJsonObject { put("kind", EXPECT); put("bestConfidence", best ?: 0.0); put("minimumConfidence", minimum) }
+                        if (best == null || BigDecimal.valueOf(best) < minimum)
+                            return ActionResult.Unavailable("本次画面中未能确认目标文字", trace)
                         val evidence = "已在本次画面中核对目标文字" + observation.result.diagnostics.takeIf { it.isNotEmpty() }
                             ?.joinToString("；", "（识别清理诊断：", "）").orEmpty()
                         if (terminalAction == action.id) businessEvidence = StepOutcome.Completed(evidence)
-                        ActionResult.Verified(buildJsonObject { put("matched", true) }, evidence)
+                        ActionResult.Verified(buildJsonObject { put("matched", true) }, evidence, trace)
                     }
                 }
                 TAP, LONG_PRESS, SWIPE -> gesture(action, inputs)
@@ -566,6 +575,8 @@ internal class ScreenActions(
             val centre = ScreenPoint(bounds.left + bounds.width / 2f, bounds.top + bounds.height / 2f)
             var gestureMillis = checkNotNull(duration(inputs))
             var trace: JsonObject? = null
+            if (action.capability != SWIPE) trace = buildJsonObject { put("kind", action.capability); region(bounds)
+                put("point", buildJsonArray { add(centre.x); add(centre.y) }); put("durationMs", gestureMillis); put("imageTarget", target.template != null) }
             val points = if (action.capability != SWIPE) listOf(centre) else {
                 val geometry = fresh.result.stamp.geometry
                 val sx = geometry.width.toFloat() / checkNotNull(integer(inputs["referenceWidth"]))
@@ -582,7 +593,7 @@ internal class ScreenActions(
                     put("start", buildJsonArray { add(path.first().x); add(path.first().y) }); put("end", buildJsonArray { add(path.last().x); add(path.last().y) }) }
                 path
             }
-            return deliver(action, bridge, trace, trace?.let { "滑动种子 ${it["seed"]}，时长 ${it["durationMs"]}ms，采样点 ${it["points"]}" }) {
+            return deliver(action, bridge, trace, trace?.takeIf { action.capability == SWIPE }?.let { "滑动种子 ${it["seed"]}，时长 ${it["durationMs"]}ms，采样点 ${it["points"]}" }) {
                 it.gestureCall(fresh.result.stamp, points, gestureMillis)
             }
         }

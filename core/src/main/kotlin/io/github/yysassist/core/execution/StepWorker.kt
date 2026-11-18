@@ -24,7 +24,7 @@ interface StepWorkFactory {
 }
 
 /** One ordered interpreter for wait and explicitly registered APK-owned actions. */
-class BuiltInStepWorkFactory(private val actions: ActionProvider? = null) : StepWorkFactory {
+class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, private val traces: ActionTraceSink? = null) : StepWorkFactory {
     private fun duration(inputs: JsonObject): Long? {
         val number = (inputs["durationMs"] as? JsonPrimitive)?.decimalOrNull() ?: return null
         return try { number.longValueExact().takeIf { it >= 0 } }
@@ -113,10 +113,23 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null) : Step
                                         val inputs = resolveActionInputs(action, configuration, outputs)
                                         require(contract.inputIssue(inputs) == null)
                                         activeSession?.prepareAction(action, atEnd)
+                                        val started = System.nanoTime()
                                         val result = if (action.capability == "control.wait") {
                                             val milliseconds = checkNotNull(duration(inputs)); delay(milliseconds)
                                             ActionResult.Produced(buildJsonObject { put("durationMs", milliseconds) })
                                         } else checkNotNull(activeSession).perform(action, inputs)
+                                        traces?.let { sink ->
+                                            val (kind, reason, trace) = when (result) {
+                                                ActionResult.Interrupted -> Triple("INTERRUPTED", null, null)
+                                                is ActionResult.Unavailable -> Triple("UNAVAILABLE", result.reason, result.trace)
+                                                is ActionResult.Produced -> Triple("PRODUCED", null, result.trace)
+                                                is ActionResult.Verified -> Triple("VERIFIED", result.evidence, result.trace)
+                                            }
+                                            // Diagnostics only: a failing sink never changes the step.
+                                            runCatching { sink.record(ActionTraceRecord(attempt.ticket, attempt.run.task.id, attempt.run.stepId,
+                                                action.id, action.capability, action.contractVersion, kind, reason, trace,
+                                                (System.nanoTime() - started) / 1_000_000)) }
+                                        }
                                         currentCoroutineContext().ensureActive()
                                         val value = when (result) {
                                             ActionResult.Interrupted -> return StepOutcome.Interrupted

@@ -29,3 +29,15 @@ sealed interface ActionResult {
     data class Verified(val outputs: JsonObject, val evidence: String, val trace: JsonObject? = null) : ActionResult
     data class Unavailable(val reason: String, val trace: JsonObject? = null) : ActionResult
 }
+
+/**
+ * Diagnostic record of one performed action: its result kind and the capability's structured trace.
+ * Never authoritative for execution or recovery and may be lost on a crash. No pixels or account values.
+ */
+data class ActionTraceRecord(
+    val ticket: AttemptTicket, val taskId: String, val stepId: String,
+    val actionId: String, val capability: String, val contractVersion: Int,
+    val result: String, val reason: String?, val trace: JsonObject?, val elapsedMillis: Long,
+)
+/** Must return quickly and never throw into the interpreter; persistence happens elsewhere. */
+fun interface ActionTraceSink { fun record(record: ActionTraceRecord) }

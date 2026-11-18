@@ -10,6 +10,7 @@ import io.github.yysassist.core.content.GitHubTaskSource
 import io.github.yysassist.core.content.TaskRepository
 import io.github.yysassist.storage.AssistDatabase
 import io.github.yysassist.storage.TaskVersionLibrary
+import io.github.yysassist.storage.ActionTraceLog
 import io.github.yysassist.storage.TaskResourceFiles
 import java.io.File
 import io.github.yysassist.storage.TaskConfigurationRepository
@@ -55,6 +56,8 @@ class AssistApplication : Application() {
         private set
     internal lateinit var textObserver: VersionedTextObserver
         private set
+    lateinit var actionTraces: ActionTraceLog
+        private set
     override fun onCreate() {
         super.onCreate()
         // Android creates this Application in :maa_ocr too. Only the main process owns
@@ -63,8 +66,9 @@ class AssistApplication : Application() {
         appearance = AppearancePreferences(this, scope)
         floating = FloatingPreferences(this, scope)
         val database = AssistDatabase.open(this)
+        actionTraces = ActionTraceLog(database, scope)
         val workers = BuiltInStepWorkFactory(ScreenActions({ textObserver }, { executor.permitsInput(it) },
-            journal = { command -> executor.submit(command).await() }))
+            journal = { command -> executor.submit(command).await() }), actionTraces)
         val library = TaskVersionLibrary(database, BundleCodec(workers.contracts), TaskResourceFiles(File(noBackupFilesDir, "task-resources")))
         textObserver = VersionedTextObserver(library, MaaTextBackend(this))
         executor = ExecutionRuntime(ExecutionStateStore(database, library), library,

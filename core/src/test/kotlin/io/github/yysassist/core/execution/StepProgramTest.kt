@@ -55,6 +55,27 @@ class StepProgramTest {
         assertEquals(1L, currentTime)
     }
 
+    @Test fun everyPerformedActionIsTracedInOrderAndASinkFailureChangesNothing() = runTest {
+        val provider = object : ActionProvider {
+            override val contracts = listOf(CapabilityContract("fixture.flag", 1,
+                outputTypes = mapOf("value" to ActionValueType.BOOLEAN), validateInputs = { null }))
+            override fun open(attempt: StepAttempt, bundle: TaskBundle) = ActionSession { _, _ ->
+                ActionResult.Produced(buildJsonObject { put("value", false) }, buildJsonObject { put("score", 0.5) })
+            }
+        }
+        val flag = ActionDefinition("flag", "fixture.flag", 1, JsonObject(emptyMap()))
+        val value = bundle(listOf(wait("first", 1), ProgramNode.Action(flag), ProgramNode.Branch(ActionInputBinding.Output("flag", "value"), listOf(
+            ProgramCase(JsonPrimitive(true), listOf(wait("yes"))), ProgramCase(JsonPrimitive(false), listOf(wait("no", 2)))))))
+        val records = mutableListOf<ActionTraceRecord>()
+        assertTrue(BuiltInStepWorkFactory(provider) { records += it }.create(attempt(value), value).execute() is StepOutcome.Completed)
+        assertEquals(listOf("first", "flag", "no"), records.map { it.actionId })
+        assertEquals(listOf("PRODUCED", "PRODUCED", "PRODUCED"), records.map { it.result })
+        assertEquals(buildJsonObject { put("score", 0.5) }, records[1].trace)
+        assertTrue(records.all { it.taskId == "task" && it.stepId == "step" && it.ticket == AttemptTicket(1, 1) })
+        val failing = BuiltInStepWorkFactory(provider) { error("sink down") }
+        assertTrue(failing.create(attempt(value), value).execute() is StepOutcome.Completed)
+    }
+
     @Test fun allCasesAndZeroCountBodiesAreValidatedAndIdsAreStepWide() {
         val bad = wait("bad").let { it.copy(action = it.action.copy(capability = "unknown")) }
         for (nodes in listOf(

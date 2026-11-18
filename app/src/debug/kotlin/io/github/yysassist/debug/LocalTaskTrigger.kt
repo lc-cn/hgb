@@ -62,7 +62,7 @@ class LocalTaskTrigger : BroadcastReceiver() {
                 val actions = if (replayDevice != null) ScreenActions({ observer }, { runtime.permitsInput(it) }, { replayDevice },
                     journal = { command -> runtime.submit(command).await() })
                     else ScreenActions({ observer }, { runtime.permitsInput(it) }, journal = { command -> runtime.submit(command).await() })
-                val factory = BuiltInStepWorkFactory(actions)
+                val factory = BuiltInStepWorkFactory(actions, ActionTraceLog(database, runScope))
                 val library = TaskVersionLibrary(database, BundleCodec(factory.contracts), TaskResourceFiles(folder))
                 observer = VersionedTextObserver(library, MaaTextBackend(app))
                 val text = File(staged, "task-bundle.json").readText()
@@ -89,6 +89,10 @@ class LocalTaskTrigger : BroadcastReceiver() {
                         .put("capability", record.intent.capability).put("actionId", record.intent.actionId)
                         .put("delivery", record.receipt?.delivery?.name).put("evidence", record.receipt?.evidence) }))
                 replayDevice?.let { report.put("replayInputs", JSONArray(it.inputs)) }
+                delay(500) // let the trace writer drain before reading back
+                report.put("traces", JSONArray(database.actionTraces().recent(500).reversed().map { t -> JSONObject()
+                    .put("actionId", t.actionId).put("capability", t.capability).put("result", t.result).put("reason", t.reason)
+                    .put("elapsedMillis", t.elapsedMillis).put("trace", t.traceJson?.let(::JSONObject)) }))
             } catch (error: Throwable) {
                 report.put("phase", "failed").put("errorType", error.javaClass.simpleName).put("error", error.message)
             } finally {

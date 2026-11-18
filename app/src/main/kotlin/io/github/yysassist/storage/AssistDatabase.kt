@@ -47,6 +47,26 @@ data class TaskConfigurationEntity(
 @Entity(tableName = "executor_state")
 data class ExecutorStateEntity(@PrimaryKey val id: Int = 1, val revision: Long, val payload: String, val digest: String)
 
+/** Diagnostic action evidence (regions, scores, digests, seeds). Not part of execution state; pruned. */
+@Entity(tableName = "action_traces", indices = [Index("runId")])
+data class ActionTraceEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val runId: Long, val generation: Long, val taskId: String, val stepId: String,
+    val actionId: String, val capability: String, val contractVersion: Int,
+    val result: String, val reason: String?, val traceJson: String?, val elapsedMillis: Long, val recordedAt: Long,
+)
+
+@Dao
+interface ActionTraceDao {
+    @Insert suspend fun insert(trace: ActionTraceEntity)
+    @Query("SELECT * FROM action_traces WHERE runId = :runId ORDER BY id")
+    suspend fun forRun(runId: Long): List<ActionTraceEntity>
+    @Query("SELECT * FROM action_traces ORDER BY id DESC LIMIT :limit")
+    suspend fun recent(limit: Int): List<ActionTraceEntity>
+    @Query("DELETE FROM action_traces WHERE id <= (SELECT MAX(id) FROM action_traces) - :keep")
+    suspend fun prune(keep: Int): Int
+}
+
 @Dao
 interface ExecutorStateDao {
     @Query("SELECT * FROM executor_state WHERE id = 1") suspend fun get(): ExecutorStateEntity?
@@ -108,11 +128,13 @@ interface TaskVersionDao {
     suspend fun releaseReference(owner: String): Int
 }
 
-@Database(entities = [TaskVersionEntity::class, TaskVersionSelection::class, TaskVersionReference::class, TaskConfigurationEntity::class, ExecutorStateEntity::class], version = 4, exportSchema = true)
+@Database(entities = [TaskVersionEntity::class, TaskVersionSelection::class, TaskVersionReference::class, TaskConfigurationEntity::class,
+    ExecutorStateEntity::class, ActionTraceEntity::class], version = 5, exportSchema = true)
 abstract class AssistDatabase : RoomDatabase() {
     abstract fun taskVersions(): TaskVersionDao
     abstract fun taskConfigurations(): TaskConfigurationDao
     abstract fun executorState(): ExecutorStateDao
+    abstract fun actionTraces(): ActionTraceDao
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -129,8 +151,14 @@ abstract class AssistDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `task_versions` ADD COLUMN `cached` INTEGER NOT NULL DEFAULT 1")
             }
         }
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `action_traces` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `runId` INTEGER NOT NULL, `generation` INTEGER NOT NULL, `taskId` TEXT NOT NULL, `stepId` TEXT NOT NULL, `actionId` TEXT NOT NULL, `capability` TEXT NOT NULL, `contractVersion` INTEGER NOT NULL, `result` TEXT NOT NULL, `reason` TEXT, `traceJson` TEXT, `elapsedMillis` INTEGER NOT NULL, `recordedAt` INTEGER NOT NULL)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_action_traces_runId` ON `action_traces` (`runId`)")
+            }
+        }
         fun open(context: Context, name: String = "assist.db"): AssistDatabase =
             Room.databaseBuilder(context.applicationContext, AssistDatabase::class.java, name)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build()
     }
 }
