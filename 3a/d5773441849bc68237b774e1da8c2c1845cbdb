@@ -1,0 +1,27 @@
+app/src/debug/kotlin/io/github/yysassist/debug/LocalTaskTrigger.kt
+  s_fae32e7f0efe76::t_6c41396c1e9cda 1-93
+app/src/debug/AndroidManifest.xml
+  s_fae32e7f0efe76::t_1406713d29b4ba 5-9
+tools/qa/stage_daily_gift_draft.py
+  s_fae32e7f0efe76::t_c0700c444e6793 1-115
+docs/development/build-evidence/back-key/README.md
+  s_fae32e7f0efe76::t_ae0dfb0bb96e04 25,29-40
+docs/development/implementation-status.md
+  s_fae32e7f0efe76::t_cc0eb30ffddfd2 300-303
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3ad5773441849bc68237b774e1da8c2c1845cbdb",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
