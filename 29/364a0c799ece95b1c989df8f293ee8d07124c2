@@ -1,0 +1,91 @@
+client/web/src/state/console.ts
+  s_fae32e7f0efe76::t_0b19345817af61 10-11,26,31
+  s_fae32e7f0efe76::t_b7495f0e479ae5 1-9,12-25,27-30,32-87
+client/web/src/features/devices/DeviceCard.tsx
+  s_fae32e7f0efe76::t_2f76a7ad7e2894 1-15,17-41,46-65
+  s_fae32e7f0efe76::t_0b19345817af61 16,42-45
+client/web/src/features/devices/DeviceCard.module.css
+  s_fae32e7f0efe76::t_14bbf1cd06cb8e 1-7
+client/web/index.html
+  s_fae32e7f0efe76::t_9db09dbb236fff 7,10-11
+client/web/src/components/ui.module.css
+  s_fae32e7f0efe76::t_0c7a0d78335225 1-36
+client/web/src/components/ui.tsx
+  s_fae32e7f0efe76::t_23408458bfbabb 1-59
+client/web/src/theme/base.css
+  s_fae32e7f0efe76::t_b7495f0e479ae5 1-10
+client/web/src/features/jobs/Jobs.tsx
+  s_fae32e7f0efe76::t_5045b6252ee164 1-14,19-38,41-60,62-66,68-71,73-95,97-119
+  s_fae32e7f0efe76::t_0b19345817af61 15-18,39-40,61,67,72,96
+client/web/src/api/types.ts
+  s_fae32e7f0efe76::t_9db09dbb236fff 1-42
+client/web/src/features/ConsolePage.tsx
+  s_fae32e7f0efe76::t_a36dc9c7219117 1-37,39-42
+  s_fae32e7f0efe76::t_0b19345817af61 38
+client/web/src/theme/tokens.css
+  s_fae32e7f0efe76::t_b7495f0e479ae5 1-32
+client/web/src/format.ts
+  s_fae32e7f0efe76::t_5edea8ca30d68d 1-37
+client/web/src/features/accounts/Accounts.module.css
+  s_fae32e7f0efe76::t_05951dfe6d8722 1-20
+client/web/src/main.tsx
+  s_fae32e7f0efe76::t_a36dc9c7219117 1-7
+client/web/src/features/ConsolePage.module.css
+  s_fae32e7f0efe76::t_a36dc9c7219117 1-5
+.claude/launch.json
+  s_fae32e7f0efe76::t_68b7b7d134bea3 1-11
+client/web/src/api/client.ts
+  s_fae32e7f0efe76::t_9db09dbb236fff 1-25
+client/web/src/features/jobs/Jobs.module.css
+  s_fae32e7f0efe76::t_292b314a5e30a1 1-14
+client/web/src/features/auth/AuthPage.module.css
+  s_fae32e7f0efe76::t_2eb0a865d02134 1-3
+client/web/src/vite-env.d.ts
+  s_fae32e7f0efe76::t_a36dc9c7219117 1
+client/web/package.json
+  s_fae32e7f0efe76::t_edde4277b5e656 17
+  s_fae32e7f0efe76::t_4cbebbf6ef7b7c 1-16,18-24
+client/web/src/features/accounts/Plans.tsx
+  s_fae32e7f0efe76::t_b60158555935be 1-76
+client/web/tsconfig.json
+  s_fae32e7f0efe76::t_edde4277b5e656 14
+  s_fae32e7f0efe76::t_9db09dbb236fff 1-13,15-17
+client/web/src/components/useAction.ts
+  s_fae32e7f0efe76::t_aa684575aa7b3f 1-22
+client/web/src/features/accounts/Settings.tsx
+  s_fae32e7f0efe76::t_3cc3e9be68e8c1 1-3,5-10,14-18,20,22-25,27-32,35-40,42-47,49-96
+  s_fae32e7f0efe76::t_a36dc9c7219117 4
+  s_fae32e7f0efe76::t_0b19345817af61 11-13,19,21,26,33-34,41,48
+client/web/src/features/auth/AuthPage.tsx
+  s_fae32e7f0efe76::t_0b19345817af61 16-22
+  s_fae32e7f0efe76::t_3f7ea8959e7280 1-15,23-98
+client/web/src/features/accounts/Accounts.tsx
+  s_fae32e7f0efe76::t_2f7a806c797016 1-12,14-90
+  s_fae32e7f0efe76::t_0b19345817af61 13
+client/web/src/App.tsx
+  s_fae32e7f0efe76::t_a36dc9c7219117 1-26
+docs/development/cloud-console.md
+  s_fae32e7f0efe76::t_1dab8cf994aa70 20,48-56
+client/web/vite.config.ts
+  s_fae32e7f0efe76::t_9db09dbb236fff 1-13
+.gitignore
+  s_fae32e7f0efe76::t_4cbebbf6ef7b7c 17-19
+client/web/pnpm-lock.yaml
+  s_fae32e7f0efe76::t_4802b7975d53a1 1-812
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "29364a0c799ece95b1c989df8f293ee8d07124c2",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
