@@ -1,0 +1,19 @@
+app/src/main/kotlin/io/github/yysassist/floating/FloatingSurface.kt
+  s_fae32e7f0efe76::t_a2f6052edd9370 43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "eb8a99c1df9284432e6487bbf334909555c60e30",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
