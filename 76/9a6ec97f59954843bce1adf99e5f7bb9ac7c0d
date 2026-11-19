@@ -1,0 +1,33 @@
+app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt
+  s_fae32e7f0efe76::t_740eb41c826829 176,432-433,438,441
+  s_fae32e7f0efe76::t_c2ead596f39fae 1029-1040,1043-1058
+  s_fae32e7f0efe76::t_24796c9b80ac77 132
+  s_fae32e7f0efe76::t_6efabd92c4f8d9 434-437,439-440,442-452
+  s_fae32e7f0efe76::t_9e7c991f120234 31,330-337,816,876-882,885-888,890,898
+  s_fae32e7f0efe76::t_0ccf39c7d643b6 30,39-40,114-129,133,141-145,147-149,152,159-167,408-431,805-806,952-973,982-983,998-1028,1059
+  s_fae32e7f0efe76::t_73a0c26fb8b742 130-131,140,146,153,932,938-939,1041-1042
+  s_fae32e7f0efe76::t_d70a3990d653c7 804
+  s_fae32e7f0efe76::t_0fea8bb56e975a 1115,1123-1125
+  s_fae32e7f0efe76::t_b3763906f49dd0 155,168-175,177
+  s_fae32e7f0efe76::t_174803e111fc19 41-42,974-981,984-997,1116-1119
+  s_fae32e7f0efe76::t_18595a5db3e23b 29
+app/src/debug/kotlin/io/github/yysassist/debug/LocalTaskTrigger.kt
+  s_fae32e7f0efe76::t_740eb41c826829 70-73
+  s_fae32e7f0efe76::t_4a3ad9a0f53ce0 78-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "769a6ec97f59954843bce1adf99e5f7bb9ac7c0d",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
