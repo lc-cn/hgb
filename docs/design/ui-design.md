@@ -1,5 +1,7 @@
 # 阴阳师助手 Android UI 设计方案
 
+> 2026-11-19：已被[护肝宝设计稿](https://claude.ai/artifact/7VRpYb4jWcQSAP7xa5Lyhk)和[护肝宝云端控制方案](cloud-executor.md)取代，仅作过程资料。
+
 版本：0.2<br>
 日期：2026-11-15<br>
 状态：旧 UI 方案与视觉稿已被用户否定，保留作过程资料，不作为后续视觉基线。最新完整原型见 [App v2](../prototype/app-v2.html)和[本轮交付索引](README.md)，尚待用户评审。下文原有结构与规则仅作需求追踪，与最新稿冲突时以完整 PRD 和 v2 为准，不代表旧布局获认可。<br>
