@@ -567,7 +567,7 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
         facts += ExecutionFact(type, run.runId, run.task.id, detail,
             taskName = run.task.name, context = run.request.context,
             packageVersion = run.request.packageVersion, occurredAtEpochMillis = clock(),
-            id = (facts.maxOfOrNull { it.id } ?: 0) + 1)
+            id = (facts.maxOfOrNull { it.id } ?: 0) + 1, stepId = run.task.stepIds.getOrNull(run.stepIndex))
     }
     /**
      * Keeps the state that is rewritten on every transition proportional to live work, not to history:

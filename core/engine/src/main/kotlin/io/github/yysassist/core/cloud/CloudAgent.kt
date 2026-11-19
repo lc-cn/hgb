@@ -25,6 +25,8 @@ import java.util.UUID
 
 @Serializable data class ActiveCloudJob(val jobId: String, val leaseNo: Long, val targetId: String, val taskId: String, val runId: Long? = null,
     val digest: String = "", val configuration: JsonObject = JsonObject(emptyMap()))
+/** One action the device performed for a run, as kept in its local trace log. */
+data class CloudTrace(val id: Long, val at: Long, val stepId: String, val actionId: String, val result: String, val reason: String?, val elapsedMillis: Long)
 /** The active task bundle as text, with the digest the cloud uses to name it. */
 data class CloudCatalog(val version: String, val digest: String, val text: String)
 @Serializable data class CloudCredentials(val serverUrl: String, val userId: String, val email: String?, val accessToken: String, val refreshToken: String,
@@ -52,6 +54,8 @@ interface CloudExecutorPort {
     /** Runs the task on bundle [digest] with exactly [configuration]; local settings are not read. */
     suspend fun enqueue(targetId: String, taskId: String, commandId: String, digest: String, configuration: JsonObject): CloudEnqueueResult
     fun remove(runId: Long)
+    /** Actions recorded for [runId] after trace [after], oldest first. */
+    suspend fun traces(runId: Long, after: Long): List<CloudTrace> = emptyList()
 }
 sealed interface CloudState {
     data object Loading : CloudState
@@ -74,7 +78,8 @@ fun cloudOutcome(state: ExecutorSnapshot, runId: Long): Pair<JobState, String>? 
 /** Keeps this device signed in, reports its state and runs the jobs leased to it, one at a time. */
 class CloudAgent(private val http: OkHttpClient, private val store: CloudCredentialStore, private val executor: CloudExecutorPort,
     private val deviceName: String, private val platform: String, private val appVersion: String, private val scope: CoroutineScope,
-    private val clock: () -> Long = System::currentTimeMillis, private val heartbeatMillis: Long = 15_000, private val retryMillis: Long = 5_000, private val pollMillis: Long = 20_000) {
+    private val clock: () -> Long = System::currentTimeMillis, private val heartbeatMillis: Long = 15_000, private val retryMillis: Long = 5_000, private val pollMillis: Long = 20_000,
+    private val progressMillis: Long = 1_500) {
     private val json = Json { ignoreUnknownKeys = true; explicitNulls = false; encodeDefaults = true }
     private val mutex = Mutex()
     private val mutableState = MutableStateFlow<CloudState>(CloudState.Loading)
@@ -226,12 +231,39 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
             is CloudEnqueueResult.Rejected -> { authorized { report(it, job, JobState.FAILED, result.reason) }; remember(null); return }
             is CloudEnqueueResult.Unconfirmed -> { authorized { report(it, job, JobState.UNKNOWN, result.reason) }; remember(null); return }
         }
-        val outcome = executor.state.first { cloudOutcome(it, runId) != null }.let { checkNotNull(cloudOutcome(it, runId)) }
+        val log = RunLog(job.copy(runId = runId), runId)
+        val outcome = coroutineScope {
+            // The log is sent while the run goes on, so the console shows where it is, and where it stopped.
+            val sender = launch { while (isActive) { log.flush(); delay(progressMillis) } }
+            executor.state.first { cloudOutcome(it, runId) != null }.let { checkNotNull(cloudOutcome(it, runId)) }.also { sender.cancel() }
+        }
+        delay(TRACE_SETTLE_MILLIS) // the trace writer stores the last actions just after the run ends
+        log.flush()
         authorized { report(it, job.copy(runId = runId), outcome.first, outcome.second) }
         remember(null)
     }
 
+    /** Remembers what was already sent for one run; a failed send is retried with the same keys next time. */
+    private inner class RunLog(private val job: ActiveCloudJob, private val runId: Long) {
+        private var factAfter = 0L; private var traceAfter = 0L
+        suspend fun flush() {
+            val facts = executor.state.value.facts.filter { it.runId == runId && it.id > factAfter }
+            val traces = try { executor.traces(runId, traceAfter) } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { emptyList() }
+            if (facts.isEmpty() && traces.isEmpty()) return
+            val events = facts.map { JobEvent("fact:${it.id}", it.occurredAtEpochMillis, it.type, it.stepId.orEmpty(), detail = it.detail.take(DETAIL_CHARS)) } +
+                traces.map { JobEvent("action:${it.id}", it.at, "action", it.stepId, it.actionId,
+                    (it.result + (it.reason?.let { reason -> "：$reason" } ?: "")).take(DETAIL_CHARS), it.elapsedMillis) }
+            try {
+                authorized { send<Unit>(it.serverUrl, "/api/device/jobs/${job.jobId}/events", json.encodeToString(JobEvents(job.leaseNo, events.sortedBy(JobEvent::at))), it.accessToken) }
+                factAfter = facts.maxOfOrNull { it.id } ?: factAfter; traceAfter = traces.maxOfOrNull { it.id } ?: traceAfter
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: IOException) { } // the log is best effort; the final report still decides the job
+        }
+    }
+
     private companion object {
+        const val DETAIL_CHARS = 300
+        const val TRACE_SETTLE_MILLIS = 600L
         val JSON_TYPE = "application/json".toMediaType()
         const val RENEW_MARGIN = 60_000L
     }

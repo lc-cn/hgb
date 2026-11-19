@@ -89,6 +89,7 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
         put("/api/configs/{target}/{task}") {
             call.respond(service.saveConfig(call.caller(service), call.parameters.getOrFail("target"), call.parameters.getOrFail("task"), call.receive()))
         }
+        get("/api/jobs/{id}/events") { call.respond(service.events(call.caller(service), call.parameters.getOrFail("id"))) }
         post("/api/jobs/{id}/cancel") { service.cancelJob(call.caller(service), call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
         route("/api/device") {
             post("/register") { call.respond(service.registerDevice(call.caller(service), call.receive())) }
@@ -102,6 +103,7 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
                 while (lease == null && System.currentTimeMillis() < deadline) { delay(500); lease = service.nextJob(caller) }
                 if (lease == null) call.respond(HttpStatusCode.NoContent) else call.respond(lease)
             }
+            post("/jobs/{id}/events") { service.appendEvents(call.caller(service), call.parameters.getOrFail("id"), call.receive()); call.respond(mapOf("ok" to true)) }
             post("/jobs/{id}/report") { service.report(call.caller(service), call.parameters.getOrFail("id"), call.receive()); call.respond(mapOf("ok" to true)) }
         }
         staticResources("/", "web") { default("index.html") }

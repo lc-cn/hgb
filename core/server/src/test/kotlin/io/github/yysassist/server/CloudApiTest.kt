@@ -181,6 +181,19 @@ class CloudApiTest {
         assertEquals(digest, lease.digest); assertEquals("v1", lease.version)
         assertEquals("currency", (lease.configuration["box"] as kotlinx.serialization.json.JsonPrimitive).content)
     }
+    @Test fun aRunLogIsStoredOnceAndNamesItsSteps() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        job(token, device.deviceId); val lease = lease(token)
+        fun batch(leaseNo: Long) = """{"leaseNo":$leaseNo,"events":[{"key":"fact:1","at":10,"kind":"step-started","step":"s"},
+            {"key":"action:4","at":11,"kind":"action","step":"s","action":"tap","detail":"PRODUCED","elapsedMs":80}]}"""
+        assertEquals(HttpStatusCode.Conflict, call(HttpMethod.Post, "/api/device/jobs/${lease.jobId}/events", batch(lease.leaseNo + 1), token).status)
+        repeat(2) { assertEquals(HttpStatusCode.OK, call(HttpMethod.Post, "/api/device/jobs/${lease.jobId}/events", batch(lease.leaseNo), token).status) }
+        val log = json.decodeFromString(ListSerializer(JobEventView.serializer()), call(HttpMethod.Get, "/api/jobs/${lease.jobId}/events", token = token).bodyAsText())
+        assertEquals(listOf("step-started", "action"), log.map { it.kind })
+        assertEquals("步骤", log.first().stepName)
+        val other = signUp("b@example.com").accessToken!!
+        assertEquals(HttpStatusCode.NotFound, call(HttpMethod.Get, "/api/jobs/${lease.jobId}/events", token = other).status)
+    }
     @Test fun aJobRunsToCompletionAndStaleLeasesCannotReport() = api {
         val session = signUp("a@example.com"); val token = session.accessToken!!; val device = enroll(token)
         job(token, device.deviceId); val lease = lease(token)

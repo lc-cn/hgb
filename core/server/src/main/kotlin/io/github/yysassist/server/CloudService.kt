@@ -268,6 +268,31 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         }
     }
 
+    /** Only the device holding the current lease can add to a job's log; lines past the cap are dropped. */
+    fun appendEvents(caller: Caller, jobId: String, batch: JobEvents) {
+        val id = device(caller)
+        db.tx {
+            val lease = single("SELECT lease_no FROM jobs WHERE id = ? AND device_id = ? AND user_id = ?", jobId, id, caller.userId) { it.getLong(1) }
+                ?: throw ApiException(404, "not_found", "作业不存在")
+            if (lease != batch.leaseNo) throw ApiException(409, "stale_lease", "作业租约已失效")
+            var stored = single("SELECT COUNT(*) FROM job_events WHERE job_id = ?", jobId) { it.getInt(1) } ?: 0
+            for (event in batch.events.take(MAX_EVENTS_PER_BATCH)) {
+                if (stored >= MAX_EVENTS_PER_JOB) break
+                stored += update("INSERT OR IGNORE INTO job_events (job_id, key, at, kind, step, action, detail, elapsed_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    jobId, event.key.take(40), event.at, event.kind.take(40), event.step.take(80), event.action.take(80), event.detail.take(400), event.elapsedMs)
+            }
+        }
+    }
+    /** Step ids are named from the task version the job ran on. */
+    fun events(caller: Caller, jobId: String): List<JobEventView> = db.tx {
+        val job = single("SELECT digest, target_id, task_id FROM jobs WHERE id = ? AND user_id = ?", jobId, caller.userId) {
+            Triple(it.getString(1), it.getString(2), it.getString(3)) } ?: throw ApiException(404, "not_found", "作业不存在")
+        val names = catalog(caller.userId, job.first)?.tasks?.singleOrNull { it.targetId == job.second && it.id == job.third }
+            ?.steps?.associate { it.id to it.name }.orEmpty()
+        query("SELECT at, kind, step, action, detail, elapsed_ms FROM job_events WHERE job_id = ? ORDER BY at, key", jobId) {
+            val step = it.getString(3)
+            JobEventView(it.getLong(1), it.getString(2), step, names[step] ?: step, it.getString(4), it.getString(5), it.getLong(6)) }
+    }
     fun devices(caller: Caller): List<DeviceView> = db.tx {
         query("SELECT id, name, platform, last_seen_at, phase, current_task, queued, tasks_json FROM devices WHERE user_id = ? AND revoked = 0 ORDER BY name, id", caller.userId) { row ->
             val seen = row.getLong(4).takeUnless { row.wasNull() }
@@ -321,6 +346,7 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         private const val PURPOSE_VERIFY = "verify"; private const val PURPOSE_LOGIN = "login"; private const val PURPOSE_RESET = "reset"
         private val EMAIL = Regex("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")
         private const val MAX_CATALOG_CHARS = 4_000_000
+        private const val MAX_EVENTS_PER_BATCH = 500; private const val MAX_EVENTS_PER_JOB = 3_000
         /** Newer apps may add fields this server does not know; only task and setting definitions are read here. */
         private val bundles = Json { ignoreUnknownKeys = true }
         private val fieldList = ListSerializer(ConfigurationField.serializer())

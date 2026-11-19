@@ -41,6 +41,16 @@ import kotlinx.serialization.json.JsonObject
     val targetId: String, val taskId: String, val expiresAt: Long, val version: String, val digest: String, val configuration: JsonObject)
 @Serializable data class JobReport(val leaseNo: Long, val state: JobState, val detail: String = "")
 
+/**
+ * One line of a job's run log. [key] names the record on the device ("fact:12", "action:340") so a resend after a
+ * lost reply is stored once. [kind] is an executor fact type, or "action" for one performed action.
+ */
+@Serializable data class JobEvent(val key: String, val at: Long, val kind: String, val step: String = "", val action: String = "",
+    val detail: String = "", val elapsedMs: Long = 0)
+@Serializable data class JobEvents(val leaseNo: Long, val events: List<JobEvent>)
+/** A stored log line as the console shows it, with the step's name from the job's task version. */
+@Serializable data class JobEventView(val at: Long, val kind: String, val step: String, val stepName: String, val action: String,
+    val detail: String, val elapsedMs: Long)
 @Serializable data class CreateJobRequest(val deviceId: String, val targetId: String, val taskId: String)
 /** A task's settings as the cloud stores them, with the field definitions of the version a device runs. */
 @Serializable data class ConfigView(val targetId: String, val taskId: String, val taskName: String, val version: String,

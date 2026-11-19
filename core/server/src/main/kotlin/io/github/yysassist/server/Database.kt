@@ -59,6 +59,9 @@ class Database(path: String) : AutoCloseable {
                 state TEXT NOT NULL, detail TEXT NOT NULL DEFAULT '', lease_no INTEGER NOT NULL DEFAULT 0, lease_expires_at INTEGER,
                 cancel_requested INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL,
                 version TEXT NOT NULL, digest TEXT NOT NULL, config_json TEXT NOT NULL)""",
+            // A job's run log, sent by the device while it runs. key is the device's own record name, so resends are stored once.
+            """CREATE TABLE IF NOT EXISTS job_events (job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE, key TEXT NOT NULL, at INTEGER NOT NULL,
+                kind TEXT NOT NULL, step TEXT NOT NULL, action TEXT NOT NULL, detail TEXT NOT NULL, elapsed_ms INTEGER NOT NULL, PRIMARY KEY (job_id, key))""",
             "CREATE INDEX IF NOT EXISTS jobs_by_device ON jobs (device_id, state, created_at)",
             "CREATE INDEX IF NOT EXISTS jobs_by_user ON jobs (user_id, created_at)",
         )

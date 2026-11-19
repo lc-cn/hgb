@@ -60,7 +60,11 @@ internal class EncryptedCloudStore(private val file: File, private val keyAlias:
 }
 
 internal class RuntimeCloudExecutor(private val runtime: ExecutionRuntime, private val updates: TaskUpdates,
-    private val library: io.github.yysassist.storage.TaskVersionLibrary) : CloudExecutorPort {
+    private val library: io.github.yysassist.storage.TaskVersionLibrary, private val database: io.github.yysassist.storage.AssistDatabase) : CloudExecutorPort {
+    override suspend fun traces(runId: Long, after: Long): List<CloudTrace> = withContext(Dispatchers.IO) {
+        database.actionTraces().forRun(runId).filter { it.id > after }
+            .map { CloudTrace(it.id, it.recordedAt, it.stepId, it.actionId, it.result, it.reason, it.elapsedMillis) }
+    }
     override val state get() = runtime.state
     override suspend fun awaitRestored() {
         runtime.status.first { it != RuntimeStatus.Loading }

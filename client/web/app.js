@@ -115,15 +115,51 @@ function deviceCard(device, reload) {
     } }));
 }
 
-function jobRow(job, reload) {
+const EVENT_KINDS = {
+  "enqueued": "已排队", "step-started": "开始步骤", "step-observed": "步骤结果", "step-completed": "步骤完成", "task-completed": "任务完成",
+  "task-failed": "任务失败", "task-restarted": "任务重来", "run-ended": "运行结束", "cancelled": "已取消", "input-unconfirmed": "输入未确认",
+  "result-resolved": "结果已确认", "revocation-observed": "停止确认", "action": "动作",
+};
+const ACTION_RESULTS = { PRODUCED: "完成", VERIFIED: "核对通过", UNAVAILABLE: "未通过", INTERRUPTED: "中断" };
+const clock = (value) => new Date(value).toLocaleTimeString("zh-CN", { hour12: false });
+
+/** Makes the executor's wording readable without changing what it says. */
+function eventDetail(event) {
+  if (event.kind === "action") {
+    const [result, ...rest] = event.detail.split("：");
+    return [ACTION_RESULTS[result] ?? result, rest.join("：")].filter(Boolean).join("：");
+  }
+  return event.detail.replace(/^Completed\(evidence=(.*)\)$/, "完成：$1").replace(/^Unknown\(reason=(.*)\)$/, "结果未知：$1")
+    .replace(/^Failed\(reason=(.*)\)$/, "失败：$1").replace(/^Interrupted$/, "已中断");
+}
+
+async function jobLog(job, box) {
+  let events;
+  try { events = await api(`/api/jobs/${encodeURIComponent(job.id)}/events`); }
+  catch (error) { box.replaceChildren(el("p", { class: "muted", text: error.message })); return; }
+  if (events.length === 0) { box.replaceChildren(el("p", { class: "muted", text: ACTIVE.has(job.state) ? "设备还没有上报明细" : "这次作业没有明细" })); return; }
+  box.replaceChildren(...events.map((event) => el("div", { class: `log-line ${event.kind === "action" ? "" : "fact"}` },
+    el("span", { class: "muted", text: clock(event.at) }),
+    el("span", { text: [event.stepName, EVENT_KINDS[event.kind] ?? event.kind, event.action].filter(Boolean).join(" · ") }),
+    el("span", { class: "muted", text: [eventDetail(event), event.elapsedMs ? `${event.elapsedMs} ms` : ""].filter(Boolean).join(" · ") }))));
+}
+
+function jobRow(job, reload, expanded) {
   const [label, tone] = STATES[job.state];
-  return el("div", { class: "job" },
+  const log = el("div", { class: "job-log" });
+  const open = expanded.has(job.id);
+  if (open) jobLog(job, log);
+  return el("div", { class: "job-wrap" }, el("div", { class: "job" },
     el("div", { class: "grow" }, el("div", { class: "name", text: job.taskName }),
       el("div", { class: "muted", text: `${job.deviceName} · ${time(job.updatedAt)}${job.detail ? ` · ${job.detail}` : ""}` })),
     el("span", { class: `pill ${tone}`, text: job.cancelRequested && ACTIVE.has(job.state) ? "取消中" : label }),
+    el("button", { class: "ghost", type: "button", text: open ? "收起" : "明细", "aria-expanded": String(open), onclick: () => {
+      if (expanded.has(job.id)) expanded.delete(job.id); else expanded.add(job.id);
+      reload();
+    } }),
     ACTIVE.has(job.state) && !job.cancelRequested ? el("button", { class: "ghost", type: "button", text: "取消", onclick: async () => {
       await api(`/api/jobs/${encodeURIComponent(job.id)}/cancel`, { method: "POST", body: {} }); reload();
-    } }) : null);
+    } }) : null), open ? log : null);
 }
 
 function jobForm(devices, reload) {
@@ -242,6 +278,7 @@ async function showConsole(account) {
   const settingsBox = el("div");
   const status = el("p", { class: "message", role: "status" });
   let formKey = "";
+  const expanded = new Set();
   async function reload() {
     stopRefresh();
     try {
@@ -249,7 +286,7 @@ async function showConsole(account) {
       status.textContent = "";
       devicesBox.replaceChildren(...(devices.length ? devices.map((device) => deviceCard(device, reload))
         : [el("p", { class: "card muted", text: "还没有设备。在手机上打开助手并登录这个账号，设备会自动出现在这里。" })]));
-      jobsBox.replaceChildren(...(jobs.length ? jobs.map((job) => jobRow(job, reload)) : [el("p", { class: "empty", text: "还没有作业" })]));
+      jobsBox.replaceChildren(...(jobs.length ? jobs.map((job) => jobRow(job, reload, expanded)) : [el("p", { class: "empty", text: "还没有作业" })]));
       // Rebuilding the form while someone is choosing a task would reset their selection.
       const key = JSON.stringify(devices.map((device) => [device.id, device.tasks]));
       if (key !== formKey) { formKey = key; formBox.replaceChildren(jobForm(devices, reload)); settingsBox.replaceChildren(settingsForm(devices)); }

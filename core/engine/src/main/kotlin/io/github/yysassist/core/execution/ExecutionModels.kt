@@ -78,6 +78,8 @@ data class ExecutionFact(
     val occurredAtEpochMillis: Long,
     /** Monotonic within one executor; 0 for facts stored before ids existed. Used to append history once. */
     val id: Long = 0,
+    /** The step the run was on, when the fact concerns one. */
+    val stepId: String? = null,
 )
 @Serializable
 data class ExecutorSnapshot(

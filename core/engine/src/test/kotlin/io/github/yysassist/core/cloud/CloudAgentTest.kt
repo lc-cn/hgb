@@ -2,7 +2,10 @@ package io.github.yysassist.core.cloud
 
 import io.github.yysassist.protocol.*
 
+import io.github.yysassist.core.execution.ExecutionFact
 import io.github.yysassist.core.execution.TaskExecutor
+import io.github.yysassist.core.model.ExecutionContext
+import io.github.yysassist.core.model.Principal
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -35,6 +38,9 @@ class CloudAgentTest {
     private val uploads = CopyOnWriteArrayList<CatalogUpload>()
     private val heartbeats = CopyOnWriteArrayList<DeviceHeartbeat>()
     @Volatile private var needCatalog = false
+    private val events = CopyOnWriteArrayList<JobEvent>()
+    /** When set, an accepted submission immediately shows this run as finished with a few facts. */
+    @Volatile private var finishedRun: Long? = null
 
     private val store = object : CloudCredentialStore {
         @Volatile var value: CloudCredentials? = null
@@ -50,7 +56,14 @@ class CloudAgentTest {
         override fun tasks() = listOf(CloudTask("game", "gift", "每日礼包"))
         override suspend fun catalog() = CloudCatalog("v1", "abc", """{"version":"v1"}""")
         override suspend fun enqueue(targetId: String, taskId: String, commandId: String, digest: String, configuration: kotlinx.serialization.json.JsonObject): CloudEnqueueResult {
-            enqueued += commandId; configurations += configuration; return enqueueResult }
+            enqueued += commandId; configurations += configuration
+            finishedRun?.let { run ->
+                fun fact(id: Long, type: String, step: String?) = ExecutionFact(type, run, "gift", "", "每日礼包", ExecutionContext("game", Principal.Anonymous), "v1", 1_000 + id, id, step)
+                executorState.value = executorState.value.copy(facts = listOf(fact(1, "step-started", "claim"), fact(2, "task-completed", null)))
+            }
+            return enqueueResult }
+        override suspend fun traces(runId: Long, after: Long) =
+            listOf(CloudTrace(9, 1_001, "claim", "tap", "PRODUCED", null, 80)).filter { it.id > after && runId == finishedRun }
         override fun remove(runId: Long) = Unit
     }
     private fun agent() = CloudAgent(OkHttpClient(), store, port, "手机", "android", "1", scope, heartbeatMillis = 50, retryMillis = 50, pollMillis = 0)
@@ -71,6 +84,7 @@ class CloudAgentTest {
                         ok(if (needCatalog) """{"needCatalog":true}""" else "{}") }
                     path == "/api/device/catalog" -> { uploads += json.decodeFromString(CatalogUpload.serializer(), request.body!!.utf8()); needCatalog = false; ok("{}") }
                     path == "/api/device/jobs/next" -> lease?.also { lease = null }?.let(::ok) ?: MockResponse.Builder().code(204).build()
+                    path.endsWith("/events") -> { events += json.decodeFromString(JobEvents.serializer(), request.body!!.utf8()).events; ok("{}") }
                     path.endsWith("/report") -> { reports += json.decodeFromString(JobReport.serializer(), request.body!!.utf8()); ok("{}") }
                     else -> ok("{}")
                 }
@@ -99,6 +113,13 @@ class CloudAgentTest {
         lease = leaseJson(); signedIn()
         eventually { reports.size == 2 }
         assertEquals("currency", configurations.single()["box"]?.let { (it as kotlinx.serialization.json.JsonPrimitive).content })
+    }
+    @Test fun aRunsLogIsSentOnceBeforeItsResult() = runBlocking<Unit> {
+        finishedRun = 7; enqueueResult = CloudEnqueueResult.Accepted(7); lease = leaseJson(); signedIn()
+        eventually { reports.size == 2 }
+        assertEquals(JobState.COMPLETED, reports.last().state)
+        assertEquals(listOf("fact:1", "action:9", "fact:2"), events.map { it.key })
+        assertEquals("claim", events.first().step)
     }
     @Test fun aJobForAnotherTaskVersionIsRefusedBeforeItStarts() = runBlocking<Unit> {
         lease = leaseJson(digest = "other"); signedIn()
