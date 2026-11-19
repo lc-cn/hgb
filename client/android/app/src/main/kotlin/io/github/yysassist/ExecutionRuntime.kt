@@ -92,8 +92,9 @@ class ExecutionRuntime(
     }
 
     fun submit(command: ExecutorCommand): RuntimeReceipt = receipt { Message.Command(command, it) }
-    fun enqueueTask(address: TaskAddress, commandId: String = UUID.randomUUID().toString()): RuntimeReceipt =
-        receipt { Message.Add({ admission.task(address) }, null, commandId, it) }
+    fun enqueueTask(address: TaskAddress, commandId: String = UUID.randomUUID().toString(),
+        provided: io.github.yysassist.storage.ProvidedSettings? = null): RuntimeReceipt =
+        receipt { Message.Add({ admission.task(address, provided) }, null, commandId, it) }
     suspend fun armedTriggers(targetId: String): List<TaskDefinition> = withContext(Dispatchers.IO) { admission.armedTriggers(targetId) }
     /** Submits one round of a plan; [context] is the account the plan belongs to, never the current one by default. */
     fun enqueuePlan(planId: String, name: String, context: ExecutionContext, taskIds: List<String>, commandId: String): RuntimeReceipt =

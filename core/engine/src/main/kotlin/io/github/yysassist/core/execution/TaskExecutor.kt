@@ -555,7 +555,7 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
     private fun validate(request: ExecutionRequest): String? {
         if (request.ref.id.isBlank() || !request.context.isValid() || request.packageVersion.isBlank()) return "提交身份或版本缺失"
         if (request.tasks.isEmpty()) return "没有可执行任务"
-        if (request.ref.kind == SubmissionKind.TASK && (request.tasks.size != 1 || request.tasks[0].id != request.ref.id)) return "任务引用不一致"
+        if (request.ref.kind != SubmissionKind.PLAN && (request.tasks.size != 1 || request.tasks[0].id != request.ref.id)) return "任务引用不一致"
         if (request.tasks.map { it.id }.distinct().size != request.tasks.size) return "计划中任务重复"
         if (request.tasks.any { it.id.isBlank() || it.name.isBlank() || it.priority < 0 || it.stepIds.isEmpty() ||
                 it.stepIds.any(String::isBlank) || it.stepIds.distinct().size != it.stepIds.size }) return "任务步骤或优先级无效"

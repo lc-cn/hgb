@@ -12,13 +12,17 @@ data class TaskAdmissionDraft(val target: TargetProfile, val version: String, va
         return ExecutionRequest(ref, context, version, tasks, label)
     }
 }
+/** Settings given with a cloud job: they replace local settings and only apply to the exact version they were checked on. */
+data class ProvidedSettings(val digest: String, val values: JsonObject)
+
 class TaskAdmissionRepository(private val database: AssistDatabase, private val library: TaskVersionLibrary) {
     val changes = database.invalidationTracker.createFlow("task_configurations", "task_versions", "task_version_selection")
     /** Read a coherent candidate; the state-store transaction checks it again before admission. */
-    suspend fun task(address: TaskAddress): TaskAdmissionDraft = database.withTransaction {
+    suspend fun task(address: TaskAddress, provided: ProvidedSettings? = null): TaskAdmissionDraft = database.withTransaction {
         val bundle = library.activeCatalog() ?: throw ExecutionStateRejected("请先启用任务版本")
+        if (provided != null && library.activeSource()?.digest != provided.digest) throw ExecutionStateRejected("任务版本已变化，作业未执行")
         TaskAdmissionDraft(bundle.targets.single { it.id == address.targetId }.takeIf { bundle.tasks.any { task -> task.targetId == address.targetId && task.id == address.taskId } }
-            ?: throw ExecutionStateRejected("当前版本没有此任务"), bundle.version, SubmissionRef(SubmissionKind.TASK, address.taskId), listOf(snapshot(bundle, address.targetId, address.taskId)))
+            ?: throw ExecutionStateRejected("当前版本没有此任务"), bundle.version, SubmissionRef(if (provided != null) SubmissionKind.CLOUD_JOB else SubmissionKind.TASK, address.taskId), listOf(snapshot(bundle, address.targetId, address.taskId, provided?.values)))
     }
     /** Passive tasks the user has switched on for this target, from the active version. */
     suspend fun armedTriggers(targetId: String): List<TaskDefinition> = database.withTransaction {
@@ -35,11 +39,10 @@ class TaskAdmissionRepository(private val database: AssistDatabase, private val 
         val target = bundle.targets.singleOrNull { it.id == targetId } ?: throw ExecutionStateRejected("当前版本没有此计划的目标")
         TaskAdmissionDraft(target, bundle.version, SubmissionRef(SubmissionKind.PLAN, planId), taskIds.map { snapshot(bundle, targetId, it) }, name)
     }
-    private suspend fun snapshot(bundle: TaskBundle, targetId: String, taskId: String): TaskSnapshot {
+    private suspend fun snapshot(bundle: TaskBundle, targetId: String, taskId: String, provided: JsonObject? = null): TaskSnapshot {
         val definition = bundle.tasks.singleOrNull { it.targetId == targetId && it.id == taskId }
             ?: throw ExecutionStateRejected("当前版本没有此任务")
-        val saved = database.taskConfigurations().get(targetId, taskId)
-        val values = try { saved?.let { Json.parseToJsonElement(it.valuesJson).jsonObject } ?: JsonObject(emptyMap()) }
+        val values = provided ?: try { database.taskConfigurations().get(targetId, taskId)?.let { Json.parseToJsonElement(it.valuesJson).jsonObject } ?: JsonObject(emptyMap()) }
         catch (_: IllegalArgumentException) { throw CorruptExecutionState("任务配置读取失败，原数据保留") }
         if (library.configurationIssues(definition, values).isNotEmpty()) throw ExecutionStateRejected("请先保存「${definition.name}」的有效配置")
         return TaskSnapshot(definition.id, definition.name, definition.priority, definition.steps.map { it.id }, values.toString())

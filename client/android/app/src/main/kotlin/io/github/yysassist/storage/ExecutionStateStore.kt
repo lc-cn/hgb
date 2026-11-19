@@ -62,10 +62,13 @@ class ExecutionStateStore(private val database: AssistDatabase, private val libr
                         throw ExecutionStateRejected("任务内容已变化，请重新提交")
                     val submitted = try { Json.parseToJsonElement(task.configurationJson).jsonObject }
                     catch (_: IllegalArgumentException) { throw ExecutionStateRejected("任务配置格式无效") }
-                    val saved = database.taskConfigurations().get(target.id, task.id)
-                    val values = try { saved?.let { Json.parseToJsonElement(it.valuesJson).jsonObject } ?: JsonObject(emptyMap()) }
-                    catch (_: IllegalArgumentException) { throw CorruptExecutionState("已保存任务配置损坏，原数据保留") }
-                    if (submitted != values) throw ExecutionStateRejected("任务配置已变化，请重新提交")
+                    // A cloud job carries the settings saved in the cloud; local settings are only the truth for local submissions.
+                    if (run.request.ref.kind != SubmissionKind.CLOUD_JOB) {
+                        val saved = database.taskConfigurations().get(target.id, task.id)
+                        val values = try { saved?.let { Json.parseToJsonElement(it.valuesJson).jsonObject } ?: JsonObject(emptyMap()) }
+                        catch (_: IllegalArgumentException) { throw CorruptExecutionState("已保存任务配置损坏，原数据保留") }
+                        if (submitted != values) throw ExecutionStateRejected("任务配置已变化，请重新提交")
+                    }
                     if (library.configurationIssues(definition, submitted).isNotEmpty()) throw ExecutionStateRejected("请先完成有效的任务配置")
                 }
             }

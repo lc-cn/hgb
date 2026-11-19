@@ -22,6 +22,13 @@ class CloudApiTest {
         override fun exchange(code: String, verifier: String, redirectUri: String) = code
         override fun user(accessToken: String) = accessToken.takeIf { it.startsWith("gh") }?.let { GitHubUser(it.removePrefix("gh"), "login$it") }
     }
+    private val bundle = """{"formatVersion":1,"version":"v1","updatedAt":"2026-11-19T00:00:00Z","changelog":"","tasks":[
+        {"id":"gift","targetId":"game","name":"每日礼包","category":"daily","priority":1,"steps":[{"id":"s","name":"步骤"}]},
+        {"id":"tour","targetId":"game","name":"日常巡游","category":"daily","priority":1,"steps":[{"id":"s","name":"步骤"}],
+         "fields":[{"id":"box","label":"礼盒","widget":"SINGLE_CHOICE","required":true,"options":[{"value":"none","label":"不选"},{"value":"currency","label":"货币"}]}]}],
+        "targets":[{"id":"game","name":"游戏","androidPackages":["test.game"],"identityPolicy":"NONE","categories":[{"id":"daily","name":"日常"}]}]}"""
+    private val digest = java.security.MessageDigest.getInstance("SHA-256").digest(bundle.toByteArray()).joinToString("") { "%02x".format(it) }
+    private val bothTasks = """[{"targetId":"game","taskId":"gift","name":"每日礼包"},{"targetId":"game","taskId":"tour","name":"日常巡游"}]"""
     private fun api(block: suspend Api.() -> Unit) {
         val file = File.createTempFile("cloud", ".db")
         val db = Database(file.path)
@@ -48,8 +55,17 @@ class CloudApiTest {
             val reply = call(HttpMethod.Post, "/api/device/register", """{"installId":"$install","name":"手机","platform":"android"}""", token)
             assertEquals(HttpStatusCode.OK, reply.status)
             val device = json.decodeFromString(DeviceRegistered.serializer(), reply.bodyAsText())
-            assertEquals(HttpStatusCode.OK, call(HttpMethod.Post, "/api/device/heartbeat", """{"phase":"IDLE","tasks":[{"targetId":"game","taskId":"gift","name":"每日礼包"}]}""", token).status)
+            beat(token, """[{"targetId":"game","taskId":"gift","name":"每日礼包"}]""")
             return device
+        }
+        /** A heartbeat naming the task bundle, uploading it when the cloud asks. */
+        suspend fun beat(token: String, tasks: String): HeartbeatReply {
+            val reply = call(HttpMethod.Post, "/api/device/heartbeat", """{"phase":"IDLE","tasks":$tasks,"catalog":{"version":"v1","digest":"$digest"}}""", token)
+            assertEquals(HttpStatusCode.OK, reply.status)
+            val parsed = json.decodeFromString(HeartbeatReply.serializer(), reply.bodyAsText())
+            if (parsed.needCatalog) assertEquals(HttpStatusCode.OK, call(HttpMethod.Post, "/api/device/catalog",
+                json.encodeToString(CatalogUpload.serializer(), CatalogUpload("v1", digest, bundle)), token).status)
+            return parsed
         }
         suspend fun job(token: String, deviceId: String) = call(HttpMethod.Post, "/api/jobs", """{"deviceId":"$deviceId","targetId":"game","taskId":"gift"}""", token)
         suspend fun next(token: String) = call(HttpMethod.Post, "/api/device/jobs/next?waitMs=0", "{}", token)
@@ -140,6 +156,30 @@ class CloudApiTest {
     @Test fun jobsOnlyAcceptTasksTheDeviceOffers() = api {
         val session = signUp("a@example.com"); val device = enroll(session.accessToken!!)
         assertEquals(HttpStatusCode.BadRequest, call(HttpMethod.Post, "/api/jobs", """{"deviceId":"${device.deviceId}","targetId":"game","taskId":"unknown"}""", session.accessToken).status)
+    }
+    @Test fun theCloudAsksForATaskVersionOnceAndRejectsAForgedOne() = api {
+        val token = signUp("a@example.com").accessToken!!; enroll(token)
+        assertFalse(beat(token, bothTasks).needCatalog)
+        val forged = CatalogUpload("v1", digest, bundle.replace("每日礼包", "别的礼包"))
+        assertEquals(HttpStatusCode.BadRequest, call(HttpMethod.Post, "/api/device/catalog", json.encodeToString(CatalogUpload.serializer(), forged), token).status)
+    }
+    @Test fun aJobNeedsValidCloudSettingsAndCarriesACopyOfThem() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token); beat(token, bothTasks)
+        val tour = """{"deviceId":"${device.deviceId}","targetId":"game","taskId":"tour"}"""
+        val refused = call(HttpMethod.Post, "/api/jobs", tour, token)
+        assertEquals(HttpStatusCode.BadRequest, refused.status)
+        assertTrue(refused.bodyAsText().contains("config_required"))
+        val view = json.decodeFromString(ConfigView.serializer(), call(HttpMethod.Get, "/api/configs/game/tour?deviceId=${device.deviceId}", token = token).bodyAsText())
+        assertEquals("box", (view.fields.single() as kotlinx.serialization.json.JsonObject)["id"]?.let { (it as kotlinx.serialization.json.JsonPrimitive).content })
+        assertEquals(0L, view.revision)
+        fun save(value: String, revision: Long) = """{"deviceId":"${device.deviceId}","values":{"box":"$value"},"revision":$revision}"""
+        assertEquals(HttpStatusCode.BadRequest, call(HttpMethod.Put, "/api/configs/game/tour", save("jade", 0), token).status)
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Put, "/api/configs/game/tour", save("currency", 0), token).status)
+        assertEquals(HttpStatusCode.Conflict, call(HttpMethod.Put, "/api/configs/game/tour", save("none", 0), token).status)
+        assertEquals(HttpStatusCode.Created, call(HttpMethod.Post, "/api/jobs", tour, token).status)
+        val lease = lease(token)
+        assertEquals(digest, lease.digest); assertEquals("v1", lease.version)
+        assertEquals("currency", (lease.configuration["box"] as kotlinx.serialization.json.JsonPrimitive).content)
     }
     @Test fun aJobRunsToCompletionAndStaleLeasesCannotReport() = api {
         val session = signUp("a@example.com"); val token = session.accessToken!!; val device = enroll(token)

@@ -1,9 +1,17 @@
 package io.github.yysassist.server
 
 import io.github.yysassist.core.cloud.*
+import io.github.yysassist.core.content.ConfigurationField
+import io.github.yysassist.core.content.TaskBundle
+import io.github.yysassist.core.content.TaskDefinition
+import io.github.yysassist.core.content.validateConfiguration
 import io.github.yysassist.protocol.*
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import java.security.MessageDigest
 import java.util.UUID
 
 class ApiException(val status: Int, val code: String, override val message: String) : RuntimeException(message)
@@ -172,23 +180,72 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
     fun heartbeat(caller: Caller, beat: DeviceHeartbeat): HeartbeatReply {
         val id = device(caller); val now = clock()
         return db.tx {
-            update("UPDATE devices SET last_seen_at = ?, phase = ?, current_task = ?, queued = ?, tasks_json = ? WHERE id = ? AND user_id = ?",
-                now, beat.phase.take(40), beat.currentTask?.take(120), beat.queued, json.encodeToString(tasks, beat.tasks.take(500)), id, caller.userId)
+            update("UPDATE devices SET last_seen_at = ?, phase = ?, current_task = ?, queued = ?, tasks_json = ?, catalog_version = ?, catalog_digest = ? WHERE id = ? AND user_id = ?",
+                now, beat.phase.take(40), beat.currentTask?.take(120), beat.queued, json.encodeToString(tasks, beat.tasks.take(500)),
+                beat.catalog?.version?.take(120), beat.catalog?.digest?.take(64), id, caller.userId)
+            val reported = beat.catalog
+            val missing = reported != null && single("SELECT 1 FROM catalogs WHERE user_id = ? AND digest = ?", caller.userId, reported.digest) { true } == null
             // Only a started job is kept alive: a lease handed to a connection that died must return to the queue.
             update("UPDATE jobs SET lease_expires_at = ? WHERE device_id = ? AND user_id = ? AND state = 'RUNNING'", now + LEASE_LIFETIME, id, caller.userId)
             sweep()
-            HeartbeatReply(query("SELECT id FROM jobs WHERE device_id = ? AND user_id = ? AND cancel_requested = 1 AND state IN ('LEASED', 'RUNNING')", id, caller.userId) { it.getString(1) })
+            HeartbeatReply(query("SELECT id FROM jobs WHERE device_id = ? AND user_id = ? AND cancel_requested = 1 AND state IN ('LEASED', 'RUNNING')", id, caller.userId) { it.getString(1) },
+                needCatalog = missing)
         }
+    }
+    /** The bundle text must hash to the digest it claims, so a stored version can never be swapped later. */
+    fun uploadCatalog(caller: Caller, upload: CatalogUpload) {
+        device(caller)
+        if (upload.bundle.length > MAX_CATALOG_CHARS) throw ApiException(413, "catalog_too_large", "任务包过大")
+        if (hex(upload.bundle) != upload.digest) throw ApiException(400, "digest_mismatch", "任务包摘要不一致")
+        val bundle = try { bundles.decodeFromString(TaskBundle.serializer(), upload.bundle) }
+            catch (_: IllegalArgumentException) { throw ApiException(400, "invalid_catalog", "任务包无法解析") }
+        if (bundle.version != upload.version) throw ApiException(400, "invalid_catalog", "任务包版本不一致")
+        db.tx { update("INSERT OR IGNORE INTO catalogs (user_id, digest, version, bundle_json, uploaded_at) VALUES (?, ?, ?, ?, ?)",
+            caller.userId, upload.digest, upload.version, upload.bundle, clock()); Unit }
+    }
+    private fun Database.catalog(userId: String, digest: String): TaskBundle? =
+        single("SELECT bundle_json FROM catalogs WHERE user_id = ? AND digest = ?", userId, digest) { bundles.decodeFromString(TaskBundle.serializer(), it.getString(1)) }
+    /** The task as defined by the version the device currently runs. */
+    private fun Database.deviceTask(userId: String, deviceId: String, targetId: String, taskId: String): Pair<String, TaskDefinition> {
+        val digest = single("SELECT catalog_digest FROM devices WHERE id = ? AND user_id = ? AND revoked = 0", deviceId, userId) { it.getString(1) to true }
+            ?: throw ApiException(404, "not_found", "设备不存在")
+        val current = digest.first ?: throw ApiException(409, "catalog_missing", "设备还没有上报任务版本，请等设备在线后再试")
+        val bundle = catalog(userId, current) ?: throw ApiException(409, "catalog_missing", "设备的任务版本还没有上传，请稍后再试")
+        val task = bundle.tasks.singleOrNull { it.targetId == targetId && it.id == taskId } ?: throw ApiException(400, "unknown_task", "这台设备没有这个任务")
+        return current to task
+    }
+    private fun Database.savedConfig(userId: String, targetId: String, taskId: String): Pair<JsonObject, Long> =
+        single("SELECT values_json, revision FROM task_configs WHERE user_id = ? AND target_id = ? AND task_id = ?", userId, targetId, taskId) {
+            json.parseToJsonElement(it.getString(1)).jsonObject to it.getLong(2) } ?: (JsonObject(emptyMap()) to 0L)
+    fun config(caller: Caller, deviceId: String, targetId: String, taskId: String): ConfigView = db.tx {
+        val (digest, task) = deviceTask(caller.userId, deviceId, targetId, taskId)
+        val version = single("SELECT version FROM catalogs WHERE user_id = ? AND digest = ?", caller.userId, digest) { it.getString(1) }.orEmpty()
+        val (values, revision) = savedConfig(caller.userId, targetId, taskId)
+        ConfigView(targetId, taskId, task.name, version, json.encodeToJsonElement(fieldList, task.fields) as JsonArray, values, revision)
+    }
+    /** Settings are checked by the same rules the app applies, against the version the chosen device runs. */
+    fun saveConfig(caller: Caller, targetId: String, taskId: String, save: ConfigSave): ConfigView {
+        db.tx {
+            val (_, task) = deviceTask(caller.userId, save.deviceId, targetId, taskId)
+            val issues = validateConfiguration(task, save.values)
+            if (issues.isNotEmpty()) throw ApiException(400, "invalid_config", issues.joinToString("；") { it.reason })
+            val (_, revision) = savedConfig(caller.userId, targetId, taskId)
+            if (revision != save.revision) throw ApiException(409, "revision_changed", "设置已在别处修改，请刷新后再改")
+            update("INSERT OR REPLACE INTO task_configs (user_id, target_id, task_id, values_json, revision, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                caller.userId, targetId, taskId, save.values.toString(), revision + 1, clock())
+        }
+        return config(caller, save.deviceId, targetId, taskId)
     }
     fun nextJob(caller: Caller): JobLease? {
         val id = device(caller); val now = clock()
         return db.tx {
             sweep()
-            val job = single("SELECT id, target_id, task_id, lease_no FROM jobs WHERE device_id = ? AND user_id = ? AND state = 'QUEUED' ORDER BY created_at, id LIMIT 1", id, caller.userId) {
-                listOf(it.getString(1), it.getString(2), it.getString(3), it.getLong(4)) } ?: return@tx null
+            val job = single("SELECT id, target_id, task_id, lease_no, version, digest, config_json FROM jobs WHERE device_id = ? AND user_id = ? AND state = 'QUEUED' ORDER BY created_at, id LIMIT 1", id, caller.userId) {
+                listOf(it.getString(1), it.getString(2), it.getString(3), it.getLong(4), it.getString(5), it.getString(6), it.getString(7)) } ?: return@tx null
             val lease = (job[3] as Long) + 1; val expires = now + ACK_LIFETIME
             update("UPDATE jobs SET state = 'LEASED', lease_no = ?, lease_expires_at = ?, updated_at = ? WHERE id = ?", lease, expires, now, job[0])
-            JobLease(job[0] as String, lease, caller.userId, id, job[1] as String, job[2] as String, expires)
+            JobLease(job[0] as String, lease, caller.userId, id, job[1] as String, job[2] as String, expires, job[4] as String, job[5] as String,
+                json.parseToJsonElement(job[6] as String).jsonObject)
         }
     }
     fun report(caller: Caller, jobId: String, report: JobReport) {
@@ -231,8 +288,14 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             val offered = single("SELECT tasks_json FROM devices WHERE id = ? AND user_id = ? AND revoked = 0", request.deviceId, caller.userId) { json.decodeFromString(tasks, it.getString(1)) }
                 ?: throw ApiException(404, "not_found", "设备不存在")
             val task = offered.firstOrNull { it.targetId == request.targetId && it.taskId == request.taskId } ?: throw ApiException(400, "unknown_task", "这台设备没有这个任务")
-            update("INSERT INTO jobs (id, user_id, device_id, target_id, task_id, task_name, state, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 'QUEUED', ?, ?)",
-                id, caller.userId, request.deviceId, task.targetId, task.taskId, task.name, now, now)
+            // The job keeps a copy of the settings, checked against the version the device runs now.
+            val (digest, definition) = deviceTask(caller.userId, request.deviceId, task.targetId, task.taskId)
+            val (values, _) = savedConfig(caller.userId, task.targetId, task.taskId)
+            val issues = validateConfiguration(definition, values)
+            if (issues.isNotEmpty()) throw ApiException(400, "config_required", "请先在控制台保存「${definition.name}」的设置：" + issues.joinToString("；") { it.reason })
+            val version = single("SELECT version FROM catalogs WHERE user_id = ? AND digest = ?", caller.userId, digest) { it.getString(1) }.orEmpty()
+            update("INSERT INTO jobs (id, user_id, device_id, target_id, task_id, task_name, state, created_at, updated_at, version, digest, config_json) VALUES (?, ?, ?, ?, ?, ?, 'QUEUED', ?, ?, ?, ?, ?)",
+                id, caller.userId, request.deviceId, task.targetId, task.taskId, task.name, now, now, version, digest, values.toString())
         }
         return jobs(caller).first { it.id == id }
     }
@@ -257,5 +320,10 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         const val LEASE_LIFETIME = 2 * MINUTE; const val ACK_LIFETIME = MINUTE / 2; const val ONLINE_WINDOW = MINUTE
         private const val PURPOSE_VERIFY = "verify"; private const val PURPOSE_LOGIN = "login"; private const val PURPOSE_RESET = "reset"
         private val EMAIL = Regex("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")
+        private const val MAX_CATALOG_CHARS = 4_000_000
+        /** Newer apps may add fields this server does not know; only task and setting definitions are read here. */
+        private val bundles = Json { ignoreUnknownKeys = true }
+        private val fieldList = ListSerializer(ConfigurationField.serializer())
+        private fun hex(text: String) = MessageDigest.getInstance("SHA-256").digest(text.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
     }
 }

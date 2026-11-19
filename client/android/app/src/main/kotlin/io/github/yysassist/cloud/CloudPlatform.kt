@@ -59,7 +59,8 @@ internal class EncryptedCloudStore(private val file: File, private val keyAlias:
     }
 }
 
-internal class RuntimeCloudExecutor(private val runtime: ExecutionRuntime, private val updates: TaskUpdates) : CloudExecutorPort {
+internal class RuntimeCloudExecutor(private val runtime: ExecutionRuntime, private val updates: TaskUpdates,
+    private val library: io.github.yysassist.storage.TaskVersionLibrary) : CloudExecutorPort {
     override val state get() = runtime.state
     override suspend fun awaitRestored() {
         runtime.status.first { it != RuntimeStatus.Loading }
@@ -68,8 +69,12 @@ internal class RuntimeCloudExecutor(private val runtime: ExecutionRuntime, priva
     /** Passive tasks start from what appears on screen, so they are never offered as jobs. */
     override fun tasks(): List<CloudTask> = ((updates.catalog.value as? VersionCatalogState.Ready)?.catalog?.activeContent as? ActiveTaskContent.Available)
         ?.bundle?.tasks.orEmpty().filter { it.trigger == null }.map { CloudTask(it.targetId, it.id, it.name) }
-    override suspend fun enqueue(targetId: String, taskId: String, commandId: String): CloudEnqueueResult =
-        when (val result = runtime.enqueueTask(TaskAddress(targetId, taskId), commandId).await()) {
+    override suspend fun catalog(): CloudCatalog? = withContext(Dispatchers.IO) {
+        runCatching { library.activeSource() }.getOrNull()?.let { CloudCatalog(it.version, it.digest, it.json) }
+    }
+    override suspend fun enqueue(targetId: String, taskId: String, commandId: String, digest: String, configuration: kotlinx.serialization.json.JsonObject): CloudEnqueueResult =
+        when (val result = runtime.enqueueTask(TaskAddress(targetId, taskId), commandId,
+            io.github.yysassist.storage.ProvidedSettings(digest, configuration)).await()) {
             is RuntimeCommandResult.Applied -> when (val reply = (result.reply as? ExecutorReply.Enqueued)?.result) {
                 is EnqueueResult.Accepted -> CloudEnqueueResult.Accepted(reply.runId)
                 is EnqueueResult.Duplicate -> CloudEnqueueResult.Accepted(reply.runId)

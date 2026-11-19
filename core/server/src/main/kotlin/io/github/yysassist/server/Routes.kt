@@ -81,10 +81,19 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
         delete("/api/devices/{id}") { service.revokeDevice(call.caller(service), call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
         get("/api/jobs") { call.respond(service.jobs(call.caller(service))) }
         post("/api/jobs") { call.respond(HttpStatusCode.Created, service.createJob(call.caller(service), call.receive())) }
+        get("/api/configs/{target}/{task}") {
+            val caller = call.caller(service)
+            call.respond(service.config(caller, call.request.queryParameters["deviceId"] ?: throw ApiException(400, "bad_request", "请选择设备"),
+                call.parameters.getOrFail("target"), call.parameters.getOrFail("task")))
+        }
+        put("/api/configs/{target}/{task}") {
+            call.respond(service.saveConfig(call.caller(service), call.parameters.getOrFail("target"), call.parameters.getOrFail("task"), call.receive()))
+        }
         post("/api/jobs/{id}/cancel") { service.cancelJob(call.caller(service), call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
         route("/api/device") {
             post("/register") { call.respond(service.registerDevice(call.caller(service), call.receive())) }
             post("/heartbeat") { call.respond(service.heartbeat(call.caller(service), call.receive())) }
+            post("/catalog") { service.uploadCatalog(call.caller(service), call.receive()); call.respond(mapOf("ok" to true)) }
             post("/jobs/next") {
                 val caller = call.caller(service)
                 val waitMillis = (call.request.queryParameters["waitMs"]?.toLongOrNull() ?: LONG_POLL_MILLIS).coerceIn(0, LONG_POLL_MILLIS)

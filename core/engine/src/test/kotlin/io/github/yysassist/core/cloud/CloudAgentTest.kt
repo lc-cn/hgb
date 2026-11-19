@@ -29,7 +29,12 @@ class CloudAgentTest {
     @Volatile private var accessRejected = false
     @Volatile private var refreshRejected = false
     private fun auth(token: String) = """{"userId":"me","email":"a@example.test","accessToken":"$token","refreshToken":"r-$token","accessExpiresAt":${System.currentTimeMillis() + 3_600_000}}"""
-    private fun leaseJson(user: String = "me", device: String = "d1") = """{"jobId":"j1","leaseNo":3,"userId":"$user","deviceId":"$device","targetId":"game","taskId":"gift","expiresAt":1}"""
+    private fun leaseJson(user: String = "me", device: String = "d1", digest: String = "abc") =
+        """{"jobId":"j1","leaseNo":3,"userId":"$user","deviceId":"$device","targetId":"game","taskId":"gift","expiresAt":1,"version":"v1","digest":"$digest","configuration":{"box":"currency"}}"""
+    private val configurations = CopyOnWriteArrayList<kotlinx.serialization.json.JsonObject>()
+    private val uploads = CopyOnWriteArrayList<CatalogUpload>()
+    private val heartbeats = CopyOnWriteArrayList<DeviceHeartbeat>()
+    @Volatile private var needCatalog = false
 
     private val store = object : CloudCredentialStore {
         @Volatile var value: CloudCredentials? = null
@@ -43,7 +48,9 @@ class CloudAgentTest {
         override val state = executorState
         override suspend fun awaitRestored() { restored.await() }
         override fun tasks() = listOf(CloudTask("game", "gift", "每日礼包"))
-        override suspend fun enqueue(targetId: String, taskId: String, commandId: String): CloudEnqueueResult { enqueued += commandId; return enqueueResult }
+        override suspend fun catalog() = CloudCatalog("v1", "abc", """{"version":"v1"}""")
+        override suspend fun enqueue(targetId: String, taskId: String, commandId: String, digest: String, configuration: kotlinx.serialization.json.JsonObject): CloudEnqueueResult {
+            enqueued += commandId; configurations += configuration; return enqueueResult }
         override fun remove(runId: Long) = Unit
     }
     private fun agent() = CloudAgent(OkHttpClient(), store, port, "手机", "android", "1", scope, heartbeatMillis = 50, retryMillis = 50, pollMillis = 0)
@@ -60,7 +67,9 @@ class CloudAgentTest {
                     path == "/api/auth/refresh" -> if (refreshRejected) denied else { accessRejected = false; ok(auth("a2")) }
                     accessRejected -> denied
                     path == "/api/device/register" -> ok("""{"deviceId":"d1","userId":"me"}""")
-                    path == "/api/device/heartbeat" -> ok("{}")
+                    path == "/api/device/heartbeat" -> { heartbeats += json.decodeFromString(DeviceHeartbeat.serializer(), request.body!!.utf8())
+                        ok(if (needCatalog) """{"needCatalog":true}""" else "{}") }
+                    path == "/api/device/catalog" -> { uploads += json.decodeFromString(CatalogUpload.serializer(), request.body!!.utf8()); needCatalog = false; ok("{}") }
                     path == "/api/device/jobs/next" -> lease?.also { lease = null }?.let(::ok) ?: MockResponse.Builder().code(204).build()
                     path.endsWith("/report") -> { reports += json.decodeFromString(JobReport.serializer(), request.body!!.utf8()); ok("{}") }
                     else -> ok("{}")
@@ -86,6 +95,26 @@ class CloudAgentTest {
         assertEquals("当前不能运行", reports.last().detail)
         assertEquals(listOf("cloud/j1/3"), enqueued)
     }
+    @Test fun aJobRunsWithTheSettingsItCarries() = runBlocking<Unit> {
+        lease = leaseJson(); signedIn()
+        eventually { reports.size == 2 }
+        assertEquals("currency", configurations.single()["box"]?.let { (it as kotlinx.serialization.json.JsonPrimitive).content })
+    }
+    @Test fun aJobForAnotherTaskVersionIsRefusedBeforeItStarts() = runBlocking<Unit> {
+        lease = leaseJson(digest = "other"); signedIn()
+        eventually { reports.isNotEmpty() }
+        delay(200)
+        assertEquals(listOf(JobState.FAILED), reports.map { it.state })
+        assertTrue(enqueued.isEmpty())
+    }
+    @Test fun heartbeatsNameTheTaskVersionAndUploadItWhenAsked() = runBlocking<Unit> {
+        needCatalog = true; signedIn()
+        eventually { uploads.isNotEmpty() }
+        assertEquals(CatalogRef("v1", "abc"), heartbeats.first().catalog)
+        assertEquals("abc", uploads.single().digest)
+        delay(200)
+        assertEquals(1, uploads.size)
+    }
     @Test fun anUnconfirmedSubmissionIsNeverReportedAsAFailure() = runBlocking<Unit> {
         enqueueResult = CloudEnqueueResult.Unconfirmed("提交结果未确认"); lease = leaseJson(); signedIn()
         eventually { reports.size == 2 }
@@ -101,7 +130,7 @@ class CloudAgentTest {
     }
     @Test fun aJobInterruptedByARestartWaitsForSavedStateBeforeJudgingTheResult() = runBlocking<Unit> {
         restored = CompletableDeferred()
-        store.value = CloudCredentials(base, "me", "a@example.test", "a1", "r-a1", System.currentTimeMillis() + 3_600_000, "install", "d1", ActiveCloudJob("j1", 3, "game", "gift", runId = 9))
+        store.value = CloudCredentials(base, "me", "a@example.test", "a1", "r-a1", System.currentTimeMillis() + 3_600_000, "install", "d1", ActiveCloudJob("j1", 3, "game", "gift", runId = 9, digest = "abc"))
         agent(); delay(400)
         assertTrue("nothing may be claimed before state is restored", reports.isEmpty())
         restored.complete(Unit)

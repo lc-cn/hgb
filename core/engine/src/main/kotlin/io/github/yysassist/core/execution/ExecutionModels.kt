@@ -5,7 +5,8 @@ import kotlinx.serialization.Serializable
 
 /** Content snapshots contain data, never their own pause/resume controller. */
 @Serializable
-enum class SubmissionKind { TASK, PLAN }
+/** CLOUD_JOB is one task run with settings given by the cloud, which replace the locally saved ones. */
+enum class SubmissionKind { TASK, PLAN, CLOUD_JOB }
 @Serializable
 data class SubmissionRef(val kind: SubmissionKind, val id: String)
 @Serializable

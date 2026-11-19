@@ -111,7 +111,7 @@ class AssistApplication : Application() {
         taskUpdates = TaskUpdates(library, source, scope)
         val cloudClient = client.newBuilder().callTimeout(40, TimeUnit.SECONDS).build()
         cloud = io.github.yysassist.core.cloud.CloudAgent(cloudClient, io.github.yysassist.cloud.EncryptedCloudStore(File(noBackupFilesDir, "cloud-session.bin"), "io.github.yysassist.cloud.v1"),
-            io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates), "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}", "android", BuildConfig.VERSION_NAME, scope)
+            io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library), "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}", "android", BuildConfig.VERSION_NAME, scope)
         taskUpdates.pullLatest()
     }
 }

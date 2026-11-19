@@ -44,14 +44,21 @@ class Database(path: String) : AutoCloseable {
             """CREATE TABLE IF NOT EXISTS oauth_states (state TEXT PRIMARY KEY, verifier TEXT NOT NULL, link_user TEXT, expires_at INTEGER NOT NULL)""",
             """CREATE TABLE IF NOT EXISTS devices (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, install_id TEXT NOT NULL,
                 name TEXT NOT NULL, platform TEXT NOT NULL, revoked INTEGER NOT NULL DEFAULT 0, last_seen_at INTEGER, phase TEXT, current_task TEXT,
-                queued INTEGER NOT NULL DEFAULT 0, tasks_json TEXT NOT NULL DEFAULT '[]', UNIQUE (user_id, install_id))""",
+                queued INTEGER NOT NULL DEFAULT 0, tasks_json TEXT NOT NULL DEFAULT '[]', catalog_version TEXT, catalog_digest TEXT, UNIQUE (user_id, install_id))""",
+            // Task bundles devices run, kept per user so settings can be checked against the exact version a job will use.
+            """CREATE TABLE IF NOT EXISTS catalogs (user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, digest TEXT NOT NULL,
+                version TEXT NOT NULL, bundle_json TEXT NOT NULL, uploaded_at INTEGER NOT NULL, PRIMARY KEY (user_id, digest))""",
+            // The cloud is the one place task settings are kept; jobs carry a copy taken when they are created.
+            """CREATE TABLE IF NOT EXISTS task_configs (user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, target_id TEXT NOT NULL,
+                task_id TEXT NOT NULL, values_json TEXT NOT NULL, revision INTEGER NOT NULL, updated_at INTEGER NOT NULL, PRIMARY KEY (user_id, target_id, task_id))""",
             """CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, kind TEXT NOT NULL,
                 device_id TEXT REFERENCES devices(id) ON DELETE CASCADE, access_hash TEXT NOT NULL UNIQUE, refresh_hash TEXT UNIQUE,
                 access_expires_at INTEGER NOT NULL, refresh_expires_at INTEGER)""",
             """CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE, target_id TEXT NOT NULL, task_id TEXT NOT NULL, task_name TEXT NOT NULL,
                 state TEXT NOT NULL, detail TEXT NOT NULL DEFAULT '', lease_no INTEGER NOT NULL DEFAULT 0, lease_expires_at INTEGER,
-                cancel_requested INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)""",
+                cancel_requested INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL,
+                version TEXT NOT NULL, digest TEXT NOT NULL, config_json TEXT NOT NULL)""",
             "CREATE INDEX IF NOT EXISTS jobs_by_device ON jobs (device_id, state, created_at)",
             "CREATE INDEX IF NOT EXISTS jobs_by_user ON jobs (user_id, created_at)",
         )

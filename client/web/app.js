@@ -147,12 +147,99 @@ function jobForm(devices, reload) {
   return form;
 }
 
+/** One input per setting the task declares; returns [node, read] where read() gives the value to save or undefined. */
+function settingInput(def, value) {
+  const disabled = def.readOnly === true;
+  const options = def.options ?? [];
+  switch (def.widget) {
+    case "SINGLE_CHOICE": {
+      const select = el("select", { disabled }, el("option", { value: "", text: "请选择" }),
+        ...options.map((option) => el("option", { value: option.value, text: option.label })));
+      select.value = typeof value === "string" ? value : "";
+      return [select, () => select.value || undefined];
+    }
+    case "MULTI_CHOICE": {
+      const chosen = new Set(Array.isArray(value) ? value : []);
+      const boxes = options.map((option) => [option.value, el("input", { type: "checkbox", disabled, checked: chosen.has(option.value) })]);
+      return [el("div", { class: "choices" }, ...boxes.map(([, box], i) => el("label", { class: "check" }, box, el("span", { text: options[i].label })))),
+        () => boxes.filter(([, box]) => box.checked).map(([id]) => id)];
+    }
+    case "SWITCH": {
+      const box = el("input", { type: "checkbox", disabled, checked: value === true });
+      return [el("label", { class: "check" }, box, el("span", { text: "开启" })), () => box.checked];
+    }
+    case "NUMBER": case "RANGE": {
+      const input = el("input", { type: "number", disabled, min: def.minimum, max: def.maximum, step: def.step ?? "any" });
+      input.value = typeof value === "number" ? String(value) : "";
+      return [input, () => (input.value === "" ? undefined : Number(input.value))];
+    }
+    case "TEXT": case "TIME": case "DATE": {
+      const input = el("input", { type: def.widget === "TEXT" ? "text" : def.widget.toLowerCase(), disabled });
+      input.value = typeof value === "string" ? value : "";
+      return [input, () => input.value || undefined];
+    }
+    default: return [el("p", { class: "muted", text: "这个设置暂时只能在 App 里修改" }), () => value];
+  }
+}
+
+/** Settings live in the cloud; a job takes a copy when it is created. Fields come from the version the device runs. */
+function settingsForm(devices) {
+  const usable = devices.filter((device) => device.tasks.length > 0);
+  if (usable.length === 0) return el("p", { class: "card muted", text: "设备上线并上报任务后，就可以在这里修改任务设置。" });
+  const message = el("p", { class: "message", role: "status" });
+  const editor = el("div", { class: "settings" });
+  const taskSelect = el("select", { required: true });
+  const deviceSelect = el("select", { required: true, onchange: fill }, ...usable.map((device) => el("option", { value: device.id, text: device.name })));
+  function fill() {
+    const device = usable.find((item) => item.id === deviceSelect.value);
+    taskSelect.replaceChildren(...device.tasks.map((task) => el("option", { value: `${task.targetId}\n${task.taskId}`, text: task.name })));
+    editor.replaceChildren();
+  }
+  fill();
+  taskSelect.addEventListener("change", () => editor.replaceChildren());
+  async function open() {
+    message.textContent = ""; message.className = "message";
+    const [targetId, taskId] = taskSelect.value.split("\n");
+    const path = `/api/configs/${encodeURIComponent(targetId)}/${encodeURIComponent(taskId)}`;
+    let view;
+    try { view = await api(`${path}?deviceId=${encodeURIComponent(deviceSelect.value)}`); }
+    catch (error) { message.textContent = error.message; return; }
+    if (view.fields.length === 0) { editor.replaceChildren(el("p", { class: "muted", text: "这个任务没有可修改的设置。" })); return; }
+    const readers = []; const pending = [];
+    const rows = view.fields.map((def) => {
+      const saved = Object.prototype.hasOwnProperty.call(view.values, def.id);
+      const [input, read] = settingInput(def, saved ? view.values[def.id] : def.recommended);
+      readers.push([def.id, read]);
+      return el("div", { class: "setting" },
+        el("div", { class: "name", text: `${def.label}${def.required ? "（必填）" : ""}` }),
+        def.description ? el("div", { class: "muted", text: def.description }) : null,
+        !saved && def.recommended !== undefined ? (pending[pending.length] = el("div", { class: "muted", text: "已填入推荐值，保存后生效" })) : null,
+        input);
+    });
+    let revision = view.revision;
+    const save = el("button", { class: "primary", type: "button", text: "保存设置", onclick: async () => {
+      const values = {};
+      for (const [id, read] of readers) { const value = read(); if (value !== undefined) values[id] = value; }
+      save.disabled = true; message.textContent = "";
+      try {
+        const saved = await api(path, { method: "PUT", body: { deviceId: deviceSelect.value, values, revision } });
+        revision = saved.revision; pending.forEach((note) => note.remove()); message.textContent = "已保存，之后下发的作业会使用这些设置"; message.className = "message ok";
+      } catch (error) { message.textContent = error.message; }
+      finally { save.disabled = false; }
+    } });
+    editor.replaceChildren(el("p", { class: "muted", text: `任务版本 ${view.version}` }), ...rows, save);
+  }
+  return el("div", { class: "card" }, el("div", { class: "new-job" }, el("label", { text: "设备" }, deviceSelect), el("label", { text: "任务" }, taskSelect),
+    el("button", { class: "ghost", type: "button", text: "编辑设置", onclick: open })), editor, message);
+}
+
 function stopRefresh() { clearTimeout(timer); timer = null; }
 
 async function showConsole(account) {
   const devicesBox = el("div", { class: "devices" });
   const jobsBox = el("div", { class: "card jobs" });
   const formBox = el("div");
+  const settingsBox = el("div");
   const status = el("p", { class: "message", role: "status" });
   let formKey = "";
   async function reload() {
@@ -165,7 +252,7 @@ async function showConsole(account) {
       jobsBox.replaceChildren(...(jobs.length ? jobs.map((job) => jobRow(job, reload)) : [el("p", { class: "empty", text: "还没有作业" })]));
       // Rebuilding the form while someone is choosing a task would reset their selection.
       const key = JSON.stringify(devices.map((device) => [device.id, device.tasks]));
-      if (key !== formKey) { formKey = key; formBox.replaceChildren(jobForm(devices, reload)); }
+      if (key !== formKey) { formKey = key; formBox.replaceChildren(jobForm(devices, reload)); settingsBox.replaceChildren(settingsForm(devices)); }
     } catch (error) {
       if (error.status === 401) { showAuth(); return; }
       status.textContent = error.message;
@@ -178,6 +265,7 @@ async function showConsole(account) {
       el("button", { class: "ghost", type: "button", text: "退出登录", onclick: async () => { await api("/api/auth/logout", { method: "POST", body: {} }); showAuth(); } })),
     status,
     el("section", {}, el("h2", { text: "设备" }), devicesBox),
+    el("section", {}, el("h2", { text: "任务设置" }), settingsBox),
     el("section", {}, el("h2", { text: "下发作业" }), formBox),
     el("section", {}, el("h2", { text: "作业记录" }), jobsBox));
   await reload();

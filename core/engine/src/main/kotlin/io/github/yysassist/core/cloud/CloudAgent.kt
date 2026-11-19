@@ -13,6 +13,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
@@ -22,7 +23,10 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.util.UUID
 
-@Serializable data class ActiveCloudJob(val jobId: String, val leaseNo: Long, val targetId: String, val taskId: String, val runId: Long? = null)
+@Serializable data class ActiveCloudJob(val jobId: String, val leaseNo: Long, val targetId: String, val taskId: String, val runId: Long? = null,
+    val digest: String = "", val configuration: JsonObject = JsonObject(emptyMap()))
+/** The active task bundle as text, with the digest the cloud uses to name it. */
+data class CloudCatalog(val version: String, val digest: String, val text: String)
 @Serializable data class CloudCredentials(val serverUrl: String, val userId: String, val email: String?, val accessToken: String, val refreshToken: String,
     val accessExpiresAt: Long, val installId: String, val deviceId: String? = null, val activeJob: ActiveCloudJob? = null) {
     override fun toString() = "CloudCredentials(<redacted>)"
@@ -43,7 +47,10 @@ interface CloudExecutorPort {
     /** Suspends until saved execution state has been restored; before that, [state] says nothing about past runs. */
     suspend fun awaitRestored()
     fun tasks(): List<CloudTask>
-    suspend fun enqueue(targetId: String, taskId: String, commandId: String): CloudEnqueueResult
+    /** The active task bundle, or null when none is usable. */
+    suspend fun catalog(): CloudCatalog?
+    /** Runs the task on bundle [digest] with exactly [configuration]; local settings are not read. */
+    suspend fun enqueue(targetId: String, taskId: String, commandId: String, digest: String, configuration: JsonObject): CloudEnqueueResult
     fun remove(runId: Long)
 }
 sealed interface CloudState {
@@ -164,8 +171,12 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
                 ensureDevice()
                 executor.awaitRestored()
                 val snapshot = executor.state.value
-                val beat = DeviceHeartbeat(snapshot.phase.name, snapshot.current?.task?.name, snapshot.waiting.size, executor.tasks(), appVersion)
+                val catalog = executor.catalog()
+                val beat = DeviceHeartbeat(snapshot.phase.name, snapshot.current?.task?.name, snapshot.waiting.size, executor.tasks(), appVersion,
+                    catalog?.let { CatalogRef(it.version, it.digest) })
                 val reply = authorized { send<HeartbeatReply>(it.serverUrl, "/api/device/heartbeat", json.encodeToString(beat), it.accessToken) }
+                if (reply?.needCatalog == true && catalog != null) authorized {
+                    send<Unit>(it.serverUrl, "/api/device/catalog", json.encodeToString(CatalogUpload(catalog.version, catalog.digest, catalog.text)), it.accessToken) }
                 val active = mutex.withLock { credentials?.activeJob }
                 if (active?.runId != null && reply?.cancelJobs?.contains(active.jobId) == true) executor.remove(active.runId)
                 publish(true)
@@ -188,7 +199,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
                 val mine = mutex.withLock { credentials }
                 // A lease for anyone else is never acted on, whatever the server says.
                 if (lease.userId != mine?.userId || lease.deviceId != deviceId) continue
-                val job = ActiveCloudJob(lease.jobId, lease.leaseNo, lease.targetId, lease.taskId)
+                val job = ActiveCloudJob(lease.jobId, lease.leaseNo, lease.targetId, lease.taskId, digest = lease.digest, configuration = lease.configuration)
                 remember(job)
                 finish(job)
             } catch (cancelled: CancellationException) { throw cancelled }
@@ -202,10 +213,15 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
     }
     private suspend fun finish(job: ActiveCloudJob) {
         executor.awaitRestored()
+        if (job.runId == null && executor.catalog()?.digest != job.digest) {
+            // The settings were checked against another version: running them here could mean something else.
+            authorized { report(it, job, JobState.FAILED, "设备当前的任务版本与作业不一致，请等设备上报新版本后重新下发") }
+            remember(null); return
+        }
         // Nothing starts until the server accepts this lease; repeating the report after a restart is harmless.
         if (job.runId == null) authorized { report(it, job, JobState.RUNNING, "") }
         // The same command id returns the original run after a restart, so a job can never start twice.
-        val runId = job.runId ?: when (val result = executor.enqueue(job.targetId, job.taskId, "cloud/${job.jobId}/${job.leaseNo}")) {
+        val runId = job.runId ?: when (val result = executor.enqueue(job.targetId, job.taskId, "cloud/${job.jobId}/${job.leaseNo}", job.digest, job.configuration)) {
             is CloudEnqueueResult.Accepted -> result.runId.also { remember(job.copy(runId = it)) }
             is CloudEnqueueResult.Rejected -> { authorized { report(it, job, JobState.FAILED, result.reason) }; remember(null); return }
             is CloudEnqueueResult.Unconfirmed -> { authorized { report(it, job, JobState.UNKNOWN, result.reason) }; remember(null); return }

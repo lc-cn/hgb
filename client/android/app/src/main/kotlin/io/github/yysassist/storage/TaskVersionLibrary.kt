@@ -44,6 +44,8 @@ enum class VersionReferenceReason { QUEUED, RUNNING, PAUSED, UNRESOLVED }
  * a failed observation or an uncertain commit is never translated to an empty catalog or success.
  * This validates content/digests; source authentication belongs to the transport, not to JSON.
  */
+data class ActiveTaskSource(val version: String, val digest: String, val json: String)
+
 class TaskVersionLibrary(
     private val database: AssistDatabase,
     private val codec: BundleCodec,
@@ -219,6 +221,14 @@ class TaskVersionLibrary(
             is Checked.Valid -> content.bundle
             is Checked.Rejected -> throw InvalidLocalTaskVersion(content.reason.message)
         }
+    }
+
+    /** The active version as stored text with its digest, for the cloud to read the settings it declares. */
+    suspend fun activeSource(): ActiveTaskSource? = database.withTransaction {
+        val version = dao.selection()?.activeVersion ?: return@withTransaction null
+        val row = dao.version(version) ?: return@withTransaction null
+        if (checked(row) !is Checked.Valid) return@withTransaction null
+        ActiveTaskSource(row.version, row.digest, row.json)
     }
 
     suspend fun readVersion(version: String): TaskBundle = database.withTransaction {
