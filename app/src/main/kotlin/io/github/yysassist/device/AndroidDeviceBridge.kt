@@ -181,6 +181,19 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
         continuation.resume(value) { _, dropped, _ -> (dropped as? FrameResult.Ready)?.frame?.close() }
     }
 
+    /**
+     * The platform keeps a screenshot callback reachable long after it has fired. Handing over through this
+     * holder cuts the path from that callback to the waiting coroutine, whose frames still hold earlier pixels.
+     */
+    private class CaptureWaiter(private var continuation: CancellableContinuation<FrameResult>?, private var lease: Closeable?) {
+        fun take(): Pair<CancellableContinuation<FrameResult>, Closeable>? {
+            val waiting = continuation ?: return null
+            val held = checkNotNull(lease)
+            continuation = null; lease = null
+            return waiting to held
+        }
+    }
+
     private fun requestCapture(expectedPackage: String?, continuation: CancellableContinuation<FrameResult>, lease: Closeable) {
         mainThread()
         if (!connected) { completeCapture(continuation, lease, FrameResult.Unavailable(DeviceRejection.DISCONNECTED)); return }
@@ -191,6 +204,11 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
         val before = geometry()
         if (before == null) { completeCapture(continuation, lease, FrameResult.Unavailable(DeviceRejection.DISCONNECTED)); return }
         val request = ScreenshotRequest(requestedConnection)
+        val waiter = CaptureWaiter(continuation, lease)
+        fun deliver(value: FrameResult) {
+            val (waiting, held) = waiter.take() ?: run { (value as? FrameResult.Ready)?.frame?.close(); return }
+            completeCapture(waiting, held, value)
+        }
         screenshotPending = request
         screenshotAfterUptime = SystemClock.uptimeMillis() + SCREENSHOT_GAP_MS
         fun terminal() {
@@ -220,13 +238,13 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
                         } catch (_: IllegalArgumentException) { FrameResult.Unavailable(DeviceRejection.DECODE_FAILED) }
                         finally { hardware?.recycle(); result.hardwareBuffer.close() }
                         if (value !is FrameResult.Ready) pixels?.recycle()
-                        completeCapture(continuation, lease, value)
+                        deliver(value)
                     }
                     override fun onFailure(errorCode: Int) {
                         terminal()
-                        completeCapture(continuation, lease, FrameResult.Unavailable(DeviceRejection.PLATFORM_REJECTED, errorCode))
+                        deliver(FrameResult.Unavailable(DeviceRejection.PLATFORM_REJECTED, errorCode))
                     }
-        }) } catch (error: Exception) { terminal(); throw error }
+        }) } catch (error: Exception) { terminal(); waiter.take(); throw error }
     }
 
     override suspend fun openInput(ticket: AttemptTicket, permitsInput: (AttemptTicket) -> Boolean): InputSession? =
