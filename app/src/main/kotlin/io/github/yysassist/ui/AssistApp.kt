@@ -119,6 +119,7 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
                                     else if (runtimeStatus is RuntimeStatus.Failure) EmptyContent("运行记录暂不可用", (runtimeStatus as RuntimeStatus.Failure).message)
                                     else RunHistoryPage(executor)
                                 "运行与数据" -> DataUsagePage(executor)
+                                "云端控制" -> CloudPage(application.cloud)
                                 "新建计划", "编辑计划" -> PlanEditorPage(plans?.firstOrNull { it.id == editPlanId }.takeIf { detail == "编辑计划" }, planTask, activeBundle, { name, targetId, schedule, taskIds ->
                                     val existing = plans?.firstOrNull { it.id == editPlanId }.takeIf { detail == "编辑计划" }
                                     val target = activeBundle?.targets?.firstOrNull { it.id == targetId }

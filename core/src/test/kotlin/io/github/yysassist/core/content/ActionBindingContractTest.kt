@@ -6,7 +6,7 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class ActionBindingContractTest {
-    private val contract = BuiltInStepWorkFactory().contracts.single()
+    private val contract = BuiltInStepWorkFactory().contracts.single { it.id == "control.wait" }
     private val codec = BundleCodec(listOf(contract))
     private val field = ConfigurationField("milliseconds", "等待时长", FieldWidget.NUMBER, required = true)
     private val first = ActionDefinition("first", "control.wait", 1, JsonObject(emptyMap()),

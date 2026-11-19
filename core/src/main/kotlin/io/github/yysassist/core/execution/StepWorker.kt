@@ -23,6 +23,9 @@ interface StepWorkFactory {
     fun canStartWithoutObservation(request: ExecutionRequest, bundle: TaskBundle): Boolean = false
 }
 
+/** Whether the user chose this option, so a passive task can answer only what was selected. */
+const val SELECTION_CONTAINS = "control.selectionContains"
+
 /** One ordered interpreter for wait and explicitly registered APK-owned actions. */
 class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, private val traces: ActionTraceSink? = null) : StepWorkFactory {
     private fun duration(inputs: JsonObject): Long? {
@@ -34,6 +37,10 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
         inputTypes = mapOf("durationMs" to ActionValueType.NUMBER),
         outputTypes = mapOf("durationMs" to ActionValueType.NUMBER)) { inputs ->
         if (inputs.keys != setOf("durationMs") || duration(inputs) == null) "等待时长需为非负整数毫秒" else null
+    }, CapabilityContract(SELECTION_CONTAINS, 1,
+        inputTypes = mapOf("selection" to ActionValueType.ARRAY, "value" to ActionValueType.STRING),
+        outputTypes = mapOf("selected" to ActionValueType.BOOLEAN)) { inputs ->
+        if (inputs.keys != setOf("selection", "value") || inputs["selection"]?.jsonArray?.any { it !is JsonPrimitive || !it.isString } != false) "请提供多选结果和要判断的选项" else null
     }) + actions?.contracts.orEmpty()
     init { require(contracts.distinctBy { it.id to it.version }.size == contracts.size) { "动作合同身份重复" } }
     private val codec = BundleCodec(contracts)
@@ -131,6 +138,8 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                                         val result = if (action.capability == "control.wait") {
                                             val milliseconds = checkNotNull(duration(inputs)); delay(milliseconds)
                                             ActionResult.Produced(buildJsonObject { put("durationMs", milliseconds) })
+                                        } else if (action.capability == SELECTION_CONTAINS) {
+                                            ActionResult.Produced(buildJsonObject { put("selected", inputs.getValue("value") in inputs.getValue("selection").jsonArray) })
                                         } else checkNotNull(activeSession).perform(action, inputs)
                                         traces?.let { sink ->
                                             val (kind, reason, trace) = when (result) {

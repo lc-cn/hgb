@@ -93,7 +93,7 @@ internal fun PlanEditorPage(plan: PlanDefinition?, initialTask: String?, bundle:
                     }
                 }
             }
-            val candidates = definitions.filter { it.id !in tasks && (targetId == null || it.targetId == targetId) }
+            val candidates = definitions.filter { it.trigger == null && it.id !in tasks && (targetId == null || it.targetId == targetId) }
             if (candidates.isNotEmpty()) {
                 SectionLabel("添加任务")
                 AssistCard {

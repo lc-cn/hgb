@@ -30,7 +30,7 @@ class BuiltInStepWorkFactoryTest {
         assertTrue(second.isCancelled)
     }
     @Test fun contractRejectsUnknownInputsAndUnsupportedActionsNeverQualifyForSafeRecovery() {
-        val contract = factory.contracts.single()
+        val contract = factory.contracts.single { it.id == "control.wait" }
         assertNotNull(contract.validateInputs(JsonObject(mapOf("durationMs" to JsonPrimitive("1000")))))
         assertNotNull(contract.validateInputs(JsonObject(mapOf("durationMs" to JsonPrimitive(-1)))))
         assertNotNull(contract.validateInputs(JsonObject(mapOf("durationMs" to JsonPrimitive(1), "script" to JsonPrimitive("anything")))))

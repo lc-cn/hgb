@@ -76,6 +76,8 @@ internal fun SettingsPage(appearance: AppearanceState, mode: ThemeMode, setTheme
         },
         SettingsSection("任务与账号") {
             val catalog = (versions as? VersionCatalogState.Ready)?.catalog
+            SettingRow(AssistIcons.Cloud, p.violet, "云端控制", "用 Web 控制台管理这台设备", { open("云端控制") }) { Chevron() }
+            RowDivider()
             SettingRow(AssistIcons.Cloud, p.blue, "任务更新", "拉取和切换任务版本", { open("任务更新") }) {
                 SettingValue(when (versions) {
                     VersionCatalogState.Loading -> "读取中"

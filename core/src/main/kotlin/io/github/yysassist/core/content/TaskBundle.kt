@@ -65,6 +65,8 @@ data class TaskDefinition(
     val steps: List<StepDefinition>,
     /** One line shown under the task name in the list. */
     val description: String? = null,
+    /** Present on passive tasks, which start from what appears on screen instead of a button or plan. */
+    val trigger: TaskTrigger? = null,
 )
 @Serializable
 data class StepDefinition(
@@ -99,6 +101,8 @@ data class ConfigurationField(
     val options: List<FieldOption> = emptyList(),
     /** Heading under which the settings page groups this field. */
     val section: String? = null,
+    /** Second-level setting: only applies while another choice is selected. */
+    val visibleWhen: FieldCondition? = null,
     /** Optional page within the settings screen, for tasks with two distinct halves. */
     val tab: String? = null,
     /** Shown for information; the user cannot change it. */
@@ -176,6 +180,8 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
     fun configurationIssues(task: TaskDefinition, values: JsonObject): List<ContentIssue> {
         val schema = validateConfiguration(task, values)
         if (schema.isNotEmpty()) return schema
+        // A passive task with nothing selected never runs, so its action inputs are not needed.
+        if (task.trigger?.enabled(values) == false) return emptyList()
         return configuredActionIssues(task, values, capabilities)
     }
 
@@ -224,6 +230,8 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
             if (task.id.isBlank() || task.name.isBlank() || task.category.isBlank()) issue(location, "缺少任务身份、名称或分类")
             if (task.priority < 0) issue(location, "优先级不能为负值")
             if (task.fields.map { it.id }.distinct().size != task.fields.size) issue(location, "配置字段重复")
+            fieldConditionIssues(task).forEach { issue("$location/field/${it.location}", it.reason) }
+            triggerIssues(task).forEach { issue(location, it) }
             task.fields.forEach { field ->
                 val path = "$location/field/${field.id}"
                 if (field.id.isBlank() || field.label.isBlank()) issue(path, "缺少字段身份或名称")

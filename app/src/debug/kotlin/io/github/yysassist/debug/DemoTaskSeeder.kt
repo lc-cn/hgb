@@ -36,6 +36,11 @@ class DemoTaskSeeder : BroadcastReceiver() {
                 val text = app.taskCodec.write(demoBundle())
                 val installed = app.versionLibrary.install(text, VERSION, TaskVersionLibrary.sha256(text))
                 Log.i(TAG, "install=$installed activate=${app.versionLibrary.activate(VERSION)}")
+                // Local end-to-end checks only: signs in to a development server with a test account.
+                intent.getStringExtra("cloudServer")?.let { server ->
+                    runCatching { app.cloud.signIn(server, intent.getStringExtra("cloudEmail").orEmpty(), intent.getStringExtra("cloudPassword").orEmpty()) }
+                        .onFailure { Log.w(TAG, "cloud sign-in failed: ${it.javaClass.simpleName}") }
+                }
                 val minutes = intent.getIntExtra("planInMinutes", -1)
                 if (minutes >= 0) {
                     val at = java.time.LocalTime.now().plusMinutes(minutes.toLong())
@@ -68,6 +73,17 @@ class DemoTaskSeeder : BroadcastReceiver() {
             number("stamina", "体力上限", "消耗上限", 40, 2000, 40, 240, "本次最多消耗，到达后结束任务"),
             switch("boost", "使用御魂加成", "加成", false, "运行前开启，任务结束后关闭"),
             number("fail", "连续失败后结束", "失败处理", 1, 10, 1, 3, "避免阵容不足时持续消耗体力"))),
+        task("invite", "daily", "协作邀请处理", "只接受勾选的协作类型", listOf(
+            ConfigurationField("accept", "接受的协作", FieldWidget.MULTI_CHOICE, true, section = "协作类型", description = "默认都不选，不选就不处理邀请", options = listOf(
+                FieldOption("jade", "勾玉协作"), FieldOption("cat", "猫粮协作"), FieldOption("dog", "狗粮协作"), FieldOption("event", "活动邀约"),
+                FieldOption("soul-team", "御魂组队"), FieldOption("explore-team", "探索组队"))),
+            ConfigurationField("soul-friends", "好友范围", FieldWidget.TEXT, true, section = "御魂组队", description = "只接受这些好友的邀请", visibleWhen = FieldCondition("accept", "soul-team")),
+            number("soul-times", "次数上限", "御魂组队", 1, 200, 1, 10, "到达后离队").copy(visibleWhen = FieldCondition("accept", "soul-team")),
+            number("soul-stamina", "体力上限", "御魂组队", 40, 2000, 40, 240, "本次最多消耗").copy(visibleWhen = FieldCondition("accept", "soul-team")),
+            ConfigurationField("explore-friends", "好友范围", FieldWidget.TEXT, true, section = "探索组队", description = "只接受这些好友的邀请", visibleWhen = FieldCondition("accept", "explore-team")),
+            number("explore-times", "次数上限", "探索组队", 1, 200, 1, 10, "到达后离队").copy(visibleWhen = FieldCondition("accept", "explore-team")),
+            number("explore-stamina", "体力上限", "探索组队", 40, 2000, 40, 240, "本次最多消耗").copy(visibleWhen = FieldCondition("accept", "explore-team")),
+        )).copy(priority = TRIGGER_MIN_PRIORITY, trigger = TaskTrigger(listOf("悬赏协作"), "accept")),
         task("realm", "kekkai", "个人结界突破", "用完突破券后结束"), task("guild", "kekkai", "寮突破", "按寮内开放时间运行"),
         task("souls", "soul", "御魂强化与处置", "强化到 +15 · 处置前先确认", listOf(
             choice("star", "星级", "强化对象", "六星", "五星", "六星").copy(tab = "强化"),
@@ -83,7 +99,7 @@ class DemoTaskSeeder : BroadcastReceiver() {
 
     private companion object {
         const val ACTION = "io.github.yysassist.debug.SEED_DEMO_TASKS"
-        const val VERSION = "demo-3"
+        const val VERSION = "demo-4"
         const val TARGET = "onmyoji"
         const val TAG = "DemoTaskSeeder"
     }

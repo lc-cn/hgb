@@ -27,7 +27,7 @@ internal fun floatingTasks(preferences: FloatingPreferences, versions: StateFlow
                 var unknown = false
                 val tasks = bundle?.tasks.orEmpty().mapNotNull { task ->
                     val address = TaskAddress(task.targetId, task.id)
-                    if (address !in selected) null else when (runtime.assessStart(address)) {
+                    if (address !in selected || task.trigger != null) null else when (runtime.assessStart(address)) {
                         TaskStartAvailability.READY -> FloatingTask(address, task.name)
                         TaskStartAvailability.UNKNOWN -> { unknown = true; null }
                         TaskStartAvailability.BLOCKED -> null

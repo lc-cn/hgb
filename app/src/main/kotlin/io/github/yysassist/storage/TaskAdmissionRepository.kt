@@ -20,6 +20,15 @@ class TaskAdmissionRepository(private val database: AssistDatabase, private val 
         TaskAdmissionDraft(bundle.targets.single { it.id == address.targetId }.takeIf { bundle.tasks.any { task -> task.targetId == address.targetId && task.id == address.taskId } }
             ?: throw ExecutionStateRejected("当前版本没有此任务"), bundle.version, SubmissionRef(SubmissionKind.TASK, address.taskId), listOf(snapshot(bundle, address.targetId, address.taskId)))
     }
+    /** Passive tasks the user has switched on for this target, from the active version. */
+    suspend fun armedTriggers(targetId: String): List<TaskDefinition> = database.withTransaction {
+        library.activeCatalog()?.tasks.orEmpty().filter { task ->
+            val trigger = task.trigger
+            if (trigger == null || task.targetId != targetId) return@filter false
+            val saved = database.taskConfigurations().get(targetId, task.id) ?: return@filter false
+            runCatching { trigger.enabled(Json.parseToJsonElement(saved.valuesJson).jsonObject) }.getOrDefault(false)
+        }
+    }
     /** All members are read from one version in one transaction, in the plan's order. */
     suspend fun plan(planId: String, name: String, targetId: String, taskIds: List<String>): TaskAdmissionDraft = database.withTransaction {
         val bundle = library.activeCatalog() ?: throw ExecutionStateRejected("请先启用任务版本")

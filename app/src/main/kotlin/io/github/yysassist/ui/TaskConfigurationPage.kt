@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import io.github.yysassist.core.content.ConfigurationField
+import io.github.yysassist.core.content.isVisible
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -57,7 +58,7 @@ internal fun TaskConfigurationPage(state: TaskEditorState, wide: Boolean, reload
                         }
                     }
                 }
-                ConfigurationFields(state, state.snapshot.task.fields.filter { tabs.size < 2 || it.tab == tabName }, landscape, Modifier.weight(1f).fillMaxWidth(), change, reload)
+                ConfigurationFields(state, state.snapshot.task.fields.filter { (tabs.size < 2 || it.tab == tabName) && it.isVisible(state.values) }, landscape, Modifier.weight(1f).fillMaxWidth(), change, reload)
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(horizontal = UiSpace.medium, vertical = 10.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)) {
