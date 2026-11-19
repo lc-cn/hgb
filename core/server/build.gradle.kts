@@ -21,5 +21,3 @@ dependencies {
     testImplementation(libs.coroutines.test)
 }
 tasks.test { useJUnit(); testLogging { events("failed", "skipped") } }
-// The web console lives in client/web and is served from the jar under /web.
-tasks.processResources { from(rootProject.file("client/web")) { into("web") } }

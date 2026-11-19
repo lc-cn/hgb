@@ -1,0 +1,20 @@
+.layout { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: var(--space-4); }
+@media (max-width: 720px) { .layout { grid-template-columns: 1fr; } }
+.list { display: grid; gap: var(--space-3); align-content: start; }
+.group { display: grid; gap: var(--space-1); }
+.account { display: flex; justify-content: space-between; gap: var(--space-2); text-align: left; padding: var(--space-2) 10px; border-radius: var(--radius-md);
+  border: 1px solid var(--color-line); background: var(--color-surface); color: var(--color-ink); cursor: pointer; }
+.account.on { border-color: var(--color-primary); background: var(--color-raised); font-weight: 600; }
+.uid { color: var(--color-muted); font-size: var(--text-sm); }
+.detail { display: grid; gap: var(--space-2); align-content: start; }
+.heading { margin: var(--space-2) 0 0; }
+.addForm { grid-template-columns: 1fr 1fr 1fr auto; }
+.detail .addForm { grid-template-columns: 1fr 1fr auto; }
+@media (max-width: 640px) { .addForm, .detail .addForm { grid-template-columns: 1fr; } }
+.settings { display: grid; gap: 14px; }
+.taskSelect { width: auto; flex: 1; min-width: 160px; }
+.setting { display: grid; gap: 6px; }
+.settingName { font-weight: 600; }
+.plans { display: grid; gap: var(--space-2); }
+.planRow { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; padding: var(--space-2) 0; border-top: 1px solid var(--color-line); }
+.editor { display: grid; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-lg); background: var(--color-raised); }

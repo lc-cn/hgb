@@ -1,0 +1,32 @@
+/*
+ * Design tokens: every colour, radius and spacing the console uses. Components read these variables and never hard-code
+ * values, so a theme is only a different set of them. Light is the default; dark follows the system unless the user
+ * picks one with data-theme on <html>.
+ */
+:root {
+  color-scheme: light;
+  --color-bg: #f6f6f6; --color-surface: #ffffff; --color-raised: #ededed; --color-ink: #181818; --color-muted: #555555;
+  --color-line: #d3d3d3; --color-primary: #202020; --color-on-primary: #ffffff; --color-accent: #c8392b;
+  --color-ok: #276547; --color-warn: #7d5315; --color-bad: #a1333a; --color-info: #2868b2;
+
+  --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --text-sm: 13px; --text-xs: 12px; --text-md: 15px; --text-lg: 16px; --text-xl: 20px;
+
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px;
+  --radius-sm: 9px; --radius-md: 10px; --radius-lg: 12px; --radius-xl: 14px; --radius-pill: 999px;
+  --control-height: 44px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-bg: #161616; --color-surface: #232323; --color-raised: #2e2e2e; --color-ink: #f2f2f2; --color-muted: #bcbcbc;
+    --color-line: #414141; --color-primary: #eeeeee; --color-on-primary: #171717; --color-accent: #f08a7c;
+    --color-ok: #a4d5b4; --color-warn: #f1ce8e; --color-bad: #ffb4b8; --color-info: #a8cff9;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #161616; --color-surface: #232323; --color-raised: #2e2e2e; --color-ink: #f2f2f2; --color-muted: #bcbcbc;
+  --color-line: #414141; --color-primary: #eeeeee; --color-on-primary: #171717; --color-accent: #f08a7c;
+  --color-ok: #a4d5b4; --color-warn: #f1ce8e; --color-bad: #ffb4b8; --color-info: #a8cff9;
+}

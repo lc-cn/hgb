@@ -5,7 +5,6 @@ import io.github.yysassist.protocol.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
-import io.ktor.server.http.content.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
@@ -142,7 +141,6 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
             post("/jobs/{id}/events") { service.appendEvents(call.caller(service), call.parameters.getOrFail("id"), call.receive()); call.respond(mapOf("ok" to true)) }
             post("/jobs/{id}/report") { service.report(call.caller(service), call.parameters.getOrFail("id"), call.receive()); call.respond(mapOf("ok" to true)) }
         }
-        staticResources("/", "web") { default("index.html") }
     }
 }
 private fun Parameters.getOrFail(name: String) = get(name) ?: throw ApiException(400, "bad_request", "请求内容无效")

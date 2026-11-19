@@ -14,3 +14,6 @@ __pycache__/
 .env
 .env.*
 !.env.example
+
+node_modules/
+client/web/dist/
