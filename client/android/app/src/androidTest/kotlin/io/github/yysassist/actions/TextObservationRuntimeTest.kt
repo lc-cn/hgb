@@ -203,7 +203,7 @@ class TextObservationRuntimeTest {
                 }
             }
         }
-        runtime = ExecutionRuntime(store, library, TaskAdmissionRepository(database!!, library), watched, runScope,
+        runtime = ExecutionRuntime(store, library, TaskAdmissionRepository(database!!, library) { _, _ -> null }, watched, runScope,
             startReadiness = DeviceExecutionReadiness(factory.contracts))
         withTimeout(5_000) { runtime.status.first { it == RuntimeStatus.Ready } }
     }
@@ -707,41 +707,6 @@ class TextObservationRuntimeTest {
             assertNull(runtime.state.value.current)
             assertEquals(1, withContext(Dispatchers.Main) { surface.downs })
         } finally { hold.complete(Unit) }
-    }
-    @Test fun rejectedHighPriorityAdmissionReentersTheOldInputProgramWhenNothingWasSent(): Unit = runBlocking {
-        val located = CompletableDeferred<Unit>(); val permitClosed = CompletableDeferred<Unit>()
-        val hint = CompletableDeferred<StepOutcome>(); val highEntered = CompletableDeferred<Unit>(); val highRelease = CompletableDeferred<Unit>()
-        prepare("已领取", withInput = true, transform = { value -> value.copy(tasks = value.tasks.map {
-            if (it.id == "read-next") it.copy(priority = 2, fields = listOf(ConfigurationField("amount", "测试值", FieldWidget.NUMBER, true))) else it
-        }) }, beforePersist = {
-            if (it.admittedRunId != null && it.snapshot.waiting.any { run -> run.request.ref.id == "read-next" }) {
-                highEntered.complete(Unit); highRelease.await()
-            }
-        }, onActionFinished = { action, _ ->
-            if (action.capability == ScreenActions.LOCATE && !located.isCompleted) {
-                located.complete(Unit); permitClosed.await()
-                assertFalse(runtime.permitsInput(runtime.state.value.activeTicket!!))
-            }
-        }, onWorkFinished = { if (it == StepOutcome.Interrupted) hint.complete(it) })
-        val high = address.copy(taskId = "read-next")
-        val configurations = TaskConfigurationRepository(database!!, library)
-        assertTrue(configurations.save(configurations.open(high), buildJsonObject { put("amount", 1) }) is ConfigurationSaveResult.Saved)
-        try {
-            runtime.enqueueTask(address).await(); withTimeout(30_000) { located.await() }
-            val original = runtime.state.value.current!!
-            val candidate = runtime.enqueueTask(high)
-            withTimeout(5_000) { highEntered.await() }
-            permitClosed.complete(Unit); assertEquals(StepOutcome.Interrupted, withTimeout(5_000) { hint.await() })
-            assertTrue(configurations.save(configurations.open(high), buildJsonObject { put("amount", 2) }) is ConfigurationSaveResult.Saved)
-            highRelease.complete(Unit)
-            assertTrue(candidate.await() is RuntimeCommandResult.Rejected)
-            val state = withTimeout(30_000) { runtime.state.first { it.facts.any { fact -> fact.type == "task-completed" } || it.unresolved.isNotEmpty() } }
-            assertTrue(state.toString(), state.unresolved.isEmpty()); assertNull(state.current)
-            assertEquals(1, withContext(Dispatchers.Main) { surface.downs })
-            assertTrue(state.facts.any { it.type == "step-reentered" && it.runId == original.runId })
-            assertFalse(state.facts.any { it.taskId == high.taskId })
-            assertTrue(state.waiting.isEmpty()); assertEquals(0, library.snapshot().versions.single().referenceCount)
-        } finally { permitClosed.complete(Unit); highRelease.complete(Unit) }
     }
 
     private fun classified(value: TaskBundle, inside: Boolean = false, absent: Boolean = false): TaskBundle = value.copy(tasks = value.tasks.map { task ->

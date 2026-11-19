@@ -188,7 +188,7 @@ class TaskResourceIntegrationTest {
         val identity = ExecutionContext("utility", Principal.Anonymous)
         val verified = executor.prepare(ExecutorCommand.VerifyContext(identity))
         store.persist(loaded.revision, verified); executor.commit(verified)
-        val candidate = TaskAdmissionRepository(database, library).task(TaskAddress("utility", "inspect"))
+        val candidate = TaskAdmissionRepository(database, library) { _, _ -> null }.task(TaskAddress("utility", "inspect"))
         loaded = store.load()
         val enqueued = executor.prepare(ExecutorCommand.Enqueue("fixture", candidate.request(identity)))
         store.persist(loaded.revision, enqueued); executor.commit(enqueued)

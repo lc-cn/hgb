@@ -114,6 +114,7 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
             post("/{id}/plans") { call.respond(HttpStatusCode.Created, service.createPlan(call.caller(service), call.parameters.getOrFail("id"), call.receive())) }
         }
         get("/api/plans") { call.respond(service.plans(call.caller(service))) }
+        post("/api/plans/{id}/run") { service.runPlan(call.caller(service), call.parameters.getOrFail("id")); call.respond(HttpStatusCode.Accepted, mapOf("ok" to true)) }
         put("/api/plans/{id}") { call.respond(service.updatePlan(call.caller(service), call.parameters.getOrFail("id"), call.receive())) }
         delete("/api/plans/{id}") { service.deletePlan(call.caller(service), call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
         put("/api/devices/{id}/apps/{key}") {

@@ -48,7 +48,7 @@ class RuntimeProcessRecoveryTest {
         val library = TaskVersionLibrary(database, BundleCodec(factory.contracts))
         val content = BundleCodec(factory.contracts).write(fixture())
         library.install(content, "qa-process-v1", TaskVersionLibrary.sha256(content)); library.activate("qa-process-v1")
-        val runtime = ExecutionRuntime(ExecutionStateStore(database, library), library, TaskAdmissionRepository(database, library), factory, childScope())
+        val runtime = ExecutionRuntime(ExecutionStateStore(database, library), library, TaskAdmissionRepository(database, library) { _, _ -> null }, factory, childScope())
         withTimeout(5_000) { runtime.status.first { it == RuntimeStatus.Ready } }
         runtime.enqueueTask(TaskAddress("qa-process", "one")).await()
         withTimeout(5_000) { runtime.state.first { it.current?.stepIndex == 1 && it.phase == ExecutorPhase.RUNNING } }
@@ -72,7 +72,7 @@ class RuntimeProcessRecoveryTest {
         assertEquals(seed.getValue("generation").jsonPrimitive.long, before.activeTicket!!.generation)
         val scope = childScope()
         try {
-            val runtime = ExecutionRuntime(store, library, TaskAdmissionRepository(database, library), factory, scope)
+            val runtime = ExecutionRuntime(store, library, TaskAdmissionRepository(database, library) { _, _ -> null }, factory, scope)
             val state = withTimeout(5_000) { runtime.state.first { it.activeTicket != null && it.activeTicket != before.activeTicket } }
             assertEquals(seed.getValue("runId").jsonPrimitive.long, state.current!!.runId)
             assertEquals(1, state.current!!.stepIndex)

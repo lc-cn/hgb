@@ -84,6 +84,7 @@ class Database(path: String) : AutoCloseable {
             "CREATE INDEX IF NOT EXISTS jobs_by_state ON jobs (state, created_at)",
             "CREATE INDEX IF NOT EXISTS jobs_by_user ON jobs (user_id, created_at)",
             "CREATE INDEX IF NOT EXISTS plans_by_user ON plans (user_id, account_id)",
+            "CREATE INDEX IF NOT EXISTS jobs_by_plan ON jobs (plan_id, created_at)",
         )
     }
 }

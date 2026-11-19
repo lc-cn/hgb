@@ -49,6 +49,25 @@ class TaskConfigurationEditor(private val repository: TaskConfigurationRepositor
         mutableDrafts.update { it + (address to (preserve?.copy(message = "$message，原输入已保留", canReload = true)
             ?: TaskEditorState.Failure(message))) }
     }
+    /**
+     * The server sent new data. Settings nobody is editing here are replaced when they really changed (another
+     * account, or a save elsewhere), in place, without a loading screen; an unsaved draft is kept.
+     */
+    fun refresh() {
+        mutableDrafts.value.forEach { (address, state) ->
+            when {
+                state is TaskEditorState.Failure -> load(address, preserve = null)
+                state is TaskEditorState.Ready && !state.dirty && !state.saving -> scope.launch {
+                    val fresh = runCatching { withContext(Dispatchers.IO) { repository.open(address) } }.getOrNull() ?: return@launch
+                    if (fresh == state.snapshot) return@launch
+                    mutableDrafts.update { all ->
+                        val now = all[address] as? TaskEditorState.Ready
+                        if (now == null || now.dirty || now.saving) all else all + (address to TaskEditorState.Ready(fresh, fresh.values))
+                    }
+                }
+            }
+        }
+    }
     fun change(address: TaskAddress, field: String, value: JsonElement) {
         mutableDrafts.update { all ->
             val current = all[address] as? TaskEditorState.Ready ?: return@update all
@@ -69,8 +88,7 @@ class TaskConfigurationEditor(private val repository: TaskConfigurationRepositor
                         TaskEditorState.Ready(result.snapshot, result.snapshot.values)
                     }
                     is ConfigurationSaveResult.Invalid -> current.copy(issues = result.issues)
-                    ConfigurationSaveResult.VersionChanged -> current.copy(message = "任务版本已变化，原输入已保留，请重新读取后核对", canReload = true)
-                    ConfigurationSaveResult.RevisionChanged -> current.copy(message = "已保存设置有变化，原输入已保留，请重新读取后核对", canReload = true)
+                    ConfigurationSaveResult.RevisionChanged -> current.copy(message = "设置已在别处修改，原输入已保留，请重新读取后核对", canReload = true)
                     is ConfigurationSaveResult.Unavailable -> current.copy(message = result.message, canReload = true)
                 }
             } catch (cancelled: CancellationException) { throw cancelled }

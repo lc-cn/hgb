@@ -47,14 +47,14 @@ class ReactionMonitorTest {
             listOf(TargetProfile("game", "游戏", listOf(context.packageName), IdentityPolicy.NONE, listOf(TaskCategory("daily", "日常")))))
         val text = codec.write(bundle); library.install(text, "v1", TaskVersionLibrary.sha256(text)); library.activate("v1")
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-        runtime = ExecutionRuntime(ExecutionStateStore(database, library), library, TaskAdmissionRepository(database, library), factory, scope)
+        runtime = ExecutionRuntime(ExecutionStateStore(database, library), library, TaskAdmissionRepository(database, library) { t, k -> settings[t to k] }, factory, scope)
         monitor = ReactionMonitor(RuntimeReactionPort(runtime), scope) { now }
         withTimeout(5_000) { runtime.status.first { it == RuntimeStatus.Ready } }
     }
     @After fun close(): Unit = runBlocking { scope.cancel(); scope.coroutineContext[Job]!!.join(); database.close(); context.deleteDatabase(name) }
-    private suspend fun select(vararg options: String) {
-        val repository = TaskConfigurationRepository(database, library)
-        assertTrue(repository.save(repository.open(TaskAddress("game", "invite")), JsonObject(mapOf("accept" to JsonArray(options.map(::JsonPrimitive))))) is ConfigurationSaveResult.Saved)
+    private val settings = mutableMapOf<Pair<String, String>, JsonObject>()
+    private fun select(vararg options: String) {
+        settings["game" to "invite"] = JsonObject(mapOf("accept" to JsonArray(options.map(::JsonPrimitive))))
     }
     private fun enqueued(task: String) = runtime.state.value.facts.count { it.type == "enqueued" && it.taskId == task }
     private suspend fun settle() = delay(600)

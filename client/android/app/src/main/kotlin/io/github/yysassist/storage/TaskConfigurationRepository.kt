@@ -1,53 +1,47 @@
 package io.github.yysassist.storage
 
-import androidx.room.withTransaction
+import io.github.yysassist.cloud.CloudAccounts
+import io.github.yysassist.core.cloud.CloudRequestException
 import io.github.yysassist.core.content.*
 import kotlinx.serialization.json.*
+import java.io.IOException
 
 data class TaskAddress(val targetId: String, val taskId: String)
+/** A task's settings for the game account the app is signed in to; null [accountId] when none has been named yet. */
 data class TaskConfigurationSnapshot(
-    val address: TaskAddress, val task: TaskDefinition, val version: String, val digest: String,
+    val address: TaskAddress, val task: TaskDefinition, val accountId: String?, val accountName: String?,
     val revision: Long, val values: JsonObject,
 )
 sealed interface ConfigurationSaveResult {
     data class Saved(val snapshot: TaskConfigurationSnapshot) : ConfigurationSaveResult
     data class Invalid(val issues: List<ContentIssue>) : ConfigurationSaveResult
-    data object VersionChanged : ConfigurationSaveResult
     data object RevisionChanged : ConfigurationSaveResult
     data class Unavailable(val message: String) : ConfigurationSaveResult
 }
 class ConfigurationUnavailable(message: String) : IllegalStateException(message)
 
-/** Configuration has no FK to cached content: deleting a version never deletes user rules. */
-class TaskConfigurationRepository(private val database: AssistDatabase, private val library: TaskVersionLibrary) {
-    suspend fun open(address: TaskAddress): TaskConfigurationSnapshot = database.withTransaction {
+/** Settings belong to a game account and are kept on the server; this reads the copy the server sent and saves there. */
+class TaskConfigurationRepository(private val library: TaskVersionLibrary, private val accounts: CloudAccounts) {
+    suspend fun open(address: TaskAddress): TaskConfigurationSnapshot {
         val bundle = library.activeCatalog() ?: throw ConfigurationUnavailable("请先启用任务版本")
         val task = bundle.tasks.find { it.id == address.taskId && it.targetId == address.targetId }
-            ?: throw ConfigurationUnavailable("当前任务版本中已没有此任务，原设置仍保留")
-        val row = database.taskVersions().version(bundle.version) ?: throw ConfigurationUnavailable("任务版本内容不可用")
-        val saved = database.taskConfigurations().get(address.targetId, address.taskId)
-        val values = saved?.let {
-            try { Json.parseToJsonElement(it.valuesJson).jsonObject }
-            catch (_: IllegalArgumentException) { throw ConfigurationUnavailable("任务设置读取失败，原数据已保留") }
-        } ?: JsonObject(emptyMap())
-        TaskConfigurationSnapshot(address, task, bundle.version, row.digest, saved?.revision ?: 0, values)
+            ?: throw ConfigurationUnavailable("当前任务版本中已没有此任务")
+        val account = accounts.current(address.targetId)
+        val saved = accounts.config(address.targetId, address.taskId)
+        return TaskConfigurationSnapshot(address, task, account?.id, account?.name, saved?.revision ?: 0, saved?.values ?: JsonObject(emptyMap()))
     }
 
-    suspend fun save(snapshot: TaskConfigurationSnapshot, draft: JsonObject): ConfigurationSaveResult = database.withTransaction {
-        val version = database.taskVersions().selection()?.activeVersion
-        if (version != snapshot.version) return@withTransaction ConfigurationSaveResult.VersionChanged
-        val row = database.taskVersions().version(version)
-        if (row?.digest != snapshot.digest) return@withTransaction ConfigurationSaveResult.VersionChanged
-        val current = try { open(snapshot.address) }
-        catch (error: ConfigurationUnavailable) { return@withTransaction ConfigurationSaveResult.Unavailable(error.message ?: "任务设置不可用") }
-        catch (_: InvalidLocalTaskVersion) { return@withTransaction ConfigurationSaveResult.Unavailable("任务内容校验失败，设置未保存") }
-        if (current.revision != snapshot.revision) return@withTransaction ConfigurationSaveResult.RevisionChanged
-        val values = normalizeConfigurationDraft(current.task, draft)
-        val issues = library.configurationIssues(current.task, values)
-        if (issues.isNotEmpty()) return@withTransaction ConfigurationSaveResult.Invalid(issues)
-        val revision = Math.addExact(current.revision, 1)
-        database.taskConfigurations().save(TaskConfigurationEntity(current.address.targetId, current.address.taskId, values.toString(),
-            configurationSchemaJson(current.task), revision, current.version, current.digest))
-        ConfigurationSaveResult.Saved(current.copy(revision = revision, values = values))
+    suspend fun save(snapshot: TaskConfigurationSnapshot, draft: JsonObject): ConfigurationSaveResult {
+        val accountId = snapshot.accountId ?: return ConfigurationSaveResult.Unavailable("先指定这台设备上的游戏当前登录的账号")
+        if (!accounts.online) return ConfigurationSaveResult.Unavailable("没有连上服务器，设置只能查看")
+        val values = normalizeConfigurationDraft(snapshot.task, draft)
+        val issues = library.configurationIssues(snapshot.task, values)
+        if (issues.isNotEmpty()) return ConfigurationSaveResult.Invalid(issues)
+        return try {
+            val saved = accounts.agent.saveConfig(accountId, snapshot.address.targetId, snapshot.address.taskId, values, snapshot.revision)
+            ConfigurationSaveResult.Saved(snapshot.copy(revision = saved.revision, values = saved.values))
+        } catch (rejected: CloudRequestException) {
+            if (rejected.code == "revision_changed") ConfigurationSaveResult.RevisionChanged else ConfigurationSaveResult.Unavailable(rejected.message)
+        } catch (_: IOException) { ConfigurationSaveResult.Unavailable("没有连上服务器，设置未保存") }
     }
 }

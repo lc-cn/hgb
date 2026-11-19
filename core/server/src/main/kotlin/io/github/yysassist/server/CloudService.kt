@@ -214,20 +214,36 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             val (planId, userId, accountId) = Triple(row[0] as String, row[1] as String, row[2] as String)
             update("UPDATE plans SET fired_up_to = ? WHERE id = ?", slot, planId)
             val latest = slot + (row[8] as Int) * MINUTE
-            val missed = now > latest
-            val account = single("SELECT name FROM game_accounts WHERE id = ?", accountId) { it.getString(1) }
-            json.decodeFromString(tasks, row[6] as String).forEachIndexed { index, task ->
-                val (values, _) = savedConfig(accountId, task.targetId, task.taskId)
-                val issue = if (missed) "错过了计划时间：服务端当时没有运行" else runCatching { latestTask(userId, task.targetId, task.taskId).second }.getOrNull()
-                    ?.let { validateConfiguration(it, values) }?.takeIf { it.isNotEmpty() }?.let { "「$account」的「${task.name}」设置不完整：" + it.joinToString("；") { issue -> issue.reason } }
-                update("""INSERT INTO jobs (id, user_id, target_id, task_id, task_name, state, detail, created_at, updated_at, config_json, account_id, account_name,
-                    plan_id, plan_name, allowed_devices_json, latest_start_at, sequence) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                    UUID.randomUUID().toString(), userId, task.targetId, task.taskId, task.name, if (issue == null) "WAITING" else "SKIPPED", issue.orEmpty(),
-                    now, now, values.toString(), accountId, account, planId, row[3], row[7], latest, index)
-            }
+            insertPlanJobs(userId, planId, row[3] as String, accountId, row[6] as String, row[7] as String, now, latest,
+                "错过了计划时间：服务端当时没有运行".takeIf { now > latest })
             touched += userId
         }
         return touched
+    }
+    /** One waiting job per task of a plan, with the account's settings; a task whose settings are incomplete is skipped. */
+    private fun Database.insertPlanJobs(userId: String, planId: String, planName: String, accountId: String, tasksJson: String, devicesJson: String,
+        now: Long, latest: Long, missed: String?) {
+        val account = single("SELECT name FROM game_accounts WHERE id = ?", accountId) { it.getString(1) }
+        json.decodeFromString(tasks, tasksJson).forEachIndexed { index, task ->
+            val (values, _) = savedConfig(accountId, task.targetId, task.taskId)
+            val issue = missed ?: runCatching { latestTask(userId, task.targetId, task.taskId).second }.getOrNull()
+                ?.let { validateConfiguration(it, values) }?.takeIf { it.isNotEmpty() }?.let { "「$account」的「${task.name}」设置不完整：" + it.joinToString("；") { issue -> issue.reason } }
+            update("""INSERT INTO jobs (id, user_id, target_id, task_id, task_name, state, detail, created_at, updated_at, config_json, account_id, account_name,
+                plan_id, plan_name, allowed_devices_json, latest_start_at, sequence) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                UUID.randomUUID().toString(), userId, task.targetId, task.taskId, task.name, if (issue == null) "WAITING" else "SKIPPED", issue.orEmpty(),
+                now, now, values.toString(), accountId, account, planId, planName, devicesJson, latest, index)
+        }
+    }
+    /** One extra run of a plan now, given to apps the same way as a timed one; the schedule is unchanged. */
+    fun runPlan(caller: Caller, planId: String) {
+        db.tx {
+            val plan = single("SELECT name, account_id, tasks_json, device_ids_json FROM plans WHERE id = ? AND user_id = ?", planId, caller.userId) {
+                listOf(it.getString(1), it.getString(2), it.getString(3), it.getString(4)) } ?: throw ApiException(404, "not_found", "计划不存在")
+            val now = clock()
+            insertPlanJobs(caller.userId, planId, plan[0], plan[1], plan[2], plan[3], now, now + IMMEDIATE_WAIT, null)
+        }
+        pushJobs(caller.userId)
+        assignNow()
     }
 
     /**
@@ -250,7 +266,10 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             val devices = devicesOf.getOrPut(userId) { deviceRows(userId, null) }
             val target = devices.asSequence().filter { it.online && (allowed.isEmpty() || it.id in allowed) && it.tasks.any { t -> t.targetId == job[2] && t.taskId == job[3] } }
                 .flatMap { device -> device.apps.filter { it.gameId == job[2] && it.accountId != null && it.accountId == job[4] }.map { device to it } }
-                .minByOrNull { (device, _) -> single("SELECT COUNT(*) FROM jobs WHERE device_id = ? AND state IN ('QUEUED', 'LEASED', 'RUNNING')", device.id) { it.getInt(1) } ?: 0 }
+                // A device already holding this account's jobs keeps getting them, so one run's tasks stay in order on one
+                // device; otherwise the least busy one.
+                .minWithOrNull(compareBy({ (device, _) -> if (single("SELECT 1 FROM jobs WHERE device_id = ? AND account_id = ? AND state IN ('QUEUED', 'LEASED', 'RUNNING') LIMIT 1",
+                    device.id, job[4]) { true } == true) 0 else 1 }, { (device, _) -> single("SELECT COUNT(*) FROM jobs WHERE device_id = ? AND state IN ('QUEUED', 'LEASED', 'RUNNING')", device.id) { it.getInt(1) } ?: 0 }))
                 ?: continue
             update("UPDATE jobs SET state = 'QUEUED', device_id = ?, app_key = ?, updated_at = ? WHERE id = ?", target.first.id, target.second.key, now, id)
             touched += userId
@@ -267,12 +286,16 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         val now = clock()
         val (lease, userId) = db.tx {
             val owner = single("SELECT user_id FROM devices WHERE id = ? AND revoked = 0", deviceId) { it.getString(1) } ?: return@tx null to null
-            if (single("SELECT 1 FROM jobs WHERE device_id = ? AND state IN ('LEASED', 'RUNNING') LIMIT 1", deviceId) { true } == true) return@tx null to owner
+            if (single("SELECT 1 FROM jobs WHERE device_id = ? AND state IN ('LEASED', 'RUNNING') LIMIT 1", deviceId) { true } == true) return@tx null to null
             // A device held on its own (paused there, or waiting for a step to be checked) would only hold the job too.
             val held = single("SELECT phase FROM devices WHERE id = ?", deviceId) { it.getString(1) } in HELD_PHASES
             var touched = false
             while (true) {
-                val job = single("""SELECT id, target_id, task_id, lease_no, config_json, latest_start_at FROM jobs WHERE device_id = ? AND state = 'QUEUED'
+                // An account runs on one device at a time: its job waits while another device has the account's job in hand,
+                // or has an older one of the account still queued, so the device that just finished cannot keep the account.
+                val job = single("""SELECT id, target_id, task_id, lease_no, config_json, latest_start_at FROM jobs j WHERE device_id = ? AND state = 'QUEUED'
+                    AND NOT EXISTS (SELECT 1 FROM jobs o WHERE o.account_id = j.account_id AND o.device_id <> j.device_id AND (o.state IN ('LEASED', 'RUNNING')
+                        OR (o.state = 'QUEUED' AND (o.created_at < j.created_at OR (o.created_at = j.created_at AND o.sequence < j.sequence)))))
                     ORDER BY created_at, sequence, id LIMIT 1""", deviceId) {
                     listOf(it.getString(1), it.getString(2), it.getString(3), it.getLong(4), it.getString(5), it.getLong(6).takeUnless { _ -> it.wasNull() }) }
                     ?: return@tx null to owner.takeIf { touched }
@@ -343,7 +366,7 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         // What the device was doing before is stale until its first report on this connection; nothing is sent till then.
         if (sockets.isOnline(deviceId)) db.tx { update("UPDATE devices SET last_seen_at = ?, phase = 'CONNECTING' WHERE id = ? AND user_id = ?", clock(), deviceId, userId) }
         pushDevice(userId, deviceId)
-        if (sockets.isOnline(deviceId)) { assignNow(); dispatch(deviceId) }
+        if (sockets.isOnline(deviceId)) { pushDeviceData(userId, only = deviceId); assignNow(); dispatch(deviceId) }
     }
     /** Waiting jobs may fit a device that just came online or an app whose account was just set. */
     private fun assignNow() { db.tx { assignWaiting(clock()) }.forEach(::pushJobs); dispatchAll() }
@@ -358,7 +381,35 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         events.publish(userId, "device", json.encodeToString(DeviceView.serializer(), view))
     }
     private fun pushDevice(userId: String, deviceId: String) = db.tx { deviceRows(userId, deviceId).singleOrNull()?.let { publishDevice(userId, it) } }
-    private fun pushJobs(userId: String) = db.tx { events.publish(userId, "jobs", json.encodeToString(jobList, jobRows(userId))) }
+    private fun pushJobs(userId: String) { db.tx { events.publish(userId, "jobs", json.encodeToString(jobList, jobRows(userId))) }; pushDeviceData(userId) }
+
+    /** What [deviceId] shows of the user's accounts, settings and plans. */
+    private fun Database.deviceData(userId: String, deviceId: String): DeviceData {
+        val configs = query("SELECT account_id, target_id, task_id, values_json, revision FROM task_configs WHERE user_id = ? ORDER BY account_id, target_id, task_id", userId) {
+            AccountConfig(it.getString(1), it.getString(2), it.getString(3), json.parseToJsonElement(it.getString(4)).jsonObject, it.getLong(5)) }
+        // A plan's latest run is the jobs it made at its latest firing.
+        val plans = planRows(userId)
+        val runs = plans.mapNotNull { plan ->
+            val at = single("SELECT created_at FROM jobs WHERE plan_id = ? ORDER BY created_at DESC LIMIT 1", plan.id) { it.getLong(1) } ?: return@mapNotNull null
+            val rows = query("SELECT state, detail FROM jobs WHERE plan_id = ? AND created_at = ? ORDER BY sequence", plan.id, at) { JobState.valueOf(it.getString(1)) to it.getString(2) }
+            PlanRun(plan.id, at, rows.map { it.first }, rows.map { it.second }.firstOrNull { it.isNotEmpty() }.orEmpty())
+        }
+        // What the apps are doing changes all the time and the device knows it already; only their accounts are sent.
+        val apps = deviceRows(userId, deviceId).singleOrNull()?.apps.orEmpty().map { it.copy(phase = "", currentTask = null, queued = 0) }
+        return DeviceData(accountRows(userId), apps, plans, configs, runs, zoneOf(userId))
+    }
+    /** The last data each device was sent, so an unchanged copy is not sent again. */
+    private val lastDeviceData = java.util.concurrent.ConcurrentHashMap<String, String>()
+    /** Sends each of the user's connected devices its data when it changed. */
+    private fun pushDeviceData(userId: String, only: String? = null) {
+        val devices = db.tx { query("SELECT id FROM devices WHERE user_id = ? AND revoked = 0", userId) { it.getString(1) } }
+            .filter { (only == null || it == only) && sockets.isOnline(it) }
+        // Read and sent in one transaction: transactions run one at a time, so a later push never carries older data.
+        for (deviceId in devices) db.tx {
+            val text = encode(ServerMessage.Data(deviceData(userId, deviceId)))
+            if (lastDeviceData.put(deviceId, text) != text || only != null) sockets.send(deviceId, text)
+        }
+    }
     /**
      * What a console shows first, and again whenever it cannot catch up from the event log, with the id of the last
      * event it already covers.
@@ -435,6 +486,7 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             update("INSERT OR REPLACE INTO task_configs (user_id, account_id, target_id, task_id, values_json, revision, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 caller.userId, accountId, targetId, taskId, save.values.toString(), revision + 1, clock())
         }
+        pushDeviceData(caller.userId)
         return config(caller, accountId, targetId, taskId)
     }
 
@@ -551,6 +603,7 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
                 deviceId, appKey, caller.userId, save.accountId, save.defaultAccountId)
         }
         pushDevice(caller.userId, deviceId)
+        pushDeviceData(caller.userId)
         assignNow()
     }
     fun timeZone(caller: Caller, save: TimeZoneSave) {
@@ -559,9 +612,10 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         db.tx { update("UPDATE users SET time_zone = ? WHERE id = ?", zone, caller.userId)
             update("UPDATE plans SET fired_up_to = MAX(fired_up_to, ?) WHERE user_id = ?", clock(), caller.userId) }
         events.publish(caller.userId, "time-zone", json.encodeToString(TimeZoneSave.serializer(), TimeZoneSave(zone)))
+        pushDeviceData(caller.userId)
     }
-    private fun pushAccounts(userId: String) = db.tx { events.publish(userId, "accounts", json.encodeToString(accountList, accountRows(userId))) }
-    private fun pushPlans(userId: String) = db.tx { events.publish(userId, "plans", json.encodeToString(planList, planRows(userId))) }
+    private fun pushAccounts(userId: String) { db.tx { events.publish(userId, "accounts", json.encodeToString(accountList, accountRows(userId))) }; pushDeviceData(userId) }
+    private fun pushPlans(userId: String) { db.tx { events.publish(userId, "plans", json.encodeToString(planList, planRows(userId))) }; pushDeviceData(userId) }
     private fun pushGames(userId: String) = db.tx { events.publish(userId, "games", json.encodeToString(gameList, gameRows(userId))) }
     private fun pushAllDevices(userId: String) = db.tx { deviceRows(userId, null).forEach { publishDevice(userId, it) } }
     /**
@@ -593,7 +647,8 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
                 report.state.name, report.detail.take(500), if (active) now + LEASE_LIFETIME else null, active, now, jobId)
         }
         pushJobs(caller.userId)
-        dispatch(id)
+        // A finished job frees its account too, so a device waiting on that account may start now.
+        if (report.state == JobState.RUNNING) dispatch(id) else dispatchAll()
     }
 
     /** Only the device holding the current lease can add to a job's log; lines past the cap are dropped. */
@@ -664,7 +719,7 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
                 ?: throw ApiException(400, "unknown_task", "这个游戏没有这个任务")
             val (values, _) = savedConfig(account.id, task.targetId, task.taskId)
             val issues = validateConfiguration(latestTask(caller.userId, task.targetId, task.taskId).second, values)
-            if (issues.isNotEmpty()) throw ApiException(400, "config_required", "请先在控制台保存「${account.name}」的「${task.name}」设置：" + issues.joinToString("；") { it.reason })
+            if (issues.isNotEmpty()) throw ApiException(400, "config_required", "请先保存「${account.name}」的「${task.name}」设置：" + issues.joinToString("；") { it.reason })
             val target = request.deviceId?.let { deviceId ->
                 val device = deviceRows(caller.userId, deviceId).singleOrNull() ?: throw ApiException(404, "not_found", "设备不存在")
                 if (device.tasks.none { it.targetId == task.targetId && it.taskId == task.taskId }) throw ApiException(400, "unknown_task", "这台设备没有这个任务")
@@ -673,6 +728,10 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
                     if (candidates.isEmpty()) "这台设备上没有这个游戏的应用" else "这台设备上有多个这个游戏的应用，请选择一个")
                 if (app.accountId != account.id) throw ApiException(409, "account_mismatch",
                     "${app.name}当前登录的不是「${account.name}」，暂不支持切号：请先在游戏里登录这个账号，并在设备的应用里标明")
+                // A run started on the device itself does not wait: it is refused while the account runs elsewhere.
+                if (caller.kind == SessionKind.DEVICE && caller.deviceId == device.id) single("""SELECT d.name FROM jobs j JOIN devices d ON d.id = j.device_id
+                    WHERE j.account_id = ? AND j.device_id <> ? AND j.state IN ('LEASED', 'RUNNING') LIMIT 1""", account.id, device.id) { it.getString(1) }
+                    ?.let { throw ApiException(409, "account_busy", "「${account.name}」正在 $it 上运行，等它结束再试") }
                 device.id to app.key
             }
             update("""INSERT INTO jobs (id, user_id, device_id, app_key, target_id, task_id, task_name, state, created_at, updated_at, config_json, account_id, account_name,

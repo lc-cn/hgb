@@ -80,7 +80,7 @@ internal class FloatingOverlayWindow(
                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
                 FloatingSurface(layer.value, state, status, tasks, vp.wide,
                     min(if (vp.wide) FloatingUi.landscapeHeight.value else FloatingUi.portraitHeight.value, vp.safe.height() / vp.density).dp,
-                    ::changeLayer, { runtime.enqueueTask(it) },
+                    ::changeLayer, { app.runTask(it) },
                     { id -> runtime.submit(id?.let { ExecutorCommand.PauseCurrent(it) } ?: ExecutorCommand.Pause) },
                     { runtime.submit(ExecutorCommand.StopCurrent(it)) },
                     { id, mode -> runtime.submit(id?.let { ExecutorCommand.ResumeCurrent(it, mode) } ?: ExecutorCommand.Resume(mode)) },

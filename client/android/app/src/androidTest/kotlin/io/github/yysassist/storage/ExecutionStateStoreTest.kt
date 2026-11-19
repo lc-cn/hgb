@@ -32,11 +32,6 @@ class ExecutionStateStoreTest {
         val text = codec.write(bundle(version))
         assertEquals(VersionChange.Applied, library.install(text, version, TaskVersionLibrary.sha256(text)))
     }
-    private suspend fun config(amount: Int) {
-        val repository = TaskConfigurationRepository(database, library)
-        assertTrue(repository.save(repository.open(TaskAddress("fixture-app", "daily")),
-            JsonObject(mapOf("amount" to JsonPrimitive(amount)))) is ConfigurationSaveResult.Saved)
-    }
     private fun request(amount: Int = 1, version: String = "v1"): ExecutionRequest {
         val task = bundle(version).tasks.single()
         return ExecutionRequest(SubmissionRef(SubmissionKind.TASK, task.id), identity, version,
@@ -47,7 +42,7 @@ class ExecutionStateStoreTest {
         database = AssistDatabase.open(context, name)
         library = TaskVersionLibrary(database, codec)
         store = ExecutionStateStore(database, library)
-        install("v1"); assertEquals(VersionChange.Applied, library.activate("v1")); config(1)
+        install("v1"); assertEquals(VersionChange.Applied, library.activate("v1"))
     }
     @After fun close() { database.close(); context.deleteDatabase(name) }
     private suspend fun commit(executor: TaskExecutor, command: ExecutorCommand): PreparedExecutorTransition {
@@ -91,16 +86,6 @@ class ExecutionStateStoreTest {
         assertEquals(revision, loaded.revision)
         assertEquals(executor.state.value, loaded.decode().state.value)
         assertEquals("{\"amount\":1}", loaded.decode().state.value.current!!.task.configurationJson)
-    }
-    @Test fun changedUserConfigurationRollsBackBothTheReferenceAndTheState() = runBlocking {
-        val executor = verified(); val before = store.load()
-        val prepared = executor.prepare(ExecutorCommand.Enqueue("submit", request()))
-        config(2)
-        try { store.persist(before.revision, prepared); fail("stale configuration admitted") }
-        catch (_: ExecutionStateRejected) { }
-        assertEquals(before, store.load())
-        assertEquals(0, database.taskVersions().referenceCount())
-        assertNull(executor.state.value.current)
     }
     @Test fun concurrentWritersCannotOverwriteACommittedRoundOrLeakTheirLocks() = runBlocking {
         val first = verified(); val loaded = store.load(); val second = loaded.decode()

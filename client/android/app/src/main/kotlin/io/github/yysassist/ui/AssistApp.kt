@@ -25,7 +25,13 @@ import io.github.yysassist.core.execution.*
 import io.github.yysassist.core.content.IdentityPolicy
 import io.github.yysassist.core.model.ExecutionContext
 import io.github.yysassist.core.model.Principal
-import io.github.yysassist.plans.PlanSubmission
+import io.github.yysassist.core.cloud.CloudRequestException
+import io.github.yysassist.core.cloud.CloudState
+import io.github.yysassist.core.plan.PlanSchedule
+import io.github.yysassist.protocol.CloudTask
+import io.github.yysassist.protocol.PlanSave
+import io.github.yysassist.protocol.PlanView
+import java.time.ZoneId
 import io.github.yysassist.storage.ActiveTaskContent
 import io.github.yysassist.storage.TaskAddress
 import kotlinx.coroutines.launch
@@ -54,8 +60,12 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
     var selected by rememberSaveable { mutableStateOf(Page.TASKS.name) }
     var detail by rememberSaveable { mutableStateOf<String?>(null) }
     var favoritesRequest by rememberSaveable { mutableIntStateOf(0) }
-    val plans by application.plans.plans.collectAsState()
+    val cloudState by application.cloud.state.collectAsState()
+    val cloudData by application.cloud.data.collectAsState()
+    val online = (cloudState as? CloudState.SignedIn)?.online == true
     var editPlanId by rememberSaveable { mutableStateOf<String?>(null) }
+    // The version the edit started from: a save over a newer one is refused by the server instead of overwriting it.
+    var editRevision by rememberSaveable { mutableStateOf<Long?>(null) }
     var planTask by rememberSaveable { mutableStateOf<String?>(null) }
     var choosePlanFor by remember { mutableStateOf<TaskAddress?>(null) }
     var editTarget by rememberSaveable { mutableStateOf<String?>(null) }
@@ -71,6 +81,19 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
     LaunchedEffect(application.executor) { application.executor.messages.collect { snackbar.showSnackbar(it) } }
     val page = Page.valueOf(selected)
     val activeBundle = ((versions as? VersionCatalogState.Ready)?.catalog?.activeContent as? ActiveTaskContent.Available)?.bundle
+    // Plans belong to the game account the game here is signed in to; a phone has one game app for now.
+    val planTarget = activeBundle?.targets?.firstOrNull { application.accounts.app(it.id) != null }?.id
+    val planAccount = planTarget?.let { application.accounts.current(it, cloudData) }
+    val plans: List<PlanView>? = if (cloudState !is CloudState.SignedIn) null else cloudData?.plans.orEmpty().filter { it.accountId == planAccount?.id }
+    val zone = runCatching { ZoneId.of(cloudData?.timeZone) }.getOrDefault(ZoneId.systemDefault())
+    /** A request to the server for the user; a refusal or a lost connection is shown, never retried by itself. */
+    fun cloudCall(done: () -> Unit = {}, block: suspend () -> Unit) { scope.launch {
+        try { block(); done() }
+        catch (rejected: CloudRequestException) { snackbar.showSnackbar(rejected.message) }
+        catch (_: IOException) { snackbar.showSnackbar("没有连上服务器，请稍后再试") }
+    } }
+    fun PlanView.save() = PlanSave(name, days, minuteOfDay, tasks, deviceIds, latestStartMinutes, enabled, revision)
+    fun taskRefs(ids: List<String>) = ids.map { id -> CloudTask(planTarget.orEmpty(), id, activeBundle?.tasks?.firstOrNull { it.id == id && it.targetId == planTarget }?.name ?: id) }
     BackHandler(detail != null || page != Page.TASKS) {
         if (detail != null) detail = null else selected = Page.TASKS.name
     }
@@ -81,9 +104,10 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
     val stopCurrent = { executor.current?.let { application.executor.submit(ExecutorCommand.StopCurrent(it.runId)) }; Unit }
     AssistTheme(mode) {
         choosePlanFor?.let { address ->
-            val candidates = plans.orEmpty().filter { it.context.targetId == address.targetId && address.taskId !in it.taskIds }
+            val candidates = plans.orEmpty().filter { plan -> address.targetId == planTarget && plan.tasks.none { it.taskId == address.taskId } }
             AlertDialog(onDismissRequest = { choosePlanFor = null }, title = { Text("加入计划") }, text = { Column {
-                candidates.forEach { plan -> TextButton({ choosePlanFor = null; scope.launch { application.plans.addTask(plan, address.taskId); snackbar.showSnackbar("已加入「${plan.name}」") } }) { Text(plan.name) } }
+                candidates.forEach { plan -> TextButton({ choosePlanFor = null; cloudCall({ scope.launch { snackbar.showSnackbar("已加入「${plan.name}」") } }) {
+                    application.cloud.updatePlan(plan.id, plan.save().copy(tasks = plan.tasks + taskRefs(listOf(address.taskId)))) } }) { Text(plan.name) } }
                 TextButton({ choosePlanFor = null; editPlanId = null; planTask = address.taskId; detail = "新建计划" }) { Text("新建计划") }
             } }, confirmButton = {}, dismissButton = { TextButton({ choosePlanFor = null }) { Text("取消") } })
         }
@@ -104,7 +128,7 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
                                 TextButton(enabled = pull !is TaskPullState.Fetching, onClick = application.taskUpdates::pullLatest) {
                                     Text(if (pull is TaskPullState.Fetching) "拉取中" else "拉取")
                                 }
-                            } else if (page == Page.PLANS && detail == null && !plans.isNullOrEmpty()) {
+                            } else if (page == Page.PLANS && detail == null && !plans.isNullOrEmpty() && online) {
                                 IconButton(onClick = { editPlanId = null; planTask = null; detail = "新建计划" }) { Icon(AssistIcons.Plus, "新建计划") }
                             } else if (detail == "GitHub" && github is GitHubSessionState.Connected) {
                                 TextButton(enabled = !(github as GitHubSessionState.Connected).checking, onClick = application.github::checkAccount) { Text("检查") }
@@ -119,32 +143,34 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
                                     else if (runtimeStatus is RuntimeStatus.Failure) EmptyContent("运行记录暂不可用", (runtimeStatus as RuntimeStatus.Failure).message)
                                     else RunHistoryPage(executor)
                                 "运行与数据" -> DataUsagePage(executor)
-                                "云端控制" -> CloudPage(application.cloud)
-                                "新建计划", "编辑计划" -> PlanEditorPage(plans?.firstOrNull { it.id == editPlanId }.takeIf { detail == "编辑计划" }, planTask, activeBundle, { name, targetId, schedule, taskIds ->
+                                "云端控制" -> CloudPage(application.accounts)
+                                "新建计划", "编辑计划" -> if (planTarget == null || planAccount == null) EmptyContent("先选好当前登录的游戏账号", "计划属于游戏账号，在 设置 → 云端控制 里选择。")
+                                    else if (detail == "编辑计划" && plans?.none { it.id == editPlanId } != false) EmptyContent("这个计划已在别处删除", "返回计划列表查看。")
+                                    else PlanEditorPage(plans?.firstOrNull { it.id == editPlanId }.takeIf { detail == "编辑计划" }, planTarget, planTask, activeBundle, online, { name, schedule: PlanSchedule, taskIds ->
                                     val existing = plans?.firstOrNull { it.id == editPlanId }.takeIf { detail == "编辑计划" }
-                                    val target = activeBundle?.targets?.firstOrNull { it.id == targetId }
-                                    val context = existing?.context ?: if (target?.identityPolicy == IdentityPolicy.NONE) ExecutionContext(targetId, Principal.Anonymous)
-                                        else executor.context?.takeIf { it.targetId == targetId }
-                                    if (context == null) scope.launch { snackbar.showSnackbar("请先核对当前账号，计划会绑定到该账号") }
-                                    else scope.launch { application.plans.save(existing, name, context, schedule, taskIds); detail = null; selected = Page.PLANS.name }
-                                }, { plans?.firstOrNull { it.id == editPlanId }?.let { plan -> scope.launch { application.plans.delete(plan); detail = null } } })
+                                    val save = PlanSave(name.trim(), schedule.days.map { it.value }.sorted(), schedule.minuteOfDay, taskRefs(taskIds),
+                                        existing?.deviceIds.orEmpty(), existing?.latestStartMinutes ?: 30, existing?.enabled ?: true, if (existing == null) 0 else editRevision ?: existing.revision)
+                                    cloudCall({ detail = null; selected = Page.PLANS.name }) {
+                                        if (existing == null) application.cloud.createPlan(planAccount.id, save) else application.cloud.updatePlan(existing.id, save) }
+                                }, { plans?.firstOrNull { it.id == editPlanId }?.let { plan -> cloudCall({ detail = null }) { application.cloud.deletePlan(plan.id) } } })
                                 "GitHub" -> GitHubAccountPage(github, wide, application.github::signIn, application.github::cancelSignIn,
                                     application.github::signOut, { detail = "任务更新" })
                                 "任务更新" -> TaskVersionsPage(versions, pull, versionOperation, application.taskUpdates::reloadCatalog,
                                     application.taskUpdates::activate, application.taskUpdates::delete)
-                                "任务配置" -> TaskConfigurationPage(editor, wide, { address?.let { application.taskEditor.reload(it) } },
+                                "任务配置" -> TaskConfigurationPage(editor, wide, settingsNotice(cloudState, online, (editor as? TaskEditorState.Ready)?.snapshot?.accountName),
+                                    { address?.let { application.taskEditor.reload(it) } },
                                     { field, value -> address?.let { application.taskEditor.change(it, field, value) } },
                                     { address?.let { application.taskEditor.save(it) } })
                                 else -> when (page) {
                                     Page.TASKS -> TaskCenter(versions, executor, runtimeStatus,
-                                        { application.executor.enqueueTask(it) },
+                                        { application.runTask(it) },
                                         application.taskUpdates::reloadCatalog, { detail = "任务更新" }, edit = {
                                         editTarget = it.targetId; editTask = it.taskId; detail = "任务配置"
                                     }, favorites = floating, toggleFavorite = application.floating::toggle, openHistory = { detail = "运行记录" }, favoritesRequest = favoritesRequest, addToPlan = { choosePlanFor = it })
-                                    Page.PLANS -> PlansPage(plans, executor, activeBundle, application.plans::nextRun,
-                                        { plan, enabled -> scope.launch { application.plans.setEnabled(plan, enabled) } },
-                                        { plan -> scope.launch { (application.plans.runNow(plan) as? PlanSubmission.Rejected)?.let { snackbar.showSnackbar(it.reason) } } },
-                                        { plan -> editPlanId = plan.id; planTask = null; detail = "编辑计划" },
+                                    Page.PLANS -> PlansPage(plans, planAccount?.name, online, cloudData?.lastRuns.orEmpty(), zone,
+                                        { plan, enabled -> cloudCall { application.cloud.updatePlan(plan.id, plan.save().copy(enabled = enabled)) } },
+                                        { plan -> cloudCall({ scope.launch { snackbar.showSnackbar("已交给服务器下发") } }) { application.cloud.runPlan(plan.id) } },
+                                        { plan -> editPlanId = plan.id; editRevision = plan.revision; planTask = null; detail = "编辑计划" },
                                         { editPlanId = null; planTask = null; detail = "新建计划" })
                                     Page.SETTINGS -> SettingsPage(appearance, mode, { item ->
                                         scope.launch {
@@ -169,6 +195,14 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
             }
         }
     }
+}
+
+/** Settings belong to a game account on the server; this says whose they are, or why they cannot be saved now. */
+private fun settingsNotice(cloud: CloudState, online: Boolean, account: String?): String = when {
+    cloud !is CloudState.SignedIn -> "设置保存在服务器上。登录护肝宝账号后才能保存：设置 → 云端控制"
+    account == null -> "先在 设置 → 云端控制 里选好游戏当前登录的账号，设置跟着账号走"
+    !online -> "没有连上服务器，「$account」的设置只能查看"
+    else -> "「$account」的设置，保存后在网页和其他设备上也生效"
 }
 
 @Composable

@@ -35,13 +35,13 @@ class TaskConfigurationPageTest {
         compose.waitUntil(10_000) { compose.activity.resources.configuration.orientation == if (landscape) Configuration.ORIENTATION_LANDSCAPE else Configuration.ORIENTATION_PORTRAIT }
         val task = TaskDefinition("fixture", "test-app", "测试任务", "tools", 1, fields,
             listOf(StepDefinition("observe", "观察画面", listOf(ActionDefinition("screen", "test.observe", 1, JsonObject(emptyMap()))))))
-        val snapshot = TaskConfigurationSnapshot(TaskAddress("test-app", "fixture"), task, "fixture-version", "digest", 0, initial)
+        val snapshot = TaskConfigurationSnapshot(TaskAddress("test-app", "fixture"), task, "fixture-account", "测试账号", 0, initial)
         values = initial
         compose.setContent {
             var state by remember { mutableStateOf(TaskEditorState.Ready(snapshot, initial)) }
             AssistTheme(if (dark) io.github.yysassist.ThemeMode.DARK else io.github.yysassist.ThemeMode.LIGHT) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    TaskConfigurationPage(state, landscape, {}, { field, value ->
+                    TaskConfigurationPage(state, landscape, "", {}, { field, value ->
                         values = JsonObject(values + (field to value)); state = state.copy(values = values)
                     }, { saves++ })
                 }

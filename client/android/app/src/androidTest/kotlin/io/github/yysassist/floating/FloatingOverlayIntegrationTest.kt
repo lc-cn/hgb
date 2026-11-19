@@ -92,7 +92,7 @@ class FloatingOverlayIntegrationTest {
         bundle = TaskBundle(1, "floating-v1", "2026-11-16T00:00:00Z", "Fixture", tasks,
             listOf(TargetProfile("floating-qa", "Fixture", listOf(context.packageName), IdentityPolicy.NONE, listOf(TaskCategory("tools", "Tools")))))
         val text = codec.write(bundle); library.install(text, bundle.version, TaskVersionLibrary.sha256(text)); library.activate(bundle.version)
-        runtime = ExecutionRuntime(ExecutionStateStore(db, library), library, TaskAdmissionRepository(db, library), factory, scope!!,
+        runtime = ExecutionRuntime(ExecutionStateStore(db, library), library, TaskAdmissionRepository(db, library) { _, _ -> null }, factory, scope!!,
             ExecutionContextReadiness { _, _ -> ready.get() })
         withTimeout(5_000) { runtime.status.first { it == RuntimeStatus.Ready } }
         preferences.toggle(TaskAddress("floating-qa", "one")); preferences.toggle(TaskAddress("floating-qa", "two"))

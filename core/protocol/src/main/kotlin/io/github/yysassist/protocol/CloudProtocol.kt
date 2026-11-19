@@ -54,6 +54,8 @@ import kotlinx.serialization.json.JsonObject
     /** Pause or resume the job if it is the one running here. */
     @Serializable @SerialName("pause") data class Pause(val jobId: String) : ServerMessage
     @Serializable @SerialName("resume") data class Resume(val jobId: String) : ServerMessage
+    /** Everything the app shows about accounts, settings and plans, sent whole on connect and after each change. */
+    @Serializable @SerialName("data") data class Data(val data: DeviceData) : ServerMessage
 }
 /** Close codes the server uses when it refuses a device socket. */
 object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DEVICE: Short = 4403; const val REPLACED: Short = 4409 }
@@ -119,6 +121,16 @@ object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DE
 @Serializable data class DeviceView(val id: String, val name: String, val platform: String, val online: Boolean, val lastSeenAt: Long?,
     val phase: String?, val currentTask: String?, val queued: Int, val tasks: List<CloudTask>, val apps: List<AppView> = emptyList(), val concurrency: Int = 1)
 @Serializable data class TimeZoneSave(val timeZone: String)
+/** One task's saved settings for one game account. */
+@Serializable data class AccountConfig(val accountId: String, val targetId: String, val taskId: String, val values: JsonObject, val revision: Long)
+/** The jobs of a plan's latest run, one per task, so the app can show how it went. */
+@Serializable data class PlanRun(val planId: String, val at: Long, val states: List<JobState>, val detail: String = "")
+/**
+ * What the app keeps of the server's data: it shows and runs with it, and keeps it for when it is offline. [apps] are
+ * this device's, with the accounts the user assigned to them.
+ */
+@Serializable data class DeviceData(val accounts: List<GameAccountView>, val apps: List<AppView>, val plans: List<PlanView>,
+    val configs: List<AccountConfig>, val lastRuns: List<PlanRun>, val timeZone: String)
 /** First message of the console's event stream (`/api/events`), and what it falls back to after a gap. */
 @Serializable data class ConsoleSnapshot(val devices: List<DeviceView>, val jobs: List<JobView>, val accounts: List<GameAccountView> = emptyList(),
     val plans: List<PlanView> = emptyList(), val games: List<GameView> = emptyList(), val timeZone: String = "Asia/Shanghai")

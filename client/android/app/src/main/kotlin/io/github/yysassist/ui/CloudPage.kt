@@ -13,8 +13,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import io.github.yysassist.BuildConfig
+import io.github.yysassist.cloud.CloudAccounts
 import io.github.yysassist.core.cloud.CloudAgent
+import io.github.yysassist.core.cloud.CloudRequestException
 import io.github.yysassist.core.cloud.CloudState
+import io.github.yysassist.protocol.AppAccounts
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.io.IOException
@@ -26,13 +29,14 @@ internal fun cloudServerIssue(server: String, debug: Boolean = BuildConfig.DEBUG
 }
 
 @Composable
-internal fun CloudPage(agent: CloudAgent) {
+internal fun CloudPage(accounts: CloudAccounts) {
+    val agent = accounts.agent
     val state by agent.state.collectAsState()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(start = UiSpace.medium, end = UiSpace.medium, bottom = UiSpace.medium)) {
         when (val current = state) {
             CloudState.Loading -> CircularProgressIndicator(Modifier.padding(UiSpace.page))
             is CloudState.SignedOut -> CloudSignIn(agent, current.message)
-            is CloudState.SignedIn -> CloudAccount(agent, current)
+            is CloudState.SignedIn -> { CloudAccount(agent, current); GameAccounts(accounts, current.online) }
         }
     }
 }
@@ -53,6 +57,50 @@ private fun CloudAccount(agent: CloudAgent, state: CloudState.SignedIn) {
     Spacer(Modifier.height(UiSpace.medium))
     OutlinedButton({ busy = true; scope.launch { agent.signOut(); busy = false } }, Modifier.fillMaxWidth().heightIn(min = UiSpace.hit), !busy,
         RoundedCornerShape(UiSpace.medium)) { Text("退出登录") }
+}
+
+/**
+ * Which game account each game here is signed in to. The app cannot read it from the game yet, so the user says;
+ * settings, plans and runs on this phone follow it.
+ */
+@Composable
+private fun GameAccounts(accounts: CloudAccounts, online: Boolean) {
+    val data by accounts.agent.data.collectAsState()
+    val scope = rememberCoroutineScope()
+    val p = LocalAssistPalette.current
+    var error by remember { mutableStateOf<String?>(null) }
+    var choosing by remember { mutableStateOf<String?>(null) }
+    val apps = accounts.apps()
+    Spacer(Modifier.height(UiSpace.medium))
+    SectionLabel("这台设备上的游戏")
+    AssistCard {
+        if (apps.isEmpty()) SettingRow(AssistIcons.Tasks, p.violet, "还没有可用的游戏", "启用任务版本并安装游戏后显示")
+        apps.forEachIndexed { index, app ->
+            if (index > 0) RowDivider()
+            val current = accounts.current(app.gameId, data)
+            SettingRow(AssistIcons.User, p.violet, app.name, "当前登录：${current?.name ?: "未指定"}") {
+                Box {
+                    SmallAction("选择", enabled = online) { choosing = app.key }
+                    DropdownMenu(choosing == app.key, { choosing = null }) {
+                        val saved = data?.apps?.firstOrNull { it.key == app.key }
+                        (accounts.accounts(app.gameId, data).map { it.id to it.name } + (null to "未指定")).forEach { (id, name) ->
+                            DropdownMenuItem({ Text(name) }, onClick = {
+                                choosing = null; error = null
+                                scope.launch {
+                                    try { accounts.agent.setAppAccounts(app.key, AppAccounts(id, saved?.defaultAccountId)) }
+                                    catch (rejected: CloudRequestException) { error = rejected.message }
+                                    catch (_: IOException) { error = "没有连上服务器，请稍后再试" }
+                                }
+                            })
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Text(error ?: if (online) "游戏账号在 Web 控制台的“游戏账号”里添加。护肝宝还不能自己认出游戏里登录的账号，换号后请在这里改。"
+        else "没有连上服务器，当前账号只能查看。", Modifier.padding(start = UiSpace.gap, top = UiSpace.gap),
+        color = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
 }
 
 @Composable

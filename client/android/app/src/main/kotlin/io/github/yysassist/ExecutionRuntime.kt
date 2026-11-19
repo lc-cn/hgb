@@ -69,7 +69,7 @@ class ExecutionRuntime(
     private val running = mutableMapOf<AttemptTicket, Running>()
     private var restoredInput: AttemptTicket? = null
     private val readinessRevision = MutableStateFlow(0L)
-    val startConditionChanges: Flow<Unit> = merge(admission.changes.map { Unit }, readinessRevision.map { Unit },
+    val startConditionChanges: Flow<Unit> = merge(admission.changes, readinessRevision.map { Unit },
         state.map { it.context }.distinctUntilChanged().map { Unit })
     /** Input lease projection only; queue decisions remain exclusively in TaskExecutor. */
     @Volatile private var inputPermit: AttemptTicket? = null
@@ -96,9 +96,8 @@ class ExecutionRuntime(
         provided: io.github.yysassist.storage.ProvidedSettings? = null): RuntimeReceipt =
         receipt { Message.Add({ admission.task(address, provided) }, null, commandId, it) }
     suspend fun armedTriggers(targetId: String): List<TaskDefinition> = withContext(Dispatchers.IO) { admission.armedTriggers(targetId) }
-    /** Submits one round of a plan; [context] is the account the plan belongs to, never the current one by default. */
-    fun enqueuePlan(planId: String, name: String, context: ExecutionContext, taskIds: List<String>, commandId: String): RuntimeReceipt =
-        receipt { Message.Add({ admission.plan(planId, name, context.targetId, taskIds) }, context, commandId, it) }
+    /** Shows [message] wherever runtime messages are shown: the app's snackbar and the floating ball. */
+    fun notify(message: String) { mutableMessages.tryEmit(message) }
     fun readinessChanged() { readinessRevision.update { it + 1 }; commands.trySend(Message.Readiness) }
     /** Read-only candidate assessment; admission still rechecks config/version/context at execution. */
     suspend fun assessStart(address: TaskAddress): TaskStartAvailability = withContext(Dispatchers.IO) {

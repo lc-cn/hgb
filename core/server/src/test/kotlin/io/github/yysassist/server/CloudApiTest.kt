@@ -337,6 +337,45 @@ class CloudApiTest {
         service.tick()
         assertTrue(jobs(token).isEmpty())
     }
+    @Test fun aConnectedDeviceIsSentItsAccountsSettingsAndPlansAndEachChange() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token); val main = main(token)
+        signedIn(token, device.deviceId, main)
+        val pushed = socket(token) {
+            val first = replies().filterIsInstance<ServerMessage.Data>().single().data
+            assertEquals(main, first.apps.single().accountId)
+            assertEquals("", first.apps.single().phase)
+            call(HttpMethod.Put, "/api/accounts/$main/configs/game/tour", """{"values":{"box":"currency"},"revision":0}""", token)
+            call(HttpMethod.Post, "/api/accounts/$main/plans", plan(), token)
+            replies().filterIsInstance<ServerMessage.Data>().last().data
+        }
+        assertEquals("currency", pushed.configs.single().values["box"].toString().trim('"'))
+        assertEquals("每日", pushed.plans.single().name)
+        val other = signUp("b@example.com").accessToken!!; enroll(other, "install-b")
+        val theirs = socket(other) { replies() }.filterIsInstance<ServerMessage.Data>().single().data
+        assertTrue(theirs.accounts.isEmpty() && theirs.configs.isEmpty() && theirs.plans.isEmpty())
+    }
+    @Test fun aPlanRunNowGoesToTheAppSignedInToItsAccount() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token); val main = main(token)
+        val created = json.decodeFromString(PlanView.serializer(), call(HttpMethod.Post, "/api/accounts/$main/plans", plan(), token).bodyAsText())
+        signedIn(token, device.deviceId, main)
+        assertEquals(HttpStatusCode.Accepted, call(HttpMethod.Post, "/api/plans/${created.id}/run", "{}", token).status)
+        assertEquals("gift", lease(token).taskId)
+        assertEquals("每日", jobs(token).single().planName)
+        assertEquals(HttpStatusCode.NotFound, call(HttpMethod.Post, "/api/plans/${created.id}/run", "{}", signUp("b@example.com").accessToken!!).status)
+    }
+    @Test fun anAccountRunsOnOneDeviceAtATime() = api {
+        val token = signUp("a@example.com").accessToken!!; val first = enroll(token); val main = main(token)
+        val second = json.decodeFromString(AuthResult.serializer(), call(HttpMethod.Post, "/api/auth/login", """{"email":"a@example.com","password":"correct horse"}""").bodyAsText()).accessToken!!
+        val other = enroll(second, "install-2")
+        job(token, first.deviceId); report(token, lease(token), JobState.RUNNING)
+        // Run on the second device itself: refused while the account runs on the first.
+        signedIn(token, other.deviceId, main)
+        val refused = call(HttpMethod.Post, "/api/jobs", """{"deviceId":"${other.deviceId}","targetId":"game","taskId":"gift","accountId":"$main"}""", second)
+        assertEquals(HttpStatusCode.Conflict, refused.status); assertTrue(refused.bodyAsText().contains("account_busy"))
+        // Sent there from the console: it waits for the first device's run to end.
+        assertEquals(HttpStatusCode.Created, call(HttpMethod.Post, "/api/jobs", """{"deviceId":"${other.deviceId}","targetId":"game","taskId":"gift","accountId":"$main"}""", token, device = false).status)
+        assertTrue(leases(second).isEmpty())
+    }
     @Test fun aDeviceHeldOnItsOwnIsNotSentJobs() = api {
         val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
         job(token, device.deviceId)
@@ -441,7 +480,7 @@ class CloudApiTest {
         report(token, lease, JobState.RUNNING)
         now += CloudService.LEASE_LIFETIME - 1
         call(HttpMethod.Post, "/api/jobs/${created.id}/cancel", "{}", token)
-        assertEquals(listOf(ServerMessage.Cancel(listOf(created.id))), beat(token, phase = "RUNNING"))
+        assertEquals(listOf(ServerMessage.Cancel(listOf(created.id))), beat(token, phase = "RUNNING").filterNot { it is ServerMessage.Data })
         now += CloudService.LEASE_LIFETIME - 1
         assertEquals(JobState.RUNNING, jobs(token).single().state)
     }

@@ -129,7 +129,7 @@ class DeviceRuntimeIntegrationTest {
                 return store.persist(expectedRevision, prepared)
             }
         }
-        runtime = ExecutionRuntime(slowStore, library, TaskAdmissionRepository(db, library), factory, scope!!)
+        runtime = ExecutionRuntime(slowStore, library, TaskAdmissionRepository(db, library) { _, _ -> null }, factory, scope!!)
         withTimeout(5_000) { runtime.status.first { it == RuntimeStatus.Ready } }
         runtime.enqueueTask(TaskAddress("fixture", "touch")).await()
         withTimeout(5_000) { captured.await() }
@@ -205,7 +205,7 @@ class DeviceRuntimeIntegrationTest {
                 return store.persist(expectedRevision, prepared)
             }
         }
-        runtime = ExecutionRuntime(gated, library, TaskAdmissionRepository(database!!, library), factory, scope!!)
+        runtime = ExecutionRuntime(gated, library, TaskAdmissionRepository(database!!, library) { _, _ -> null }, factory, scope!!)
         withTimeout(5_000) { runtime.status.first { it == RuntimeStatus.Ready } }
         try {
             runtime.enqueueTask(TaskAddress("fixture", "tap")).await()

@@ -26,7 +26,7 @@ import io.github.yysassist.TaskEditorState
 import kotlinx.serialization.json.JsonElement
 
 @Composable
-internal fun TaskConfigurationPage(state: TaskEditorState, wide: Boolean, reload: () -> Unit,
+internal fun TaskConfigurationPage(state: TaskEditorState, wide: Boolean, notice: String, reload: () -> Unit,
     change: (String, JsonElement) -> Unit, save: () -> Unit) {
     when (state) {
         TaskEditorState.Loading -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
@@ -58,6 +58,8 @@ internal fun TaskConfigurationPage(state: TaskEditorState, wide: Boolean, reload
                         }
                     }
                 }
+                Text(notice, Modifier.fillMaxWidth().padding(start = UiSpace.medium, end = UiSpace.medium, top = UiSpace.gap),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                 ConfigurationFields(state, state.snapshot.task.fields.filter { (tabs.size < 2 || it.tab == tabName) && it.isVisible(state.values) }, landscape, Modifier.weight(1f).fillMaxWidth(), change, reload)
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(horizontal = UiSpace.medium, vertical = 10.dp),

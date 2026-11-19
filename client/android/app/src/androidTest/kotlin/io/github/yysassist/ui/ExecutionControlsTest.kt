@@ -49,7 +49,7 @@ class ExecutionControlsTest {
         }, listOf(TargetProfile("fixture", "测试应用", listOf(context.packageName), IdentityPolicy.NONE, listOf(TaskCategory("tools", "工具")))))
         val text = codec.write(bundle); library.install(text, "v1", TaskVersionLibrary.sha256(text)); library.activate("v1")
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-        runtime = ExecutionRuntime(ExecutionStateStore(database, library), library, TaskAdmissionRepository(database, library), factory, scope,
+        runtime = ExecutionRuntime(ExecutionStateStore(database, library), library, TaskAdmissionRepository(database, library) { _, _ -> null }, factory, scope,
             startReadiness = object : ExecutionStartReadiness {
                 override val changes = startCondition.map { Unit }
                 override suspend fun check(attempt: StepAttempt, bundle: TaskBundle) = startCondition.value

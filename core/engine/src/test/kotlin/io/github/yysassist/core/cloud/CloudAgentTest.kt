@@ -77,7 +77,12 @@ class CloudAgentTest {
         override fun pause(runId: Long) { paused += runId }
         override fun resume(runId: Long) { resumed += runId }
     }
-    private fun agent() = CloudAgent(OkHttpClient(), store, port, "手机", "android", "1", scope, heartbeatMillis = 50, retryMillis = 50)
+    private val dataStore = object : CloudDataStore {
+        @Volatile var value: DeviceData? = null
+        override suspend fun read() = value
+        override suspend fun write(value: DeviceData?) { this.value = value }
+    }
+    private fun agent() = CloudAgent(OkHttpClient(), store, port, "手机", "android", "1", scope, heartbeatMillis = 50, retryMillis = 50, dataStore = dataStore)
     private val base get() = server.url("/").toString().trimEnd('/')
 
     @Before fun start() {
@@ -184,6 +189,16 @@ class CloudAgentTest {
         eventually { resumed.isNotEmpty() }
         assertEquals(listOf(5L), paused); assertEquals(listOf(5L), resumed)
         assertEquals(false, store.value?.activeJob?.paused)
+    }
+    @Test fun theServersDataIsKeptForOfflineUseAndErasedOnSignOut() = runBlocking<Unit> {
+        val agent = signedIn()
+        eventually { socket != null }
+        val data = DeviceData(listOf(GameAccountView("a1", "game", "主号", createdAt = 1)), emptyList(), emptyList(), emptyList(), emptyList(), "Asia/Shanghai")
+        socket!!.send(json.encodeToString(ServerMessage.serializer(), ServerMessage.Data(data)))
+        eventually { agent.data.value == data }
+        assertEquals(data, dataStore.value)
+        agent.signOut()
+        assertEquals(null, agent.data.value); assertEquals(null, dataStore.value)
     }
     @Test fun anUnconfirmedSubmissionIsNeverReportedAsAFailure() = runBlocking<Unit> {
         enqueueResult = CloudEnqueueResult.Unconfirmed("提交结果未确认"); lease = leaseJson(); signedIn()

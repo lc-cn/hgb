@@ -92,17 +92,15 @@ class LocalTaskTrigger : BroadcastReceiver() {
                 } == VersionChange.Applied) { "任务包安装失败" }
                 check(library.activate(bundle.version) == VersionChange.Applied) { "任务包启用失败" }
                 // Settings for this run: "--es config field=value,field=value", otherwise each field's recommended value.
-                val settings = io.github.yysassist.storage.TaskConfigurationRepository(database, library)
-                val opened = settings.open(io.github.yysassist.storage.TaskAddress(target, task))
+                val definition = bundle.tasks.single { it.targetId == target && it.id == task }
                 val chosen = intent.getStringExtra("config")?.split(",")?.associate { pair ->
                     pair.substringBefore("=") to kotlinx.serialization.json.JsonPrimitive(pair.substringAfter("=")) as kotlinx.serialization.json.JsonElement }
-                    ?: opened.task.fields.mapNotNull { field -> field.recommended?.let { field.id to it } }.toMap()
-                if (chosen.isNotEmpty()) check(settings.save(opened, kotlinx.serialization.json.JsonObject(chosen)) is
-                    io.github.yysassist.storage.ConfigurationSaveResult.Saved) { "任务配置保存失败" }
+                    ?: definition.fields.mapNotNull { field -> field.recommended?.let { field.id to it } }.toMap()
+                val values = io.github.yysassist.core.content.normalizeConfigurationDraft(definition, kotlinx.serialization.json.JsonObject(chosen))
+                val admission = TaskAdmissionRepository(database, library) { t, k -> values.takeIf { t == target && k == task } }
                 // A replay has no real screen to wait for; a live run waits for the real device as usual.
-                runtime = if (replayDevice != null) ExecutionRuntime(ExecutionStateStore(database, library), library,
-                    TaskAdmissionRepository(database, library), factory, runScope)
-                else ExecutionRuntime(ExecutionStateStore(database, library), library, TaskAdmissionRepository(database, library),
+                runtime = if (replayDevice != null) ExecutionRuntime(ExecutionStateStore(database, library), library, admission, factory, runScope)
+                else ExecutionRuntime(ExecutionStateStore(database, library), library, admission,
                     factory, runScope, startReadiness = DeviceExecutionReadiness(factory.contracts))
                 withTimeout(10_000) { runtime.status.first { it == RuntimeStatus.Ready } }
                 result.writeText(report.put("phase", "running").toString(2))

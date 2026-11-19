@@ -36,12 +36,6 @@ data class TaskVersionRow(
     val referenceCount: Int,
 )
 
-@Entity(tableName = "task_configurations", primaryKeys = ["targetId", "taskId"])
-data class TaskConfigurationEntity(
-    val targetId: String, val taskId: String, val valuesJson: String, val schemaJson: String,
-    val revision: Long, val validatedVersion: String, val validatedDigest: String,
-)
-
 @Entity(tableName = "executor_state")
 data class ExecutorStateEntity(@PrimaryKey val id: Int = 1, val revision: Long, val payload: String, val digest: String)
 
@@ -87,13 +81,6 @@ interface ActionTraceDao {
 interface ExecutorStateDao {
     @Query("SELECT * FROM executor_state WHERE id = 1") suspend fun get(): ExecutorStateEntity?
     @Upsert suspend fun save(state: ExecutorStateEntity)
-}
-
-@Dao
-interface TaskConfigurationDao {
-    @Query("SELECT * FROM task_configurations WHERE targetId = :targetId AND taskId = :taskId")
-    suspend fun get(targetId: String, taskId: String): TaskConfigurationEntity?
-    @Upsert suspend fun save(configuration: TaskConfigurationEntity)
 }
 
 @Dao
@@ -144,12 +131,11 @@ interface TaskVersionDao {
     suspend fun releaseReference(owner: String): Int
 }
 
-@Database(entities = [TaskVersionEntity::class, TaskVersionSelection::class, TaskVersionReference::class, TaskConfigurationEntity::class,
-    ExecutorStateEntity::class, ActionTraceEntity::class, PlanEntity::class, ExecutionFactEntity::class], version = 7, exportSchema = true)
+// Task settings and plans live on the server (the app keeps the copy it was sent); they are not stored here.
+@Database(entities = [TaskVersionEntity::class, TaskVersionSelection::class, TaskVersionReference::class,
+    ExecutorStateEntity::class, ActionTraceEntity::class, ExecutionFactEntity::class], version = 8, exportSchema = true)
 abstract class AssistDatabase : RoomDatabase() {
-    abstract fun plans(): PlanDao
     abstract fun taskVersions(): TaskVersionDao
-    abstract fun taskConfigurations(): TaskConfigurationDao
     abstract fun executorState(): ExecutorStateDao
     abstract fun actionTraces(): ActionTraceDao
     abstract fun executionFacts(): ExecutionFactDao

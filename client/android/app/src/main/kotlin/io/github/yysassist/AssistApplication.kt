@@ -28,6 +28,8 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 import io.github.yysassist.auth.EncryptedGitHubSessionStore
 import io.github.yysassist.auth.GitHubSession
 import io.github.yysassist.core.auth.GitHubDeviceAuthorization
@@ -63,12 +65,15 @@ class AssistApplication : Application() {
         private set
     lateinit var cloud: io.github.yysassist.core.cloud.CloudAgent
         private set
-    lateinit var plans: io.github.yysassist.plans.PlanCoordinator
+    /** Which game account each game here is signed in to, with its settings and plans as the server last sent them. */
+    lateinit var accounts: io.github.yysassist.cloud.CloudAccounts
         private set
     internal lateinit var versionLibrary: TaskVersionLibrary
         private set
     internal lateinit var taskCodec: BundleCodec
         private set
+    /** The server sent new accounts or settings; tasks that may start can differ now. */
+    private val settingsChanged = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     override fun onCreate() {
         super.onCreate()
         // Android creates this Application in :maa_ocr too. Only the main process owns
@@ -86,22 +91,9 @@ class AssistApplication : Application() {
         versionLibrary = library
         textObserver = VersionedTextObserver(library, MaaTextBackend(this))
         executor = ExecutionRuntime(ExecutionStateStore(database, library), library,
-            TaskAdmissionRepository(database, library), workers, scope,
+            TaskAdmissionRepository(database, library, settingsChanged) { target, task -> accounts.config(target, task)?.values }, workers, scope,
             startReadiness = DeviceExecutionReadiness(workers.contracts))
         reactions = io.github.yysassist.reactions.ReactionMonitor(io.github.yysassist.reactions.RuntimeReactionPort(executor), scope)
-        plans = io.github.yysassist.plans.PlanCoordinator(io.github.yysassist.storage.PlanRepository(database), { plan, command ->
-            when (val result = executor.enqueuePlan(plan.id, plan.name, plan.context, plan.taskIds, command).await()) {
-                is RuntimeCommandResult.Applied -> when (val enqueued = (result.reply as? io.github.yysassist.core.execution.ExecutorReply.Enqueued)?.result) {
-                    is io.github.yysassist.core.execution.EnqueueResult.Accepted -> io.github.yysassist.plans.PlanSubmission.Accepted(enqueued.runId)
-                    is io.github.yysassist.core.execution.EnqueueResult.Duplicate -> io.github.yysassist.plans.PlanSubmission.Accepted(enqueued.runId)
-                    else -> io.github.yysassist.plans.PlanSubmission.Rejected("计划提交未确认")
-                }
-                is RuntimeCommandResult.Rejected -> io.github.yysassist.plans.PlanSubmission.Rejected(result.message)
-                is RuntimeCommandResult.Unconfirmed -> io.github.yysassist.plans.PlanSubmission.Rejected(result.message)
-            }
-        }, io.github.yysassist.plans.AndroidPlanAlarm(this), scope)
-        configurations = TaskConfigurationRepository(database, library)
-        taskEditor = TaskConfigurationEditor(configurations, scope)
         val client = OkHttpClient.Builder().proxy(Proxy.NO_PROXY).followSslRedirects(false)
             .callTimeout(30, TimeUnit.SECONDS).build()
         github = GitHubSession(BuildConfig.GITHUB_CLIENT_ID,
@@ -109,12 +101,32 @@ class AssistApplication : Application() {
             GitHubDeviceAuthorization(BuildConfig.GITHUB_CLIENT_ID, client), GitHubUserApi(client), scope)
         val source = GitHubTaskSource(TaskRepository("lc-cn", "yys-helper"), "https://api.github.com/".toHttpUrl(), client, github)
         taskUpdates = TaskUpdates(library, source, scope)
-        // Job polls wait up to 20 s on the server. Reading must outlast that, or the server hands a job to a
-        // request this app has already given up on, and the job is never started.
-        val cloudClient = client.newBuilder().readTimeout(35, TimeUnit.SECONDS).callTimeout(40, TimeUnit.SECONDS).build()
-        cloud = io.github.yysassist.core.cloud.CloudAgent(cloudClient, io.github.yysassist.cloud.EncryptedCloudStore(File(noBackupFilesDir, "cloud-session.bin"), "io.github.yysassist.cloud.v1"),
-            io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library, database) { packageManager.getLaunchIntentForPackage(it) != null },
-            "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}", "android", BuildConfig.VERSION_NAME, scope)
+        val cloudExecutor = io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library, database) { packageManager.getLaunchIntentForPackage(it) != null }
+        cloud = io.github.yysassist.core.cloud.CloudAgent(client, io.github.yysassist.cloud.EncryptedCloudStore(File(noBackupFilesDir, "cloud-session.bin"), "io.github.yysassist.cloud.v1"),
+            cloudExecutor, "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}", "android", BuildConfig.VERSION_NAME, scope,
+            dataStore = io.github.yysassist.cloud.CloudDataFile(File(noBackupFilesDir, "cloud-data.json")))
+        accounts = io.github.yysassist.cloud.CloudAccounts(cloud, cloudExecutor::apps)
+        configurations = TaskConfigurationRepository(library, accounts)
+        taskEditor = TaskConfigurationEditor(configurations, scope)
+        scope.launch { cloud.data.drop(1).collect { settingsChanged.tryEmit(Unit); taskEditor.refresh() } }
         taskUpdates.pullLatest()
+    }
+
+    /**
+     * Runs a task in the game on this device. Online, it is queued through the server as a job of the account the
+     * game is signed in to, so that account never runs on two devices at once. Offline, it runs here with the
+     * settings the server last sent.
+     */
+    fun runTask(task: io.github.yysassist.storage.TaskAddress) {
+        scope.launch {
+            val app = accounts.app(task.targetId)
+            if (!accounts.online || app == null) { executor.enqueueTask(task); return@launch }
+            val account = accounts.current(task.targetId)
+                ?: return@launch executor.notify("先在 设置 → 云端控制 里选好${app.name}当前登录的游戏账号")
+            try { cloud.runHere(task.targetId, task.taskId, account.id, app.key) }
+            catch (rejected: io.github.yysassist.core.cloud.CloudRequestException) { executor.notify(rejected.message) }
+            // The server may have queued it before the reply was lost, so it is not run here as well.
+            catch (_: java.io.IOException) { executor.notify("没有连上服务器，请稍后再试") }
+        }
     }
 }

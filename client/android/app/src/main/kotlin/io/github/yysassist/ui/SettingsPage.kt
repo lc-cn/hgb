@@ -36,7 +36,6 @@ import io.github.yysassist.device.ScreenshotCheck
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import io.github.yysassist.floating.FloatingPreferencesState
-import io.github.yysassist.plans.canUseExactAlarms
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -54,7 +53,7 @@ internal fun SettingsPage(appearance: AppearanceState, mode: ThemeMode, setTheme
     val sections = listOf(
         SettingsSection("权限与运行环境", service == null) {
             AccessibilityRow(service != null); RowDivider()
-            NotificationAccessContent(notifications.access, notifications.request, notifications.openSettings); RowDivider(); ExactAlarmRow(); RowDivider(); ScreenshotRow()
+            NotificationAccessContent(notifications.access, notifications.request, notifications.openSettings); RowDivider(); ScreenshotRow()
         },
         SettingsSection("悬浮球") { FloatingRows(floating, setFloatingVisible, setAutoDock, reloadFloating, { open("常用") }) },
         SettingsSection("外观") {
@@ -162,18 +161,6 @@ private fun AccessibilityRow(connected: Boolean) {
     SettingRow(AssistIcons.Shield, p.blue, "无障碍服务", "用于读取画面和执行操作") {
         if (connected) SettingValue("已开启", p.success)
         else SmallAction("开启") { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
-    }
-}
-
-@Composable
-private fun ExactAlarmRow() {
-    val context = LocalContext.current
-    val p = LocalAssistPalette.current
-    var allowed by remember { mutableStateOf(canUseExactAlarms(context)) }
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { allowed = canUseExactAlarms(context) }
-    SettingRow(AssistIcons.Calendar, p.gold, "精确定时", if (allowed) "计划按设定时间准时运行" else "未开启时，计划可能晚几分钟运行") {
-        if (allowed) SettingValue("已开启", p.success)
-        else SmallAction("开启") { context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}"))) }
     }
 }
 

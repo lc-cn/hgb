@@ -26,25 +26,24 @@ import androidx.compose.ui.unit.dp
 import io.github.yysassist.core.content.TaskBundle
 import io.github.yysassist.core.plan.PlanSchedule
 import io.github.yysassist.core.plan.planIssues
-import io.github.yysassist.storage.PlanDefinition
+import io.github.yysassist.protocol.PlanView
 import java.time.DayOfWeek
 
 /** Nothing is preset: time, days and tasks stay empty until the user chooses them. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun PlanEditorPage(plan: PlanDefinition?, initialTask: String?, bundle: TaskBundle?,
-    save: (name: String, targetId: String, schedule: PlanSchedule, taskIds: List<String>) -> Unit, delete: () -> Unit) {
+internal fun PlanEditorPage(plan: PlanView?, targetId: String, initialTask: String?, bundle: TaskBundle?, editable: Boolean,
+    save: (name: String, schedule: PlanSchedule, taskIds: List<String>) -> Unit, delete: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     var name by rememberSaveable(plan?.id) { mutableStateOf(plan?.name.orEmpty()) }
-    var minute by rememberSaveable(plan?.id) { mutableStateOf(plan?.schedule?.minuteOfDay) }
-    var daily by rememberSaveable(plan?.id) { mutableStateOf(plan?.schedule?.daily) }
-    var days by rememberSaveable(plan?.id) { mutableStateOf(ArrayList(plan?.schedule?.days.orEmpty().map { it.value })) }
-    var tasks by rememberSaveable(plan?.id) { mutableStateOf(ArrayList(plan?.taskIds ?: listOfNotNull(initialTask))) }
+    var minute by rememberSaveable(plan?.id) { mutableStateOf(plan?.minuteOfDay) }
+    var daily by rememberSaveable(plan?.id) { mutableStateOf(plan?.let { it.days.size == 7 }) }
+    var days by rememberSaveable(plan?.id) { mutableStateOf(ArrayList(plan?.days.orEmpty())) }
+    var tasks by rememberSaveable(plan?.id) { mutableStateOf(ArrayList(plan?.tasks?.map { it.taskId } ?: listOfNotNull(initialTask))) }
     var issues by remember { mutableStateOf(emptyList<String>()) }
     var picking by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
-    val definitions = bundle?.tasks.orEmpty()
-    val targetId = plan?.context?.targetId ?: definitions.firstOrNull { it.id in tasks }?.targetId
+    val definitions = bundle?.tasks.orEmpty().filter { it.targetId == targetId }
     val chosenDays = if (daily == true) DayOfWeek.entries.toSet() else if (daily == false) days.map(DayOfWeek::of).toSet() else emptySet()
     Column(Modifier.fillMaxSize().imePadding()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = UiSpace.medium, end = UiSpace.medium, bottom = UiSpace.medium)) {
@@ -84,7 +83,7 @@ internal fun PlanEditorPage(plan: PlanDefinition?, initialTask: String?, bundle:
                 tasks.forEachIndexed { index, id ->
                     if (index > 0) RowDivider()
                     Row(Modifier.fillMaxWidth().padding(start = 14.dp, end = UiSpace.tiny), verticalAlignment = Alignment.CenterVertically) {
-                        Text("${index + 1}. ${definitions.firstOrNull { it.id == id }?.name ?: "当前版本没有此任务"}", Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("${index + 1}. ${definitions.firstOrNull { it.id == id }?.name ?: plan?.tasks?.firstOrNull { it.taskId == id }?.name ?: "当前版本没有此任务"}", Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                         IconButton(enabled = index > 0, onClick = { tasks = ArrayList(tasks).also { it.add(index - 1, it.removeAt(index)) } }) {
                             Icon(AssistIcons.Chevron, "上移", Modifier.rotate(-90f)) }
                         IconButton(enabled = index < tasks.lastIndex, onClick = { tasks = ArrayList(tasks).also { it.add(index + 1, it.removeAt(index)) } }) {
@@ -93,7 +92,7 @@ internal fun PlanEditorPage(plan: PlanDefinition?, initialTask: String?, bundle:
                     }
                 }
             }
-            val candidates = definitions.filter { it.trigger == null && it.id !in tasks && (targetId == null || it.targetId == targetId) }
+            val candidates = definitions.filter { it.trigger == null && it.id !in tasks }
             if (candidates.isNotEmpty()) {
                 SectionLabel("添加任务")
                 AssistCard {
@@ -110,15 +109,15 @@ internal fun PlanEditorPage(plan: PlanDefinition?, initialTask: String?, bundle:
         }
         HorizontalDivider(color = colors.outlineVariant)
         // Kept outside the scrolling form so a failed save is always explained on screen.
-        if (issues.isNotEmpty()) Text(issues.joinToString("；"), Modifier.fillMaxWidth().background(colors.surfaceContainerHigh)
+        val shown = if (editable) issues else listOf("没有连上服务器，计划只能查看")
+        if (shown.isNotEmpty()) Text(shown.joinToString("；"), Modifier.fillMaxWidth().background(colors.surfaceContainerHigh)
             .padding(start = UiSpace.medium, end = UiSpace.medium, top = UiSpace.gap), color = colors.error, style = MaterialTheme.typography.bodySmall)
         Row(Modifier.fillMaxWidth().background(colors.surfaceContainerHigh).padding(horizontal = UiSpace.medium, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            if (plan != null) OutlinedButton({ confirmDelete = true }, Modifier.weight(1f).heightIn(min = UiSpace.hit), shape = RoundedCornerShape(UiSpace.medium)) { Text("删除", color = colors.error) }
+            if (plan != null) OutlinedButton({ confirmDelete = true }, Modifier.weight(1f).heightIn(min = UiSpace.hit), editable, shape = RoundedCornerShape(UiSpace.medium)) { Text("删除", color = colors.error) }
             Button({
                 issues = planIssues(name, chosenDays, minute, tasks)
-                val target = targetId
-                if (issues.isEmpty() && target != null) save(name, target, PlanSchedule(chosenDays, minute!!), tasks)
-            }, Modifier.weight(1.4f).heightIn(min = UiSpace.hit), shape = RoundedCornerShape(UiSpace.medium)) { Text("保存", fontWeight = FontWeight.SemiBold) }
+                if (issues.isEmpty()) save(name, PlanSchedule(chosenDays, minute!!), tasks)
+            }, Modifier.weight(1.4f).heightIn(min = UiSpace.hit), editable, shape = RoundedCornerShape(UiSpace.medium)) { Text("保存", fontWeight = FontWeight.SemiBold) }
         }
     }
     if (picking) {

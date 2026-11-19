@@ -21,7 +21,7 @@ class PlanEditorPageTest {
         TaskDefinition(id, "app", name, "daily", 1, steps = listOf(StepDefinition("s", "步骤"))) },
         listOf(TargetProfile("app", "应用", listOf("a.b"), IdentityPolicy.NONE, listOf(TaskCategory("daily", "日常")))))
     private fun show() = compose.setContent { AssistTheme(ThemeMode.LIGHT) { Surface(Modifier.fillMaxSize()) {
-        PlanEditorPage(null, null, bundle, { name, _, schedule, tasks -> saved = Triple(name, schedule, tasks) }, {})
+        PlanEditorPage(null, "app", null, bundle, true, { name, schedule, tasks -> saved = Triple(name, schedule, tasks) }, {})
     } } }
 
     @Test fun nothingIsPresetAndEveryMissingPartIsExplainedOnSave() {

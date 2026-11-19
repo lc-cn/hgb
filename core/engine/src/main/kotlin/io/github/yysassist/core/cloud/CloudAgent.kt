@@ -45,6 +45,11 @@ interface CloudCredentialStore {
     suspend fun read(): CloudCredentials?
     suspend fun write(value: CloudCredentials?)
 }
+/** Keeps the last data the server sent, so the app can show it and run with it offline. */
+interface CloudDataStore {
+    suspend fun read(): DeviceData?
+    suspend fun write(value: DeviceData?)
+}
 sealed interface CloudEnqueueResult {
     data class Accepted(val runId: Long) : CloudEnqueueResult
     data class Rejected(val reason: String) : CloudEnqueueResult
@@ -97,7 +102,7 @@ fun cloudOutcome(state: ExecutorSnapshot, runId: Long): Pair<JobState, String>? 
 class CloudAgent(private val http: OkHttpClient, private val store: CloudCredentialStore, private val executor: CloudExecutorPort,
     private val deviceName: String, private val platform: String, private val appVersion: String, private val scope: CoroutineScope,
     private val clock: () -> Long = System::currentTimeMillis, private val heartbeatMillis: Long = 15_000, private val retryMillis: Long = 5_000,
-    private val progressMillis: Long = 1_500, private val statusMillis: Long = 1_000) {
+    private val progressMillis: Long = 1_500, private val statusMillis: Long = 1_000, private val dataStore: CloudDataStore? = null) {
     private val json = Json { ignoreUnknownKeys = true; explicitNulls = false; encodeDefaults = true }
     /** A socket stays open for hours; pings keep it alive through NAT and let both ends notice a dead link. */
     private val sockets = http.newBuilder().readTimeout(0, java.util.concurrent.TimeUnit.MILLISECONDS).callTimeout(0, java.util.concurrent.TimeUnit.MILLISECONDS)
@@ -105,6 +110,9 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
     private val mutex = Mutex()
     private val mutableState = MutableStateFlow<CloudState>(CloudState.Loading)
     val state = mutableState.asStateFlow()
+    private val mutableData = MutableStateFlow<DeviceData?>(null)
+    /** The user's accounts, settings and plans as the server last sent them; kept while offline, cleared on sign-out. */
+    val data = mutableData.asStateFlow()
     private var credentials: CloudCredentials? = null
     private var worker: Job? = null
     /** The latest lease the server pushed, waiting for the job loop; a device has one valid lease at a time, so older ones are dropped. Replaced on each sign-in so nothing carries over. */
@@ -116,6 +124,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         scope.launch {
             val saved = try { store.read() } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { null }
             mutex.withLock { credentials = saved }
+            if (saved != null) mutableData.value = runCatching { dataStore?.read() }.getOrNull()
             if (saved == null) mutableState.value = CloudState.SignedOut() else startWorking(saved)
         }
     }
@@ -136,6 +145,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         val access = result.accessToken; val refresh = result.refreshToken; val expires = result.accessExpiresAt
         if (access == null || refresh == null || expires == null) throw CloudRequestException(0, "invalid_reply", "服务器回复无效")
         val saved = CloudCredentials(server.trimEnd('/'), result.userId, result.email, access, refresh, expires, UUID.randomUUID().toString())
+        clearData() // whoever was signed in before, their accounts and settings are not shown or run for this user
         mutex.withLock { save(saved) }
         startWorking(saved)
     }
@@ -155,8 +165,28 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
             send<Unit>(saved.serverUrl, "/api/auth/logout", "{}", saved.accessToken)
         }
         mutex.withLock { save(null) }
+        clearData()
         mutableState.value = CloudState.SignedOut(message)
     }
+    private suspend fun clearData() { mutableData.value = null; runCatching { dataStore?.write(null) } }
+
+    /** Requests the app makes for the user. They fail with [IOException] when the server cannot be reached. */
+    private suspend inline fun <reified R> call(method: String, path: String, body: String?): R? =
+        authorized { send<R>(it.serverUrl, path, body, it.accessToken, method) }
+    private suspend fun deviceId(): String = mutex.withLock { credentials?.deviceId } ?: throw CloudRequestException(0, "not_registered", "设备还没有连上服务器")
+    suspend fun saveConfig(accountId: String, targetId: String, taskId: String, values: JsonObject, revision: Long): ConfigView =
+        checkNotNull(call<ConfigView>("PUT", "/api/accounts/$accountId/configs/$targetId/$taskId", json.encodeToString(ConfigSave(values, revision))))
+    suspend fun createPlan(accountId: String, save: PlanSave): PlanView = checkNotNull(call<PlanView>("POST", "/api/accounts/$accountId/plans", json.encodeToString(save)))
+    suspend fun updatePlan(planId: String, save: PlanSave): PlanView = checkNotNull(call<PlanView>("PUT", "/api/plans/$planId", json.encodeToString(save)))
+    suspend fun deletePlan(planId: String) { call<Unit>("DELETE", "/api/plans/$planId", null) }
+    suspend fun runPlan(planId: String) { call<Unit>("POST", "/api/plans/$planId/run", "{}") }
+    /** Says which account the app on this device is signed in to, until the app can tell by itself. */
+    suspend fun setAppAccounts(appKey: String, accounts: AppAccounts) {
+        call<Unit>("PUT", "/api/devices/${deviceId()}/apps/$appKey", json.encodeToString(accounts))
+    }
+    /** Queues the task here as a job of [accountId], so the account is not run on two devices at once. */
+    suspend fun runHere(targetId: String, taskId: String, accountId: String, appKey: String): JobView =
+        checkNotNull(call<JobView>("POST", "/api/jobs", json.encodeToString(CreateJobRequest(targetId, taskId, accountId, deviceId(), appKey))))
 
     private fun startWorking(saved: CloudCredentials) {
         worker?.cancel()
@@ -185,7 +215,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         if (latest.accessToken != used.accessToken) return@withLock latest
         val result = try { checkNotNull(send<AuthResult>(latest.serverUrl, "/api/auth/refresh", json.encodeToString(RefreshRequest(latest.refreshToken)))) }
         catch (rejected: CloudRequestException) {
-            if (rejected.status == 401) { save(null); mutableState.value = CloudState.SignedOut("登录已失效，请重新登录"); worker?.cancel() }
+            if (rejected.status == 401) { save(null); clearData(); mutableState.value = CloudState.SignedOut("登录已失效，请重新登录"); worker?.cancel() }
             throw rejected
         }
         latest.copy(accessToken = checkNotNull(result.accessToken), refreshToken = checkNotNull(result.refreshToken), accessExpiresAt = checkNotNull(result.accessExpiresAt)).also { save(it) }
@@ -281,6 +311,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
                 if (active?.runId != null && active.jobId in message.jobIds) executor.remove(active.runId)
             }
             is ServerMessage.Job -> leases.trySend(message.lease)
+            is ServerMessage.Data -> { mutableData.value = message.data; runCatching { dataStore?.write(message.data) } }
             // The server repeats the wanted state with every status reply, so only a change is acted on, and a pause or
             // resume on the phone itself is not undone. A pause that comes before the run has started is kept with the
             // job and applied by the job loop once it has; the lock makes one of the two act, never both or neither.

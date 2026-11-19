@@ -7,9 +7,6 @@ import android.content.Intent
 import android.util.Log
 import io.github.yysassist.AssistApplication
 import io.github.yysassist.core.content.*
-import io.github.yysassist.core.model.ExecutionContext
-import io.github.yysassist.core.model.Principal
-import io.github.yysassist.core.plan.PlanSchedule
 import io.github.yysassist.storage.TaskVersionLibrary
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +19,7 @@ import kotlinx.serialization.json.JsonPrimitive
  * Debug builds only, for looking at the interface on an emulator. Installs a task list whose steps only
  * wait, so nothing touches a game. Protected by android.permission.DUMP: only the shell can send it.
  *
- * adb shell am broadcast -n <pkg>/.debug.DemoTaskSeeder -a io.github.yysassist.debug.SEED_DEMO_TASKS [--ei planInMinutes 2]
+ * adb shell am broadcast -n <pkg>/.debug.DemoTaskSeeder -a io.github.yysassist.debug.SEED_DEMO_TASKS
  */
 class DemoTaskSeeder : BroadcastReceiver() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -40,12 +37,6 @@ class DemoTaskSeeder : BroadcastReceiver() {
                 intent.getStringExtra("cloudServer")?.let { server ->
                     runCatching { app.cloud.signIn(server, intent.getStringExtra("cloudEmail").orEmpty(), intent.getStringExtra("cloudPassword").orEmpty()) }
                         .onFailure { Log.w(TAG, "cloud sign-in failed: ${it.javaClass.simpleName}") }
-                }
-                val minutes = intent.getIntExtra("planInMinutes", -1)
-                if (minutes >= 0) {
-                    val at = java.time.LocalTime.now().plusMinutes(minutes.toLong())
-                    app.plans.save(null, "演示计划", ExecutionContext(TARGET, Principal.Anonymous),
-                        PlanSchedule(java.time.DayOfWeek.entries.toSet(), at.hour * 60 + at.minute), listOf("mail", "sign"))
                 }
             } finally { pending.finish() }
         }
