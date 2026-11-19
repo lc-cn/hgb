@@ -109,7 +109,9 @@ class AssistApplication : Application() {
             GitHubDeviceAuthorization(BuildConfig.GITHUB_CLIENT_ID, client), GitHubUserApi(client), scope)
         val source = GitHubTaskSource(TaskRepository("lc-cn", "yys-helper"), "https://api.github.com/".toHttpUrl(), client, github)
         taskUpdates = TaskUpdates(library, source, scope)
-        val cloudClient = client.newBuilder().callTimeout(40, TimeUnit.SECONDS).build()
+        // Job polls wait up to 20 s on the server. Reading must outlast that, or the server hands a job to a
+        // request this app has already given up on, and the job is never started.
+        val cloudClient = client.newBuilder().readTimeout(35, TimeUnit.SECONDS).callTimeout(40, TimeUnit.SECONDS).build()
         cloud = io.github.yysassist.core.cloud.CloudAgent(cloudClient, io.github.yysassist.cloud.EncryptedCloudStore(File(noBackupFilesDir, "cloud-session.bin"), "io.github.yysassist.cloud.v1"),
             io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library), "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}", "android", BuildConfig.VERSION_NAME, scope)
         taskUpdates.pullLatest()

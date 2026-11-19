@@ -68,6 +68,15 @@ class TaskUpdates(private val library: TaskVersionLibrary, private val source: G
         }
     }
 
+    /** Installs and activates a bundle that did not come from the release source; used by debug tooling only. */
+    suspend fun installLocal(text: String, version: String, resource: suspend (io.github.yysassist.core.content.TaskResource, java.io.OutputStream) -> Unit): VersionChange =
+        withContext(Dispatchers.IO) {
+            when (val installed = library.install(text, version, TaskVersionLibrary.sha256(text), resource)) {
+                is VersionChange.Rejected -> installed
+                else -> library.activate(version)
+            }
+        }
+
     fun activate(version: String) = change(version) { library.activate(version) }
     fun delete(version: String) = change(version) { library.delete(version) }
     private fun change(version: String, action: suspend () -> VersionChange) {

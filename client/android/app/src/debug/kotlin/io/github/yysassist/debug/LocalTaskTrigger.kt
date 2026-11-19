@@ -31,6 +31,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  *   --es target <targetId> --es task <taskId>
  * Result: /sdcard/Android/data/<pkg>/files/debug-task/result.json
  * With --ez replay true and a staged replay.json, the screen is a ReplayDevice: no real capture or input.
+ * With --ez install true the staged bundle is instead installed into the user's library and made active,
+ * so cloud jobs and the task list can use it; nothing runs.
  */
 class LocalTaskTrigger : BroadcastReceiver() {
     companion object {
@@ -48,6 +50,20 @@ class LocalTaskTrigger : BroadcastReceiver() {
         val result = File(staged, "result.json")
         if (!running.compareAndSet(false, true)) { result.writeText(JSONObject().put("error", "already-running").toString(2)); return }
         val app = context.applicationContext
+        if (intent.getBooleanExtra("install", false)) {
+            scope.launch {
+                val report = JSONObject().put("phase", "install")
+                try {
+                    val text = File(staged, "task-bundle.json").readText()
+                    val version = JSONObject(text).getString("version")
+                    val change = (app as io.github.yysassist.AssistApplication).taskUpdates.installLocal(text, version) { resource, output ->
+                        File(staged, resource.assetName).inputStream().use { it.copyTo(output) } }
+                    report.put("version", version).put("result", change.toString())
+                } catch (error: Throwable) { report.put("error", "${error.javaClass.simpleName}: ${error.message}") }
+                finally { result.writeText(report.put("finishedAtEpochMillis", System.currentTimeMillis()).toString(2)); running.set(false) }
+            }
+            return
+        }
         scope.launch {
             val replayDevice = if (replay) ReplayDevice(staged) else null
             val report = JSONObject().put("target", target).put("task", task).put("replay", replay).put("startedAtEpochMillis", System.currentTimeMillis())
