@@ -23,6 +23,37 @@ class BundleCodecTest {
         val changed = original.copy(version = "release-b", tasks = original.tasks.map { it.copy(name = "云端更新名称") })
         assertEquals(BundleReadResult.Valid(changed), codec.read(codec.write(changed)))
     }
+    private val shared = Routine("home", listOf(ProgramNode.Action(ActionDefinition("screen", "observe", 1, JsonObject(emptyMap())))))
+    private fun using(vararg routines: Routine, step: StepDefinition = StepDefinition("back", "返回", use = "home")) =
+        valid().let { it.copy(routines = routines.toList(), tasks = it.tasks.map { task -> task.copy(steps = task.steps + step) }) }
+    @Test fun `a shared routine expands into each step that uses it`() {
+        val read = codec.read(codec.write(using(shared))) as BundleReadResult.Valid
+        val step = read.bundle.tasks.single().steps.last()
+        assertEquals("back", step.id)
+        assertEquals(shared.program, step.program)
+        assertNull(step.use)
+        assertTrue(read.bundle.routines.isEmpty())
+        assertEquals(BundleReadResult.Valid(read.bundle), codec.read(codec.write(read.bundle)))
+    }
+    @Test fun `routine references must resolve and be unambiguous`() {
+        fun reasons(bundle: TaskBundle) = (codec.read(codec.write(bundle)) as BundleReadResult.Invalid).issues.map { it.reason }
+        assertTrue(reasons(using()).contains("引用了未声明的公共步骤"))
+        assertTrue(reasons(using(shared, shared)).contains("公共步骤身份为空或重复"))
+        assertTrue(reasons(using(shared, shared.copy(id = "unused"))).contains("公共步骤未被任何任务使用"))
+        assertTrue(reasons(using(shared.copy(program = emptyList()))).contains("公共步骤程序不能为空"))
+        val mixed = StepDefinition("back", "返回", shared.program.map { (it as ProgramNode.Action).action }, use = "home")
+        assertTrue(reasons(using(shared, step = mixed)).contains("use与actions、program不能同时指定"))
+    }
+    private fun branchingOn(field: ConfigurationField, value: String) = valid().let { bundle -> bundle.copy(tasks = bundle.tasks.map { task ->
+        task.copy(fields = listOf(field), steps = listOf(StepDefinition("pick", "选择", program = listOf(
+            ProgramNode.Branch(ActionInputBinding.Configuration(field.id), listOf(ProgramCase(JsonPrimitive(value), emptyList()))))))) }) }
+    @Test fun `a branch may follow a required single choice setting`() {
+        val field = ConfigurationField("box", "礼盒", FieldWidget.SINGLE_CHOICE, required = true, options = listOf(FieldOption("a", "甲"), FieldOption("b", "乙")))
+        assertEquals(emptyList<ContentIssue>(), codec.validate(branchingOn(field, "a")))
+        assertTrue(codec.validate(branchingOn(field, "z")).any { it.reason.contains("选项") })
+        assertTrue(codec.validate(branchingOn(field.copy(required = false), "a")).any { it.reason.contains("必填") })
+        assertTrue(codec.validate(branchingOn(field.copy(widget = FieldWidget.TEXT), "a")).any { it.reason.contains("单选") })
+    }
     @Test fun `unknown capability version field or malformed content never loads partially`() {
         val text = codec.write(valid())
         assertTrue(codec.read(text.replace("observe\"", "shell\"")) is BundleReadResult.Invalid)

@@ -20,6 +20,8 @@ data class TaskBundle(
     val resources: List<TaskResource> = emptyList(),
     /** Declared once per target, referenced by screen actions instead of repeating package and models. */
     val visionProfiles: List<VisionProfile> = emptyList(),
+    /** Programs shared between tasks; only present in published text, expanded when read. */
+    val routines: List<Routine> = emptyList(),
 )
 /**
  * Which package to capture and which recognizer resources to use for one target. The APK owns the
@@ -69,6 +71,8 @@ data class StepDefinition(
     val id: String, val name: String,
     val actions: List<ActionDefinition> = emptyList(),
     val program: List<ProgramNode>? = null,
+    /** Id of a [Routine] supplying this step's program. */
+    val use: String? = null,
 )
 @Serializable
 data class ActionDefinition(
@@ -149,7 +153,7 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
     private val json = Json { ignoreUnknownKeys = false; isLenient = false; coerceInputValues = false }
 
     fun read(text: String): BundleReadResult {
-        val bundle = try {
+        val (bundle, routineIssues) = try {
             val element = json.parseToJsonElement(text)
             val value = json.decodeFromJsonElement<TaskBundle>(element)
             require(element.jsonObject.getValue("tasks").jsonArray.none { task ->
@@ -157,12 +161,12 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
                     "actions" in step.jsonObject && "program" in step.jsonObject
                 }
             }) { "program与actions不能同时指定" }
-            value
+            value.expandRoutines()
         }
         catch (_: IllegalArgumentException) {
             return BundleReadResult.Invalid(listOf(ContentIssue("bundle", "任务格式不可解析或包含未知字段")))
         }
-        val issues = validate(bundle)
+        val issues = routineIssues + validate(bundle)
         return if (issues.isEmpty()) BundleReadResult.Valid(bundle) else BundleReadResult.Invalid(issues)
     }
 

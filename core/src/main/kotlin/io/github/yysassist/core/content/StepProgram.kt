@@ -151,8 +151,15 @@ internal fun programIssues(bundle: TaskBundle, task: TaskDefinition, step: StepD
                 }
                 is ProgramNode.Branch -> {
                     val source = node.value as? ActionInputBinding.Output
-                    val type = source?.let { binding -> flow.context.previous[binding.actionId]?.let(::contract)?.outputTypes?.get(binding.field) }
-                    if (type !in setOf(ActionValueType.STRING, ActionValueType.NUMBER, ActionValueType.BOOLEAN))
+                    val configured = node.value as? ActionInputBinding.Configuration
+                    val type = if (configured != null) ActionValueType.STRING
+                        else source?.let { binding -> flow.context.previous[binding.actionId]?.let(::contract)?.outputTypes?.get(binding.field) }
+                    if (configured != null) {
+                        // A case left out on purpose stops the step as unknown when the user picks that option.
+                        val field = task.fields.singleOrNull { it.id == configured.fieldId }
+                        if (field == null || !field.required || field.widget != FieldWidget.SINGLE_CHOICE) issue(location, "配置分支必须引用必填的单选字段")
+                        else if (node.cases.any { case -> field.options.none { it.value == case.equals.content } }) issue(location, "分支值不是该配置字段的选项")
+                    } else if (type !in setOf(ActionValueType.STRING, ActionValueType.NUMBER, ActionValueType.BOOLEAN))
                         issue(location, "分支必须引用本块前序动作的字符串、布尔或数值输出")
                     if (source != null && flow.context.previous[source.actionId]?.let(::contract)?.outputHandles?.containsKey(source.field) == true)
                         issue(location, "分支不能比较观察、目标或区域句柄")
