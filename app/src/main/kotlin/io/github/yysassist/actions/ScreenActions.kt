@@ -26,6 +26,9 @@ internal class ScreenActions(
         const val CLASSIFY = "screen.classifyText"
         const val DERIVE = "screen.deriveRegion"; const val READ_REGION = "screen.readRegionText"
         const val MATCH = "screen.matchImage"; const val CLASSIFY_REGION = "screen.classifyRegion"
+        const val CLASSIFY_SCREEN = "screen.classifyScreen"; const val EXPECT_SCREEN = "screen.expectScreen"
+        const val AWAIT_SCREEN = "screen.awaitScreen"; const val LOCATE_IMAGE_IN = "screen.locateImageIn"; const val LOCATE_TEXT_IN = "screen.locateTextIn"
+        const val MATCH_COLOR_IN = "screen.matchColorIn"
         const val LONG_PRESS = "screen.longPress"; const val SWIPE = "screen.swipe"; const val BACK = "screen.back"
         const val TAP_REGION = "screen.tapRegion"; const val LOCATE_IMAGE = "screen.locateImage"
         const val READ_NUMBER = "screen.readNumber"; const val READ_FRACTION = "screen.readFraction"
@@ -33,6 +36,10 @@ internal class ScreenActions(
         const val MATCH_COLOR = "screen.matchColor"; const val COMPARE = "screen.compareFrames"
         const val LAUNCH = "app.launch"; const val AWAIT_FOREGROUND = "app.awaitForeground"; const val NOTIFY = "notify.local"
         private const val MAX_FOREGROUND_WAIT_MS = 120_000L; private const val FOREGROUND_POLL_MS = 500L
+        /** The platform refuses accessibility screenshots taken closer together than about a third of a second. */
+        private const val MIN_POLL_MS = 350
+        /** Pixels of surroundings recognized with a blank-area check. */
+        private const val BLANK_CONTEXT = 80
         private val ORDERS = setOf("top", "bottom", "left", "right")
         /** Handle kinds. Region-derived observations keep REGION in their lineage. */
         const val OBSERVATION = "screen.observation"; const val TARGET = "screen.target"; const val REGION = "screen.region"
@@ -104,30 +111,70 @@ internal class ScreenActions(
             definitions.map { it.text("id") }.distinct().size == definitions.size
     }
     /** Parsed classifyRegion states, or null when any part is not explicit. */
-    private data class TextCondition(val text: String, val minimum: BigDecimal)
-    private data class ImageCondition(val template: String, val minimum: BigDecimal)
-    private data class RegionState(val id: String, val text: List<TextCondition>, val present: List<ImageCondition>, val absent: List<ImageCondition>)
-    private fun regionStates(inputs: JsonObject): List<RegionState>? {
+    private data class TextCondition(val text: String, val minimum: BigDecimal, val within: List<Int>? = null)
+    private data class ImageCondition(val template: String, val minimum: BigDecimal, val within: List<Int>? = null)
+    /** x, y, width, height on the task's reference frame. */
+    private fun rectangle(value: JsonElement?): List<Int>? = (value as? JsonArray)?.takeIf { it.size == 4 }?.map { integer(it) ?: return null }
+        ?.takeIf { (x, y, w, h) -> x >= 0 && y >= 0 && w > 0 && h > 0 && x.toLong() + w <= MAX_OFFSET && y.toLong() + h <= MAX_OFFSET }
+    private fun scaled(rect: List<Int>, geometry: ScreenGeometry, referenceWidth: Int, referenceHeight: Int): TextBounds? {
+        val sx = geometry.width.toDouble() / referenceWidth; val sy = geometry.height.toDouble() / referenceHeight
+        if (kotlin.math.abs(sx / sy - 1.0) > 0.01) return null
+        val bounds = TextBounds(kotlin.math.round(rect[0] * sx).toInt(), kotlin.math.round(rect[1] * sy).toInt(),
+            kotlin.math.round(rect[2] * sx).toInt(), kotlin.math.round(rect[3] * sy).toInt())
+        return bounds.takeIf { it.width > 0 && it.height > 0 && it.left.toLong() + it.width <= geometry.width && it.top.toLong() + it.height <= geometry.height }
+    }
+    private fun reference(inputs: JsonObject): Pair<Int, Int>? {
+        val width = integer(inputs["referenceWidth"])?.takeIf { it in 1..MAX_OFFSET } ?: return null
+        return (integer(inputs["referenceHeight"])?.takeIf { it in 1..MAX_OFFSET } ?: return null).let { width to it }
+    }
+    private data class RegionState(val id: String, val text: List<TextCondition>, val present: List<ImageCondition>, val absent: List<ImageCondition>,
+        val absentText: List<TextCondition>)
+    /** Whole-screen states may repeat an id: any entry proves it, as when one page has several looks. */
+    private fun regionStates(inputs: JsonObject, repeatable: Boolean = false, windowed: Boolean = false): List<RegionState>? {
         val states = inputs["states"] as? JsonArray ?: return null
         if (states.isEmpty() || states.size > MAX_STATES) return null
         fun list(value: JsonElement?, parse: (JsonObject) -> Any?): List<Any>? =
             if (value == null) emptyList() else (value as? JsonArray)?.map { (it as? JsonObject)?.let(parse) ?: return null }
         val parsed = states.map { element ->
             val state = element as? JsonObject ?: return null
-            if (!setOf("id", "text", "present", "absent").containsAll(state.keys)) return null
-            val text = list(state["text"]) { c -> if (c.keys != setOf("text", "minimumConfidence") || c.text("text").isNullOrBlank()) null
-                else threshold(c)?.let { TextCondition(c.text("text")!!, it) } } ?: return null
-            fun image(key: String) = list(state[key]) { c -> if (c.keys != setOf("template", "minimumScore") || c.text("template").isNullOrBlank()) null
-                else unit(c["minimumScore"])?.let { ImageCondition(c.text("template")!!, it) } }
+            if (!setOf("id", "text", "present", "absent", "absentText").containsAll(state.keys)) return null
+            // Polling must stay cheap, so a windowed state names where every condition is looked for.
+            fun within(c: JsonObject): List<Int>? = rectangle(c["within"])
+            fun words(key: String) = list(state[key]) { c -> if (c.keys != setOf("text", "minimumConfidence") + (if (windowed) setOf("within") else emptySet()) ||
+                c.text("text").isNullOrBlank() || windowed && within(c) == null) null
+                else threshold(c)?.let { TextCondition(c.text("text")!!, it, within(c)) } }
+            val text = words("text") ?: return null; val absentText = words("absentText") ?: return null
+            fun image(key: String) = list(state[key]) { c -> if (c.keys != setOf("template", "minimumScore") + (if (windowed) setOf("within") else emptySet()) ||
+                c.text("template").isNullOrBlank() || windowed && within(c) == null) null
+                else unit(c["minimumScore"])?.let { ImageCondition(c.text("template")!!, it, within(c)) } }
             val present = image("present") ?: return null; val absent = image("absent") ?: return null
             val id = state.text("id")?.takeIf { it.isNotBlank() } ?: return null
-            if (text.isEmpty() && present.isEmpty() && absent.isEmpty()) return null
-            @Suppress("UNCHECKED_CAST") RegionState(id, text as List<TextCondition>, present as List<ImageCondition>, absent as List<ImageCondition>)
+            if (text.isEmpty() && present.isEmpty() && absent.isEmpty() && absentText.isEmpty()) return null
+            @Suppress("UNCHECKED_CAST") RegionState(id, text as List<TextCondition>, present as List<ImageCondition>, absent as List<ImageCondition>, absentText as List<TextCondition>)
         }
-        if (parsed.map { it.id }.distinct().size != parsed.size) return null
+        if (!repeatable && parsed.map { it.id }.distinct().size != parsed.size) return null
         if (parsed.flatMap { (it.present + it.absent).map(ImageCondition::template) }.distinct().size > MAX_TEMPLATES) return null
         return parsed
     }
+    private val awaitKeys = setOf("profile", "states", "timeoutMs", "intervalMs", "stableMs", "referenceWidth", "referenceHeight")
+    private fun awaitTiming(inputs: JsonObject): Triple<Long, Long, Long>? {
+        val timeout = foregroundWait(inputs) ?: return null
+        val interval = integer(inputs["intervalMs"])?.takeIf { it in MIN_POLL_MS..2000 } ?: return null
+        val stable = integer(inputs["stableMs"])?.takeIf { it in 0..5000 } ?: return null
+        return Triple(timeout, interval.toLong(), stable.toLong())
+    }
+    private fun locateInIssue(inputs: JsonObject, name: String, valid: Boolean): String? =
+        if (inputs.text("observation").isNullOrBlank() || !valid || rectangle(inputs["within"]) == null || reference(inputs) == null) "请指定观察、$name、查找区域及参考截图尺寸" else null
+    private val wholeObservation = mapOf("observation" to HandleRequirement(setOf(OBSERVATION), forbiddenAncestors = setOf(REGION)))
+    private fun screenStatesIssue(bundle: TaskBundle, action: ActionDefinition): String? = when {
+        "states" in action.bindings || "otherwise" in action.bindings -> "状态证据必须由任务版本明确指定"
+        regionStates(action.inputs, repeatable = true)?.flatMap { it.present + it.absent }?.any { c -> bundle.resources.none { it.id == c.template } } == true ->
+            "页面状态引用了未声明的模板资源"
+        else -> null
+    }
+    /** The state reported when nothing matches; it must not be mistaken for a declared state. */
+    private fun otherwiseValid(inputs: JsonObject): Boolean = inputs.text("otherwise").let { value ->
+        !value.isNullOrBlank() && regionStates(inputs, repeatable = true)?.none { it.id == value } != false }
     private fun foregroundWait(inputs: JsonObject): Long? = try {
         (inputs["timeoutMs"] as? JsonPrimitive)?.takeUnless { it.isString }?.content?.toBigDecimalOrNull()?.longValueExact()?.takeIf { it in 1..MAX_FOREGROUND_WAIT_MS }
     } catch (_: ArithmeticException) { null }
@@ -280,6 +327,14 @@ internal class ScreenActions(
                 selectIssue(inputs) != null || "order" !in inputs || "index" !in inputs) "请指定观察、模板、得分、排序与序号" else null
         },
         // Share of region pixels inside an inclusive RGB box, from the observed pixels (no recognizer).
+        // Whether a fixed spot shows a colour, such as a notification dot. Host-side pixel maths, so it costs almost nothing.
+        CapabilityContract(MATCH_COLOR_IN, 1, inputTypes = mapOf("observation" to ActionValueType.STRING, "within" to ActionValueType.ARRAY, "lower" to ActionValueType.ARRAY,
+            "upper" to ActionValueType.ARRAY, "minimumRatio" to ActionValueType.NUMBER, "referenceWidth" to ActionValueType.NUMBER, "referenceHeight" to ActionValueType.NUMBER),
+            outputTypes = mapOf("matched" to ActionValueType.BOOLEAN, "ratio" to ActionValueType.NUMBER), inputHandles = wholeObservation,
+            validateKnownInputs = { inputs -> colorIssue(inputs) },
+            validateDefinition = { _, _, _, action -> if (setOf("lower", "upper", "within").any { it in action.bindings }) "颜色范围和查找区域必须由任务版本明确指定" else null }) { inputs ->
+            locateInIssue(inputs, "颜色上下限和比例", colorIssue(inputs) == null && rgb(inputs["lower"]) != null && rgb(inputs["upper"]) != null && unit(inputs["minimumRatio"]) != null)
+        },
         CapabilityContract(MATCH_COLOR, 1, inputTypes = mapOf("region" to ActionValueType.STRING, "lower" to ActionValueType.ARRAY,
             "upper" to ActionValueType.ARRAY, "minimumRatio" to ActionValueType.NUMBER),
             outputTypes = mapOf("matched" to ActionValueType.BOOLEAN, "ratio" to ActionValueType.NUMBER), inputHandles = regionHandle,
@@ -349,6 +404,51 @@ internal class ScreenActions(
                 else -> null } }) { inputs ->
             if (inputs.keys != setOf("region", "template", "minimumScore") || inputs.text("template").isNullOrBlank() || unit(inputs["minimumScore"]) == null)
                 "请指定区域、模板与零到一之间的得分" else null
+        },
+        // Polls fresh frames until one declared page holds, looking only inside each condition's window. Replaces a
+        // fixed pause plus a whole-frame read; the frame that proved the page is the output observation.
+        CapabilityContract(AWAIT_SCREEN, 1, inputTypes = mapOf("profile" to ActionValueType.STRING, "states" to ActionValueType.ARRAY,
+            "timeoutMs" to ActionValueType.NUMBER, "intervalMs" to ActionValueType.NUMBER, "stableMs" to ActionValueType.NUMBER,
+            "referenceWidth" to ActionValueType.NUMBER, "referenceHeight" to ActionValueType.NUMBER),
+            outputTypes = mapOf("state" to ActionValueType.STRING, "observation" to ActionValueType.STRING), role = ActionRole.VERIFICATION,
+            outputHandles = mapOf("observation" to OBSERVATION),
+            validateDefinition = { bundle, task, _, action -> profileIssue(bundle, task, action) ?:
+                regionStates(action.inputs, repeatable = true, windowed = true)?.flatMap { it.present + it.absent }
+                    ?.takeIf { used -> used.any { c -> bundle.resources.none { it.id == c.template } } }?.let { "页面状态引用了未声明的模板资源" } }) { inputs ->
+            if (inputs.keys != awaitKeys || inputs.text("profile").isNullOrBlank() || regionStates(inputs, repeatable = true, windowed = true) == null ||
+                awaitTiming(inputs) == null || reference(inputs) == null) "请指定视觉配置、带查找区域的页面状态、等待时长及参考截图尺寸" else null
+        },
+        CapabilityContract(LOCATE_IMAGE_IN, 1, inputTypes = mapOf("observation" to ActionValueType.STRING, "template" to ActionValueType.STRING,
+            "minimumScore" to ActionValueType.NUMBER, "within" to ActionValueType.ARRAY, "referenceWidth" to ActionValueType.NUMBER, "referenceHeight" to ActionValueType.NUMBER),
+            outputTypes = mapOf("target" to ActionValueType.STRING), outputHandles = mapOf("target" to TARGET), inputHandles = wholeObservation,
+            validateDefinition = { bundle, _, _, action -> if (bundle.resources.none { it.id == action.inputs.text("template") }) "图像定位引用了未声明的模板资源" else null }) { inputs ->
+            locateInIssue(inputs, "模板和得分", !inputs.text("template").isNullOrBlank() && unit(inputs["minimumScore"]) != null)
+        },
+        CapabilityContract(LOCATE_TEXT_IN, 1, inputTypes = mapOf("observation" to ActionValueType.STRING, "text" to ActionValueType.STRING,
+            "minimumConfidence" to ActionValueType.NUMBER, "within" to ActionValueType.ARRAY, "referenceWidth" to ActionValueType.NUMBER, "referenceHeight" to ActionValueType.NUMBER),
+            outputTypes = mapOf("target" to ActionValueType.STRING), outputHandles = mapOf("target" to TARGET), inputHandles = wholeObservation) { inputs ->
+            locateInIssue(inputs, "文字和置信度", !inputs.text("text").isNullOrBlank() && threshold(inputs) != null)
+        },
+        // Which page is on screen, from recognized text and whole-frame templates. An unrecognized page reports
+        // "otherwise": a branch can wait on it (loading screens), and a branch with no such case stops as unknown.
+        CapabilityContract(CLASSIFY_SCREEN, 1, inputTypes = mapOf("observation" to ActionValueType.STRING, "states" to ActionValueType.ARRAY,
+            "otherwise" to ActionValueType.STRING), outputTypes = mapOf("state" to ActionValueType.STRING), inputHandles = wholeObservation,
+            validateKnownInputs = { inputs -> when {
+                "states" in inputs && regionStates(inputs, repeatable = true) == null -> ContentIssue("states", "请为每个状态明确提供文字、需出现或需缺失的图像条件")
+                "otherwise" in inputs && !otherwiseValid(inputs) -> ContentIssue("otherwise", "兜底状态不能为空，也不能与声明状态相同")
+                else -> null } },
+            validateDefinition = { bundle, _, _, action -> screenStatesIssue(bundle, action) }) { inputs ->
+            if (inputs.keys != setOf("observation", "states", "otherwise") || inputs.text("observation").isNullOrBlank() ||
+                regionStates(inputs, repeatable = true) == null || !otherwiseValid(inputs)) "请指定观察和完整的页面状态" else null
+        },
+        // Proof that the frame shows one of the listed pages, for steps that end on a page without stable text.
+        CapabilityContract(EXPECT_SCREEN, 1, inputTypes = mapOf("observation" to ActionValueType.STRING, "states" to ActionValueType.ARRAY),
+            outputTypes = mapOf("state" to ActionValueType.STRING), role = ActionRole.VERIFICATION, inputHandles = wholeObservation,
+            validateKnownInputs = { inputs -> if ("states" in inputs && regionStates(inputs, repeatable = true) == null)
+                ContentIssue("states", "请为每个状态明确提供文字、需出现或需缺失的图像条件") else null },
+            validateDefinition = { bundle, _, _, action -> screenStatesIssue(bundle, action) }) { inputs ->
+            if (inputs.keys != setOf("observation", "states") || inputs.text("observation").isNullOrBlank() ||
+                regionStates(inputs, repeatable = true) == null) "请指定观察和完整的页面状态" else null
         },
         CapabilityContract(CLASSIFY_REGION, 1, inputTypes = mapOf("region" to ActionValueType.STRING, "states" to ActionValueType.ARRAY),
             outputTypes = mapOf("state" to ActionValueType.STRING), inputHandles = regionHandle,
@@ -701,6 +801,9 @@ internal class ScreenActions(
                     }
                 }
                 CLASSIFY_REGION -> classifyRegion(inputs)
+                CLASSIFY_SCREEN, EXPECT_SCREEN -> screenState(action, inputs)
+                AWAIT_SCREEN -> awaitScreen(action, inputs)
+                LOCATE_IMAGE_IN, LOCATE_TEXT_IN -> locateIn(action, inputs)
                 READ_NUMBER, READ_FRACTION -> readNumber(action, inputs)
                 SELECT_TEXT, SELECT_IMAGE -> select(action, inputs)
                 LAUNCH -> launch(action, inputs)
@@ -710,6 +813,7 @@ internal class ScreenActions(
                     ActionResult.Produced(buildJsonObject { put("delivered", delivered) }, buildJsonObject { put("kind", NOTIFY); put("delivered", delivered) })
                 }
                 MATCH_COLOR -> matchColor(inputs)
+                MATCH_COLOR_IN -> matchColorIn(inputs)
                 COMPARE -> compare(inputs)
                 LOCATE_IMAGE -> {
                     val observation = observations[inputs.text("observation")] ?: return ActionResult.Unavailable("本步骤的画面观察不可用")
@@ -769,11 +873,21 @@ internal class ScreenActions(
             return ActionResult.Produced(buildJsonObject { put("target", token) }, buildJsonObject {
                 put("kind", action.capability); put("matches", matches.size); region(match.bounds) })
         }
+        private fun matchColorIn(inputs: JsonObject): ActionResult {
+            val observation = observations[inputs.text("observation")] ?: return ActionResult.Unavailable("本步骤的画面观察不可用")
+            val (referenceWidth, referenceHeight) = checkNotNull(reference(inputs))
+            val bounds = scaled(checkNotNull(rectangle(inputs["within"])), observation.result.stamp.geometry, referenceWidth, referenceHeight)
+                ?: return ActionResult.Unavailable("查找区域超出画面，或画面比例与参考尺寸不同")
+            return colorResult(observation, bounds, inputs, MATCH_COLOR_IN)
+        }
         private fun matchColor(inputs: JsonObject): ActionResult {
             val region = regions[inputs.text("region")] ?: return ActionResult.Unavailable("本步骤的区域不可用")
-            val pixels = pixelsFor(region.observation)?.let(::rgba) ?: return ActionResult.Unavailable("本次观察的画面像素已释放，需重新观察")
+            return colorResult(region.observation, region.bounds, inputs, MATCH_COLOR)
+        }
+        private fun colorResult(observation: Observation, b: TextBounds, inputs: JsonObject, kind: String): ActionResult {
+            val pixels = pixelsFor(observation)?.let(::rgba) ?: return ActionResult.Unavailable("本次观察的画面像素已释放，需重新观察")
             val lower = checkNotNull(rgb(inputs["lower"])); val upper = checkNotNull(rgb(inputs["upper"])); val minimum = checkNotNull(unit(inputs["minimumRatio"]))
-            val b = region.bounds; var inside = 0; var total = 0
+            var inside = 0; var total = 0
             for (y in b.top until b.top + b.height step 2) for (x in b.left until b.left + b.width step 2) {
                 val i = (y * pixels.width + x) * 4
                 val r = pixels.bytes[i].toInt() and 255; val g = pixels.bytes[i + 1].toInt() and 255; val bl = pixels.bytes[i + 2].toInt() and 255
@@ -781,7 +895,7 @@ internal class ScreenActions(
             }
             val ratio = if (total == 0) 0.0 else inside.toDouble() / total
             return ActionResult.Produced(buildJsonObject { put("matched", BigDecimal.valueOf(ratio) >= minimum); put("ratio", ratio) },
-                buildJsonObject { put("kind", MATCH_COLOR); region(b); put("ratio", ratio); put("sampled", total) })
+                buildJsonObject { put("kind", kind); region(b); put("ratio", ratio); put("sampled", total) })
         }
         private fun compare(inputs: JsonObject): ActionResult {
             val before = observations[inputs.text("before")] ?: beforeObservations[inputs.text("before")] ?: return ActionResult.Unavailable("之前的观察不可用")
@@ -815,14 +929,14 @@ internal class ScreenActions(
             val region = regions[inputs.text("region")] ?: return ActionResult.Unavailable("本步骤的区域不可用")
             val states = checkNotNull(regionStates(inputs))
             val templates = states.flatMap { (it.present + it.absent).map(ImageCondition::template) }.distinct()
-            val needsText = states.any { it.text.isNotEmpty() }
+            val needsText = states.any { it.text.isNotEmpty() || it.absentText.isNotEmpty() }
             val requests = listOfNotNull(InspectionRequest.Text(region.bounds).takeIf { needsText }) +
                 templates.map { InspectionRequest.Image(region.bounds, it) }
             val inspected = when (val value = inspect(region, requests)) { is ActionResult -> return value; else -> value as InspectionResult.Inspected }
             val candidates = if (needsText) (inspected.values.first() as InspectionValue.Text).candidates else emptyList()
             val scores = templates.zip(inspected.values.drop(if (needsText) 1 else 0).map { (it as InspectionValue.Image).bestScore }).toMap()
-            fun holds(state: RegionState) = state.text.all { c -> candidates.any { it.text == c.text && it.confidence.isFinite() &&
-                    BigDecimal.valueOf(it.confidence) >= c.minimum } } &&
+            fun seen(c: TextCondition) = candidates.any { it.text == c.text && it.confidence.isFinite() && BigDecimal.valueOf(it.confidence) >= c.minimum }
+            fun holds(state: RegionState) = state.text.all(::seen) && state.absentText.none(::seen) &&
                 state.present.all { BigDecimal.valueOf(scores.getValue(it.template)) >= it.minimum } &&
                 state.absent.all { BigDecimal.valueOf(scores.getValue(it.template)) < it.minimum }
             val matched = states.filter(::holds)
@@ -834,6 +948,114 @@ internal class ScreenActions(
             if (matched.size != 1) return ActionResult.Unavailable((if (matched.isEmpty()) "本区域未能确认任何声明状态" else "本区域同时满足多个声明状态") +
                 scores.values.joinToString("，", "（图像得分 ", "）") { "%.3f".format(it) }.takeIf { scores.isNotEmpty() }.orEmpty(), trace)
             return ActionResult.Produced(buildJsonObject { put("state", matched.single().id) }, trace)
+        }
+        private suspend fun awaitScreen(action: ActionDefinition, inputs: JsonObject): ActionResult {
+            val bridge = device() ?: return ActionResult.Unavailable("未连接无障碍服务，未取得画面")
+            val profile = bundle.visionProfiles.single { it.id == inputs.text("profile") }
+            val models = OcrModelReferences(profile.recognizer, profile.models)
+            val states = checkNotNull(regionStates(inputs, repeatable = true, windowed = true))
+            val (timeout, interval, stable) = checkNotNull(awaitTiming(inputs)); val (referenceWidth, referenceHeight) = checkNotNull(reference(inputs))
+            val windows = states.flatMap { it.text + it.absentText }.map { checkNotNull(it.within) }.distinct()
+            val images = states.flatMap { it.present + it.absent }.map { it.template to checkNotNull(it.within) }.distinct()
+            val started = android.os.SystemClock.elapsedRealtime()
+            var held: String? = null; var heldSince = 0L; var polls = 0; var lastScores = emptyList<Double>()
+            fun trace(matched: String?) = buildJsonObject { put("kind", AWAIT_SCREEN); put("polls", polls); put("waitedMs", android.os.SystemClock.elapsedRealtime() - started)
+                matched?.let { put("state", it) }; put("scores", buildJsonArray { lastScores.forEach { add(it) } }) }
+            while (true) {
+                if (!permitted(attempt.ticket)) return ActionResult.Interrupted
+                val observation = when (val acquired = snapshot(attempt, bundle, bridge, profile.packageName, models)) {
+                    is Acquisition.Problem -> return acquired.result
+                    is Acquisition.Ready -> acquired.value
+                }
+                polls++
+                val geometry = observation.result.stamp.geometry
+                fun bounds(rect: List<Int>) = scaled(rect, geometry, referenceWidth, referenceHeight)
+                if ((windows + images.map { it.second }).any { bounds(it) == null }) return ActionResult.Unavailable("查找区域超出画面，或画面比例与参考尺寸不同")
+                // Templates are cheap, so they rule states out first; text is then read only where a state still depends on it.
+                val scores = if (images.isEmpty()) emptyMap() else {
+                    val values = when (val value = inspectOn(observation, images.map { (template, rect) -> InspectionRequest.Image(checkNotNull(bounds(rect)), template) })) {
+                        is ActionResult -> return value
+                        else -> (value as InspectionResult.Inspected).values
+                    }
+                    images.indices.associate { images[it] to (values[it] as InspectionValue.Image).bestScore }
+                }
+                lastScores = scores.values.toList()
+                fun reached(c: ImageCondition) = BigDecimal.valueOf(scores.getValue(c.template to checkNotNull(c.within))) >= c.minimum
+                var possible = states.filter { state -> state.present.all(::reached) && state.absent.none(::reached) }
+                val texts = mutableMapOf<List<Int>, List<RecognizedText>>()
+                fun seen(c: TextCondition) = texts.getValue(checkNotNull(c.within)).any { it.text == c.text && it.confidence.isFinite() && BigDecimal.valueOf(it.confidence) >= c.minimum }
+                while (true) {
+                    val needed = possible.mapNotNull { state -> (state.text + state.absentText).firstOrNull { it.within !in texts }?.within }.distinct()
+                    if (needed.isEmpty()) break
+                    val values = when (val value = inspectOn(observation, needed.map { InspectionRequest.Text(checkNotNull(bounds(it))) })) {
+                        is ActionResult -> return value
+                        else -> (value as InspectionResult.Inspected).values
+                    }
+                    needed.forEachIndexed { index, rect -> texts[rect] = (values[index] as InspectionValue.Text).candidates }
+                    possible = possible.filter { state -> state.text.none { it.within in texts && !seen(it) } && state.absentText.none { it.within in texts && seen(it) } }
+                }
+                val matched = possible.map { it.id }.distinct()
+                val now = android.os.SystemClock.elapsedRealtime()
+                val current = matched.singleOrNull()
+                if (current != held) { held = current; heldSince = now }
+                if (current != null && now - heldSince >= stable) {
+                    val token = token(); observations[token] = store(observation)
+                    val evidence = "已在本次画面中核对页面状态"
+                    if (terminalAction == action.id) businessEvidence = StepOutcome.Completed(evidence)
+                    return ActionResult.Verified(buildJsonObject { put("state", current); put("observation", token) }, evidence, trace(current))
+                }
+                if (now - started >= timeout) return ActionResult.Unavailable("等待 ${timeout}ms 后仍未确认任何声明的页面状态", trace(null))
+                delay(interval)
+            }
+        }
+        private suspend fun locateIn(action: ActionDefinition, inputs: JsonObject): ActionResult {
+            val observation = observations[inputs.text("observation")] ?: return ActionResult.Unavailable("本步骤的画面观察不可用")
+            if (observation.regionDerived) return ActionResult.Unavailable("区域定位需要整图观察")
+            val (referenceWidth, referenceHeight) = checkNotNull(reference(inputs))
+            val bounds = scaled(checkNotNull(rectangle(inputs["within"])), observation.result.stamp.geometry, referenceWidth, referenceHeight)
+                ?: return ActionResult.Unavailable("查找区域超出画面，或画面比例与参考尺寸不同")
+            val template = inputs.text("template").takeIf { action.capability == LOCATE_IMAGE_IN }; val text = inputs.text("text").orEmpty()
+            val minimum = checkNotNull(if (template != null) unit(inputs["minimumScore"]) else threshold(inputs))
+            val request = if (template != null) InspectionRequest.Image(bounds, template) else InspectionRequest.Text(bounds)
+            val inspected = when (val value = inspectOn(observation, listOf(request))) { is ActionResult -> return value; else -> value as InspectionResult.Inspected }
+            val accepted = when (val value = inspected.values.single()) {
+                is InspectionValue.Text -> value.candidates.filter { it.text == text && it.confidence.isFinite() && BigDecimal.valueOf(it.confidence) >= minimum }
+                is InspectionValue.Image -> value.matches.filter { BigDecimal.valueOf(it.score) >= minimum }.map { RecognizedText("", it.score, it.bounds) }
+            }
+            val match = accepted.singleOrNull() ?: return ActionResult.Unavailable(if (accepted.isEmpty()) "查找区域内没有达到要求的目标" else "查找区域内有 ${accepted.size} 处目标，不能唯一定位")
+            val token = token(); targets[token] = Target(observation, text, minimum, match, template)
+            return ActionResult.Produced(buildJsonObject { put("target", token) }, buildJsonObject { put("kind", action.capability); region(match.bounds); put("confidence", match.confidence) })
+        }
+        private suspend fun screenState(action: ActionDefinition, inputs: JsonObject): ActionResult {
+            val observation = observations[inputs.text("observation")] ?: return ActionResult.Unavailable("本步骤的画面观察不可用")
+            if (observation.regionDerived) return ActionResult.Unavailable("页面判断需要整图观察")
+            observation.bridge.validateObservation(observation.result.stamp)?.let { return ActionResult.Unavailable(deviceReason(it)) }
+            val states = checkNotNull(regionStates(inputs, repeatable = true))
+            val templates = states.flatMap { (it.present + it.absent).map(ImageCondition::template) }.distinct()
+            val scores = if (templates.isEmpty()) emptyMap() else {
+                val requests = templates.map { InspectionRequest.Image(whole(observation), it) }
+                val inspected = when (val value = inspectOn(observation, requests)) { is ActionResult -> return value; else -> value as InspectionResult.Inspected }
+                templates.zip(inspected.values.map { (it as InspectionValue.Image).bestScore }).toMap()
+            }
+            val candidates = observation.result.candidates
+            fun seen(c: TextCondition) = candidates.any { it.text == c.text && it.confidence.isFinite() && BigDecimal.valueOf(it.confidence) >= c.minimum }
+            val matched = states.filter { state -> state.text.all(::seen) && state.absentText.none(::seen) &&
+                state.present.all { BigDecimal.valueOf(scores.getValue(it.template)) >= it.minimum } &&
+                state.absent.all { BigDecimal.valueOf(scores.getValue(it.template)) < it.minimum } }.map { it.id }.distinct()
+            val trace = buildJsonObject {
+                put("kind", action.capability); put("textCandidates", candidates.size)
+                put("templates", buildJsonArray { scores.forEach { (id, score) -> add(buildJsonObject { put("sha256", digest(id)); put("score", score) }) } })
+                put("matchedStates", buildJsonArray { matched.forEach { add(it) } })
+            }
+            val scoreText = scores.values.joinToString("，", "（图像得分 ", "）") { "%.3f".format(it) }.takeIf { scores.isNotEmpty() }.orEmpty()
+            if (matched.size > 1) return ActionResult.Unavailable("本次画面同时满足多个页面状态$scoreText", trace)
+            val state = matched.singleOrNull() ?: inputs.text("otherwise").takeIf { action.capability == CLASSIFY_SCREEN }
+                ?: return ActionResult.Unavailable("本次画面未能确认任何声明的页面状态$scoreText", trace)
+            val outputs = buildJsonObject { put("state", state) }
+            if (action.capability == CLASSIFY_SCREEN) return ActionResult.Produced(outputs, trace)
+            val evidence = "已在本次画面中核对页面状态"
+            if (terminalAction == action.id) businessEvidence = StepOutcome.Completed(evidence)
+            return ActionResult.Verified(outputs, evidence, trace)
         }
         override fun verifiedStepCompleted(evidence: String) {
             businessEvidence = StepOutcome.Completed(evidence)
@@ -890,11 +1112,17 @@ internal class ScreenActions(
             val bounds = regionBounds(match, fresh.result.stamp.geometry, region.derivation) ?: return ActionResult.Unavailable("输入前推出的区域超出画面")
             var trace = buildJsonObject { put("kind", TAP_REGION); region(bounds) }
             if ((inputs["requireNoText"] as JsonPrimitive).boolean) {
-                val inspected = when (val value = inspectOn(fresh, listOf(InspectionRequest.Text(bounds)))) {
+                // Recognize with surrounding context: a tight crop of plain background makes the model invent characters.
+                val geometry = fresh.result.stamp.geometry; val left = (bounds.left - BLANK_CONTEXT).coerceAtLeast(0); val top = (bounds.top - BLANK_CONTEXT).coerceAtLeast(0)
+                val context = TextBounds(left, top, (bounds.left + bounds.width + BLANK_CONTEXT).coerceAtMost(geometry.width) - left,
+                    (bounds.top + bounds.height + BLANK_CONTEXT).coerceAtMost(geometry.height) - top)
+                val inspected = when (val value = inspectOn(fresh, listOf(InspectionRequest.Text(context)))) {
                     is ActionResult -> return value
                     else -> value as InspectionResult.Inspected
                 }
-                val candidates = (inspected.values.single() as InspectionValue.Text).candidates
+                val candidates = (inspected.values.single() as InspectionValue.Text).candidates.filter { c ->
+                    c.bounds.left < bounds.left + bounds.width && bounds.left < c.bounds.left + c.bounds.width &&
+                        c.bounds.top < bounds.top + bounds.height && bounds.top < c.bounds.top + c.bounds.height }
                 // A detector box with nothing recognized is not text; any recognized character, at any
                 // confidence, still refuses the press.
                 val found = candidates.filter { it.text.isNotBlank() }
