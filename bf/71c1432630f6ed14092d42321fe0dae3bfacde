@@ -1,0 +1,113 @@
+client/android/app/src/main/kotlin/io/github/yysassist/ExecutionRuntime.kt
+  s_fae32e7f0efe76::t_dd02a5a16583e1 72
+  s_fae32e7f0efe76::t_35cc3a4c1aeb12 99-100
+client/android/app/src/androidTest/kotlin/io/github/yysassist/ExecutionRuntimeTest.kt
+  s_fae32e7f0efe76::t_1cdff2b03f0a39 27-28,53-54,237-238,240,252
+client/android/app/src/main/kotlin/io/github/yysassist/cloud/CloudAccounts.kt
+  s_fae32e7f0efe76::t_9ca36d0b98a054 35,40
+  s_fae32e7f0efe76::t_69d3d386af302f 39
+  s_fae32e7f0efe76::t_e5f2f64c9af5f5 1-34,36-38,41-54
+client/android/app/src/main/kotlin/io/github/yysassist/ui/CloudPage.kt
+  s_fae32e7f0efe76::t_69d3d386af302f 16,18,20,32-33,39,62-103
+  s_fae32e7f0efe76::t_57253c3cdf1d56 104-105
+client/android/app/src/androidTest/kotlin/io/github/yysassist/device/DeviceRuntimeIntegrationTest.kt
+  s_fae32e7f0efe76::t_1ff7fc4a99bd0c 132,208
+core/server/src/test/kotlin/io/github/yysassist/server/CloudApiTest.kt
+  s_fae32e7f0efe76::t_d45f89fad1a25f 340-352,356-378,483
+  s_fae32e7f0efe76::t_fb83cab7d8c8a5 353-355
+client/android/app/src/androidTest/kotlin/io/github/yysassist/storage/ActionBindingIntegrationTest.kt
+  s_fae32e7f0efe76::t_74d47c42cbdb6b 30-31,54,56,58-60,63-64,68-69,84,99,104
+client/android/app/src/androidTest/kotlin/io/github/yysassist/RuntimeProcessRecoveryTest.kt
+  s_fae32e7f0efe76::t_1ff7fc4a99bd0c 51,75
+client/android/app/src/androidTest/kotlin/io/github/yysassist/ui/ExecutionControlsTest.kt
+  s_fae32e7f0efe76::t_1ff7fc4a99bd0c 52
+core/server/src/main/kotlin/io/github/yysassist/server/Routes.kt
+  s_fae32e7f0efe76::t_3964f69170523f 117
+client/android/app/src/main/kotlin/io/github/yysassist/TaskConfigurationEditor.kt
+  s_fae32e7f0efe76::t_8b8ab8e52875da 56-57,69-70,91
+  s_fae32e7f0efe76::t_dd02a5a16583e1 52-55,58-68
+client/android/app/src/androidTest/kotlin/io/github/yysassist/floating/FloatingOverlayIntegrationTest.kt
+  s_fae32e7f0efe76::t_1ff7fc4a99bd0c 95
+client/android/app/src/main/kotlin/io/github/yysassist/floating/FloatingOverlayWindow.kt
+  s_fae32e7f0efe76::t_e4eb4a55a74262 83
+core/protocol/src/main/kotlin/io/github/yysassist/protocol/CloudProtocol.kt
+  s_fae32e7f0efe76::t_ff34c02fd03231 57-58,124-133
+client/android/app/src/main/kotlin/io/github/yysassist/ui/SettingsPage.kt
+  s_fae32e7f0efe76::t_6257ad12612183 56
+client/android/app/src/main/kotlin/io/github/yysassist/ui/PlansPage.kt
+  s_fae32e7f0efe76::t_ca4055333ea08e 25-27,39-42,53-63,68-75,78-79,86,93-95,99,106,110,115,117,119,122,131,138,141,149
+client/android/app/src/main/kotlin/io/github/yysassist/storage/TaskAdmissionRepository.kt
+  s_fae32e7f0efe76::t_883052b18cbba8 19-20,22,38-39,45
+  s_fae32e7f0efe76::t_ea25e3b174e1d1 4
+  s_fae32e7f0efe76::t_dd02a5a16583e1 21,23-25
+client/android/app/src/androidTest/kotlin/io/github/yysassist/reactions/ReactionMonitorTest.kt
+  s_fae32e7f0efe76::t_2954bb6436ddbd 50,55-57
+client/android/app/src/debug/kotlin/io/github/yysassist/debug/LocalTaskTrigger.kt
+  s_fae32e7f0efe76::t_24594f76f51569 95,98-100,102-103
+core/server/src/main/kotlin/io/github/yysassist/server/CloudService.kt
+  s_fae32e7f0efe76::t_50bdc341f199e0 722
+  s_fae32e7f0efe76::t_c6ae41a48e9ec2 269-272,289,294-295,297-298,391-396,399,407-410
+  s_fae32e7f0efe76::t_55710cc3648664 397-398,606,615
+  s_fae32e7f0efe76::t_908d31d709364a 650-651
+  s_fae32e7f0efe76::t_3964f69170523f 217-218,223-246,296,731-734
+  s_fae32e7f0efe76::t_8049eb226d4b4c 247,369,384-390,400-406,411-412,489,617-618
+client/android/app/src/androidTest/kotlin/io/github/yysassist/storage/TaskResourceIntegrationTest.kt
+  s_fae32e7f0efe76::t_1ff7fc4a99bd0c 191
+client/android/app/schemas/io.github.yysassist.storage.AssistDatabase/8.json
+  s_fae32e7f0efe76::t_d19d51df339af2 1-376
+core/engine/src/main/kotlin/io/github/yysassist/core/cloud/CloudAgent.kt
+  s_fae32e7f0efe76::t_dd02a5a16583e1 148,168,171,218
+  s_fae32e7f0efe76::t_c2faa23cf8da15 48-52,105,113-115,127,172-189,314
+client/android/app/src/androidTest/kotlin/io/github/yysassist/storage/ExecutionStateStoreTest.kt
+  s_fae32e7f0efe76::t_74d47c42cbdb6b 45
+docs/design/cloud-executor.md
+  s_fae32e7f0efe76::t_0ebee5af53bb03 95
+  s_fae32e7f0efe76::t_9bf272a43667dc 96,339
+client/android/app/src/debug/kotlin/io/github/yysassist/debug/DemoTaskSeeder.kt
+  s_fae32e7f0efe76::t_81f72b88346a36 22
+docs/development/cloud-console.md
+  s_fae32e7f0efe76::t_9bf272a43667dc 5,21,35-36
+client/android/app/src/main/kotlin/io/github/yysassist/storage/TaskConfigurationRepository.kt
+  s_fae32e7f0efe76::t_4d4b59316ceb78 3-4,7,10,12,23-25,28-31,34-45
+client/android/app/src/main/kotlin/io/github/yysassist/storage/AssistDatabase.kt
+  s_fae32e7f0efe76::t_6257ad12612183 134-136
+core/engine/src/test/kotlin/io/github/yysassist/core/cloud/CloudAgentTest.kt
+  s_fae32e7f0efe76::t_593fd0073bc763 80-85,193-202
+client/android/app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt
+  s_fae32e7f0efe76::t_69d3d386af302f 146,160-161,200-205
+  s_fae32e7f0efe76::t_d19d51df339af2 28-34,63-65,84-96,107,109-110,131,147,149,151,153-155,166,170-172
+  s_fae32e7f0efe76::t_ea25e3b174e1d1 67-68,148,152,173
+  s_fae32e7f0efe76::t_879d2bf63dc1f8 206-207
+client/android/app/src/main/kotlin/io/github/yysassist/ui/TaskConfigurationPage.kt
+  s_fae32e7f0efe76::t_69d3d386af302f 29,61-62
+client/android/app/src/main/kotlin/io/github/yysassist/ui/PlanEditorPage.kt
+  s_fae32e7f0efe76::t_31894211bfa5ce 29,35-36,39-42,46,86,95,112-113,116,119-120
+client/android/app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_e4eb4a55a74262 31-32,68-69,104-110,114-130
+  s_fae32e7f0efe76::t_dd02a5a16583e1 75-76,94,111
+  s_fae32e7f0efe76::t_0bd5e8d470a2c1 131
+core/server/src/main/kotlin/io/github/yysassist/server/Database.kt
+  s_fae32e7f0efe76::t_c6ae41a48e9ec2 87
+client/android/app/src/androidTest/kotlin/io/github/yysassist/actions/TextObservationRuntimeTest.kt
+  s_fae32e7f0efe76::t_3841d94dcfe556 206
+client/android/app/src/androidTest/kotlin/io/github/yysassist/ui/PlanEditorPageTest.kt
+  s_fae32e7f0efe76::t_e616771fe6cc30 24
+client/android/app/src/androidTest/kotlin/io/github/yysassist/ui/TaskConfigurationPageTest.kt
+  s_fae32e7f0efe76::t_93810a80a38535 38,44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bf71c1432630f6ed14092d42321fe0dae3bfacde",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
