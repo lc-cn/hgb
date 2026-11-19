@@ -1,0 +1,118 @@
+server/src/main/kotlin/io/github/yysassist/server/GitHubIdentity.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-38
+server/src/test/kotlin/io/github/yysassist/server/CloudApiTest.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-208
+app/src/main/kotlin/io/github/yysassist/floating/FloatingTasks.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 30
+app/src/debug/kotlin/io/github/yysassist/debug/DemoTaskSeeder.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 39-43,76-86,102
+app/src/main/kotlin/io/github/yysassist/storage/TaskAdmissionRepository.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 23-31
+core/src/main/kotlin/io/github/yysassist/core/content/ConfigurationValidator.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 18-20,23,36
+core/src/main/kotlin/io/github/yysassist/core/content/TaskTriggers.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-68
+core/src/test/kotlin/io/github/yysassist/core/cloud/CloudAgentTest.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-126
+gradle/verification-metadata.xml
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1489-1493,2850-2865,3031-3355,3372-3379,3396-3411,3428-3435,3452-3459,3492-3499,3516-3523,3550-3554,3571-3578,3595-3634,3651-3658,3736-3756,3770-3777,3786-3793,3866-3870,3891-3906,3923-3932,3943-3947,3963-3970,3979-3986,3995-4002,4027-4034,4126-4151,4498-4505,4711-4718,4895-4910,4929-4964,5029-5041,5079-5091,5100-5147,5172-5179,5249-5261,5267-5279,5306-5313
+server/src/main/kotlin/io/github/yysassist/server/Database.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-59
+app/src/main/kotlin/io/github/yysassist/ui/TaskListPage.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 241,245
+server/src/main/kotlin/io/github/yysassist/server/Main.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-14
+app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 62-65,82-83,91,112-114
+app/src/main/kotlin/io/github/yysassist/cloud/CloudPlatform.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-82
+gradle/libs.versions.toml
+  s_fae32e7f0efe76::t_48aa52802ed1b4 15-18,52-60
+  s_fae32e7f0efe76::t_0d9f1023bac177 61
+app/src/main/kotlin/io/github/yysassist/ui/SettingsPage.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 79-80
+app/src/main/kotlin/io/github/yysassist/ui/TaskConfigurationPage.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 21,61
+core/src/test/kotlin/io/github/yysassist/core/execution/BuiltInStepWorkFactoryTest.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 33
+server/src/main/kotlin/io/github/yysassist/server/Security.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-59
+core/src/main/kotlin/io/github/yysassist/core/content/ActionBindings.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 31,66
+server/src/main/resources/web/app.js
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-191
+app/src/androidTest/kotlin/io/github/yysassist/cloud/CloudServerAddressTest.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-21
+app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 7,23-24,51,565-566
+core/src/test/kotlin/io/github/yysassist/core/content/TaskTriggerTest.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-62
+docs/development/cloud-console.md
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-50
+core/src/test/kotlin/io/github/yysassist/core/content/ActionBindingContractTest.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 9
+app/src/main/kotlin/io/github/yysassist/ui/PlanEditorPage.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 96
+app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 122
+server/src/main/resources/web/index.html
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-14
+server/src/main/resources/web/logo.svg
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1
+docs/design/passive-triggers.md
+  s_fae32e7f0efe76::t_48aa52802ed1b4 3,85-123
+app/src/androidTest/kotlin/io/github/yysassist/reactions/ReactionMonitorTest.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-89
+app/src/debug/AndroidManifest.xml
+  s_fae32e7f0efe76::t_48aa52802ed1b4 2
+app/src/debug/res/xml/network_security_config.xml
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-8
+app/src/main/kotlin/io/github/yysassist/ui/ConfigurationFields.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 118-128
+server/build.gradle.kts
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-22
+server/src/main/kotlin/io/github/yysassist/server/CloudService.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-260
+server/gradle.lockfile
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-150
+settings.gradle.kts
+  s_fae32e7f0efe76::t_48aa52802ed1b4 9
+core/src/main/kotlin/io/github/yysassist/core/cloud/CloudProtocol.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-39
+core/src/main/kotlin/io/github/yysassist/core/cloud/CloudAgent.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-220
+app/src/main/kotlin/io/github/yysassist/ExecutionRuntime.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 97
+app/src/main/kotlin/io/github/yysassist/reactions/ReactionMonitor.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-60
+core/src/main/kotlin/io/github/yysassist/core/execution/StepWorker.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 26-28,40-43,141-142
+app/src/main/kotlin/io/github/yysassist/ui/CloudPage.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-107
+core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 68-69,104-105,183-184,233-234
+docs/design/cloud-executor.md
+  s_fae32e7f0efe76::t_48aa52802ed1b4 3
+server/src/main/kotlin/io/github/yysassist/server/Mailer.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-12
+server/src/main/resources/web/style.css
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-58
+server/src/main/kotlin/io/github/yysassist/server/Routes.kt
+  s_fae32e7f0efe76::t_48aa52802ed1b4 1-100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "64e83f18dc62c859aec15f16833530f6d84bbf5b",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
