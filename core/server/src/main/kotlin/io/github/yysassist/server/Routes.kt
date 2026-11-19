@@ -30,7 +30,6 @@ data class ServerConfig(val publicUrl: String, val secureCookies: Boolean)
 private const val COOKIE = "yys_session"
 private const val CSRF_HEADER = "X-YYS-Request"
 private const val DEVICE_HEADER = "X-YYS-Client"
-private const val LONG_POLL_MILLIS = 20_000L
 
 private fun ApplicationCall.sessionKind() = if (request.headers[DEVICE_HEADER] == "device") SessionKind.DEVICE else SessionKind.WEB
 
@@ -58,8 +57,8 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
         exception<io.ktor.server.plugins.BadRequestException> { call, _ -> call.respond(HttpStatusCode.BadRequest, ApiError("bad_request", "请求内容无效")) }
     }
     install(WebSockets) { pingPeriod = 20.seconds; timeout = 45.seconds; maxFrameSize = MAX_DEVICE_FRAME }
-    // A device that went silent while running leaves a lease to settle even when no request comes in.
-    launch { while (isActive) { delay(SWEEP_MILLIS); runCatching { service.sweepAll() } } }
+    // Plans fire, waiting jobs find apps, and leases of silent devices settle on this beat, even when no request comes in.
+    launch { while (isActive) { delay(TICK_MILLIS); runCatching { service.tick() } } }
     intercept(ApplicationCallPipeline.Plugins) {
         call.response.headers.append("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
         call.response.headers.append("X-Content-Type-Options", "nosniff")
@@ -126,19 +125,19 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
             service.cancelJob(call.caller(service), call.parameters.getOrFail("id"))?.let { (deviceId, message) -> service.sockets.send(deviceId, service.encode(message)) }
             call.respond(mapOf("ok" to true))
         }
+        post("/api/jobs/{id}/pause") {
+            val (deviceId, message) = service.pauseJob(call.caller(service), call.parameters.getOrFail("id"), true)
+            service.sockets.send(deviceId, service.encode(message)); call.respond(mapOf("ok" to true))
+        }
+        post("/api/jobs/{id}/resume") {
+            val (deviceId, message) = service.pauseJob(call.caller(service), call.parameters.getOrFail("id"), false)
+            service.sockets.send(deviceId, service.encode(message)); call.respond(mapOf("ok" to true))
+        }
         get("/api/events") { consoleStream(call, service) }
         route("/api/device") {
             post("/register") { call.respond(service.registerDevice(call.caller(service), call.receive())) }
             webSocket("/socket") { deviceSocket(this, service) }
             post("/catalog") { service.uploadCatalog(call.caller(service), call.receive()); call.respond(mapOf("ok" to true)) }
-            post("/jobs/next") {
-                val caller = call.caller(service)
-                val waitMillis = (call.request.queryParameters["waitMs"]?.toLongOrNull() ?: LONG_POLL_MILLIS).coerceIn(0, LONG_POLL_MILLIS)
-                val deadline = System.currentTimeMillis() + waitMillis
-                var lease = service.nextJob(caller)
-                while (lease == null && System.currentTimeMillis() < deadline) { delay(500); lease = service.nextJob(caller) }
-                if (lease == null) call.respond(HttpStatusCode.NoContent) else call.respond(lease)
-            }
             post("/jobs/{id}/events") { service.appendEvents(call.caller(service), call.parameters.getOrFail("id"), call.receive()); call.respond(mapOf("ok" to true)) }
             post("/jobs/{id}/report") { service.report(call.caller(service), call.parameters.getOrFail("id"), call.receive()); call.respond(mapOf("ok" to true)) }
         }
@@ -158,21 +157,34 @@ private suspend fun deviceSocket(session: DefaultWebSocketServerSession, service
     val deviceId = caller.deviceId
     if (caller.kind != SessionKind.DEVICE || deviceId == null) { close(CloseReason(SocketClose.NOT_A_DEVICE, "device_only")); return }
     val (connection, replaced) = service.sockets.attach(caller.userId, deviceId,
-        send = { text -> runCatching { outgoing.send(Frame.Text(text)) }.isSuccess },
         close = { runCatching { close(CloseReason(SocketClose.REPLACED, "closed")) } })
     replaced?.close?.invoke()
+    // Everything for this device goes through its outbox, so business code never waits on the network.
+    val writer = launch { for (text in connection.outbox) outgoing.send(Frame.Text(text)) }
     service.connectionChanged(caller.userId, deviceId)
+    var checkedAt = System.currentTimeMillis()
+    var windowStart = 0L; var inWindow = 0
     try {
         for (frame in incoming) {
             if (frame !is Frame.Text) continue
+            val now = System.currentTimeMillis()
+            // A session ended by sign-out, password reset or revocation also ends its socket.
+            if (now - checkedAt > SESSION_RECHECK_MILLIS) {
+                if (!service.sessionAlive(caller)) { close(CloseReason(SocketClose.INVALID_SESSION, "invalid_session")); break }
+                checkedAt = now
+            }
+            // A device reports at most once a second; anything faster is dropped, and the next report catches up.
+            if (now - windowStart > 1_000) { windowStart = now; inWindow = 0 }
+            if (++inWindow > MAX_FRAMES_PER_SECOND) continue
             val message = runCatching { service.decodeDeviceMessage(frame.readText()) }.getOrNull() ?: continue
             when (message) {
-                is DeviceMessage.Status -> service.status(caller, message.status).forEach { outgoing.send(Frame.Text(service.encode(it))) }
+                is DeviceMessage.Status -> service.status(caller, message.status).forEach { connection.outbox.trySend(service.encode(it)) }
             }
         }
     } catch (_: ApiException) {
         close(CloseReason(SocketClose.NOT_A_DEVICE, "device_only"))
     } finally {
+        writer.cancel()
         if (service.sockets.detach(connection)) service.connectionChanged(caller.userId, deviceId)
     }
 }
@@ -187,37 +199,51 @@ private suspend fun consoleStream(call: ApplicationCall, service: CloudService) 
     call.response.headers.append("X-Accel-Buffering", "no") // proxies must pass each event through at once
     call.respondBytesWriter(ContentType.Text.EventStream) {
         suspend fun write(text: String) { writeStringUtf8(text); flush() }
-        suspend fun send(id: Long, name: String, data: String) = write("id: $id\nevent: $name\ndata: $data\n\n")
+        suspend fun send(id: Long, name: String, data: String) = write("id: ${service.events.wireId(id)}\nevent: $name\ndata: $data\n\n")
         coroutineScope {
-            // Subscribe before reading the snapshot, so nothing published in between is lost.
-            val pending = Channel<ConsoleEvent>(Channel.UNLIMITED)
+            // Subscribe before reading the snapshot, so nothing published in between is lost. A browser that stops
+            // reading is cut off once its backlog is full; it reconnects and starts from a snapshot.
+            val pending = Channel<ConsoleEvent>(MAX_PENDING_EVENTS)
             val subscribed = CompletableDeferred<Unit>()
             val collector = launch {
-                service.events.stream(caller.userId).onSubscription { subscribed.complete(Unit) }.collect { pending.send(it) }
+                service.events.stream(caller.userId).onSubscription { subscribed.complete(Unit) }
+                    .collect { if (!pending.trySend(it).isSuccess) pending.close() }
             }
             subscribed.await()
-            val lastSeen = call.request.headers["Last-Event-ID"]?.toLongOrNull()
-            val missed = lastSeen?.let { service.events.since(caller.userId, it) }
+            val lastEventId = call.request.headers["Last-Event-ID"]
+            val missed = service.events.since(caller.userId, lastEventId)
             var sentUpTo = if (missed != null) {
                 missed.forEach { send(it.id, it.name, it.data) }
-                missed.lastOrNull()?.id ?: lastSeen
+                missed.lastOrNull()?.id ?: checkNotNull(service.events.idOf(lastEventId))
             } else {
-                val upTo = service.events.latest(caller.userId)
-                send(upTo, "snapshot", service.encode(service.consoleSnapshot(caller.userId))); upTo
+                // The snapshot and the id it covers are read together, so no later event can hold older data.
+                val (snapshot, upTo) = service.consoleSnapshotUpTo(caller.userId)
+                send(upTo, "snapshot", service.encode(snapshot)); upTo
             }
             write("retry: 3000\n\n")
+            var checkedAt = System.currentTimeMillis()
             try {
                 while (isActive) {
-                    val event = withTimeoutOrNull(KEEPALIVE_MILLIS) { pending.receive() }
-                    if (event == null) { write(": keep-alive\n\n"); continue }
-                    if (event.id <= sentUpTo) continue
-                    send(event.id, event.name, event.data); sentUpTo = event.id
+                    val event = withTimeoutOrNull(KEEPALIVE_MILLIS) { pending.receiveCatching() }
+                    if (event != null && event.isClosed) break
+                    if (System.currentTimeMillis() - checkedAt > KEEPALIVE_MILLIS) {
+                        if (!service.sessionAlive(caller)) break // signed out, reset or expired: stop streaming
+                        checkedAt = System.currentTimeMillis()
+                    }
+                    val next = event?.getOrNull()
+                    if (next == null) { write(": keep-alive\n\n"); continue }
+                    if (next.id <= sentUpTo) continue
+                    send(next.id, next.name, next.data); sentUpTo = next.id
                 }
             } finally { collector.cancel() }
         }
     }
 }
 
-private const val SWEEP_MILLIS = 30_000L
+/** Plans fire and waiting jobs are assigned on this beat. */
+private const val TICK_MILLIS = 5_000L
 private const val KEEPALIVE_MILLIS = 15_000L
+private const val SESSION_RECHECK_MILLIS = 60_000L
+private const val MAX_FRAMES_PER_SECOND = 5
+private const val MAX_PENDING_EVENTS = 256
 private const val MAX_DEVICE_FRAME = 1L shl 20

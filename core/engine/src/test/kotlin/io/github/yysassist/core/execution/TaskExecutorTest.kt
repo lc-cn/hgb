@@ -72,6 +72,44 @@ class TaskExecutorTest {
         assertNotEquals(ticket, e.ticket())
     }
 
+    @Test fun `pause after step lets the step finish without revoking input and then holds`() {
+        val e = TaskExecutor(scope("A"))
+        e.add("one")
+        val ticket = e.ticket()
+        val runId = e.state.value.current!!.runId
+        assertEquals(runId, e.state.value.current!!.runId)
+        assertTrue(e.pauseAfterStep().isEmpty())
+        assertTrue("input in flight is not revoked", e.permitsInput(ticket))
+        assertTrue(e.complete().isEmpty())
+        assertEquals(ExecutorPhase.PAUSED, e.state.value.phase)
+        assertTrue(e.state.value.unresolved.isEmpty())
+        assertEquals("s2", e.state.value.current!!.stepId)
+        assertEquals("s2", (e.resume(ResumeMode.CONTINUE).single() as ExecutorEffect.ExecuteStep).attempt.run.stepId)
+    }
+
+    @Test fun `a step end pause belongs to its run and the queue goes on once that run is removed`() {
+        val e = TaskExecutor(scope("A"))
+        e.add("one"); e.add("two")
+        val runId = e.state.value.current!!.runId
+        e.pauseAfterStep()
+        // It survives a restart while the step is still in flight.
+        val restored = TaskExecutor.fromEncodedState(e.encodeState())
+        restored.complete()
+        assertEquals(ExecutorPhase.PAUSED, restored.state.value.phase)
+        val next = restored.remove(runId).single() as ExecutorEffect.ExecuteStep
+        assertEquals("two", next.attempt.run.task.id)
+    }
+
+    @Test fun `a whole queue pause is not narrowed by a later step end pause`() {
+        val e = TaskExecutor(scope("A"))
+        e.add("one"); e.add("two")
+        val runId = e.state.value.current!!.runId
+        e.quiet(e.ticket().also { e.pause() })
+        e.pauseAfterStep()
+        assertTrue(e.remove(runId).isEmpty())
+        assertEquals(ExecutorPhase.PAUSED, e.state.value.phase)
+    }
+
     @Test fun `continue skips completed steps restart only resets current task`() {
         val e = TaskExecutor(scope("A"))
         e.enqueue("p", plan(task("done", 10, 1), task("current", 20, 3)))

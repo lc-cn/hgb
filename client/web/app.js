@@ -98,13 +98,13 @@ function showAuth(tab = "password", notice = "") {
 }
 
 const STATES = {
-  QUEUED: ["排队中", "info"], LEASED: ["已下发", "info"], RUNNING: ["运行中", "info"], COMPLETED: ["已完成", "ok"],
-  FAILED: ["失败", "bad"], UNKNOWN: ["结果未知", "warn"], CANCELLED: ["已取消", ""],
+  WAITING: ["等可用应用", "info"], QUEUED: ["排队中", "info"], LEASED: ["已下发", "info"], RUNNING: ["运行中", "info"], COMPLETED: ["已完成", "ok"],
+  FAILED: ["失败", "bad"], UNKNOWN: ["结果未知", "warn"], CANCELLED: ["已取消", ""], SKIPPED: ["已跳过", "warn"],
 };
-const ACTIVE = new Set(["QUEUED", "LEASED", "RUNNING"]);
+const ACTIVE = new Set(["WAITING", "QUEUED", "LEASED", "RUNNING"]);
 const time = (value) => value ? new Date(value).toLocaleString("zh-CN", { hour12: false }) : "—";
 
-const PHASES = { IDLE: "空闲", RUNNING: "运行中", PAUSING: "正在暂停", PAUSED: "已暂停", REMOVING: "正在停止", SWITCHING: "切换中", BLOCKED_UNKNOWN: "需要处理" };
+const PHASES = { CONNECTING: "连接中", IDLE: "空闲", RUNNING: "运行中", PAUSING: "正在暂停", PAUSED: "已暂停", REMOVING: "正在停止", SWITCHING: "切换中", BLOCKED_UNKNOWN: "需要处理" };
 
 const enc = encodeURIComponent;
 function accountSelect(label, value, accounts, onchange) {
@@ -121,17 +121,18 @@ function accountSelect(label, value, accounts, onchange) {
 function appLine(device, app, accounts) {
   const doing = app.currentTask ? `${PHASES[app.phase] ?? app.phase}：${app.currentTask}` : PHASES[app.phase] ?? app.phase;
   const mine = accounts.filter((account) => account.gameId === app.gameId);
-  const save = async (change) => {
+  // Both values are read from the selects at save time, so two quick changes cannot undo each other.
+  const save = async () => {
     try { await api(`/api/devices/${enc(device.id)}/apps/${enc(app.key)}`, { method: "PUT",
-      body: { accountId: app.accountId ?? null, defaultAccountId: app.defaultAccountId ?? null, ...change } }); }
+      body: { accountId: current.querySelector("select").value || null, defaultAccountId: fallback.querySelector("select").value || null } }); }
     catch (error) { alert(error.message); }
   };
+  const current = accountSelect("当前登录", app.accountId, mine, save);
+  const fallback = accountSelect("默认账号", app.defaultAccountId, mine, save);
   return el("li", { class: "app-line" },
     el("div", { class: "row" }, el("span", { class: "grow", text: app.name }),
       el("span", { class: "muted", text: [doing, app.queued ? `排队 ${app.queued} 个` : ""].filter(Boolean).join(" · ") })),
-    mine.length ? el("div", { class: "app-accounts" },
-      accountSelect("当前登录", app.accountId, mine, (id) => save({ accountId: id })),
-      accountSelect("默认账号", app.defaultAccountId, mine, (id) => save({ defaultAccountId: id })))
+    mine.length ? el("div", { class: "app-accounts" }, current, fallback)
       : el("p", { class: "muted", text: "先在“游戏账号”里添加这个游戏的账号" }));
 }
 
@@ -182,48 +183,57 @@ function jobRow(job, reload, expanded) {
   const log = el("div", { class: "job-log" });
   const open = expanded.has(job.id);
   if (open) jobLog(job, log);
+  const command = (path) => async () => {
+    try { await api(`/api/jobs/${enc(job.id)}/${path}`, { method: "POST", body: {} }); } catch (error) { alert(error.message); }
+  };
+  const where = job.deviceName ?? (job.state === "WAITING" ? `最晚 ${clock(job.latestStartAt)} 前开始` : null);
   return el("div", { class: "job-wrap" }, el("div", { class: "job" },
-    el("div", { class: "grow" }, el("div", { class: "name", text: job.taskName }),
-      el("div", { class: "muted", text: [job.accountName, job.deviceName, time(job.updatedAt), job.detail].filter(Boolean).join(" · ") })),
-    el("span", { class: `pill ${tone}`, text: job.cancelRequested && ACTIVE.has(job.state) ? "取消中" : label }),
+    el("div", { class: "grow" }, el("div", { class: "name", text: job.planName ? `${job.taskName} · 计划“${job.planName}”` : job.taskName }),
+      el("div", { class: "muted", text: [job.accountName, where, time(job.updatedAt), job.detail].filter(Boolean).join(" · ") })),
+    el("span", { class: `pill ${tone}`, text: job.cancelRequested && ACTIVE.has(job.state) ? "取消中" : job.state === "RUNNING" && job.pauseRequested ? "暂停中" : label }),
+    job.state === "RUNNING" && !job.cancelRequested ? el("button", { class: "ghost", type: "button", text: job.pauseRequested ? "继续" : "暂停",
+      onclick: command(job.pauseRequested ? "resume" : "pause") }) : null,
     el("button", { class: "ghost", type: "button", text: open ? "收起" : "明细", "aria-expanded": String(open), onclick: () => {
       if (expanded.has(job.id)) expanded.delete(job.id); else expanded.add(job.id);
       reload();
     } }),
-    ACTIVE.has(job.state) && !job.cancelRequested ? el("button", { class: "ghost", type: "button", text: "取消", onclick: async () => {
-      await api(`/api/jobs/${encodeURIComponent(job.id)}/cancel`, { method: "POST", body: {} }); reload();
-    } }) : null), open ? log : null);
+    ACTIVE.has(job.state) && !job.cancelRequested ? el("button", { class: "ghost", type: "button", text: job.state === "RUNNING" ? "停止" : "取消",
+      onclick: command("cancel") }) : null), open ? log : null);
 }
 
-/** A job runs one task for one game account, with that account's settings. */
-function jobForm(devices, accounts, reload) {
-  const online = devices.filter((device) => device.tasks.length > 0);
-  if (online.length === 0) return el("p", { class: "card muted", text: "设备上线并上报任务后，就可以在这里下发作业。" });
-  if (accounts.length === 0) return el("p", { class: "card muted", text: "先在“游戏账号”里添加账号，作业会用这个账号的设置运行。" });
+/**
+ * Runs a task now for one game account. "自动分配" lets the server pick an app signed in to the account; choosing an
+ * app sends it there, which works only while that app is signed in to the account (switching comes later).
+ */
+function jobForm(devices, accounts, games) {
+  const tasks = games.flatMap((game) => game.tasks.map((task) => ({ ...task, game })));
+  if (tasks.length === 0) return el("p", { class: "card muted", text: "设备上线并上报任务后，就可以在这里运行任务。" });
+  if (accounts.length === 0) return el("p", { class: "card muted", text: "先在“游戏账号”里添加账号，任务会用这个账号的设置运行。" });
   const message = el("p", { class: "message", role: "status" });
-  const taskSelect = el("select", { name: "task", required: true, onchange: fillAccounts });
+  const taskSelect = el("select", { name: "task", required: true, onchange: fill },
+    ...tasks.map((task, i) => el("option", { value: String(i), text: games.length > 1 ? `${task.game.name} · ${task.name}` : task.name })));
   const accountSelect = el("select", { name: "account", required: true });
-  const deviceSelect = el("select", { name: "device", required: true, onchange: fill }, ...online.map((device) => el("option", { value: device.id, text: device.name })));
+  const whereSelect = el("select", { name: "where" });
   function fill() {
-    const device = online.find((item) => item.id === deviceSelect.value);
-    taskSelect.replaceChildren(...device.tasks.map((task) => el("option", { value: `${task.targetId}\n${task.taskId}`, text: task.name })));
-    fillAccounts();
-  }
-  function fillAccounts() {
-    const [targetId] = taskSelect.value.split("\n");
-    const mine = accounts.filter((account) => account.gameId === targetId);
+    const task = tasks[Number(taskSelect.value)];
+    const mine = accounts.filter((account) => account.gameId === task.targetId);
     accountSelect.replaceChildren(...(mine.length ? mine.map((account) => el("option", { value: account.id, text: account.name }))
       : [el("option", { value: "", text: "这个游戏还没有账号" })]));
+    const apps = devices.filter((device) => device.online).flatMap((device) => device.apps.filter((app) => app.gameId === task.targetId)
+      .map((app) => [JSON.stringify([device.id, app.key]), device.apps.length > 1 ? `${device.name} · ${app.name}` : device.name]));
+    whereSelect.replaceChildren(el("option", { value: "", text: "自动分配（登录着这个账号的应用）" }), ...apps.map(([value, text]) => el("option", { value, text })));
   }
   fill();
-  const form = el("form", { class: "card", onsubmit: async (event) => {
-    event.preventDefault(); message.textContent = "";
-    const [targetId, taskId] = taskSelect.value.split("\n");
-    try { await api("/api/jobs", { method: "POST", body: { deviceId: deviceSelect.value, targetId, taskId, accountId: accountSelect.value } }); reload(); }
-    catch (error) { message.textContent = error.message; }
-  } }, el("div", { class: "new-job" }, el("label", { text: "设备" }, deviceSelect), el("label", { text: "任务" }, taskSelect),
-    el("label", { text: "账号" }, accountSelect), el("button", { class: "primary", type: "submit", text: "运行" })), message);
-  return form;
+  return el("form", { class: "card", onsubmit: async (event) => {
+    event.preventDefault(); message.textContent = ""; message.className = "message";
+    const task = tasks[Number(taskSelect.value)];
+    const [deviceId, appKey] = whereSelect.value ? JSON.parse(whereSelect.value) : [null, null];
+    try {
+      await api("/api/jobs", { method: "POST", body: { targetId: task.targetId, taskId: task.taskId, accountId: accountSelect.value, deviceId, appKey } });
+      message.textContent = "已提交，进度见作业记录"; message.className = "message ok";
+    } catch (error) { message.textContent = error.message; }
+  } }, el("div", { class: "new-job" }, el("label", { text: "任务" }, taskSelect), el("label", { text: "账号" }, accountSelect),
+    el("label", { text: "在哪运行" }, whereSelect), el("button", { class: "primary", type: "submit", text: "运行" })), message);
 }
 
 /** One input per setting the task declares; returns [node, read] where read() gives the value to save or undefined. */
@@ -432,7 +442,8 @@ function accountsPanel(view) {
     refresh(what) {
       renderList();
       if (what === "games" || what === "init") addBox.replaceChildren(addForm());
-      if (what === "accounts" && !view.accounts.some((item) => item.id === selected)) { selected = null; showDetail(); }
+      // A new or renamed account appears here once the server confirms it; the open detail follows, unless a plan is being edited.
+      if (what === "accounts") { if (!view.accounts.some((item) => item.id === selected)) selected = null; if (!editing) showDetail(); }
       if (what === "plans" && !editing) renderPlans();
     },
   };
@@ -452,18 +463,24 @@ async function showConsole(account) {
   let jobs = [];
   const view = { accounts: [], plans: [], games: [], devices: [] };
   const panel = accountsPanel(view);
-  const nothing = () => {};
 
   // Each part is redrawn only when its own data changes, so open forms and expanded logs stay as they are.
+  let devicesStale = false;
   function renderDevices() {
     const list = [...devices.values()].sort((a, b) => a.name.localeCompare(b.name, "zh-CN") || a.id.localeCompare(b.id));
     view.devices = list;
-    devicesBox.replaceChildren(...(list.length ? list.map((device) => deviceCard(device, view.accounts))
-      : [el("p", { class: "card muted", text: "还没有设备。在手机上打开护肝宝并登录这个账号，设备会自动出现在这里。" })]));
+    // A select someone has open is not pulled from under them; the cards are redrawn when it loses focus.
+    if (devicesBox.contains(document.activeElement)) devicesStale = true;
+    else {
+      devicesStale = false;
+      devicesBox.replaceChildren(...(list.length ? list.map((device) => deviceCard(device, view.accounts))
+        : [el("p", { class: "card muted", text: "还没有设备。在手机上打开护肝宝并登录这个账号，设备会自动出现在这里。" })]));
+    }
     // Rebuilding the form while someone is choosing a task would reset their selection.
-    const key = JSON.stringify([list.map((device) => [device.id, device.tasks]), view.accounts]);
-    if (key !== formKey) { formKey = key; formBox.replaceChildren(jobForm(list, view.accounts, nothing)); }
+    const key = JSON.stringify([list.map((device) => [device.id, device.online, device.apps.map((app) => app.key)]), view.accounts, view.games]);
+    if (key !== formKey && !formBox.contains(document.activeElement)) { formKey = key; formBox.replaceChildren(jobForm(list, view.accounts, view.games)); }
   }
+  devicesBox.addEventListener("focusout", () => setTimeout(() => { if (devicesStale && !devicesBox.contains(document.activeElement)) renderDevices(); }));
   function showZone(value) {
     zone.replaceChildren(`计划时区：${value} `, el("button", { class: "link", type: "button", text: "修改", onclick: async () => {
       const next = prompt("计划按哪个时区计时？例如 Asia/Shanghai", value);
@@ -475,9 +492,14 @@ async function showConsole(account) {
   }
   function live(ok, text) { status.textContent = text; status.className = `message ${ok ? "ok" : ""}`; }
 
+  // The browser retries a dropped stream by itself, but not after an error status (a proxy's 502 during a deploy):
+  // then the stream is closed and is opened again here, a little later each time.
+  let retryMs = 2000;
+  function connect() {
   stopRefresh();
   stream = new EventSource("/api/events");
   stream.addEventListener("snapshot", (event) => {
+    retryMs = 2000;
     const snapshot = JSON.parse(event.data);
     devices = new Map(snapshot.devices.map((device) => [device.id, device]));
     jobs = snapshot.jobs;
@@ -486,7 +508,7 @@ async function showConsole(account) {
   });
   for (const name of ["accounts", "plans", "games"]) stream.addEventListener(name, (event) => {
     view[name] = JSON.parse(event.data);
-    if (name === "accounts") renderDevices();
+    if (name === "accounts" || name === "games") renderDevices();
     panel.refresh(name);
   });
   stream.addEventListener("time-zone", (event) => showZone(JSON.parse(event.data).timeZone));
@@ -498,9 +520,15 @@ async function showConsole(account) {
   stream.onopen = () => live(true, "实时连接中");
   stream.onerror = async () => {
     live(false, "与服务器的连接断开了，正在重连…");
-    // The browser keeps retrying on its own; only a lost sign-in has to be handled here.
-    try { await api("/api/me"); } catch (error) { if (error.status === 401) { stopRefresh(); showAuth(); } }
+    try { await api("/api/me"); } catch (error) { if (error.status === 401) { stopRefresh(); showAuth(); return; } }
+    if (stream?.readyState === EventSource.CLOSED) {
+      const closed = stream;
+      setTimeout(() => { if (stream === closed) connect(); }, retryMs); // not if the console was left meanwhile
+      retryMs = Math.min(retryMs * 2, 60000);
+    }
   };
+  }
+  connect();
   root.className = "shell";
   root.replaceChildren(
     el("header", { class: "top" }, el("div", { class: "grow" }, brand()), el("span", { class: "who", text: account.email ?? account.githubLogin ?? "" }),

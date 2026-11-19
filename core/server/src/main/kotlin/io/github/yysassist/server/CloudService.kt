@@ -178,13 +178,134 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         val now = clock()
         val touched = query("SELECT DISTINCT user_id FROM jobs WHERE state IN ('LEASED', 'RUNNING') AND lease_expires_at < ?", now) { it.getString(1) }.toSet()
         if (touched.isEmpty()) return touched
-        // Never acknowledged, so nothing ran: offer it again. Once started the outcome is unknown and is never retried.
+        // Never acknowledged, so nothing ran: offer it again, unless it was cancelled meanwhile. Once started the outcome
+        // is unknown and is never retried.
+        update("UPDATE jobs SET state = 'CANCELLED', detail = '已取消', lease_expires_at = NULL, updated_at = ? WHERE state = 'LEASED' AND cancel_requested = 1 AND lease_expires_at < ?", now, now)
         update("UPDATE jobs SET state = 'QUEUED', lease_expires_at = NULL, updated_at = ? WHERE state = 'LEASED' AND lease_expires_at < ?", now, now)
         update("UPDATE jobs SET state = 'UNKNOWN', detail = '设备失联，结果未确认', lease_expires_at = NULL, updated_at = ? WHERE state = 'RUNNING' AND lease_expires_at < ?", now, now)
         return touched
     }
-    /** Run periodically, so a job whose device went silent is settled even when nobody is looking. */
-    fun sweepAll() { db.tx { sweep() }.forEach(::pushJobs) }
+    /**
+     * Run every few seconds: fires plans whose time has come, settles expired leases, gives waiting jobs to apps and
+     * sends each idle connected device its next job.
+     */
+    fun tick() {
+        val now = clock()
+        val touched = db.tx { firePlans(now) + sweep() + assignWaiting(now) }
+        touched.forEach(::pushJobs)
+        dispatchAll()
+    }
+
+    /**
+     * Each enabled plan fires once per scheduled time, in the user's time zone. A time missed by more than the plan's
+     * latest start (the server was down) is recorded as skipped. A plan never fires for a time before it was saved.
+     */
+    private fun Database.firePlans(now: Long): Set<String> {
+        val touched = mutableSetOf<String>()
+        val due = query("""SELECT p.id, p.user_id, p.account_id, p.name, p.days_mask, p.minute_of_day, p.tasks_json, p.device_ids_json,
+            p.latest_start_minutes, p.fired_up_to, u.time_zone FROM plans p JOIN users u ON u.id = p.user_id WHERE p.enabled = 1""") {
+            listOf(it.getString(1), it.getString(2), it.getString(3), it.getString(4), it.getInt(5), it.getInt(6), it.getString(7), it.getString(8),
+                it.getInt(9), it.getLong(10), it.getString(11)) }
+        for (row in due) {
+            val zone = runCatching { java.time.ZoneId.of(row[10] as String) }.getOrDefault(java.time.ZoneId.of(DEFAULT_ZONE))
+            val schedule = io.github.yysassist.core.plan.PlanSchedule(io.github.yysassist.core.plan.PlanSchedule.daysOf(row[4] as Int), row[5] as Int)
+            val slot = schedule.previous(java.time.Instant.ofEpochMilli(now).atZone(zone)).toInstant().toEpochMilli()
+            if (slot <= row[9] as Long) continue
+            val (planId, userId, accountId) = Triple(row[0] as String, row[1] as String, row[2] as String)
+            update("UPDATE plans SET fired_up_to = ? WHERE id = ?", slot, planId)
+            val latest = slot + (row[8] as Int) * MINUTE
+            val missed = now > latest
+            val account = single("SELECT name FROM game_accounts WHERE id = ?", accountId) { it.getString(1) }
+            json.decodeFromString(tasks, row[6] as String).forEachIndexed { index, task ->
+                val (values, _) = savedConfig(accountId, task.targetId, task.taskId)
+                val issue = if (missed) "错过了计划时间：服务端当时没有运行" else runCatching { latestTask(userId, task.targetId, task.taskId).second }.getOrNull()
+                    ?.let { validateConfiguration(it, values) }?.takeIf { it.isNotEmpty() }?.let { "「$account」的「${task.name}」设置不完整：" + it.joinToString("；") { issue -> issue.reason } }
+                update("""INSERT INTO jobs (id, user_id, target_id, task_id, task_name, state, detail, created_at, updated_at, config_json, account_id, account_name,
+                    plan_id, plan_name, allowed_devices_json, latest_start_at, sequence) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    UUID.randomUUID().toString(), userId, task.targetId, task.taskId, task.name, if (issue == null) "WAITING" else "SKIPPED", issue.orEmpty(),
+                    now, now, values.toString(), accountId, account, planId, row[3], row[7], latest, index)
+            }
+            touched += userId
+        }
+        return touched
+    }
+
+    /**
+     * Gives each waiting job to an online app signed in to its account, among the devices it may use. Switching
+     * accounts is not supported yet, so a job no such app can take waits, and is skipped after its latest start.
+     */
+    private fun Database.assignWaiting(now: Long): Set<String> {
+        val touched = mutableSetOf<String>()
+        val waiting = query("""SELECT id, user_id, target_id, task_id, account_id, allowed_devices_json, latest_start_at FROM jobs
+            WHERE state = 'WAITING' ORDER BY created_at, sequence, id""") {
+            listOf(it.getString(1), it.getString(2), it.getString(3), it.getString(4), it.getString(5), it.getString(6), it.getLong(7)) }
+        val devicesOf = HashMap<String, List<DeviceView>>()
+        for (job in waiting) {
+            val (id, userId) = job[0] as String to job[1] as String
+            if (now > job[6] as Long) {
+                update("UPDATE jobs SET state = 'SKIPPED', detail = ?, updated_at = ? WHERE id = ?", "到最晚开始时间仍没有登录着这个账号的在线应用", now, id)
+                touched += userId; continue
+            }
+            val allowed = json.decodeFromString(idList, job[5] as String).toSet()
+            val devices = devicesOf.getOrPut(userId) { deviceRows(userId, null) }
+            val target = devices.asSequence().filter { it.online && (allowed.isEmpty() || it.id in allowed) && it.tasks.any { t -> t.targetId == job[2] && t.taskId == job[3] } }
+                .flatMap { device -> device.apps.filter { it.gameId == job[2] && it.accountId != null && it.accountId == job[4] }.map { device to it } }
+                .minByOrNull { (device, _) -> single("SELECT COUNT(*) FROM jobs WHERE device_id = ? AND state IN ('QUEUED', 'LEASED', 'RUNNING')", device.id) { it.getInt(1) } ?: 0 }
+                ?: continue
+            update("UPDATE jobs SET state = 'QUEUED', device_id = ?, app_key = ?, updated_at = ? WHERE id = ?", target.first.id, target.second.key, now, id)
+            touched += userId
+        }
+        return touched
+    }
+
+    /**
+     * Sends [deviceId] its next queued job when it is connected and has none in hand. A job past its latest start is
+     * skipped; one whose settings no longer fit the device's task version fails without being sent.
+     */
+    private fun dispatch(deviceId: String) {
+        if (!sockets.isOnline(deviceId)) return
+        val now = clock()
+        val (lease, userId) = db.tx {
+            val owner = single("SELECT user_id FROM devices WHERE id = ? AND revoked = 0", deviceId) { it.getString(1) } ?: return@tx null to null
+            if (single("SELECT 1 FROM jobs WHERE device_id = ? AND state IN ('LEASED', 'RUNNING') LIMIT 1", deviceId) { true } == true) return@tx null to owner
+            // A device held on its own (paused there, or waiting for a step to be checked) would only hold the job too.
+            val held = single("SELECT phase FROM devices WHERE id = ?", deviceId) { it.getString(1) } in HELD_PHASES
+            var touched = false
+            while (true) {
+                val job = single("""SELECT id, target_id, task_id, lease_no, config_json, latest_start_at FROM jobs WHERE device_id = ? AND state = 'QUEUED'
+                    ORDER BY created_at, sequence, id LIMIT 1""", deviceId) {
+                    listOf(it.getString(1), it.getString(2), it.getString(3), it.getLong(4), it.getString(5), it.getLong(6).takeUnless { _ -> it.wasNull() }) }
+                    ?: return@tx null to owner.takeIf { touched }
+                val jobId = job[0] as String
+                val latest = job[5] as Long?
+                if (latest != null && now > latest) {
+                    update("UPDATE jobs SET state = 'SKIPPED', detail = '到最晚开始时间还没轮到', updated_at = ? WHERE id = ?", now, jobId); touched = true; continue
+                }
+                if (held) return@tx null to owner.takeIf { touched }
+                val values = json.parseToJsonElement(job[4] as String).jsonObject
+                val checked = runCatching { deviceTask(owner, deviceId, job[1] as String, job[2] as String) }
+                val issue = checked.exceptionOrNull()?.message ?: validateConfiguration(checked.getOrThrow().second, values).takeIf { it.isNotEmpty() }
+                    ?.joinToString("；") { it.reason }?.let { "设置与设备的任务版本不符：$it" }
+                if (issue != null) {
+                    update("UPDATE jobs SET state = 'FAILED', detail = ?, updated_at = ? WHERE id = ?", issue.take(500), now, jobId); touched = true; continue
+                }
+                val digest = checked.getOrThrow().first
+                val version = single("SELECT version FROM catalogs WHERE user_id = ? AND digest = ?", owner, digest) { it.getString(1) }.orEmpty()
+                val leaseNo = (job[3] as Long) + 1; val expires = now + ACK_LIFETIME
+                update("UPDATE jobs SET state = 'LEASED', lease_no = ?, lease_expires_at = ?, version = ?, digest = ?, updated_at = ? WHERE id = ?",
+                    leaseNo, expires, version, digest, now, jobId)
+                return@tx JobLease(jobId, leaseNo, owner, deviceId, job[1] as String, job[2] as String, expires, version, digest, values) to owner
+            }
+            @Suppress("UNREACHABLE_CODE") null to null
+        }
+        if (lease != null && !sockets.send(deviceId, encode(ServerMessage.Job(lease)))) {
+            // Not delivered: the lease expires unacknowledged and the job is offered again.
+        }
+        userId?.let(::pushJobs)
+    }
+    private fun dispatchAll() {
+        db.tx { query("SELECT DISTINCT device_id FROM jobs WHERE state = 'QUEUED' AND device_id IS NOT NULL") { it.getString(1) } }.forEach(::dispatch)
+    }
 
     /**
      * A device's report over its socket. Returns what the server has to tell it back: whether its task bundle is
@@ -195,7 +316,7 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         val (replies, swept) = db.tx {
             update("""UPDATE devices SET last_seen_at = ?, phase = ?, current_task = ?, queued = ?, tasks_json = ?, catalog_version = ?, catalog_digest = ?,
                 apps_json = ?, concurrency = ? WHERE id = ? AND user_id = ?""",
-                now, status.phase.take(40), status.currentTask?.take(120), status.queued, json.encodeToString(tasks, status.tasks.take(500)),
+                now, status.phase.take(40), status.currentTask?.take(120), status.queued, json.encodeToString(tasks, status.tasks.take(500).map { it.copy(targetId = it.targetId.take(80), taskId = it.taskId.take(80), name = it.name.take(80)) }),
                 status.catalog?.version?.take(120), status.catalog?.digest?.take(64), json.encodeToString(apps, status.apps.take(MAX_APPS).map(::bounded)),
                 status.concurrency.coerceIn(1, MAX_APPS), id, caller.userId)
             val reported = status.catalog
@@ -204,29 +325,46 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             update("UPDATE jobs SET lease_expires_at = ? WHERE device_id = ? AND user_id = ? AND state = 'RUNNING'", now + LEASE_LIFETIME, id, caller.userId)
             val swept = sweep()
             val cancelled = query("SELECT id FROM jobs WHERE device_id = ? AND user_id = ? AND cancel_requested = 1 AND state IN ('LEASED', 'RUNNING')", id, caller.userId) { it.getString(1) }
-            listOfNotNull(ServerMessage.CatalogNeeded.takeIf { missing }, cancelled.takeIf { it.isNotEmpty() }?.let(ServerMessage::Cancel)) to swept
+            // The wanted pause state goes back with every report, so one sent while the run had not started, or lost
+            // with a dropped socket, still arrives. The device acts only on a change.
+            val running = query("SELECT id, pause_requested FROM jobs WHERE device_id = ? AND user_id = ? AND state = 'RUNNING' AND cancel_requested = 0", id, caller.userId) {
+                if (it.getInt(2) == 1) ServerMessage.Pause(it.getString(1)) else ServerMessage.Resume(it.getString(1)) }
+            listOfNotNull(ServerMessage.CatalogNeeded.takeIf { missing }, cancelled.takeIf { it.isNotEmpty() }?.let(ServerMessage::Cancel)) + running to swept
         }
         pushDevice(caller.userId, id)
         swept.forEach(::pushJobs)
+        dispatch(id)
         return replies
     }
     private fun bounded(app: AppStatus) = app.copy(key = app.key.take(120), gameId = app.gameId.take(80), name = app.name.take(80), phase = app.phase.take(40),
         currentTask = app.currentTask?.take(120))
     /** Called when a device's socket opens or closes; the console shows it as online only while connected. */
     fun connectionChanged(userId: String, deviceId: String) {
-        if (sockets.isOnline(deviceId)) db.tx { update("UPDATE devices SET last_seen_at = ? WHERE id = ? AND user_id = ?", clock(), deviceId, userId) }
+        // What the device was doing before is stale until its first report on this connection; nothing is sent till then.
+        if (sockets.isOnline(deviceId)) db.tx { update("UPDATE devices SET last_seen_at = ?, phase = 'CONNECTING' WHERE id = ? AND user_id = ?", clock(), deviceId, userId) }
         pushDevice(userId, deviceId)
+        if (sockets.isOnline(deviceId)) { assignNow(); dispatch(deviceId) }
     }
+    /** Waiting jobs may fit a device that just came online or an app whose account was just set. */
+    private fun assignNow() { db.tx { assignWaiting(clock()) }.forEach(::pushJobs); dispatchAll() }
 
-    private fun pushDevice(userId: String, deviceId: String) {
-        val view = db.tx { deviceRows(userId, deviceId) }.singleOrNull() ?: return
+    // Each push reads and publishes inside one transaction. Transactions run one at a time, so events leave in the
+    // order their data was read, and a later event never carries older data than an earlier one.
+    /** The last device payload sent, without its last-seen time, so a report that changes nothing else is not sent. */
+    private val lastDevicePayload = java.util.concurrent.ConcurrentHashMap<String, String>()
+    private fun Database.publishDevice(userId: String, view: DeviceView) {
+        val quiet = json.encodeToString(DeviceView.serializer(), view.copy(lastSeenAt = null))
+        if (lastDevicePayload.put(view.id, quiet) == quiet) return
         events.publish(userId, "device", json.encodeToString(DeviceView.serializer(), view))
     }
-    private fun pushJobs(userId: String) = events.publish(userId, "jobs", json.encodeToString(jobList, db.tx { jobRows(userId) }))
-    /** What a console shows first, and again whenever it cannot catch up from the event log. */
-    fun consoleSnapshot(userId: String): ConsoleSnapshot = db.tx {
-        sweep()
-        ConsoleSnapshot(deviceRows(userId, null), jobRows(userId), accountRows(userId), planRows(userId), gameRows(userId), zoneOf(userId))
+    private fun pushDevice(userId: String, deviceId: String) = db.tx { deviceRows(userId, deviceId).singleOrNull()?.let { publishDevice(userId, it) } }
+    private fun pushJobs(userId: String) = db.tx { events.publish(userId, "jobs", json.encodeToString(jobList, jobRows(userId))) }
+    /**
+     * What a console shows first, and again whenever it cannot catch up from the event log, with the id of the last
+     * event it already covers.
+     */
+    fun consoleSnapshotUpTo(userId: String): Pair<ConsoleSnapshot, Long> = db.tx {
+        ConsoleSnapshot(deviceRows(userId, null), jobRows(userId), accountRows(userId), planRows(userId), gameRows(userId), zoneOf(userId)) to events.latest(userId)
     }
     private fun Database.zoneOf(userId: String) = single("SELECT time_zone FROM users WHERE id = ?", userId) { it.getString(1) } ?: DEFAULT_ZONE
     fun encode(snapshot: ConsoleSnapshot) = json.encodeToString(ConsoleSnapshot.serializer(), snapshot)
@@ -242,8 +380,15 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             caller.userId, upload.digest, upload.version, upload.bundle, clock()) }
         if (added > 0) pushGames(caller.userId)
     }
+    /** Stored bundles never change, so each is parsed once and kept while it is in use. */
+    private val parsed = object : LinkedHashMap<String, TaskBundle>(16, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, TaskBundle>) = size > MAX_PARSED_BUNDLES
+    }
+    private fun bundle(digest: String, text: () -> String): TaskBundle = synchronized(parsed) { parsed[digest] }
+        ?: bundles.decodeFromString(TaskBundle.serializer(), text()).also { synchronized(parsed) { parsed[digest] = it } }
     private fun Database.catalog(userId: String, digest: String): TaskBundle? =
-        single("SELECT bundle_json FROM catalogs WHERE user_id = ? AND digest = ?", userId, digest) { bundles.decodeFromString(TaskBundle.serializer(), it.getString(1)) }
+        single("SELECT 1 FROM catalogs WHERE user_id = ? AND digest = ?", userId, digest) { true }?.let {
+            bundle(digest) { single("SELECT bundle_json FROM catalogs WHERE user_id = ? AND digest = ?", userId, digest) { row -> row.getString(1) }!! } }
     /** The task as defined by the version the device currently runs. */
     private fun Database.deviceTask(userId: String, deviceId: String, targetId: String, taskId: String): Pair<String, TaskDefinition> {
         val digest = single("SELECT catalog_digest FROM devices WHERE id = ? AND user_id = ? AND revoked = 0", deviceId, userId) { it.getString(1) to true }
@@ -258,8 +403,8 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             json.parseToJsonElement(it.getString(1)).jsonObject to it.getLong(2) } ?: (JsonObject(emptyMap()) to 0L)
     /** Bundles this user's devices uploaded, newest first. */
     private fun Database.catalogsNewestFirst(userId: String): List<Pair<String, TaskBundle>> =
-        query("SELECT version, bundle_json FROM catalogs WHERE user_id = ? ORDER BY uploaded_at DESC, digest", userId) {
-            it.getString(1) to bundles.decodeFromString(TaskBundle.serializer(), it.getString(2)) }
+        query("SELECT version, digest FROM catalogs WHERE user_id = ? ORDER BY uploaded_at DESC, digest LIMIT ?", userId, MAX_BUNDLES_READ) { it.getString(1) to it.getString(2) }
+            .map { (version, digest) -> version to bundle(digest) { single("SELECT bundle_json FROM catalogs WHERE user_id = ? AND digest = ?", userId, digest) { it.getString(1) }!! } }
     /**
      * The task as the newest uploaded bundle defines it. Until each game has a chosen current version, this is what
      * settings are checked against.
@@ -365,9 +510,10 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         val id = UUID.randomUUID().toString(); val now = clock()
         db.tx {
             val (mask, chosen) = checkedPlan(caller.userId, account(caller.userId, accountId), save)
-            update("""INSERT INTO plans (id, user_id, account_id, name, days_mask, minute_of_day, tasks_json, device_ids_json, latest_start_minutes, enabled, revision, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)""", id, caller.userId, accountId, save.name.trim(), mask, save.minuteOfDay, json.encodeToString(tasks, chosen),
-                json.encodeToString(idList, save.deviceIds.distinct()), save.latestStartMinutes, if (save.enabled) 1 else 0, now, now)
+            // fired_up_to starts at now: a plan never fires for a time that had already passed when it was saved.
+            update("""INSERT INTO plans (id, user_id, account_id, name, days_mask, minute_of_day, tasks_json, device_ids_json, latest_start_minutes, enabled, revision,
+                created_at, updated_at, fired_up_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)""", id, caller.userId, accountId, save.name.trim(), mask, save.minuteOfDay,
+                json.encodeToString(tasks, chosen), json.encodeToString(idList, save.deviceIds.distinct()), save.latestStartMinutes, if (save.enabled) 1 else 0, now, now, now)
         }
         pushPlans(caller.userId)
         return plans(caller).first { it.id == id }
@@ -375,13 +521,17 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
     /** A save made from an older copy is refused rather than overwriting someone else's change. */
     fun updatePlan(caller: Caller, planId: String, save: PlanSave): PlanView {
         db.tx {
-            val (accountId, revision) = single("SELECT account_id, revision FROM plans WHERE id = ? AND user_id = ?", planId, caller.userId) { it.getString(1) to it.getLong(2) }
-                ?: throw ApiException(404, "not_found", "计划不存在")
+            val (accountId, revision, schedule) = single("SELECT account_id, revision, days_mask, minute_of_day, enabled FROM plans WHERE id = ? AND user_id = ?", planId, caller.userId) {
+                Triple(it.getString(1), it.getLong(2), Triple(it.getInt(3), it.getInt(4), it.getInt(5) == 1)) } ?: throw ApiException(404, "not_found", "计划不存在")
             if (revision != save.revision) throw ApiException(409, "revision_changed", "计划已在别处修改，请刷新后再改")
             val (mask, chosen) = checkedPlan(caller.userId, account(caller.userId, accountId), save)
+            val now = clock()
+            // Only a new time, or turning the plan back on, starts it afresh; renaming it just after its time keeps that run.
+            val rescheduled = schedule.first != mask || schedule.second != save.minuteOfDay || (save.enabled && !schedule.third)
             update("""UPDATE plans SET name = ?, days_mask = ?, minute_of_day = ?, tasks_json = ?, device_ids_json = ?, latest_start_minutes = ?, enabled = ?,
-                revision = revision + 1, updated_at = ? WHERE id = ? AND user_id = ?""", save.name.trim(), mask, save.minuteOfDay, json.encodeToString(tasks, chosen),
-                json.encodeToString(idList, save.deviceIds.distinct()), save.latestStartMinutes, if (save.enabled) 1 else 0, clock(), planId, caller.userId)
+                revision = revision + 1, updated_at = ?, fired_up_to = CASE WHEN ? THEN MAX(fired_up_to, ?) ELSE fired_up_to END WHERE id = ? AND user_id = ?""", save.name.trim(), mask, save.minuteOfDay,
+                json.encodeToString(tasks, chosen), json.encodeToString(idList, save.deviceIds.distinct()), save.latestStartMinutes, if (save.enabled) 1 else 0,
+                now, if (rescheduled) 1 else 0, now, planId, caller.userId)
         }
         pushPlans(caller.userId)
         return plans(caller).first { it.id == planId }
@@ -401,29 +551,28 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
                 deviceId, appKey, caller.userId, save.accountId, save.defaultAccountId)
         }
         pushDevice(caller.userId, deviceId)
+        assignNow()
     }
     fun timeZone(caller: Caller, save: TimeZoneSave) {
         val zone = runCatching { java.time.ZoneId.of(save.timeZone).id }.getOrNull() ?: throw ApiException(400, "invalid_time_zone", "时区无效")
-        db.tx { update("UPDATE users SET time_zone = ? WHERE id = ?", zone, caller.userId) }
+        // The plans' times move with the zone; one that has already passed in the new zone does not fire again today.
+        db.tx { update("UPDATE users SET time_zone = ? WHERE id = ?", zone, caller.userId)
+            update("UPDATE plans SET fired_up_to = MAX(fired_up_to, ?) WHERE user_id = ?", clock(), caller.userId) }
         events.publish(caller.userId, "time-zone", json.encodeToString(TimeZoneSave.serializer(), TimeZoneSave(zone)))
     }
-    private fun pushAccounts(userId: String) = events.publish(userId, "accounts", json.encodeToString(accountList, db.tx { accountRows(userId) }))
-    private fun pushPlans(userId: String) = events.publish(userId, "plans", json.encodeToString(planList, db.tx { planRows(userId) }))
-    private fun pushGames(userId: String) = events.publish(userId, "games", json.encodeToString(gameList, db.tx { gameRows(userId) }))
-    private fun pushAllDevices(userId: String) = db.tx { deviceRows(userId, null) }.forEach {
-        events.publish(userId, "device", json.encodeToString(DeviceView.serializer(), it)) }
-    fun nextJob(caller: Caller): JobLease? {
-        val id = device(caller); val now = clock()
-        return db.tx {
-            sweep()
-            val job = single("SELECT id, target_id, task_id, lease_no, version, digest, config_json FROM jobs WHERE device_id = ? AND user_id = ? AND state = 'QUEUED' ORDER BY created_at, id LIMIT 1", id, caller.userId) {
-                listOf(it.getString(1), it.getString(2), it.getString(3), it.getLong(4), it.getString(5), it.getString(6), it.getString(7)) } ?: return@tx null
-            val lease = (job[3] as Long) + 1; val expires = now + ACK_LIFETIME
-            update("UPDATE jobs SET state = 'LEASED', lease_no = ?, lease_expires_at = ?, updated_at = ? WHERE id = ?", lease, expires, now, job[0])
-            JobLease(job[0] as String, lease, caller.userId, id, job[1] as String, job[2] as String, expires, job[4] as String, job[5] as String,
-                json.parseToJsonElement(job[6] as String).jsonObject)
-        }?.also { pushJobs(caller.userId) }
+    private fun pushAccounts(userId: String) = db.tx { events.publish(userId, "accounts", json.encodeToString(accountList, accountRows(userId))) }
+    private fun pushPlans(userId: String) = db.tx { events.publish(userId, "plans", json.encodeToString(planList, planRows(userId))) }
+    private fun pushGames(userId: String) = db.tx { events.publish(userId, "games", json.encodeToString(gameList, gameRows(userId))) }
+    private fun pushAllDevices(userId: String) = db.tx { deviceRows(userId, null).forEach { publishDevice(userId, it) } }
+    /**
+     * Whether the session a socket or stream was opened with still holds: sign-out, a password reset and device
+     * revocation delete it, and a browser session also ends when it expires.
+     */
+    fun sessionAlive(caller: Caller): Boolean = db.tx {
+        single("SELECT kind, access_expires_at FROM sessions WHERE id = ? AND user_id = ?", caller.sessionId, caller.userId) {
+            it.getString(1) == SessionKind.DEVICE.name || it.getLong(2) >= clock() } ?: false
     }
+    /** A finished job frees its device for the next one. */
     fun report(caller: Caller, jobId: String, report: JobReport) {
         val id = device(caller); val now = clock()
         db.tx {
@@ -440,9 +589,11 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             }
             if (!allowed) throw ApiException(409, "invalid_transition", "作业状态不能这样变更")
             val active = report.state == JobState.RUNNING
-            update("UPDATE jobs SET state = ?, detail = ?, lease_expires_at = ?, updated_at = ? WHERE id = ?", report.state.name, report.detail.take(500), if (active) now + LEASE_LIFETIME else null, now, jobId)
+            update("UPDATE jobs SET state = ?, detail = ?, lease_expires_at = ?, pause_requested = CASE WHEN ? THEN pause_requested ELSE 0 END, updated_at = ? WHERE id = ?",
+                report.state.name, report.detail.take(500), if (active) now + LEASE_LIFETIME else null, active, now, jobId)
         }
         pushJobs(caller.userId)
+        dispatch(id)
     }
 
     /** Only the device holding the current lease can add to a job's log; lines past the cap are dropped. */
@@ -499,43 +650,60 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         events.publish(caller.userId, "device-removed", json.encodeToString(RemovedDevice.serializer(), RemovedDevice(deviceId)))
         pushJobs(caller.userId)
     }
+    /**
+     * Runs a task now for one game account. Without a device the server picks an app signed in to the account (4.2);
+     * with one, the job goes to that device's app of the game, which must be signed in to the account because switching
+     * is not supported yet. Either way it has [IMMEDIATE_WAIT] to start, or it is skipped.
+     */
     fun createJob(caller: Caller, request: CreateJobRequest): JobView {
         val id = UUID.randomUUID().toString(); val now = clock()
-        db.tx {
-            val offered = single("SELECT tasks_json FROM devices WHERE id = ? AND user_id = ? AND revoked = 0", request.deviceId, caller.userId) { json.decodeFromString(tasks, it.getString(1)) }
-                ?: throw ApiException(404, "not_found", "设备不存在")
-            val task = offered.firstOrNull { it.targetId == request.targetId && it.taskId == request.taskId } ?: throw ApiException(400, "unknown_task", "这台设备没有这个任务")
+        val assigned = db.tx {
             val account = account(caller.userId, request.accountId)
-            if (account.gameId != task.targetId) throw ApiException(400, "wrong_game", "这个账号不属于该任务的游戏")
-            // The job keeps a copy of the account's settings, checked against the version the device runs now.
-            val (digest, definition) = deviceTask(caller.userId, request.deviceId, task.targetId, task.taskId)
+            if (account.gameId != request.targetId) throw ApiException(400, "wrong_game", "这个账号不属于该任务的游戏")
+            val task = gameRows(caller.userId).singleOrNull { it.id == account.gameId }?.tasks?.singleOrNull { it.taskId == request.taskId }
+                ?: throw ApiException(400, "unknown_task", "这个游戏没有这个任务")
             val (values, _) = savedConfig(account.id, task.targetId, task.taskId)
-            val issues = validateConfiguration(definition, values)
-            if (issues.isNotEmpty()) throw ApiException(400, "config_required", "请先在控制台保存「${account.name}」的「${definition.name}」设置：" + issues.joinToString("；") { it.reason })
-            val version = single("SELECT version FROM catalogs WHERE user_id = ? AND digest = ?", caller.userId, digest) { it.getString(1) }.orEmpty()
-            update("""INSERT INTO jobs (id, user_id, device_id, target_id, task_id, task_name, state, created_at, updated_at, version, digest, config_json, account_id, account_name)
-                VALUES (?, ?, ?, ?, ?, ?, 'QUEUED', ?, ?, ?, ?, ?, ?, ?)""",
-                id, caller.userId, request.deviceId, task.targetId, task.taskId, task.name, now, now, version, digest, values.toString(), account.id, account.name)
+            val issues = validateConfiguration(latestTask(caller.userId, task.targetId, task.taskId).second, values)
+            if (issues.isNotEmpty()) throw ApiException(400, "config_required", "请先在控制台保存「${account.name}」的「${task.name}」设置：" + issues.joinToString("；") { it.reason })
+            val target = request.deviceId?.let { deviceId ->
+                val device = deviceRows(caller.userId, deviceId).singleOrNull() ?: throw ApiException(404, "not_found", "设备不存在")
+                if (device.tasks.none { it.targetId == task.targetId && it.taskId == task.taskId }) throw ApiException(400, "unknown_task", "这台设备没有这个任务")
+                val candidates = device.apps.filter { it.gameId == task.targetId && (request.appKey == null || it.key == request.appKey) }
+                val app = candidates.singleOrNull() ?: throw ApiException(400, if (candidates.isEmpty()) "unknown_app" else "choose_app",
+                    if (candidates.isEmpty()) "这台设备上没有这个游戏的应用" else "这台设备上有多个这个游戏的应用，请选择一个")
+                if (app.accountId != account.id) throw ApiException(409, "account_mismatch",
+                    "${app.name}当前登录的不是「${account.name}」，暂不支持切号：请先在游戏里登录这个账号，并在设备的应用里标明")
+                device.id to app.key
+            }
+            update("""INSERT INTO jobs (id, user_id, device_id, app_key, target_id, task_id, task_name, state, created_at, updated_at, config_json, account_id, account_name,
+                latest_start_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                id, caller.userId, target?.first, target?.second, task.targetId, task.taskId, task.name, if (target == null) "WAITING" else "QUEUED", now, now,
+                values.toString(), account.id, account.name, now + IMMEDIATE_WAIT)
+            target
         }
         pushJobs(caller.userId)
+        if (assigned == null) assignNow() else dispatch(assigned.first)
         return jobs(caller).first { it.id == id }
     }
     private fun Database.jobRows(userId: String): List<JobView> =
         query("""SELECT j.id, j.device_id, d.name, j.target_id, j.task_id, j.task_name, j.state, j.detail, j.cancel_requested, j.created_at, j.updated_at,
-            j.account_id, j.account_name FROM jobs j JOIN devices d ON d.id = j.device_id WHERE j.user_id = ? ORDER BY j.created_at DESC, j.id LIMIT 100""", userId) { r ->
+            j.account_id, j.account_name, j.app_key, j.plan_id, j.plan_name, j.latest_start_at, j.pause_requested
+            FROM jobs j LEFT JOIN devices d ON d.id = j.device_id WHERE j.user_id = ? ORDER BY j.created_at DESC, j.sequence DESC, j.id LIMIT 100""", userId) { r ->
             JobView(r.getString(1), r.getString(2), r.getString(3), r.getString(4), r.getString(5), r.getString(6), JobState.valueOf(r.getString(7)), r.getString(8), r.getInt(9) == 1,
-                r.getLong(10), r.getLong(11), r.getString(12), r.getString(13)) }
-    fun jobs(caller: Caller): List<JobView> = db.tx { sweep(); jobRows(caller.userId) }
+                r.getLong(10), r.getLong(11), r.getString(12), r.getString(13), r.getString(14), r.getString(15), r.getString(16),
+                r.getLong(17).takeUnless { r.wasNull() }, r.getInt(18) == 1) }
+    /** Leases are settled by [tick], which also tells consoles; reading never changes jobs. */
+    fun jobs(caller: Caller): List<JobView> = db.tx { jobRows(caller.userId) }
     /**
-     * A queued job is dropped at once; a running one is flagged, and the device is told now if it is connected and
-     * otherwise on its next report. Returns the device to notify and the job id, or null when nothing has to be sent.
+     * A job that has not been sent is dropped at once; a sent one is flagged, and the device is told now if it is
+     * connected and otherwise on its next report. Returns the device to notify, or null when nothing has to be sent.
      */
     fun cancelJob(caller: Caller, jobId: String): Pair<String, ServerMessage.Cancel>? {
         val notify = db.tx {
             val job = single("SELECT state, device_id FROM jobs WHERE id = ? AND user_id = ?", jobId, caller.userId) { JobState.valueOf(it.getString(1)) to it.getString(2) }
                 ?: throw ApiException(404, "not_found", "作业不存在")
             when (job.first) {
-                JobState.QUEUED -> { update("UPDATE jobs SET state = 'CANCELLED', detail = '已取消', updated_at = ? WHERE id = ?", clock(), jobId); null }
+                JobState.WAITING, JobState.QUEUED -> { update("UPDATE jobs SET state = 'CANCELLED', detail = '已取消', updated_at = ? WHERE id = ?", clock(), jobId); null }
                 JobState.LEASED, JobState.RUNNING -> { update("UPDATE jobs SET cancel_requested = 1, updated_at = ? WHERE id = ?", clock(), jobId)
                     job.second to ServerMessage.Cancel(listOf(jobId)) }
                 else -> null
@@ -544,14 +712,32 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         pushJobs(caller.userId)
         return notify
     }
+    /** Pause or resume a running job. The device's own report shows when it has actually paused. */
+    fun pauseJob(caller: Caller, jobId: String, pause: Boolean): Pair<String, ServerMessage> {
+        val deviceId = db.tx {
+            val job = single("SELECT state, device_id FROM jobs WHERE id = ? AND user_id = ?", jobId, caller.userId) { JobState.valueOf(it.getString(1)) to it.getString(2) }
+                ?: throw ApiException(404, "not_found", "作业不存在")
+            if (job.first != JobState.RUNNING) throw ApiException(409, "not_running", "只有运行中的作业可以暂停或继续")
+            update("UPDATE jobs SET pause_requested = ?, updated_at = ? WHERE id = ?", if (pause) 1 else 0, clock(), jobId)
+            job.second
+        }
+        pushJobs(caller.userId)
+        return deviceId to if (pause) ServerMessage.Pause(jobId) else ServerMessage.Resume(jobId)
+    }
     fun encode(message: ServerMessage) = json.encodeToString(ServerMessage.serializer(), message)
     fun decodeDeviceMessage(text: String): DeviceMessage = json.decodeFromString(DeviceMessage.serializer(), text)
 
     companion object {
+        val HELD_PHASES = setOf("CONNECTING", "PAUSING", "PAUSED", "BLOCKED_UNKNOWN", "REMOVING", "SWITCHING")
         const val MINUTE = 60_000L; const val CODE_LIFETIME = 10 * MINUTE; const val MAX_CODE_ATTEMPTS = 5
         const val WEB_LIFETIME = 7 * 24 * 60 * MINUTE; const val DEVICE_ACCESS_LIFETIME = 60 * MINUTE; const val REFRESH_LIFETIME = 30 * 24 * 60 * MINUTE
         const val LEASE_LIFETIME = 2 * MINUTE; const val ACK_LIFETIME = MINUTE / 2
+        /** How long a job started from the console may wait for its app before it is skipped. */
+        const val IMMEDIATE_WAIT = 30 * MINUTE
         private const val MAX_APPS = 32
+        private const val MAX_PARSED_BUNDLES = 32
+        /** Only the newest bundles decide games and settings; older uploads are kept but no longer read. */
+        private const val MAX_BUNDLES_READ = 8
         const val DEFAULT_ZONE = "Asia/Shanghai"
         private val jobList = ListSerializer(JobView.serializer())
         private val accountList = ListSerializer(GameAccountView.serializer())

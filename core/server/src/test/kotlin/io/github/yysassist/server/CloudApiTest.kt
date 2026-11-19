@@ -38,10 +38,12 @@ class CloudApiTest {
         val file = File.createTempFile("cloud", ".db")
         val db = Database(file.path)
         val service = CloudService(db, { to, subject, body -> mail += Triple(to, subject, body) }, github, ByteArray(32) { 7 }, { now })
-        try { testApplication { application { cloudModule(service, ServerConfig("http://localhost", false)) }; Api(this).block() } }
+        try { testApplication { application { cloudModule(service, ServerConfig("http://localhost", false)) }; Api(this, service).block() } }
         finally { db.close(); file.delete() }
     }
-    private inner class Api(private val app: ApplicationTestBuilder) {
+    private val gift = """[{"targetId":"game","taskId":"gift","name":"每日礼包"}]"""
+    private val gameApp = """[{"key":"test.game","gameId":"game","name":"游戏"}]"""
+    private inner class Api(private val app: ApplicationTestBuilder, val service: CloudService) {
         suspend fun call(method: HttpMethod, path: String, body: String? = null, token: String? = null, device: Boolean = true, cookie: String? = null, csrf: Boolean = true) = app.client.request(path) {
             this.method = method
             if (body != null) { contentType(ContentType.Application.Json); setBody(body) }
@@ -60,7 +62,7 @@ class CloudApiTest {
             val reply = call(HttpMethod.Post, "/api/device/register", """{"installId":"$install","name":"手机","platform":"android"}""", token)
             assertEquals(HttpStatusCode.OK, reply.status)
             val device = json.decodeFromString(DeviceRegistered.serializer(), reply.bodyAsText())
-            beat(token, """[{"targetId":"game","taskId":"gift","name":"每日礼包"}]""")
+            beat(token)
             return device
         }
         private val sockets by lazy { app.createClient { install(WebSockets) } }
@@ -77,10 +79,10 @@ class CloudApiTest {
                 if (frame is Frame.Text) add(json.decodeFromString(ServerMessage.serializer(), frame.readText()))
             }
         }
-        fun status(tasks: String = "[]", phase: String = "IDLE", apps: String = "[]") =
+        fun status(tasks: String = gift, phase: String = "IDLE", apps: String = gameApp) =
             """{"type":"status","status":{"phase":"$phase","tasks":$tasks,"catalog":{"version":"v1","digest":"$digest"},"apps":$apps}}"""
         /** One status report naming the task bundle, uploading it when the cloud asks. */
-        suspend fun beat(token: String, tasks: String = "[]", phase: String = "IDLE"): List<ServerMessage> {
+        suspend fun beat(token: String, tasks: String = gift, phase: String = "IDLE"): List<ServerMessage> {
             val replies = socket(token) { send(Frame.Text(status(tasks, phase))); replies() }
             if (ServerMessage.CatalogNeeded in replies) assertEquals(HttpStatusCode.OK, call(HttpMethod.Post, "/api/device/catalog",
                 json.encodeToString(CatalogUpload.serializer(), CatalogUpload("v1", digest, bundle)), token).status)
@@ -88,9 +90,9 @@ class CloudApiTest {
         }
         suspend fun devices(token: String) = json.decodeFromString(ListSerializer(DeviceView.serializer()), call(HttpMethod.Get, "/api/devices", token = token).bodyAsText())
         /** Reads the console stream until [count] events have arrived, running [during] after the first one. */
-        suspend fun stream(token: String, count: Int, lastEventId: Long? = null, during: suspend () -> Unit = {}): List<Pair<String, String>> {
+        suspend fun stream(token: String, count: Int, lastEventId: String? = null, during: suspend () -> Unit = {}): List<Pair<String, String>> {
             val events = mutableListOf<Pair<String, String>>()
-            app.client.prepareGet("/api/events") { bearerAuth(token); lastEventId?.let { header("Last-Event-ID", it.toString()) } }.execute { reply ->
+            app.client.prepareGet("/api/events") { bearerAuth(token); lastEventId?.let { header("Last-Event-ID", it) } }.execute { reply ->
                 assertEquals(ContentType.Text.EventStream, reply.contentType()?.withoutParameters())
                 val body = reply.bodyAsChannel()
                 var id = ""; var name = ""
@@ -112,12 +114,19 @@ class CloudApiTest {
             json.decodeFromString(GameAccountView.serializer(), reply.bodyAsText()).id.also { mains[token] = it }
         }
         suspend fun createAccount(token: String, name: String, game: String = "game") = call(HttpMethod.Post, "/api/accounts", """{"gameId":"$game","name":"$name"}""", token)
-        suspend fun job(token: String, deviceId: String, task: String = "gift", account: String? = null) =
-            call(HttpMethod.Post, "/api/jobs", """{"deviceId":"$deviceId","targetId":"game","taskId":"$task","accountId":"${account ?: main(token)}"}""", token)
+        /** Marks the device's app as signed in to the account, then runs the task there. */
+        suspend fun job(token: String, deviceId: String, task: String = "gift", account: String? = null): HttpResponse {
+            val chosen = account ?: main(token)
+            signedIn(token, deviceId, chosen)
+            return call(HttpMethod.Post, "/api/jobs", """{"deviceId":"$deviceId","targetId":"game","taskId":"$task","accountId":"$chosen"}""", token)
+        }
+        suspend fun signedIn(token: String, deviceId: String, account: String) =
+            call(HttpMethod.Put, "/api/devices/$deviceId/apps/test.game", """{"accountId":"$account"}""", token)
         fun plan(name: String = "每日", tasks: String = """[{"targetId":"game","taskId":"gift","name":"每日礼包"}]""", revision: Long = 0, days: String = "[1,2,3,4,5,6,7]") =
             """{"name":"$name","days":$days,"minuteOfDay":390,"tasks":$tasks,"revision":$revision}"""
-        suspend fun next(token: String) = call(HttpMethod.Post, "/api/device/jobs/next?waitMs=0", "{}", token)
-        suspend fun lease(token: String) = json.decodeFromString(JobLease.serializer(), next(token).bodyAsText())
+        /** Jobs the server pushes to the device when it connects and reports. */
+        suspend fun leases(token: String) = socket(token) { send(Frame.Text(status())); replies() }.filterIsInstance<ServerMessage.Job>().map { it.lease }
+        suspend fun lease(token: String) = leases(token).single()
         suspend fun report(token: String, lease: JobLease, state: JobState, leaseNo: Long = lease.leaseNo) =
             call(HttpMethod.Post, "/api/device/jobs/${lease.jobId}/report", """{"leaseNo":$leaseNo,"state":"$state"}""", token)
         suspend fun jobs(token: String) = json.decodeFromString(ListSerializer(JobView.serializer()), call(HttpMethod.Get, "/api/jobs", token = token).bodyAsText())
@@ -191,7 +200,7 @@ class CloudApiTest {
         assertEquals(HttpStatusCode.NotFound, job(bob.accessToken!!, device.deviceId).status)
         assertEquals(HttpStatusCode.NotFound, call(HttpMethod.Post, "/api/jobs/${created.id}/cancel", "{}", bob.accessToken).status)
         assertEquals(HttpStatusCode.NotFound, call(HttpMethod.Delete, "/api/devices/${device.deviceId}", token = bob.accessToken).status)
-        assertEquals(HttpStatusCode.NoContent, next(bob.accessToken!!).status)
+        assertTrue(leases(bob.accessToken!!).isEmpty())
         val lease = lease(alice.accessToken!!)
         assertEquals(alice.userId, lease.userId)
         assertEquals(HttpStatusCode.NotFound, report(bob.accessToken!!, lease, JobState.RUNNING).status)
@@ -274,6 +283,106 @@ class CloudApiTest {
         assertEquals(HttpStatusCode.OK, call(HttpMethod.Delete, "/api/accounts/$main", token = token).status)
         assertNull(devices(token).single().apps.single().accountId)
     }
+    /** 1970-01-02 06:31 in Shanghai, one minute after a daily 06:30 plan's time. */
+    private val justAfterPlan = 81_060_000L
+    @Test fun aPlanFiresOnceAtItsTimeAndGoesToTheAppSignedInToItsAccount() = api {
+        now = justAfterPlan - 10 * CloudService.MINUTE
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token); val main = main(token)
+        assertEquals(HttpStatusCode.Created, call(HttpMethod.Post, "/api/accounts/$main/plans", plan(), token).status)
+        signedIn(token, device.deviceId, main)
+        val pushed = socket(token) {
+            send(Frame.Text(status())); replies()
+            now = justAfterPlan; service.tick(); val first = replies()
+            service.tick(); first + replies()
+        }
+        val lease = pushed.filterIsInstance<ServerMessage.Job>().single().lease
+        assertEquals("gift", lease.taskId)
+        val job = jobs(token).single()
+        assertEquals("每日" to "主号", job.planName to job.accountName)
+        assertEquals(JobState.LEASED, job.state)
+    }
+    @Test fun aPlanRunNoAppCanTakeIsSkippedAfterItsLatestStart() = api {
+        now = justAfterPlan - 10 * CloudService.MINUTE
+        val token = signUp("a@example.com").accessToken!!; enroll(token); val main = main(token)
+        call(HttpMethod.Post, "/api/accounts/$main/plans", plan(), token)
+        now = justAfterPlan; service.tick()
+        assertEquals(JobState.WAITING, jobs(token).single().state)
+        now += 30 * CloudService.MINUTE; service.tick()
+        assertEquals(JobState.SKIPPED, jobs(token).single().state)
+    }
+    @Test fun aPlanTimeMissedWhileTheServerWasDownIsRecordedAsSkipped() = api {
+        now = justAfterPlan - 10 * CloudService.MINUTE
+        val token = signUp("a@example.com").accessToken!!; enroll(token); val main = main(token)
+        call(HttpMethod.Post, "/api/accounts/$main/plans", plan(), token)
+        now = justAfterPlan + 35 * CloudService.MINUTE; service.tick()
+        val job = jobs(token).single()
+        assertEquals(JobState.SKIPPED, job.state); assertTrue(job.detail.contains("错过"))
+    }
+    @Test fun renamingAPlanJustAfterItsTimeKeepsThatRunButMovingItsTimeDoesNot() = api {
+        now = justAfterPlan - 10 * CloudService.MINUTE
+        val token = signUp("a@example.com").accessToken!!; enroll(token); val main = main(token)
+        val created = json.decodeFromString(PlanView.serializer(), call(HttpMethod.Post, "/api/accounts/$main/plans", plan(), token).bodyAsText())
+        now = justAfterPlan
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Put, "/api/plans/${created.id}", plan(name = "改名", revision = created.revision), token).status)
+        service.tick()
+        assertEquals("改名", jobs(token).single().planName)
+    }
+    @Test fun movingAPlanToATimeThatHasJustPassedWaitsForItsNextOne() = api {
+        now = justAfterPlan - 10 * CloudService.MINUTE
+        val token = signUp("a@example.com").accessToken!!; enroll(token); val main = main(token)
+        val created = json.decodeFromString(PlanView.serializer(), call(HttpMethod.Post, "/api/accounts/$main/plans",
+            plan().replace("\"minuteOfDay\":390", "\"minuteOfDay\":420"), token).bodyAsText())
+        now = justAfterPlan
+        call(HttpMethod.Put, "/api/plans/${created.id}", plan(revision = created.revision), token)
+        service.tick()
+        assertTrue(jobs(token).isEmpty())
+    }
+    @Test fun aDeviceHeldOnItsOwnIsNotSentJobs() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        job(token, device.deviceId)
+        val held = socket(token) { send(Frame.Text(status(phase = "PAUSED"))); replies() }
+        assertTrue(held.none { it is ServerMessage.Job })
+        assertEquals(1, leases(token).size)
+    }
+    @Test fun aCancelledLeaseThatWasNeverStartedIsNotOfferedAgain() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        val created = json.decodeFromString(JobView.serializer(), job(token, device.deviceId).bodyAsText()); lease(token)
+        call(HttpMethod.Post, "/api/jobs/${created.id}/cancel", "{}", token)
+        now += CloudService.LEASE_LIFETIME + 1
+        assertTrue(leases(token).isEmpty())
+        assertEquals(JobState.CANCELLED, jobs(token).single().state)
+    }
+    @Test fun aJobWithoutADeviceGoesToAnAppSignedInToItsAccount() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token); val main = main(token)
+        signedIn(token, device.deviceId, main)
+        val pushed = socket(token) {
+            send(Frame.Text(status())); replies()
+            assertEquals(HttpStatusCode.Created, call(HttpMethod.Post, "/api/jobs", """{"targetId":"game","taskId":"gift","accountId":"$main"}""", token).status)
+            replies()
+        }
+        assertEquals(device.deviceId, pushed.filterIsInstance<ServerMessage.Job>().single().lease.deviceId)
+    }
+    @Test fun aJobForAnAppSignedInToAnotherAccountIsRefused() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token); main(token)
+        val alt = json.decodeFromString(GameAccountView.serializer(), createAccount(token, "小号").bodyAsText()).id
+        signedIn(token, device.deviceId, alt)
+        val refused = call(HttpMethod.Post, "/api/jobs", """{"deviceId":"${device.deviceId}","targetId":"game","taskId":"gift","accountId":"${main(token)}"}""", token)
+        assertEquals(HttpStatusCode.Conflict, refused.status)
+    }
+    @Test fun aPauseReachesTheDeviceRunningTheJob() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        val created = json.decodeFromString(JobView.serializer(), job(token, device.deviceId).bodyAsText())
+        report(token, lease(token), JobState.RUNNING)
+        val pushed = socket(token) {
+            send(Frame.Text(status(phase = "RUNNING"))); replies()
+            call(HttpMethod.Post, "/api/jobs/${created.id}/pause", "{}", token)
+            val direct = replies()
+            // The wanted state is repeated with each report, so a pause sent before the run started still arrives.
+            send(Frame.Text(status(phase = "RUNNING"))); direct + replies()
+        }
+        assertEquals(listOf(ServerMessage.Pause(created.id), ServerMessage.Pause(created.id)), pushed)
+        assertTrue(jobs(token).single().pauseRequested)
+    }
     @Test fun theTimeZoneIsCheckedAndKeptPerUser() = api {
         val token = signUp("a@example.com").accessToken!!
         assertEquals("Asia/Shanghai", json.decodeFromString(AccountView.serializer(), call(HttpMethod.Get, "/api/me", token = token).bodyAsText()).timeZone)
@@ -297,7 +406,7 @@ class CloudApiTest {
     @Test fun aJobRunsToCompletionAndStaleLeasesCannotReport() = api {
         val session = signUp("a@example.com"); val token = session.accessToken!!; val device = enroll(token)
         job(token, device.deviceId); val lease = lease(token)
-        assertEquals(HttpStatusCode.NoContent, next(token).status)
+        assertTrue(leases(token).isEmpty())
         assertEquals(HttpStatusCode.Conflict, report(token, lease, JobState.RUNNING, lease.leaseNo + 1).status)
         assertEquals(HttpStatusCode.OK, report(token, lease, JobState.RUNNING).status)
         assertEquals(HttpStatusCode.OK, report(token, lease, JobState.RUNNING).status)
@@ -313,8 +422,8 @@ class CloudApiTest {
         assertEquals(first.jobId, second.jobId); assertEquals(first.leaseNo + 1, second.leaseNo)
         assertEquals(HttpStatusCode.Conflict, report(token, first, JobState.RUNNING).status)
         report(token, second, JobState.RUNNING)
-        now += CloudService.LEASE_LIFETIME + 1
-        assertEquals(HttpStatusCode.NoContent, next(token).status)
+        // A device that keeps reporting keeps its running job alive; one that goes silent loses it.
+        now += CloudService.LEASE_LIFETIME + 1; service.tick()
         assertEquals(JobState.UNKNOWN, jobs(token).single().state)
         assertEquals(HttpStatusCode.OK, report(token, second, JobState.COMPLETED).status)
     }
@@ -369,23 +478,26 @@ class CloudApiTest {
         assertEquals(setOf(JobState.UNKNOWN, JobState.CANCELLED), jobs(web.accessToken!!).map { it.state }.toSet())
     }
     @Test fun theConsoleStreamStartsWithASnapshotThenSendsChanges() = api {
-        val token = signUp("a@example.com").accessToken!!; val device = enroll(token); main(token)
-        val events = stream(token, 3) { job(token, device.deviceId); beat(token) }
-        assertEquals("snapshot", events[0].first.substringAfter(':'))
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token); signedIn(token, device.deviceId, main(token))
+        val events = stream(token, 3) { call(HttpMethod.Post, "/api/jobs", """{"deviceId":"${device.deviceId}","targetId":"game","taskId":"gift","accountId":"${main(token)}"}""", token); beat(token) }
+        assertEquals("snapshot", events[0].first.substringAfterLast(':'))
         assertEquals(device.deviceId, json.decodeFromString(ConsoleSnapshot.serializer(), events[0].second).devices.single().id)
-        assertEquals("jobs", events[1].first.substringAfter(':'))
-        assertEquals("device", events[2].first.substringAfter(':'))
+        assertEquals("jobs", events[1].first.substringAfterLast(':'))
+        assertEquals("device", events[2].first.substringAfterLast(':'))
         val other = signUp("b@example.com").accessToken!!
-        assertEquals("snapshot", stream(other, 1).single().first.substringAfter(':'))
+        assertEquals("snapshot", stream(other, 1).single().first.substringAfterLast(':'))
         assertTrue(json.decodeFromString(ConsoleSnapshot.serializer(), stream(other, 1).single().second).devices.isEmpty())
     }
     @Test fun aReconnectingConsoleGetsOnlyWhatItMissedOrANewSnapshot() = api {
-        val token = signUp("a@example.com").accessToken!!; val device = enroll(token); main(token)
-        val first = stream(token, 1).single().first.substringBefore(':').toLong()
-        job(token, device.deviceId)
-        val missed = stream(token, 1, lastEventId = first).single()
-        assertEquals("${first + 1}:jobs", missed.first)
-        assertEquals("snapshot", stream(token, 1, lastEventId = first + 1_000).single().first.substringAfter(':'))
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token); signedIn(token, device.deviceId, main(token))
+        val first = stream(token, 1).single().first.substringBeforeLast(':')
+        call(HttpMethod.Post, "/api/jobs", """{"deviceId":"${device.deviceId}","targetId":"game","taskId":"gift","accountId":"${main(token)}"}""", token)
+        val missed = stream(token, 1, lastEventId = first).single().first
+        assertEquals("jobs", missed.substringAfterLast(':'))
+        assertEquals(first.substringAfter('.').toLong() + 1, missed.substringBeforeLast(':').substringAfter('.').toLong())
+        // An id from before a restart, or one this server never sent, gets a fresh snapshot.
+        assertEquals("snapshot", stream(token, 1, lastEventId = "earlier.${first.substringAfter('.')}").single().first.substringAfterLast(':'))
+        assertEquals("snapshot", stream(token, 1, lastEventId = "${first.substringBefore('.')}.999999").single().first.substringAfterLast(':'))
     }
     @Test fun gitHubSignInNeverMergesIntoAnExistingEmailAccountAndKeepsOneLoginMethod() = api {
         val email = signUp("a@example.com")

@@ -85,7 +85,10 @@ internal class FloatingOverlayWindow(
                     { runtime.submit(ExecutorCommand.StopCurrent(it)) },
                     { id, mode -> runtime.submit(id?.let { ExecutorCommand.ResumeCurrent(it, mode) } ?: ExecutorCommand.Resume(mode)) },
                     ::openApp, ::ballMotion, maxWidth = (vp.safe.width() / vp.density).dp, feedback = feedback.value,
-                    rightSide = rightSide.value, touched = ::armIdle)
+                    rightSide = rightSide.value, touched = ::armIdle,
+                    // "没生效" re-enters the step by looking at the screen again; "已生效" moves on to the next step.
+                    resolve = { ticket, applied -> runtime.submit(ExecutorCommand.ResolveUnknown(ticket,
+                        if (applied) StepOutcome.Completed("用户在悬浮球确认这一步已生效") else StepOutcome.Interrupted)) })
                 }
             }
         }

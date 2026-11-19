@@ -10,6 +10,11 @@ sealed interface ExecutorCommand {
     data object Pause : ExecutorCommand
     data object Stop : ExecutorCommand
     data class PauseCurrent(val runId: Long) : ExecutorCommand
+    /**
+     * Pauses [runId] once its current step ends, without revoking input in flight, so the step's result stays known.
+     * Used for pauses that arrive from afar, where nobody is watching the screen to judge an interrupted step.
+     */
+    data class PauseAfterStep(val runId: Long) : ExecutorCommand
     data class StopCurrent(val runId: Long) : ExecutorCommand
     data class ResumeCurrent(val runId: Long, val mode: ResumeMode) : ExecutorCommand
     data class Remove(val runId: Long) : ExecutorCommand

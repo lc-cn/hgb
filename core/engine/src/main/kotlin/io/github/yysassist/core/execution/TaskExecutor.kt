@@ -34,6 +34,7 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
         val observedDuringHandoff: StepOutcome?, val endAfterResolution: Handoff?,
         val serial: Long, val generation: Long, val attempts: List<AttemptRecord>,
         val receipts: Map<String, Receipt>, val unknowns: List<UnresolvedResult>, val facts: List<ExecutionFact>,
+        val pauseWhenStepEnds: Boolean = false, val holdForRun: Long? = null,
     )
     @Serializable
     private data class StoredRun(val runId: Long, val sequence: Long, val request: ExecutionRequest, val priority: Long)
@@ -52,6 +53,7 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
         val endAfterResolution: Handoff?, val serial: Long, val generation: Long,
         val attempts: List<StoredAttempt>, val receipts: Map<String, Receipt>,
         val unknowns: List<StoredUncertainty>, val facts: List<ExecutionFact>,
+        val pauseWhenStepEnds: Boolean = false, val holdForRun: Long? = null,
     )
 
     companion object {
@@ -105,6 +107,7 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
             ExecutorCommand.Pause -> draft.pause()
             ExecutorCommand.Stop -> draft.stop()
             is ExecutorCommand.PauseCurrent -> if (draft.current?.runId == command.runId) draft.pause() else emptyList()
+            is ExecutorCommand.PauseAfterStep -> if (draft.current?.runId == command.runId) draft.pauseAfterStep() else emptyList()
             is ExecutorCommand.StopCurrent -> if (draft.current?.runId == command.runId) draft.stop() else emptyList()
             is ExecutorCommand.ResumeCurrent -> if (draft.current?.runId == command.runId) draft.resume(command.mode) else emptyList()
             is ExecutorCommand.Remove -> draft.remove(command.runId)
@@ -156,7 +159,8 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
             value.current?.let(::position), value.waiting.map(::position), value.active?.ticket, value.pending,
             value.observedDuringHandoff, value.endAfterResolution, value.serial, value.generation,
             value.attempts.map { StoredAttempt(it.attempt.ticket, position(it.attempt.run), it.reconciliation, it.deviceActions) },
-            value.receipts, value.unknowns.map { StoredUncertainty(it.attempt.ticket, it.reason) }, value.facts))
+            value.receipts, value.unknowns.map { StoredUncertainty(it.attempt.ticket, it.reason) }, value.facts,
+            value.pauseWhenStepEnds, value.holdForRun))
     }
 
     private fun unpack(value: PackedState): StoredState {
@@ -178,13 +182,14 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
         }
         return StoredState(1, value.context, value.manualHold, current, waiting, value.active?.let(::attempt), value.pending,
             value.observedDuringHandoff, value.endAfterResolution, value.serial, value.generation, records, value.receipts,
-            value.unknowns.map { UnresolvedResult(attempt(it.ticket), it.reason) }, value.facts)
+            value.unknowns.map { UnresolvedResult(attempt(it.ticket), it.reason) }, value.facts, value.pauseWhenStepEnds, value.holdForRun)
     }
 
     private fun capture() = StoredState(format = 1, context = context, manualHold = manualHold, current = current,
         waiting = waiting.toList(), active = active, pending = pending, observedDuringHandoff = observedDuringHandoff,
         endAfterResolution = endAfterResolution, serial = serial, generation = generation, attempts = attempts.values.toList(),
-        receipts = receipts.toMap(), unknowns = unknowns.values.toList(), facts = facts.toList())
+        receipts = receipts.toMap(), unknowns = unknowns.values.toList(), facts = facts.toList(), pauseWhenStepEnds = pauseWhenStepEnds,
+        holdForRun = holdForRun)
 
     private fun restore(value: StoredState, publish: Boolean = true) {
         context = value.context; manualHold = value.manualHold; current = value.current
@@ -195,6 +200,7 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
         receipts.clear(); receipts.putAll(value.receipts)
         unknowns.clear(); value.unknowns.forEach { unknowns[it.attempt.ticket] = it }
         facts.clear(); facts.addAll(value.facts)
+        pauseWhenStepEnds = value.pauseWhenStepEnds; holdForRun = value.holdForRun
         if (publish) mutableState.value = snapshot()
     }
 
@@ -269,13 +275,27 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
 
     @Synchronized
     fun pause(): List<ExecutorEffect> = change { effects ->
-        manualHold = true
+        manualHold = true; holdForRun = null
         if (active != null) revoke(Handoff.PAUSE, effects)
     }
 
+    /**
+     * Holds the current run once the step in progress ends normally; its input is neither revoked nor blocked, so no
+     * result becomes unknown. The hold belongs to that run: once it ends, by finishing or being removed, the queue goes on.
+     */
+    @Synchronized
+    fun pauseAfterStep(): List<ExecutorEffect> = change {
+        if (manualHold && holdForRun == null) return@change // a hold of the whole queue stays one
+        holdForRun = current?.runId
+        if (active == null) manualHold = true else pauseWhenStepEnds = true
+    }
+    private var pauseWhenStepEnds = false
+    /** The run a step-end pause was asked for, while that pause holds or is waiting to. */
+    private var holdForRun: Long? = null
+
     @Synchronized
     fun stop(): List<ExecutorEffect> = change { effects ->
-        manualHold = true
+        manualHold = true; holdForRun = null
         if (current == null) return@change
         endAfterResolution = Handoff.STOP
         if (active != null) revoke(Handoff.STOP, effects)
@@ -297,6 +317,7 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
 
     @Synchronized
     fun resume(mode: ResumeMode): List<ExecutorEffect> = change { effects ->
+        pauseWhenStepEnds = false; holdForRun = null // a resume before the step ended cancels the pause
         if (pending != null || unknowns.isNotEmpty()) return@change
         // A repeated resume while running cannot restart a task or mint another attempt.
         if (!manualHold) return@change
@@ -387,7 +408,7 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
             (listOfNotNull(current) + waiting).forEach { fact("cancelled", it, "账号已切换") }
             current = null
             waiting.clear()
-            manualHold = true
+            manualHold = true; holdForRun = null; pauseWhenStepEnds = false
         }
         context = newContext
         publish()
@@ -469,6 +490,10 @@ class TaskExecutor(initialContext: ExecutionContext? = null, private val clock: 
     }
 
     private fun schedule(effects: MutableList<ExecutorEffect>) {
+        holdForRun?.let { held -> if (current?.runId != held && waiting.none { it.runId == held }) {
+            holdForRun = null; pauseWhenStepEnds = false; manualHold = false
+        } }
+        if (pauseWhenStepEnds && active == null) { pauseWhenStepEnds = false; manualHold = true }
         if (manualHold || pending != null || unknowns.isNotEmpty() || active != null) return
         val eligible = (listOfNotNull(current) + waiting).filter { it.request.context == context }
         val best = eligible.sortedWith(compareByDescending<RunProgress> { it.priority }.thenBy { it.sequence }).firstOrNull()

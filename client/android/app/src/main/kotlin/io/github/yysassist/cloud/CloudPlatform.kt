@@ -93,4 +93,6 @@ internal class RuntimeCloudExecutor(private val runtime: ExecutionRuntime, priva
             is RuntimeCommandResult.Unconfirmed -> CloudEnqueueResult.Unconfirmed(result.message)
         }
     override fun remove(runId: Long) { runtime.submit(ExecutorCommand.Remove(runId)) }
+    override fun pause(runId: Long) { runtime.submit(ExecutorCommand.PauseAfterStep(runId)) }
+    override fun resume(runId: Long) { runtime.submit(ExecutorCommand.ResumeCurrent(runId, io.github.yysassist.core.execution.ResumeMode.CONTINUE)) }
 }

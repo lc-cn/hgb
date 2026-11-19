@@ -95,7 +95,7 @@ internal fun FloatingSurface(layer: FloatingLayer, state: ExecutorSnapshot, stat
     common: FloatingTasksState, wide: Boolean, maxHeight: Dp, changeLayer: (FloatingLayer) -> Unit,
     enqueue: (TaskAddress) -> Unit, pause: (Long?) -> Unit, stop: (Long) -> Unit, resume: (Long?, ResumeMode) -> Unit,
     openApp: (TaskAddress?) -> Unit, ballMotion: ((MotionEvent) -> Boolean)? = null, maxWidth: Dp = FloatingUi.wideCommonWidth, feedback: String? = null,
-    rightSide: Boolean = true, touched: () -> Unit = {}) {
+    rightSide: Boolean = true, touched: () -> Unit = {}, resolve: (AttemptTicket, Boolean) -> Unit = { _, _ -> }) {
     val palette = LocalAssistPalette.current
     val phase = when (status) { RuntimeStatus.Loading -> "读取中"; is RuntimeStatus.Waiting -> "等待中"; is RuntimeStatus.Failure -> "存储异常"; is RuntimeStatus.RecoveryBlocked -> "等待核对"; RuntimeStatus.Ready -> phaseLabel(state.phase) }
     @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
@@ -192,6 +192,20 @@ internal fun FloatingSurface(layer: FloatingLayer, state: ExecutorSnapshot, stat
         issue?.let { TextButton(onClick = { openApp(null) }) {
             Text(it, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall, color = palette.error)
         } }
+        // A step whose input may or may not have landed waits for someone looking at the game to say which. Each choice
+        // takes a second tap, so a stray touch cannot settle it.
+        val unresolved = state.unresolved.firstOrNull()
+        if (unresolved != null && status !is RuntimeStatus.Failure && status != RuntimeStatus.Loading) {
+            var armed by remember(unresolved.attempt.ticket) { mutableStateOf<Boolean?>(null) }
+            Text("看一眼游戏画面：「${unresolved.attempt.run.task.name}」的第 ${unresolved.attempt.run.stepIndex + 1} 步生效了吗？",
+                Modifier.padding(horizontal = UiSpace.gap), style = MaterialTheme.typography.bodySmall)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+                OutlinedButton({ if (armed == true) { armed = null; resolve(unresolved.attempt.ticket, true) } else armed = true }, Modifier.weight(1f)) {
+                    Text(if (armed == true) "再点一次确认" else "已生效") }
+                OutlinedButton({ if (armed == false) { armed = null; resolve(unresolved.attempt.ticket, false) } else armed = false }, Modifier.weight(1f)) {
+                    Text(if (armed == false) "再点一次确认" else "没生效") }
+            }
+        }
         if (layer == FloatingLayer.COMMON) {
             HorizontalDivider()
             when (common) {

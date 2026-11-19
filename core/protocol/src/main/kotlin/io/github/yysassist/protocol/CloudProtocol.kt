@@ -49,11 +49,20 @@ import kotlinx.serialization.json.JsonObject
     @Serializable @SerialName("catalog-needed") data object CatalogNeeded : ServerMessage
     /** Stop these jobs if they are running here. */
     @Serializable @SerialName("cancel") data class Cancel(val jobIds: List<String>) : ServerMessage
+    /** Run this job. The server sends a device one job at a time and resends it until the device reports it started. */
+    @Serializable @SerialName("job") data class Job(val lease: JobLease) : ServerMessage
+    /** Pause or resume the job if it is the one running here. */
+    @Serializable @SerialName("pause") data class Pause(val jobId: String) : ServerMessage
+    @Serializable @SerialName("resume") data class Resume(val jobId: String) : ServerMessage
 }
 /** Close codes the server uses when it refuses a device socket. */
 object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DEVICE: Short = 4403; const val REPLACED: Short = 4409 }
 
-@Serializable enum class JobState { QUEUED, LEASED, RUNNING, COMPLETED, FAILED, UNKNOWN, CANCELLED }
+/**
+ * WAITING: created but no app can take it yet; QUEUED: assigned to an app and waiting for its turn; LEASED: sent to the
+ * device, not yet acknowledged; SKIPPED: never started before its latest start time.
+ */
+@Serializable enum class JobState { WAITING, QUEUED, LEASED, RUNNING, COMPLETED, FAILED, UNKNOWN, CANCELLED, SKIPPED }
 
 /**
  * Permission to run one job. [leaseNo] rises on every grant, so a stale holder can never report. The job runs on
@@ -73,8 +82,11 @@ object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DE
 /** A stored log line as the console shows it, with the step's name from the job's task version. */
 @Serializable data class JobEventView(val at: Long, val kind: String, val step: String, val stepName: String, val action: String,
     val detail: String, val elapsedMs: Long)
-/** A job runs a task for one game account, with that account's settings. */
-@Serializable data class CreateJobRequest(val deviceId: String, val targetId: String, val taskId: String, val accountId: String)
+/**
+ * A job runs a task for one game account, with that account's settings. Without [deviceId] the server picks an app:
+ * one signed in to the account. With [deviceId] (and [appKey] when the device has several apps of the game) it goes there.
+ */
+@Serializable data class CreateJobRequest(val targetId: String, val taskId: String, val accountId: String, val deviceId: String? = null, val appKey: String? = null)
 /** A task's settings for one game account, with the field definitions of the newest uploaded task version that has the task. */
 @Serializable data class ConfigView(val accountId: String, val targetId: String, val taskId: String, val taskName: String, val version: String,
     val fields: JsonArray, val values: JsonObject, val revision: Long)
@@ -113,6 +125,8 @@ object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DE
 @Serializable data class RemovedDevice(val id: String)
 /** A job's run log has new lines; consoles that show it fetch them. */
 @Serializable data class JobLogUpdated(val id: String)
-@Serializable data class JobView(val id: String, val deviceId: String, val deviceName: String, val targetId: String, val taskId: String,
+/** [deviceId] and [appKey] are null while the job waits for an app. [planName] is set for a plan's run. */
+@Serializable data class JobView(val id: String, val deviceId: String?, val deviceName: String?, val targetId: String, val taskId: String,
     val taskName: String, val state: JobState, val detail: String, val cancelRequested: Boolean, val createdAt: Long, val updatedAt: Long,
-    val accountId: String? = null, val accountName: String? = null)
+    val accountId: String? = null, val accountName: String? = null, val appKey: String? = null, val planId: String? = null, val planName: String? = null,
+    val latestStartAt: Long? = null, val pauseRequested: Boolean = false)

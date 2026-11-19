@@ -40,6 +40,9 @@ class CloudAgentTest {
     private val uploads = CopyOnWriteArrayList<CatalogUpload>()
     private val statuses = CopyOnWriteArrayList<DeviceStatus>()
     @Volatile private var needCatalog = false
+    @Volatile private var socket: WebSocket? = null
+    private val paused = CopyOnWriteArrayList<Long>()
+    private val resumed = CopyOnWriteArrayList<Long>()
     private val events = CopyOnWriteArrayList<JobEvent>()
     /** When set, an accepted submission immediately shows this run as finished with a few facts. */
     @Volatile private var finishedRun: Long? = null
@@ -52,6 +55,8 @@ class CloudAgentTest {
     private val executorState = MutableStateFlow(TaskExecutor().state.value)
     private var restored = CompletableDeferred(Unit)
     private var enqueueResult: CloudEnqueueResult = CloudEnqueueResult.Rejected("当前不能运行")
+    /** Holds a submission until completed, to deliver messages while the job has no run yet. */
+    @Volatile private var enqueueGate = CompletableDeferred(Unit)
     private val port = object : CloudExecutorPort {
         override val state = executorState
         override suspend fun awaitRestored() { restored.await() }
@@ -60,6 +65,7 @@ class CloudAgentTest {
         override suspend fun catalog() = CloudCatalog("v1", "abc", """{"version":"v1"}""")
         override suspend fun enqueue(targetId: String, taskId: String, commandId: String, digest: String, configuration: kotlinx.serialization.json.JsonObject): CloudEnqueueResult {
             enqueued += commandId; configurations += configuration
+            enqueueGate.await()
             finishedRun?.let { run ->
                 fun fact(id: Long, type: String, step: String?) = ExecutionFact(type, run, "gift", "", "每日礼包", ExecutionContext("game", Principal.Anonymous), "v1", 1_000 + id, id, step)
                 executorState.value = executorState.value.copy(facts = listOf(fact(1, "step-started", "claim"), fact(2, "task-completed", null)))
@@ -68,8 +74,10 @@ class CloudAgentTest {
         override suspend fun traces(runId: Long, after: Long) =
             listOf(CloudTrace(9, 1_001, "claim", "tap", "PRODUCED", null, 80)).filter { it.id > after && runId == finishedRun }
         override fun remove(runId: Long) = Unit
+        override fun pause(runId: Long) { paused += runId }
+        override fun resume(runId: Long) { resumed += runId }
     }
-    private fun agent() = CloudAgent(OkHttpClient(), store, port, "手机", "android", "1", scope, heartbeatMillis = 50, retryMillis = 50, pollMillis = 0)
+    private fun agent() = CloudAgent(OkHttpClient(), store, port, "手机", "android", "1", scope, heartbeatMillis = 50, retryMillis = 50)
     private val base get() = server.url("/").toString().trimEnd('/')
 
     @Before fun start() {
@@ -84,13 +92,15 @@ class CloudAgentTest {
                     accessRejected -> denied
                     path == "/api/device/register" -> ok("""{"deviceId":"d1","userId":"me"}""")
                     path == "/api/device/socket" -> MockResponse.Builder().webSocketUpgrade(object : WebSocketListener() {
+                        override fun onOpen(webSocket: WebSocket, response: okhttp3.Response) { socket = webSocket }
                         override fun onMessage(webSocket: WebSocket, text: String) {
                             statuses += (json.decodeFromString(DeviceMessage.serializer(), text) as DeviceMessage.Status).status
                             if (needCatalog) webSocket.send(json.encodeToString(ServerMessage.serializer(), ServerMessage.CatalogNeeded))
+                            // Leases are pushed over the socket, as the server does.
+                            lease?.also { lease = null }?.let { webSocket.send("""{"type":"job","lease":$it}""") }
                         }
                     }).build()
                     path == "/api/device/catalog" -> { uploads += json.decodeFromString(CatalogUpload.serializer(), request.body!!.utf8()); needCatalog = false; ok("{}") }
-                    path == "/api/device/jobs/next" -> lease?.also { lease = null }?.let(::ok) ?: MockResponse.Builder().code(204).build()
                     path.endsWith("/events") -> { events += json.decodeFromString(JobEvents.serializer(), request.body!!.utf8()).events; ok("{}") }
                     path.endsWith("/report") -> { reports += json.decodeFromString(JobReport.serializer(), request.body!!.utf8()); ok("{}") }
                     else -> ok("{}")
@@ -144,6 +154,37 @@ class CloudAgentTest {
         delay(200)
         assertEquals(1, uploads.size)
     }
+    @Test fun aPauseForTheRunningJobReachesTheExecutorAndOneForAnotherJobDoesNot() = runBlocking<Unit> {
+        enqueueResult = CloudEnqueueResult.Accepted(5); lease = leaseJson(); signedIn()
+        eventually { store.value?.activeJob?.runId == 5L }
+        socket!!.send("""{"type":"pause","jobId":"other"}""")
+        socket!!.send("""{"type":"pause","jobId":"j1"}""")
+        eventually { paused.isNotEmpty() }
+        assertEquals(listOf(5L), paused)
+    }
+    @Test fun aPauseThatArrivesBeforeTheRunStartsIsAppliedOnceItHasAndRepeatsAreIgnored() = runBlocking<Unit> {
+        enqueueGate = CompletableDeferred(); enqueueResult = CloudEnqueueResult.Accepted(5); lease = leaseJson(); signedIn()
+        eventually { enqueued.isNotEmpty() }
+        socket!!.send("""{"type":"pause","jobId":"j1"}""")
+        delay(200)
+        assertTrue(paused.isEmpty())
+        enqueueGate.complete(Unit)
+        eventually { paused.isNotEmpty() }
+        socket!!.send("""{"type":"pause","jobId":"j1"}""")
+        delay(200)
+        assertEquals(listOf(5L), paused)
+    }
+    @Test fun theConsolesPauseIsKeptWithTheJobSoAResumeIsActedOnAfterARestart() = runBlocking<Unit> {
+        enqueueResult = CloudEnqueueResult.Accepted(5); lease = leaseJson(); signedIn()
+        eventually { store.value?.activeJob?.runId == 5L }
+        socket!!.send("""{"type":"resume","jobId":"j1"}""")
+        socket!!.send("""{"type":"pause","jobId":"j1"}""")
+        eventually { store.value?.activeJob?.paused == true }
+        socket!!.send("""{"type":"resume","jobId":"j1"}""")
+        eventually { resumed.isNotEmpty() }
+        assertEquals(listOf(5L), paused); assertEquals(listOf(5L), resumed)
+        assertEquals(false, store.value?.activeJob?.paused)
+    }
     @Test fun anUnconfirmedSubmissionIsNeverReportedAsAFailure() = runBlocking<Unit> {
         enqueueResult = CloudEnqueueResult.Unconfirmed("提交结果未确认"); lease = leaseJson(); signedIn()
         eventually { reports.size == 2 }
@@ -166,14 +207,15 @@ class CloudAgentTest {
         eventually { reports.isNotEmpty() }
     }
     @Test fun anExpiredAccessTokenIsRenewedOnce() = runBlocking<Unit> {
-        signedIn(); eventually { store.value?.deviceId != null }
-        accessRejected = true
+        signedIn(); eventually { store.value?.deviceId != null && socket != null }
+        // The open socket keeps working; the expired token shows when the device reconnects.
+        accessRejected = true; socket!!.close(1001, "restart")
         eventually { store.value?.accessToken == "a2" }
         assertEquals("r-a2", store.value?.refreshToken)
     }
     @Test fun aRejectedRefreshSignsOutAndErasesCredentials() = runBlocking<Unit> {
-        val agent = signedIn(); eventually { store.value?.deviceId != null }
-        refreshRejected = true; accessRejected = true
+        val agent = signedIn(); eventually { store.value?.deviceId != null && socket != null }
+        refreshRejected = true; accessRejected = true; socket!!.close(1001, "restart")
         withTimeout(5_000) { agent.state.first { it is CloudState.SignedOut } }
         assertNull(store.value)
     }

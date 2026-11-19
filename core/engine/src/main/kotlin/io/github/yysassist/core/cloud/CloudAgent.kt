@@ -28,7 +28,9 @@ import java.io.IOException
 import java.util.UUID
 
 @Serializable data class ActiveCloudJob(val jobId: String, val leaseNo: Long, val targetId: String, val taskId: String, val runId: Long? = null,
-    val digest: String = "", val configuration: JsonObject = JsonObject(emptyMap()))
+    val digest: String = "", val configuration: JsonObject = JsonObject(emptyMap()),
+    /** Whether the console last asked for this job to be paused; kept across restarts so only a change is acted on. */
+    val paused: Boolean = false)
 /** One action the device performed for a run, as kept in its local trace log. */
 data class CloudTrace(val id: Long, val at: Long, val stepId: String, val actionId: String, val result: String, val reason: String?, val elapsedMillis: Long)
 /** The active task bundle as text, with the digest the cloud uses to name it. */
@@ -64,6 +66,9 @@ interface CloudExecutorPort {
     /** Runs the task on bundle [digest] with exactly [configuration]; local settings are not read. */
     suspend fun enqueue(targetId: String, taskId: String, commandId: String, digest: String, configuration: JsonObject): CloudEnqueueResult
     fun remove(runId: Long)
+    /** Pauses or resumes [runId] if it is the run in progress. */
+    fun pause(runId: Long) {}
+    fun resume(runId: Long) {}
     /** Actions recorded for [runId] after trace [after], oldest first. */
     suspend fun traces(runId: Long, after: Long): List<CloudTrace> = emptyList()
 }
@@ -91,7 +96,7 @@ fun cloudOutcome(state: ExecutorSnapshot, runId: Long): Pair<JobState, String>? 
  */
 class CloudAgent(private val http: OkHttpClient, private val store: CloudCredentialStore, private val executor: CloudExecutorPort,
     private val deviceName: String, private val platform: String, private val appVersion: String, private val scope: CoroutineScope,
-    private val clock: () -> Long = System::currentTimeMillis, private val heartbeatMillis: Long = 15_000, private val retryMillis: Long = 5_000, private val pollMillis: Long = 20_000,
+    private val clock: () -> Long = System::currentTimeMillis, private val heartbeatMillis: Long = 15_000, private val retryMillis: Long = 5_000,
     private val progressMillis: Long = 1_500, private val statusMillis: Long = 1_000) {
     private val json = Json { ignoreUnknownKeys = true; explicitNulls = false; encodeDefaults = true }
     /** A socket stays open for hours; pings keep it alive through NAT and let both ends notice a dead link. */
@@ -102,6 +107,10 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
     val state = mutableState.asStateFlow()
     private var credentials: CloudCredentials? = null
     private var worker: Job? = null
+    /** The latest lease the server pushed, waiting for the job loop; a device has one valid lease at a time, so older ones are dropped. Replaced on each sign-in so nothing carries over. */
+    @Volatile private var leases = Channel<JobLease>(Channel.CONFLATED)
+    /** A bundle the server refused (too large, invalid); it is not uploaded again until the device runs another one. */
+    @Volatile private var refusedCatalog: String? = null
 
     init {
         scope.launch {
@@ -151,6 +160,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
 
     private fun startWorking(saved: CloudCredentials) {
         worker?.cancel()
+        leases = Channel(Channel.CONFLATED)
         mutableState.value = CloudState.SignedIn(saved.email, saved.serverUrl, false)
         worker = scope.launch { supervisorScope {
             launch { connections() }
@@ -258,11 +268,31 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
     private suspend fun handle(text: String) {
         val message = runCatching { json.decodeFromString(ServerMessage.serializer(), text) }.getOrNull() ?: return
         when (message) {
-            ServerMessage.CatalogNeeded -> executor.catalog()?.let { catalog -> authorized {
-                send<Unit>(it.serverUrl, "/api/device/catalog", json.encodeToString(CatalogUpload(catalog.version, catalog.digest, catalog.text)), it.accessToken) } }
+            // A failed upload must not take the socket down: the server asks again, and a refusal is not retried for this bundle.
+            ServerMessage.CatalogNeeded -> executor.catalog()?.takeIf { it.digest != refusedCatalog }?.let { catalog ->
+                try {
+                    authorized { send<Unit>(it.serverUrl, "/api/device/catalog", json.encodeToString(CatalogUpload(catalog.version, catalog.digest, catalog.text)), it.accessToken) }
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (rejected: CloudRequestException) { if (rejected.status in 400..499) refusedCatalog = catalog.digest }
+                catch (_: IOException) { }
+            }
             is ServerMessage.Cancel -> {
                 val active = mutex.withLock { credentials?.activeJob }
                 if (active?.runId != null && active.jobId in message.jobIds) executor.remove(active.runId)
+            }
+            is ServerMessage.Job -> leases.trySend(message.lease)
+            // The server repeats the wanted state with every status reply, so only a change is acted on, and a pause or
+            // resume on the phone itself is not undone. A pause that comes before the run has started is kept with the
+            // job and applied by the job loop once it has; the lock makes one of the two act, never both or neither.
+            is ServerMessage.Pause, is ServerMessage.Resume -> {
+                val pause = message is ServerMessage.Pause
+                val jobId = if (message is ServerMessage.Pause) message.jobId else (message as ServerMessage.Resume).jobId
+                val runId = mutex.withLock {
+                    val active = credentials?.activeJob?.takeIf { it.jobId == jobId && it.paused != pause } ?: return
+                    credentials?.let { save(it.copy(activeJob = active.copy(paused = pause))) }
+                    active.runId
+                } ?: return
+                if (pause) executor.pause(runId) else executor.resume(runId)
             }
         }
     }
@@ -276,7 +306,8 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
                 val deviceId = ensureDevice()
                 val resumed = mutex.withLock { credentials?.activeJob }
                 if (resumed != null) { finish(resumed); continue }
-                val lease = authorized { send<JobLease>(it.serverUrl, "/api/device/jobs/next?waitMs=$pollMillis", "{}", it.accessToken) } ?: continue
+                // The server pushes leases over the socket, one at a time; a resend after a lost reply comes the same way.
+                val lease = leases.receive()
                 val mine = mutex.withLock { credentials }
                 // A lease for anyone else is never acted on, whatever the server says.
                 if (lease.userId != mine?.userId || lease.deviceId != deviceId) continue
@@ -303,7 +334,12 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         if (job.runId == null) authorized { report(it, job, JobState.RUNNING, "") }
         // The same command id returns the original run after a restart, so a job can never start twice.
         val runId = job.runId ?: when (val result = executor.enqueue(job.targetId, job.taskId, "cloud/${job.jobId}/${job.leaseNo}", job.digest, job.configuration)) {
-            is CloudEnqueueResult.Accepted -> result.runId.also { remember(job.copy(runId = it)) }
+            is CloudEnqueueResult.Accepted -> result.runId.also { runId ->
+                val paused = mutex.withLock { credentials?.let { saved ->
+                    val latest = saved.activeJob?.takeIf { it.jobId == job.jobId } ?: job
+                    save(saved.copy(activeJob = latest.copy(runId = runId))); latest.paused } } == true
+                if (paused) executor.pause(runId)
+            }
             is CloudEnqueueResult.Rejected -> { authorized { report(it, job, JobState.FAILED, result.reason) }; remember(null); return }
             is CloudEnqueueResult.Unconfirmed -> { authorized { report(it, job, JobState.UNKNOWN, result.reason) }; remember(null); return }
         }
@@ -313,6 +349,9 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
             val sender = launch { while (isActive) { log.flush(); delay(progressMillis) } }
             executor.state.first { cloudOutcome(it, runId) != null }.let { checkNotNull(cloudOutcome(it, runId)) }.also { sender.cancel() }
         }
+        // A job that ends with a step awaiting a check is over for the server; once the user settles the step on the
+        // phone, the run ends there too instead of carrying on with nobody having asked for it.
+        if (outcome.first == JobState.UNKNOWN && executor.state.value.unresolved.any { it.attempt.ticket.runId == runId }) executor.remove(runId)
         delay(TRACE_SETTLE_MILLIS) // the trace writer stores the last actions just after the run ends
         log.flush()
         authorized { report(it, job.copy(runId = runId), outcome.first, outcome.second) }
