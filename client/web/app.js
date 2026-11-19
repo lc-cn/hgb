@@ -106,19 +106,41 @@ const time = (value) => value ? new Date(value).toLocaleString("zh-CN", { hour12
 
 const PHASES = { IDLE: "空闲", RUNNING: "运行中", PAUSING: "正在暂停", PAUSED: "已暂停", REMOVING: "正在停止", SWITCHING: "切换中", BLOCKED_UNKNOWN: "需要处理" };
 
-/** One game instance on the device: what it is doing and how many tasks wait for it. */
-function appLine(app) {
-  const doing = app.currentTask ? `${PHASES[app.phase] ?? app.phase}：${app.currentTask}` : PHASES[app.phase] ?? app.phase;
-  return el("li", { class: "app-line" }, el("span", { class: "grow", text: app.name }),
-    el("span", { class: "muted", text: [doing, app.queued ? `排队 ${app.queued} 个` : ""].filter(Boolean).join(" · ") }));
+const enc = encodeURIComponent;
+function accountSelect(label, value, accounts, onchange) {
+  const select = el("select", { "aria-label": label, onchange: (event) => onchange(event.target.value || null) },
+    el("option", { value: "", text: "未指定" }), ...accounts.map((account) => el("option", { value: account.id, text: account.name })));
+  select.value = value ?? "";
+  return el("label", { class: "inline" }, el("span", { class: "muted", text: label }), select);
 }
 
-function deviceCard(device) {
+/**
+ * One game instance on the device: what it is doing, and which accounts it uses. Until the app can read the signed-in
+ * account, the user picks it here.
+ */
+function appLine(device, app, accounts) {
+  const doing = app.currentTask ? `${PHASES[app.phase] ?? app.phase}：${app.currentTask}` : PHASES[app.phase] ?? app.phase;
+  const mine = accounts.filter((account) => account.gameId === app.gameId);
+  const save = async (change) => {
+    try { await api(`/api/devices/${enc(device.id)}/apps/${enc(app.key)}`, { method: "PUT",
+      body: { accountId: app.accountId ?? null, defaultAccountId: app.defaultAccountId ?? null, ...change } }); }
+    catch (error) { alert(error.message); }
+  };
+  return el("li", { class: "app-line" },
+    el("div", { class: "row" }, el("span", { class: "grow", text: app.name }),
+      el("span", { class: "muted", text: [doing, app.queued ? `排队 ${app.queued} 个` : ""].filter(Boolean).join(" · ") })),
+    mine.length ? el("div", { class: "app-accounts" },
+      accountSelect("当前登录", app.accountId, mine, (id) => save({ accountId: id })),
+      accountSelect("默认账号", app.defaultAccountId, mine, (id) => save({ defaultAccountId: id })))
+      : el("p", { class: "muted", text: "先在“游戏账号”里添加这个游戏的账号" }));
+}
+
+function deviceCard(device, accounts) {
   const apps = device.apps ?? [];
   return el("article", { class: "card device" },
     el("div", { class: "row" }, el("b", { class: "grow", text: device.name }), el("span", { class: `pill ${device.online ? "ok" : ""}`, text: device.online ? "在线" : "离线" })),
     el("p", { class: "muted", text: device.online ? `${device.platform} · 可用任务 ${device.tasks.length} 个` : `最后在线：${time(device.lastSeenAt)}` }),
-    apps.length ? el("ul", { class: "apps", "aria-label": "应用" }, ...apps.map(appLine))
+    apps.length ? el("ul", { class: "apps", "aria-label": "应用" }, ...apps.map((app) => appLine(device, app, accounts)))
       : el("p", { class: "muted", text: device.online ? "这台设备上还没有护肝宝支持的游戏" : "离线时不显示应用状态" }),
     el("button", { class: "danger", type: "button", text: "解绑设备", onclick: async () => {
       if (!confirm(`解绑“${device.name}”？这台设备会下线，正在运行的作业结果将标记为未知。`)) return;
@@ -162,7 +184,7 @@ function jobRow(job, reload, expanded) {
   if (open) jobLog(job, log);
   return el("div", { class: "job-wrap" }, el("div", { class: "job" },
     el("div", { class: "grow" }, el("div", { class: "name", text: job.taskName }),
-      el("div", { class: "muted", text: `${job.deviceName} · ${time(job.updatedAt)}${job.detail ? ` · ${job.detail}` : ""}` })),
+      el("div", { class: "muted", text: [job.accountName, job.deviceName, time(job.updatedAt), job.detail].filter(Boolean).join(" · ") })),
     el("span", { class: `pill ${tone}`, text: job.cancelRequested && ACTIVE.has(job.state) ? "取消中" : label }),
     el("button", { class: "ghost", type: "button", text: open ? "收起" : "明细", "aria-expanded": String(open), onclick: () => {
       if (expanded.has(job.id)) expanded.delete(job.id); else expanded.add(job.id);
@@ -173,24 +195,34 @@ function jobRow(job, reload, expanded) {
     } }) : null), open ? log : null);
 }
 
-function jobForm(devices, reload) {
+/** A job runs one task for one game account, with that account's settings. */
+function jobForm(devices, accounts, reload) {
   const online = devices.filter((device) => device.tasks.length > 0);
   if (online.length === 0) return el("p", { class: "card muted", text: "设备上线并上报任务后，就可以在这里下发作业。" });
+  if (accounts.length === 0) return el("p", { class: "card muted", text: "先在“游戏账号”里添加账号，作业会用这个账号的设置运行。" });
   const message = el("p", { class: "message", role: "status" });
-  const taskSelect = el("select", { name: "task", required: true });
+  const taskSelect = el("select", { name: "task", required: true, onchange: fillAccounts });
+  const accountSelect = el("select", { name: "account", required: true });
   const deviceSelect = el("select", { name: "device", required: true, onchange: fill }, ...online.map((device) => el("option", { value: device.id, text: device.name })));
   function fill() {
     const device = online.find((item) => item.id === deviceSelect.value);
     taskSelect.replaceChildren(...device.tasks.map((task) => el("option", { value: `${task.targetId}\n${task.taskId}`, text: task.name })));
+    fillAccounts();
+  }
+  function fillAccounts() {
+    const [targetId] = taskSelect.value.split("\n");
+    const mine = accounts.filter((account) => account.gameId === targetId);
+    accountSelect.replaceChildren(...(mine.length ? mine.map((account) => el("option", { value: account.id, text: account.name }))
+      : [el("option", { value: "", text: "这个游戏还没有账号" })]));
   }
   fill();
   const form = el("form", { class: "card", onsubmit: async (event) => {
     event.preventDefault(); message.textContent = "";
     const [targetId, taskId] = taskSelect.value.split("\n");
-    try { await api("/api/jobs", { method: "POST", body: { deviceId: deviceSelect.value, targetId, taskId } }); reload(); }
+    try { await api("/api/jobs", { method: "POST", body: { deviceId: deviceSelect.value, targetId, taskId, accountId: accountSelect.value } }); reload(); }
     catch (error) { message.textContent = error.message; }
   } }, el("div", { class: "new-job" }, el("label", { text: "设备" }, deviceSelect), el("label", { text: "任务" }, taskSelect),
-    el("button", { class: "primary", type: "submit", text: "运行" })), message);
+    el("label", { text: "账号" }, accountSelect), el("button", { class: "primary", type: "submit", text: "运行" })), message);
   return form;
 }
 
@@ -230,26 +262,19 @@ function settingInput(def, value) {
 }
 
 /** Settings live in the cloud; a job takes a copy when it is created. Fields come from the version the device runs. */
-function settingsForm(devices) {
-  const usable = devices.filter((device) => device.tasks.length > 0);
-  if (usable.length === 0) return el("p", { class: "card muted", text: "设备上线并上报任务后，就可以在这里修改任务设置。" });
+/** Settings belong to a game account. Fields come from the newest uploaded version that has the task. */
+function settingsForm(account, game) {
+  const tasks = game?.tasks ?? [];
+  if (tasks.length === 0) return el("p", { class: "muted", text: "这个游戏还没有可设置的任务。" });
   const message = el("p", { class: "message", role: "status" });
   const editor = el("div", { class: "settings" });
-  const taskSelect = el("select", { required: true });
-  const deviceSelect = el("select", { required: true, onchange: fill }, ...usable.map((device) => el("option", { value: device.id, text: device.name })));
-  function fill() {
-    const device = usable.find((item) => item.id === deviceSelect.value);
-    taskSelect.replaceChildren(...device.tasks.map((task) => el("option", { value: `${task.targetId}\n${task.taskId}`, text: task.name })));
-    editor.replaceChildren();
-  }
-  fill();
-  taskSelect.addEventListener("change", () => editor.replaceChildren());
+  const taskSelect = el("select", { required: true, "aria-label": "任务", onchange: () => editor.replaceChildren() },
+    ...tasks.map((task) => el("option", { value: task.taskId, text: task.name })));
   async function open() {
     message.textContent = ""; message.className = "message";
-    const [targetId, taskId] = taskSelect.value.split("\n");
-    const path = `/api/configs/${encodeURIComponent(targetId)}/${encodeURIComponent(taskId)}`;
+    const path = `/api/accounts/${enc(account.id)}/configs/${enc(account.gameId)}/${enc(taskSelect.value)}`;
     let view;
-    try { view = await api(`${path}?deviceId=${encodeURIComponent(deviceSelect.value)}`); }
+    try { view = await api(path); }
     catch (error) { message.textContent = error.message; return; }
     if (view.fields.length === 0) { editor.replaceChildren(el("p", { class: "muted", text: "这个任务没有可修改的设置。" })); return; }
     const readers = []; const pending = [];
@@ -269,15 +294,148 @@ function settingsForm(devices) {
       for (const [id, read] of readers) { const value = read(); if (value !== undefined) values[id] = value; }
       save.disabled = true; message.textContent = "";
       try {
-        const saved = await api(path, { method: "PUT", body: { deviceId: deviceSelect.value, values, revision } });
-        revision = saved.revision; pending.forEach((note) => note.remove()); message.textContent = "已保存，之后下发的作业会使用这些设置"; message.className = "message ok";
+        const saved = await api(path, { method: "PUT", body: { values, revision } });
+        revision = saved.revision; pending.forEach((note) => note.remove()); message.textContent = `已保存，之后${account.name}的作业和计划都用这些设置`; message.className = "message ok";
       } catch (error) { message.textContent = error.message; }
       finally { save.disabled = false; }
     } });
     editor.replaceChildren(el("p", { class: "muted", text: `任务版本 ${view.version}` }), ...rows, save);
   }
-  return el("div", { class: "card" }, el("div", { class: "new-job" }, el("label", { text: "设备" }, deviceSelect), el("label", { text: "任务" }, taskSelect),
+  return el("div", {}, el("div", { class: "new-job" }, el("label", { text: "任务" }, taskSelect),
     el("button", { class: "ghost", type: "button", text: "编辑设置", onclick: open })), editor, message);
+}
+
+const WEEK = ["一", "二", "三", "四", "五", "六", "日"];
+const clockText = (minute) => `${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`;
+function planRule(plan) {
+  const days = plan.days.length === 7 ? "每天" : `每周${plan.days.map((day) => WEEK[day - 1]).join("、")}`;
+  return `${days} ${clockText(plan.minuteOfDay)}`;
+}
+
+/** Creates a plan for [account], or edits [plan]. Nothing is filled in on the user's behalf beyond the task list. */
+function planEditor(account, game, devices, plan, close) {
+  const message = el("p", { class: "message", role: "status" });
+  const name = el("input", { type: "text", required: true, maxlength: "40", value: plan?.name ?? "" });
+  const at = el("input", { type: "time", required: true, value: plan ? clockText(plan.minuteOfDay) : "" });
+  const late = el("input", { type: "number", min: "1", max: "1440", required: true, value: String(plan?.latestStartMinutes ?? 30) });
+  const enabled = el("input", { type: "checkbox", checked: plan?.enabled ?? true });
+  const days = WEEK.map((label, i) => [i + 1, el("input", { type: "checkbox", checked: plan ? plan.days.includes(i + 1) : false })]);
+  const chosen = new Set((plan?.tasks ?? []).map((task) => task.taskId));
+  const tasks = (game?.tasks ?? []).map((task) => [task, el("input", { type: "checkbox", checked: chosen.has(task.taskId) })]);
+  const where = new Set(plan?.deviceIds ?? []);
+  const boxes = devices.map((device) => [device.id, el("input", { type: "checkbox", checked: where.has(device.id) })]);
+  const check = (box, label) => el("label", { class: "check" }, box, el("span", { text: label }));
+  return el("form", { class: "plan-editor", onsubmit: async (event) => {
+    event.preventDefault(); message.textContent = "";
+    const [hour, minute] = at.value.split(":").map(Number);
+    const body = { name: name.value, days: days.filter(([, box]) => box.checked).map(([day]) => day), minuteOfDay: hour * 60 + minute,
+      tasks: tasks.filter(([, box]) => box.checked).map(([task]) => task), deviceIds: boxes.filter(([, box]) => box.checked).map(([id]) => id),
+      latestStartMinutes: Number(late.value), enabled: enabled.checked, revision: plan?.revision ?? 0 };
+    try {
+      if (plan) await api(`/api/plans/${enc(plan.id)}`, { method: "PUT", body });
+      else await api(`/api/accounts/${enc(account.id)}/plans`, { method: "POST", body });
+      close();
+    } catch (error) { message.textContent = error.message; }
+  } },
+    el("label", { text: "计划名称" }, name),
+    el("div", { class: "name", text: "运行周期" }), el("div", { class: "choices" }, ...days.map(([day, box]) => check(box, `周${WEEK[day - 1]}`))),
+    el("label", { text: "运行时间" }, at),
+    el("div", { class: "name", text: "按顺序运行的任务" }), el("div", { class: "choices" }, ...tasks.map(([task, box]) => check(box, task.name))),
+    el("div", { class: "name", text: "可以在哪些设备上运行（都不选就是所有装了这个游戏的设备）" }),
+    el("div", { class: "choices" }, ...boxes.map(([id, box]) => check(box, devices.find((device) => device.id === id).name))),
+    el("label", { text: "到点后最晚多少分钟内开始，超过就跳过" }, late),
+    check(enabled, "启用"),
+    el("div", { class: "row" }, el("button", { class: "primary", type: "submit", text: plan ? "保存计划" : "新建计划" }),
+      el("button", { class: "ghost", type: "button", text: "取消", onclick: close })), message);
+}
+
+/**
+ * Game accounts, grouped by game, and for the chosen one its settings and plans. [view] holds what the stream sent;
+ * the list and the plan rows are redrawn on change, the editors only when the user opens them.
+ */
+function accountsPanel(view) {
+  let selected = null;
+  let editing = false;
+  const list = el("div", { class: "accounts" });
+  const detail = el("div", { class: "account-detail" });
+  const plansBox = el("div");
+  const editorBox = el("div");
+  const message = el("p", { class: "message", role: "status" });
+
+  function addForm() {
+    if (view.games.length === 0) return el("p", { class: "muted", text: "设备上线并上传任务包后，就能为它的游戏添加账号。" });
+    const game = el("select", { "aria-label": "游戏" }, ...view.games.map((item) => el("option", { value: item.id, text: item.name })));
+    const name = el("input", { type: "text", placeholder: "账号名称，如主号", required: true, maxlength: "40" });
+    const uid = el("input", { type: "text", placeholder: "UID（可不填）", maxlength: "40" });
+    return el("form", { class: "new-job", onsubmit: async (event) => {
+      event.preventDefault(); message.textContent = "";
+      try { selected = (await api("/api/accounts", { method: "POST", body: { gameId: game.value, name: name.value, uid: uid.value || null } })).id; showDetail(); }
+      catch (error) { message.textContent = error.message; }
+    } }, el("label", { text: "游戏" }, game), el("label", { text: "名称" }, name), el("label", { text: "UID" }, uid),
+      el("button", { class: "ghost", type: "submit", text: "添加账号" }));
+  }
+  function renderList() {
+    const groups = view.games.map((game) => [game, view.accounts.filter((account) => account.gameId === game.id)]);
+    list.replaceChildren(...groups.filter(([, accounts]) => accounts.length).map(([game, accounts]) => el("div", { class: "account-group" },
+      el("div", { class: "muted", text: game.name }),
+      ...accounts.map((account) => el("button", { type: "button", class: `account ${account.id === selected ? "on" : ""}`, "aria-pressed": String(account.id === selected),
+        onclick: () => { selected = account.id; renderList(); showDetail(); } },
+        el("span", { text: account.name }), account.uid ? el("span", { class: "muted", text: `UID ${account.uid}` }) : null)))),
+      ...(view.accounts.length ? [] : [el("p", { class: "muted", text: "还没有游戏账号。任务设置、计划和运行记录都归属于账号。" })]));
+  }
+  function renderPlans() {
+    const account = view.accounts.find((item) => item.id === selected);
+    if (!account) { plansBox.replaceChildren(); return; }
+    const mine = view.plans.filter((plan) => plan.accountId === account.id);
+    const game = view.games.find((item) => item.id === account.gameId);
+    // Changes that arrive while the editor is open are drawn when it closes.
+    const open = (plan) => { editing = true; editorBox.replaceChildren(planEditor(account, game, view.devices, plan, () => { editing = false; editorBox.replaceChildren(); renderPlans(); })); };
+    plansBox.replaceChildren(
+      ...mine.map((plan) => el("div", { class: "job" },
+        el("div", { class: "grow" }, el("div", { class: "name", text: plan.name }),
+          el("div", { class: "muted", text: [planRule(plan), plan.tasks.map((task) => task.name).join("、"),
+            plan.deviceIds.length ? `${plan.deviceIds.length} 台设备` : "所有设备", `最晚 ${plan.latestStartMinutes} 分钟内开始`].join(" · ") })),
+        el("span", { class: `pill ${plan.enabled ? "ok" : ""}`, text: plan.enabled ? "已启用" : "已停用" }),
+        el("button", { class: "ghost", type: "button", text: "编辑", onclick: () => open(plan) }),
+        el("button", { class: "ghost", type: "button", text: "删除", onclick: async () => {
+          if (confirm(`删除计划“${plan.name}”？`)) try { await api(`/api/plans/${enc(plan.id)}`, { method: "DELETE" }); } catch (error) { alert(error.message); }
+        } }))),
+      ...(mine.length ? [] : [el("p", { class: "muted", text: "这个账号还没有计划。" })]),
+      el("button", { class: "ghost", type: "button", text: "新建计划", onclick: () => open(null) }));
+  }
+  function showDetail() {
+    const account = view.accounts.find((item) => item.id === selected);
+    if (!account) { detail.replaceChildren(); return; }
+    const game = view.games.find((item) => item.id === account.gameId);
+    const name = el("input", { type: "text", value: account.name, maxlength: "40", "aria-label": "账号名称" });
+    const uid = el("input", { type: "text", value: account.uid ?? "", maxlength: "40", "aria-label": "UID" });
+    editing = false; editorBox.replaceChildren();
+    detail.replaceChildren(
+      el("div", { class: "row" }, el("h3", { class: "grow", text: `${game?.name ?? account.gameId} · ${account.name}` }),
+        el("button", { class: "danger", type: "button", text: "删除账号", onclick: async () => {
+          if (!confirm(`删除“${account.name}”？它的任务设置和计划也会删除，过去的作业记录保留。`)) return;
+          try { await api(`/api/accounts/${enc(account.id)}`, { method: "DELETE" }); selected = null; showDetail(); } catch (error) { alert(error.message); }
+        } })),
+      el("form", { class: "new-job", onsubmit: async (event) => {
+        event.preventDefault();
+        try { await api(`/api/accounts/${enc(account.id)}`, { method: "PUT", body: { name: name.value, uid: uid.value || null } }); } catch (error) { alert(error.message); }
+      } }, el("label", { text: "名称" }, name), el("label", { text: "UID" }, uid), el("button", { class: "ghost", type: "submit", text: "保存" })),
+      el("h4", { text: "任务设置" }), settingsForm(account, game),
+      el("h4", { text: "计划" }), plansBox, editorBox);
+    renderPlans();
+  }
+  const node = el("div", { class: "card" }, el("div", { class: "account-layout" }, el("div", {}, list), detail), el("h4", { text: "添加账号" }), el("div", {}), message);
+  const addBox = node.children[2];
+  return {
+    node,
+    /** Called when accounts, plans, games or devices change. */
+    refresh(what) {
+      renderList();
+      if (what === "games" || what === "init") addBox.replaceChildren(addForm());
+      if (what === "accounts" && !view.accounts.some((item) => item.id === selected)) { selected = null; showDetail(); }
+      if (what === "plans" && !editing) renderPlans();
+    },
+  };
 }
 
 function stopRefresh() { stream?.close(); stream = null; }
@@ -286,22 +444,31 @@ async function showConsole(account) {
   const devicesBox = el("div", { class: "devices" });
   const jobsBox = el("div", { class: "card jobs" });
   const formBox = el("div");
-  const settingsBox = el("div");
   const status = el("p", { class: "message", role: "status", text: "正在连接…" });
+  const zone = el("span", { class: "muted" });
   let formKey = "";
   const expanded = new Set();
   let devices = new Map();
   let jobs = [];
+  const view = { accounts: [], plans: [], games: [], devices: [] };
+  const panel = accountsPanel(view);
   const nothing = () => {};
 
   // Each part is redrawn only when its own data changes, so open forms and expanded logs stay as they are.
   function renderDevices() {
     const list = [...devices.values()].sort((a, b) => a.name.localeCompare(b.name, "zh-CN") || a.id.localeCompare(b.id));
-    devicesBox.replaceChildren(...(list.length ? list.map(deviceCard)
+    view.devices = list;
+    devicesBox.replaceChildren(...(list.length ? list.map((device) => deviceCard(device, view.accounts))
       : [el("p", { class: "card muted", text: "还没有设备。在手机上打开护肝宝并登录这个账号，设备会自动出现在这里。" })]));
-    // Rebuilding the forms while someone is choosing a task would reset their selection.
-    const key = JSON.stringify(list.map((device) => [device.id, device.tasks]));
-    if (key !== formKey) { formKey = key; formBox.replaceChildren(jobForm(list, nothing)); settingsBox.replaceChildren(settingsForm(list)); }
+    // Rebuilding the form while someone is choosing a task would reset their selection.
+    const key = JSON.stringify([list.map((device) => [device.id, device.tasks]), view.accounts]);
+    if (key !== formKey) { formKey = key; formBox.replaceChildren(jobForm(list, view.accounts, nothing)); }
+  }
+  function showZone(value) {
+    zone.replaceChildren(`计划时区：${value} `, el("button", { class: "link", type: "button", text: "修改", onclick: async () => {
+      const next = prompt("计划按哪个时区计时？例如 Asia/Shanghai", value);
+      if (next && next !== value) try { await api("/api/me/time-zone", { method: "PUT", body: { timeZone: next } }); } catch (error) { alert(error.message); }
+    } }));
   }
   function renderJobs() {
     jobsBox.replaceChildren(...(jobs.length ? jobs.map((job) => jobRow(job, renderJobs, expanded)) : [el("p", { class: "empty", text: "还没有作业" })]));
@@ -314,8 +481,15 @@ async function showConsole(account) {
     const snapshot = JSON.parse(event.data);
     devices = new Map(snapshot.devices.map((device) => [device.id, device]));
     jobs = snapshot.jobs;
-    renderDevices(); renderJobs();
+    Object.assign(view, { accounts: snapshot.accounts, plans: snapshot.plans, games: snapshot.games });
+    renderDevices(); renderJobs(); panel.refresh("init"); showZone(snapshot.timeZone);
   });
+  for (const name of ["accounts", "plans", "games"]) stream.addEventListener(name, (event) => {
+    view[name] = JSON.parse(event.data);
+    if (name === "accounts") renderDevices();
+    panel.refresh(name);
+  });
+  stream.addEventListener("time-zone", (event) => showZone(JSON.parse(event.data).timeZone));
   stream.addEventListener("device", (event) => { const device = JSON.parse(event.data); devices.set(device.id, device); renderDevices(); });
   stream.addEventListener("device-removed", (event) => { devices.delete(JSON.parse(event.data).id); renderDevices(); });
   stream.addEventListener("jobs", (event) => { jobs = JSON.parse(event.data); renderJobs(); });
@@ -331,9 +505,9 @@ async function showConsole(account) {
   root.replaceChildren(
     el("header", { class: "top" }, el("div", { class: "grow" }, brand()), el("span", { class: "who", text: account.email ?? account.githubLogin ?? "" }),
       el("button", { class: "ghost", type: "button", text: "退出登录", onclick: async () => { await api("/api/auth/logout", { method: "POST", body: {} }); showAuth(); } })),
-    status,
+    el("div", { class: "row" }, el("div", { class: "grow" }, status), zone),
     el("section", {}, el("h2", { text: "设备" }), devicesBox),
-    el("section", {}, el("h2", { text: "任务设置" }), settingsBox),
+    el("section", {}, el("h2", { text: "游戏账号" }), el("p", { class: "muted", text: "任务设置、计划和运行记录都属于游戏账号，不属于某台设备。" }), panel.node),
     el("section", {}, el("h2", { text: "下发作业" }), formBox),
     el("section", {}, el("h2", { text: "作业记录" }), jobsBox));
 }

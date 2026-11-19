@@ -105,7 +105,17 @@ class CloudApiTest {
             }
             return events
         }
-        suspend fun job(token: String, deviceId: String) = call(HttpMethod.Post, "/api/jobs", """{"deviceId":"$deviceId","targetId":"game","taskId":"gift"}""", token)
+        private val mains = mutableMapOf<String, String>()
+        /** The token's main game account, created on first use. */
+        suspend fun main(token: String): String = mains[token] ?: createAccount(token, "主号").let { reply ->
+            assertEquals(HttpStatusCode.Created, reply.status)
+            json.decodeFromString(GameAccountView.serializer(), reply.bodyAsText()).id.also { mains[token] = it }
+        }
+        suspend fun createAccount(token: String, name: String, game: String = "game") = call(HttpMethod.Post, "/api/accounts", """{"gameId":"$game","name":"$name"}""", token)
+        suspend fun job(token: String, deviceId: String, task: String = "gift", account: String? = null) =
+            call(HttpMethod.Post, "/api/jobs", """{"deviceId":"$deviceId","targetId":"game","taskId":"$task","accountId":"${account ?: main(token)}"}""", token)
+        fun plan(name: String = "每日", tasks: String = """[{"targetId":"game","taskId":"gift","name":"每日礼包"}]""", revision: Long = 0, days: String = "[1,2,3,4,5,6,7]") =
+            """{"name":"$name","days":$days,"minuteOfDay":390,"tasks":$tasks,"revision":$revision}"""
         suspend fun next(token: String) = call(HttpMethod.Post, "/api/device/jobs/next?waitMs=0", "{}", token)
         suspend fun lease(token: String) = json.decodeFromString(JobLease.serializer(), next(token).bodyAsText())
         suspend fun report(token: String, lease: JobLease, state: JobState, leaseNo: Long = lease.leaseNo) =
@@ -193,7 +203,7 @@ class CloudApiTest {
     }
     @Test fun jobsOnlyAcceptTasksTheDeviceOffers() = api {
         val session = signUp("a@example.com"); val device = enroll(session.accessToken!!)
-        assertEquals(HttpStatusCode.BadRequest, call(HttpMethod.Post, "/api/jobs", """{"deviceId":"${device.deviceId}","targetId":"game","taskId":"unknown"}""", session.accessToken).status)
+        assertEquals(HttpStatusCode.BadRequest, job(session.accessToken!!, device.deviceId, "unknown").status)
     }
     @Test fun theCloudAsksForATaskVersionOnceAndRejectsAForgedOne() = api {
         val token = signUp("a@example.com").accessToken!!; enroll(token)
@@ -201,23 +211,75 @@ class CloudApiTest {
         val forged = CatalogUpload("v1", digest, bundle.replace("每日礼包", "别的礼包"))
         assertEquals(HttpStatusCode.BadRequest, call(HttpMethod.Post, "/api/device/catalog", json.encodeToString(CatalogUpload.serializer(), forged), token).status)
     }
-    @Test fun aJobNeedsValidCloudSettingsAndCarriesACopyOfThem() = api {
+    @Test fun aJobNeedsValidSettingsOfItsAccountAndCarriesACopyOfThem() = api {
         val token = signUp("a@example.com").accessToken!!; val device = enroll(token); beat(token, bothTasks)
-        val tour = """{"deviceId":"${device.deviceId}","targetId":"game","taskId":"tour"}"""
-        val refused = call(HttpMethod.Post, "/api/jobs", tour, token)
+        val main = main(token)
+        val refused = job(token, device.deviceId, "tour")
         assertEquals(HttpStatusCode.BadRequest, refused.status)
         assertTrue(refused.bodyAsText().contains("config_required"))
-        val view = json.decodeFromString(ConfigView.serializer(), call(HttpMethod.Get, "/api/configs/game/tour?deviceId=${device.deviceId}", token = token).bodyAsText())
+        val path = "/api/accounts/$main/configs/game/tour"
+        val view = json.decodeFromString(ConfigView.serializer(), call(HttpMethod.Get, path, token = token).bodyAsText())
         assertEquals("box", (view.fields.single() as kotlinx.serialization.json.JsonObject)["id"]?.let { (it as kotlinx.serialization.json.JsonPrimitive).content })
         assertEquals(0L, view.revision)
-        fun save(value: String, revision: Long) = """{"deviceId":"${device.deviceId}","values":{"box":"$value"},"revision":$revision}"""
-        assertEquals(HttpStatusCode.BadRequest, call(HttpMethod.Put, "/api/configs/game/tour", save("jade", 0), token).status)
-        assertEquals(HttpStatusCode.OK, call(HttpMethod.Put, "/api/configs/game/tour", save("currency", 0), token).status)
-        assertEquals(HttpStatusCode.Conflict, call(HttpMethod.Put, "/api/configs/game/tour", save("none", 0), token).status)
-        assertEquals(HttpStatusCode.Created, call(HttpMethod.Post, "/api/jobs", tour, token).status)
+        fun save(value: String, revision: Long) = """{"values":{"box":"$value"},"revision":$revision}"""
+        assertEquals(HttpStatusCode.BadRequest, call(HttpMethod.Put, path, save("jade", 0), token).status)
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Put, path, save("currency", 0), token).status)
+        assertEquals(HttpStatusCode.Conflict, call(HttpMethod.Put, path, save("none", 0), token).status)
+        assertEquals(HttpStatusCode.Created, job(token, device.deviceId, "tour").status)
         val lease = lease(token)
         assertEquals(digest, lease.digest); assertEquals("v1", lease.version)
         assertEquals("currency", (lease.configuration["box"] as kotlinx.serialization.json.JsonPrimitive).content)
+        // Another account of the same game has its own settings.
+        val alt = json.decodeFromString(GameAccountView.serializer(), createAccount(token, "小号").bodyAsText()).id
+        assertEquals(HttpStatusCode.BadRequest, job(token, device.deviceId, "tour", alt).status)
+        assertEquals("主号", jobs(token).single().accountName)
+    }
+    @Test fun gameAccountsBelongToAGameTheDevicesReportedAndCannotBeSeenByOthers() = api {
+        val token = signUp("a@example.com").accessToken!!; enroll(token)
+        assertEquals(HttpStatusCode.BadRequest, createAccount(token, "主号", game = "unknown").status)
+        val main = main(token)
+        assertEquals(HttpStatusCode.Conflict, createAccount(token, "主号").status)
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Put, "/api/accounts/$main", """{"name":"大号","uid":"123"}""", token).status)
+        val listed = json.decodeFromString(ListSerializer(GameAccountView.serializer()), call(HttpMethod.Get, "/api/accounts", token = token).bodyAsText()).single()
+        assertEquals("大号" to "123", listed.name to listed.uid)
+        val games = json.decodeFromString(ListSerializer(GameView.serializer()), call(HttpMethod.Get, "/api/games", token = token).bodyAsText())
+        assertEquals(listOf("game"), games.map { it.id })
+        val other = signUp("b@example.com").accessToken!!
+        assertEquals("[]", call(HttpMethod.Get, "/api/accounts", token = other).bodyAsText())
+        assertEquals(HttpStatusCode.NotFound, call(HttpMethod.Get, "/api/accounts/$main/configs/game/gift", token = other).status)
+        assertEquals(HttpStatusCode.NotFound, call(HttpMethod.Delete, "/api/accounts/$main", token = other).status)
+    }
+    @Test fun plansBelongToAnAccountHoldOnlyItsGamesTasksAndRefuseStaleSaves() = api {
+        val token = signUp("a@example.com").accessToken!!; enroll(token); beat(token, bothTasks)
+        val main = main(token)
+        assertEquals(HttpStatusCode.BadRequest, call(HttpMethod.Post, "/api/accounts/$main/plans", plan(days = "[]"), token).status)
+        assertEquals(HttpStatusCode.BadRequest, call(HttpMethod.Post, "/api/accounts/$main/plans", plan(tasks = """[{"targetId":"game","taskId":"nope","name":"x"}]"""), token).status)
+        val created = json.decodeFromString(PlanView.serializer(), call(HttpMethod.Post, "/api/accounts/$main/plans", plan(), token).bodyAsText())
+        assertEquals(listOf(1, 2, 3, 4, 5, 6, 7), created.days); assertEquals(30, created.latestStartMinutes); assertEquals(1L, created.revision)
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Put, "/api/plans/${created.id}", plan("周末", days = "[6,7]", revision = 1), token).status)
+        assertEquals(HttpStatusCode.Conflict, call(HttpMethod.Put, "/api/plans/${created.id}", plan("又改", revision = 1), token).status)
+        val other = signUp("b@example.com").accessToken!!
+        assertEquals(HttpStatusCode.NotFound, call(HttpMethod.Put, "/api/plans/${created.id}", plan(revision = 2), other).status)
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Delete, "/api/accounts/$main", token = token).status)
+        assertEquals("[]", call(HttpMethod.Get, "/api/plans", token = token).bodyAsText())
+    }
+    @Test fun anAppIsToldWhichAccountsItUses() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token); val main = main(token)
+        val app = """[{"key":"test.game","gameId":"game","name":"游戏"}]"""
+        socket(token) { send(Frame.Text(status(apps = app))); replies() }
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Put, "/api/devices/${device.deviceId}/apps/test.game", """{"accountId":"$main","defaultAccountId":"$main"}""", token).status)
+        val seen = devices(token).single().apps.single()
+        assertEquals(main to main, seen.accountId to seen.defaultAccountId)
+        assertEquals(HttpStatusCode.NotFound, call(HttpMethod.Put, "/api/devices/${device.deviceId}/apps/other", """{}""", token).status)
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Delete, "/api/accounts/$main", token = token).status)
+        assertNull(devices(token).single().apps.single().accountId)
+    }
+    @Test fun theTimeZoneIsCheckedAndKeptPerUser() = api {
+        val token = signUp("a@example.com").accessToken!!
+        assertEquals("Asia/Shanghai", json.decodeFromString(AccountView.serializer(), call(HttpMethod.Get, "/api/me", token = token).bodyAsText()).timeZone)
+        assertEquals(HttpStatusCode.BadRequest, call(HttpMethod.Put, "/api/me/time-zone", """{"timeZone":"Mars/Base"}""", token).status)
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Put, "/api/me/time-zone", """{"timeZone":"Asia/Tokyo"}""", token).status)
+        assertEquals("Asia/Tokyo", json.decodeFromString(AccountView.serializer(), call(HttpMethod.Get, "/api/me", token = token).bodyAsText()).timeZone)
     }
     @Test fun aRunLogIsStoredOnceAndNamesItsSteps() = api {
         val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
@@ -291,7 +353,7 @@ class CloudApiTest {
         val app = """[{"key":"test.game","gameId":"game","name":"游戏","phase":"RUNNING","currentTask":"每日礼包","queued":1}]"""
         val seen = socket(token) { send(Frame.Text(status(apps = app))); replies(); devices(token).single() }
         assertTrue(seen.online)
-        assertEquals(listOf(AppStatus("test.game", "game", "游戏", "RUNNING", "每日礼包", 1)), seen.apps)
+        assertEquals(listOf(AppView("test.game", "game", "游戏", "RUNNING", "每日礼包", 1)), seen.apps)
         assertFalse(devices(token).single().online)
     }
     @Test fun aSocketWithoutAValidDeviceSessionIsRefusedWithACode() = api {
@@ -307,7 +369,7 @@ class CloudApiTest {
         assertEquals(setOf(JobState.UNKNOWN, JobState.CANCELLED), jobs(web.accessToken!!).map { it.state }.toSet())
     }
     @Test fun theConsoleStreamStartsWithASnapshotThenSendsChanges() = api {
-        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token); main(token)
         val events = stream(token, 3) { job(token, device.deviceId); beat(token) }
         assertEquals("snapshot", events[0].first.substringAfter(':'))
         assertEquals(device.deviceId, json.decodeFromString(ConsoleSnapshot.serializer(), events[0].second).devices.single().id)
@@ -318,7 +380,7 @@ class CloudApiTest {
         assertTrue(json.decodeFromString(ConsoleSnapshot.serializer(), stream(other, 1).single().second).devices.isEmpty())
     }
     @Test fun aReconnectingConsoleGetsOnlyWhatItMissedOrANewSnapshot() = api {
-        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token); main(token)
         val first = stream(token, 1).single().first.substringBefore(':').toLong()
         job(token, device.deviceId)
         val missed = stream(token, 1, lastEventId = first).single()

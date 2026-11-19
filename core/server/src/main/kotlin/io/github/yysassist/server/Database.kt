@@ -36,7 +36,7 @@ class Database(path: String) : AutoCloseable {
     private companion object {
         val SCHEMA = listOf(
             """CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE, email_verified INTEGER NOT NULL DEFAULT 0,
-                password_hash TEXT, created_at INTEGER NOT NULL)""",
+                password_hash TEXT, created_at INTEGER NOT NULL, time_zone TEXT NOT NULL DEFAULT 'Asia/Shanghai')""",
             """CREATE TABLE IF NOT EXISTS identities (provider TEXT NOT NULL, subject TEXT NOT NULL, login TEXT, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 PRIMARY KEY (provider, subject), UNIQUE (provider, user_id))""",
             """CREATE TABLE IF NOT EXISTS email_codes (email TEXT NOT NULL, purpose TEXT NOT NULL, code_hash TEXT NOT NULL, expires_at INTEGER NOT NULL,
@@ -49,9 +49,21 @@ class Database(path: String) : AutoCloseable {
             // Task bundles devices run, kept per user so settings can be checked against the exact version a job will use.
             """CREATE TABLE IF NOT EXISTS catalogs (user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, digest TEXT NOT NULL,
                 version TEXT NOT NULL, bundle_json TEXT NOT NULL, uploaded_at INTEGER NOT NULL, PRIMARY KEY (user_id, digest))""",
-            // The cloud is the one place task settings are kept; jobs carry a copy taken when they are created.
-            """CREATE TABLE IF NOT EXISTS task_configs (user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, target_id TEXT NOT NULL,
-                task_id TEXT NOT NULL, values_json TEXT NOT NULL, revision INTEGER NOT NULL, updated_at INTEGER NOT NULL, PRIMARY KEY (user_id, target_id, task_id))""",
+            // Game accounts own settings, plans and run records; they are not tied to a device.
+            """CREATE TABLE IF NOT EXISTS game_accounts (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                game_id TEXT NOT NULL, name TEXT NOT NULL, uid TEXT, created_at INTEGER NOT NULL, UNIQUE (user_id, game_id, name))""",
+            // The server is the one place task settings are kept, per game account; jobs carry a copy taken when they are created.
+            """CREATE TABLE IF NOT EXISTS task_configs (user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                account_id TEXT NOT NULL REFERENCES game_accounts(id) ON DELETE CASCADE, target_id TEXT NOT NULL, task_id TEXT NOT NULL,
+                values_json TEXT NOT NULL, revision INTEGER NOT NULL, updated_at INTEGER NOT NULL, PRIMARY KEY (account_id, target_id, task_id))""",
+            """CREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                account_id TEXT NOT NULL REFERENCES game_accounts(id) ON DELETE CASCADE, name TEXT NOT NULL, days_mask INTEGER NOT NULL,
+                minute_of_day INTEGER NOT NULL, tasks_json TEXT NOT NULL, device_ids_json TEXT NOT NULL, latest_start_minutes INTEGER NOT NULL,
+                enabled INTEGER NOT NULL, revision INTEGER NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)""",
+            // Which account an app is signed in to, as the user says until the app can read it, and its default account.
+            """CREATE TABLE IF NOT EXISTS app_accounts (device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE, app_key TEXT NOT NULL,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, account_id TEXT REFERENCES game_accounts(id) ON DELETE SET NULL,
+                default_account_id TEXT REFERENCES game_accounts(id) ON DELETE SET NULL, PRIMARY KEY (device_id, app_key))""",
             """CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, kind TEXT NOT NULL,
                 device_id TEXT REFERENCES devices(id) ON DELETE CASCADE, access_hash TEXT NOT NULL UNIQUE, refresh_hash TEXT UNIQUE,
                 access_expires_at INTEGER NOT NULL, refresh_expires_at INTEGER)""",
@@ -59,12 +71,14 @@ class Database(path: String) : AutoCloseable {
                 device_id TEXT NOT NULL REFERENCES devices(id) ON DELETE CASCADE, target_id TEXT NOT NULL, task_id TEXT NOT NULL, task_name TEXT NOT NULL,
                 state TEXT NOT NULL, detail TEXT NOT NULL DEFAULT '', lease_no INTEGER NOT NULL DEFAULT 0, lease_expires_at INTEGER,
                 cancel_requested INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL,
-                version TEXT NOT NULL, digest TEXT NOT NULL, config_json TEXT NOT NULL)""",
+                version TEXT NOT NULL, digest TEXT NOT NULL, config_json TEXT NOT NULL,
+                account_id TEXT REFERENCES game_accounts(id) ON DELETE SET NULL, account_name TEXT)""",
             // A job's run log, sent by the device while it runs. key is the device's own record name, so resends are stored once.
             """CREATE TABLE IF NOT EXISTS job_events (job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE, key TEXT NOT NULL, at INTEGER NOT NULL,
                 kind TEXT NOT NULL, step TEXT NOT NULL, action TEXT NOT NULL, detail TEXT NOT NULL, elapsed_ms INTEGER NOT NULL, PRIMARY KEY (job_id, key))""",
             "CREATE INDEX IF NOT EXISTS jobs_by_device ON jobs (device_id, state, created_at)",
             "CREATE INDEX IF NOT EXISTS jobs_by_user ON jobs (user_id, created_at)",
+            "CREATE INDEX IF NOT EXISTS plans_by_user ON plans (user_id, account_id)",
         )
     }
 }

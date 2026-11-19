@@ -67,3 +67,14 @@ h2 { font-size: 15px; font-weight: 600; color: var(--muted); }
 .log-line.fact > span:nth-child(2){font-weight:600}
 .apps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .app-line { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 8px 10px; border-radius: 10px; background: var(--raised); }
+.app-accounts { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 6px; }
+label.inline { display: inline-flex; align-items: center; gap: 6px; }
+.account-layout { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 16px; }
+@media (max-width: 720px) { .account-layout { grid-template-columns: 1fr; } }
+.accounts { display: grid; gap: 12px; align-content: start; }
+.account-group { display: grid; gap: 4px; }
+.account { display: flex; justify-content: space-between; gap: 8px; text-align: left; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.account.on { border-color: var(--primary); background: var(--raised); font-weight: 600; }
+.account-detail { display: grid; gap: 8px; align-content: start; }
+.account-detail h3, .account-detail h4 { margin: 8px 0 0; }
+.plan-editor { display: grid; gap: 8px; padding: 12px; border-radius: 12px; background: var(--raised); }

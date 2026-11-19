@@ -19,7 +19,7 @@ import kotlinx.serialization.json.JsonObject
 @Serializable data class AuthResult(val userId: String, val email: String? = null, val accessToken: String? = null,
     val refreshToken: String? = null, val accessExpiresAt: Long? = null)
 @Serializable data class ApiError(val code: String, val message: String)
-@Serializable data class AccountView(val userId: String, val email: String?, val hasPassword: Boolean, val githubLogin: String?)
+@Serializable data class AccountView(val userId: String, val email: String?, val hasPassword: Boolean, val githubLogin: String?, val timeZone: String = "Asia/Shanghai")
 
 @Serializable data class DeviceRegistration(val installId: String, val name: String, val platform: String)
 @Serializable data class DeviceRegistered(val deviceId: String, val userId: String)
@@ -73,18 +73,46 @@ object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DE
 /** A stored log line as the console shows it, with the step's name from the job's task version. */
 @Serializable data class JobEventView(val at: Long, val kind: String, val step: String, val stepName: String, val action: String,
     val detail: String, val elapsedMs: Long)
-@Serializable data class CreateJobRequest(val deviceId: String, val targetId: String, val taskId: String)
-/** A task's settings as the cloud stores them, with the field definitions of the version a device runs. */
-@Serializable data class ConfigView(val targetId: String, val taskId: String, val taskName: String, val version: String,
+/** A job runs a task for one game account, with that account's settings. */
+@Serializable data class CreateJobRequest(val deviceId: String, val targetId: String, val taskId: String, val accountId: String)
+/** A task's settings for one game account, with the field definitions of the newest uploaded task version that has the task. */
+@Serializable data class ConfigView(val accountId: String, val targetId: String, val taskId: String, val taskName: String, val version: String,
     val fields: JsonArray, val values: JsonObject, val revision: Long)
 /** [revision] is the one the editor started from; a newer save in between is refused rather than overwritten. */
-@Serializable data class ConfigSave(val deviceId: String, val values: JsonObject, val revision: Long)
+@Serializable data class ConfigSave(val values: JsonObject, val revision: Long)
+
+/** A game account; settings, plans and run records belong to it. [uid] is optional until the app can read it. */
+@Serializable data class GameAccountView(val id: String, val gameId: String, val name: String, val uid: String? = null, val createdAt: Long)
+@Serializable data class GameAccountSave(val gameId: String = "", val name: String, val uid: String? = null)
+/** A game the user's devices can run, from the task bundles they reported. */
+@Serializable data class GameView(val id: String, val name: String, val tasks: List<CloudTask>)
+
+/**
+ * A plan of one game account, timed by the server in the user's time zone. [days] are ISO weekdays 1 (Monday) to 7;
+ * [minuteOfDay] counts from midnight. [deviceIds] empty means any device with the game. A run that has not started
+ * [latestStartMinutes] after its time is skipped.
+ */
+@Serializable data class PlanView(val id: String, val accountId: String, val name: String, val days: List<Int>, val minuteOfDay: Int,
+    val tasks: List<CloudTask>, val deviceIds: List<String>, val latestStartMinutes: Int, val enabled: Boolean, val revision: Long, val updatedAt: Long)
+/** [revision] 0 creates a plan; otherwise it must match the stored one. */
+@Serializable data class PlanSave(val name: String, val days: List<Int>, val minuteOfDay: Int, val tasks: List<CloudTask>,
+    val deviceIds: List<String> = emptyList(), val latestStartMinutes: Int = 30, val enabled: Boolean = true, val revision: Long = 0)
+
+/** An app as the console shows it: what the device reports plus the accounts the user assigned to it. */
+@Serializable data class AppView(val key: String, val gameId: String, val name: String, val phase: String, val currentTask: String?, val queued: Int,
+    val accountId: String? = null, val defaultAccountId: String? = null)
+/** Until the app can tell which account is signed in, the user says so. Null clears it. */
+@Serializable data class AppAccounts(val accountId: String? = null, val defaultAccountId: String? = null)
+
 @Serializable data class DeviceView(val id: String, val name: String, val platform: String, val online: Boolean, val lastSeenAt: Long?,
-    val phase: String?, val currentTask: String?, val queued: Int, val tasks: List<CloudTask>, val apps: List<AppStatus> = emptyList(), val concurrency: Int = 1)
+    val phase: String?, val currentTask: String?, val queued: Int, val tasks: List<CloudTask>, val apps: List<AppView> = emptyList(), val concurrency: Int = 1)
+@Serializable data class TimeZoneSave(val timeZone: String)
 /** First message of the console's event stream (`/api/events`), and what it falls back to after a gap. */
-@Serializable data class ConsoleSnapshot(val devices: List<DeviceView>, val jobs: List<JobView>)
+@Serializable data class ConsoleSnapshot(val devices: List<DeviceView>, val jobs: List<JobView>, val accounts: List<GameAccountView> = emptyList(),
+    val plans: List<PlanView> = emptyList(), val games: List<GameView> = emptyList(), val timeZone: String = "Asia/Shanghai")
 @Serializable data class RemovedDevice(val id: String)
 /** A job's run log has new lines; consoles that show it fetch them. */
 @Serializable data class JobLogUpdated(val id: String)
 @Serializable data class JobView(val id: String, val deviceId: String, val deviceName: String, val targetId: String, val taskId: String,
-    val taskName: String, val state: JobState, val detail: String, val cancelRequested: Boolean, val createdAt: Long, val updatedAt: Long)
+    val taskName: String, val state: JobState, val detail: String, val cancelRequested: Boolean, val createdAt: Long, val updatedAt: Long,
+    val accountId: String? = null, val accountName: String? = null)

@@ -118,7 +118,8 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
     fun logout(caller: Caller) = db.tx { update("DELETE FROM sessions WHERE id = ? AND user_id = ?", caller.sessionId, caller.userId); Unit }
     fun account(caller: Caller): AccountView = db.tx {
         val user = single("SELECT email, password_hash FROM users WHERE id = ?", caller.userId) { it.getString(1) to (it.getString(2) != null) } ?: throw ApiException(401, "invalid_session", "登录已失效")
-        AccountView(caller.userId, user.first, user.second, single("SELECT login FROM identities WHERE provider = 'github' AND user_id = ?", caller.userId) { it.getString(1) })
+        AccountView(caller.userId, user.first, user.second, single("SELECT login FROM identities WHERE provider = 'github' AND user_id = ?", caller.userId) { it.getString(1) },
+            zoneOf(caller.userId))
     }
 
     fun githubStart(redirectUri: String, linkUser: String?): String {
@@ -223,7 +224,11 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
     }
     private fun pushJobs(userId: String) = events.publish(userId, "jobs", json.encodeToString(jobList, db.tx { jobRows(userId) }))
     /** What a console shows first, and again whenever it cannot catch up from the event log. */
-    fun consoleSnapshot(userId: String): ConsoleSnapshot = db.tx { sweep(); ConsoleSnapshot(deviceRows(userId, null), jobRows(userId)) }
+    fun consoleSnapshot(userId: String): ConsoleSnapshot = db.tx {
+        sweep()
+        ConsoleSnapshot(deviceRows(userId, null), jobRows(userId), accountRows(userId), planRows(userId), gameRows(userId), zoneOf(userId))
+    }
+    private fun Database.zoneOf(userId: String) = single("SELECT time_zone FROM users WHERE id = ?", userId) { it.getString(1) } ?: DEFAULT_ZONE
     fun encode(snapshot: ConsoleSnapshot) = json.encodeToString(ConsoleSnapshot.serializer(), snapshot)
     /** The bundle text must hash to the digest it claims, so a stored version can never be swapped later. */
     fun uploadCatalog(caller: Caller, upload: CatalogUpload) {
@@ -233,8 +238,9 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         val bundle = try { bundles.decodeFromString(TaskBundle.serializer(), upload.bundle) }
             catch (_: IllegalArgumentException) { throw ApiException(400, "invalid_catalog", "任务包无法解析") }
         if (bundle.version != upload.version) throw ApiException(400, "invalid_catalog", "任务包版本不一致")
-        db.tx { update("INSERT OR IGNORE INTO catalogs (user_id, digest, version, bundle_json, uploaded_at) VALUES (?, ?, ?, ?, ?)",
-            caller.userId, upload.digest, upload.version, upload.bundle, clock()); Unit }
+        val added = db.tx { update("INSERT OR IGNORE INTO catalogs (user_id, digest, version, bundle_json, uploaded_at) VALUES (?, ?, ?, ?, ?)",
+            caller.userId, upload.digest, upload.version, upload.bundle, clock()) }
+        if (added > 0) pushGames(caller.userId)
     }
     private fun Database.catalog(userId: String, digest: String): TaskBundle? =
         single("SELECT bundle_json FROM catalogs WHERE user_id = ? AND digest = ?", userId, digest) { bundles.decodeFromString(TaskBundle.serializer(), it.getString(1)) }
@@ -247,28 +253,165 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         val task = bundle.tasks.singleOrNull { it.targetId == targetId && it.id == taskId } ?: throw ApiException(400, "unknown_task", "这台设备没有这个任务")
         return current to task
     }
-    private fun Database.savedConfig(userId: String, targetId: String, taskId: String): Pair<JsonObject, Long> =
-        single("SELECT values_json, revision FROM task_configs WHERE user_id = ? AND target_id = ? AND task_id = ?", userId, targetId, taskId) {
+    private fun Database.savedConfig(accountId: String, targetId: String, taskId: String): Pair<JsonObject, Long> =
+        single("SELECT values_json, revision FROM task_configs WHERE account_id = ? AND target_id = ? AND task_id = ?", accountId, targetId, taskId) {
             json.parseToJsonElement(it.getString(1)).jsonObject to it.getLong(2) } ?: (JsonObject(emptyMap()) to 0L)
-    fun config(caller: Caller, deviceId: String, targetId: String, taskId: String): ConfigView = db.tx {
-        val (digest, task) = deviceTask(caller.userId, deviceId, targetId, taskId)
-        val version = single("SELECT version FROM catalogs WHERE user_id = ? AND digest = ?", caller.userId, digest) { it.getString(1) }.orEmpty()
-        val (values, revision) = savedConfig(caller.userId, targetId, taskId)
-        ConfigView(targetId, taskId, task.name, version, json.encodeToJsonElement(fieldList, task.fields) as JsonArray, values, revision)
+    /** Bundles this user's devices uploaded, newest first. */
+    private fun Database.catalogsNewestFirst(userId: String): List<Pair<String, TaskBundle>> =
+        query("SELECT version, bundle_json FROM catalogs WHERE user_id = ? ORDER BY uploaded_at DESC, digest", userId) {
+            it.getString(1) to bundles.decodeFromString(TaskBundle.serializer(), it.getString(2)) }
+    /**
+     * The task as the newest uploaded bundle defines it. Until each game has a chosen current version, this is what
+     * settings are checked against.
+     */
+    private fun Database.latestTask(userId: String, targetId: String, taskId: String): Pair<String, TaskDefinition> =
+        catalogsNewestFirst(userId).firstNotNullOfOrNull { (version, bundle) -> bundle.tasks.singleOrNull { it.targetId == targetId && it.id == taskId }?.let { version to it } }
+            ?: throw ApiException(404, "unknown_task", "还没有设备上报过这个任务")
+    private fun Database.account(userId: String, accountId: String): GameAccountView =
+        single("SELECT id, game_id, name, uid, created_at FROM game_accounts WHERE id = ? AND user_id = ?", accountId, userId) {
+            GameAccountView(it.getString(1), it.getString(2), it.getString(3), it.getString(4), it.getLong(5)) } ?: throw ApiException(404, "not_found", "游戏账号不存在")
+    fun config(caller: Caller, accountId: String, targetId: String, taskId: String): ConfigView = db.tx {
+        val account = account(caller.userId, accountId)
+        if (account.gameId != targetId) throw ApiException(400, "unknown_task", "这个任务不属于该账号的游戏")
+        val (version, task) = latestTask(caller.userId, targetId, taskId)
+        val (values, revision) = savedConfig(accountId, targetId, taskId)
+        ConfigView(accountId, targetId, taskId, task.name, version, json.encodeToJsonElement(fieldList, task.fields) as JsonArray, values, revision)
     }
-    /** Settings are checked by the same rules the app applies, against the version the chosen device runs. */
-    fun saveConfig(caller: Caller, targetId: String, taskId: String, save: ConfigSave): ConfigView {
+    /** Settings are checked by the same rules the app applies. */
+    fun saveConfig(caller: Caller, accountId: String, targetId: String, taskId: String, save: ConfigSave): ConfigView {
         db.tx {
-            val (_, task) = deviceTask(caller.userId, save.deviceId, targetId, taskId)
+            val account = account(caller.userId, accountId)
+            if (account.gameId != targetId) throw ApiException(400, "unknown_task", "这个任务不属于该账号的游戏")
+            val (_, task) = latestTask(caller.userId, targetId, taskId)
             val issues = validateConfiguration(task, save.values)
             if (issues.isNotEmpty()) throw ApiException(400, "invalid_config", issues.joinToString("；") { it.reason })
-            val (_, revision) = savedConfig(caller.userId, targetId, taskId)
+            val (_, revision) = savedConfig(accountId, targetId, taskId)
             if (revision != save.revision) throw ApiException(409, "revision_changed", "设置已在别处修改，请刷新后再改")
-            update("INSERT OR REPLACE INTO task_configs (user_id, target_id, task_id, values_json, revision, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                caller.userId, targetId, taskId, save.values.toString(), revision + 1, clock())
+            update("INSERT OR REPLACE INTO task_configs (user_id, account_id, target_id, task_id, values_json, revision, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                caller.userId, accountId, targetId, taskId, save.values.toString(), revision + 1, clock())
         }
-        return config(caller, save.deviceId, targetId, taskId)
+        return config(caller, accountId, targetId, taskId)
     }
+
+    /** Games the user's devices can run: each target of the newest bundle that has it, with its tasks that can be started. */
+    private fun Database.gameRows(userId: String): List<GameView> {
+        val seen = LinkedHashMap<String, GameView>()
+        for ((_, bundle) in catalogsNewestFirst(userId)) for (target in bundle.targets) if (target.id !in seen)
+            seen[target.id] = GameView(target.id, target.name, bundle.tasks.filter { it.targetId == target.id && it.trigger == null }.map { CloudTask(it.targetId, it.id, it.name) })
+        return seen.values.toList()
+    }
+    fun games(caller: Caller): List<GameView> = db.tx { gameRows(caller.userId) }
+    private fun Database.accountRows(userId: String): List<GameAccountView> =
+        query("SELECT id, game_id, name, uid, created_at FROM game_accounts WHERE user_id = ? ORDER BY game_id, created_at, id", userId) {
+            GameAccountView(it.getString(1), it.getString(2), it.getString(3), it.getString(4), it.getLong(5)) }
+    fun gameAccounts(caller: Caller): List<GameAccountView> = db.tx { accountRows(caller.userId) }
+    private fun accountName(save: GameAccountSave) = save.name.trim().takeIf { it.length in 1..40 } ?: throw ApiException(400, "invalid_account", "账号名称需要 1 到 40 个字")
+    private fun accountUid(save: GameAccountSave) = save.uid?.trim()?.takeIf { it.isNotEmpty() }?.also { if (it.length > 40) throw ApiException(400, "invalid_account", "UID 太长") }
+    fun createGameAccount(caller: Caller, save: GameAccountSave): GameAccountView {
+        val name = accountName(save); val uid = accountUid(save); val id = UUID.randomUUID().toString()
+        db.tx {
+            if (gameRows(caller.userId).none { it.id == save.gameId }) throw ApiException(400, "unknown_game", "还没有设备上报过这个游戏")
+            if (single("SELECT 1 FROM game_accounts WHERE user_id = ? AND game_id = ? AND name = ?", caller.userId, save.gameId, name) { true } == true)
+                throw ApiException(409, "account_exists", "这个游戏已经有同名账号")
+            update("INSERT INTO game_accounts (id, user_id, game_id, name, uid, created_at) VALUES (?, ?, ?, ?, ?, ?)", id, caller.userId, save.gameId, name, uid, clock())
+        }
+        pushAccounts(caller.userId)
+        return db.tx { account(caller.userId, id) }
+    }
+    /** The game cannot change: settings and plans were made for it. */
+    fun updateGameAccount(caller: Caller, accountId: String, save: GameAccountSave): GameAccountView {
+        val name = accountName(save); val uid = accountUid(save)
+        db.tx {
+            val current = account(caller.userId, accountId)
+            if (single("SELECT 1 FROM game_accounts WHERE user_id = ? AND game_id = ? AND name = ? AND id <> ?", caller.userId, current.gameId, name, accountId) { true } == true)
+                throw ApiException(409, "account_exists", "这个游戏已经有同名账号")
+            update("UPDATE game_accounts SET name = ?, uid = ? WHERE id = ? AND user_id = ?", name, uid, accountId, caller.userId)
+            update("UPDATE jobs SET account_name = ? WHERE account_id = ? AND user_id = ?", name, accountId, caller.userId)
+        }
+        pushAccounts(caller.userId); pushJobs(caller.userId); pushAllDevices(caller.userId)
+        return db.tx { account(caller.userId, accountId) }
+    }
+    /** Its settings and plans go with it; past jobs keep the account's name. */
+    fun deleteGameAccount(caller: Caller, accountId: String) {
+        db.tx { account(caller.userId, accountId); update("DELETE FROM game_accounts WHERE id = ? AND user_id = ?", accountId, caller.userId) }
+        pushAccounts(caller.userId); pushPlans(caller.userId); pushJobs(caller.userId); pushAllDevices(caller.userId)
+    }
+
+    private fun Database.planRows(userId: String): List<PlanView> =
+        query("""SELECT id, account_id, name, days_mask, minute_of_day, tasks_json, device_ids_json, latest_start_minutes, enabled, revision, updated_at
+            FROM plans WHERE user_id = ? ORDER BY account_id, minute_of_day, created_at, id""", userId) {
+            PlanView(it.getString(1), it.getString(2), it.getString(3), (1..7).filter { day -> it.getInt(4) and (1 shl (day - 1)) != 0 }, it.getInt(5),
+                json.decodeFromString(tasks, it.getString(6)), json.decodeFromString(idList, it.getString(7)), it.getInt(8), it.getInt(9) == 1, it.getLong(10), it.getLong(11)) }
+    fun plans(caller: Caller): List<PlanView> = db.tx { planRows(caller.userId) }
+    /** Everything a plan names must exist and belong to the user; the account's game decides which tasks it can hold. */
+    private fun Database.checkedPlan(userId: String, account: GameAccountView, save: PlanSave): Pair<Int, List<CloudTask>> {
+        val issues = buildList {
+            if (save.name.isBlank() || save.name.length > 40) add("计划名称需要 1 到 40 个字")
+            if (save.days.isEmpty() || save.days.any { it !in 1..7 } || save.days.distinct().size != save.days.size) add("请选择运行周期")
+            if (save.minuteOfDay !in 0 until 24 * 60) add("运行时间无效")
+            if (save.tasks.isEmpty()) add("请至少添加一个任务")
+            if (save.tasks.map { it.targetId to it.taskId }.distinct().size != save.tasks.size) add("计划中的任务不能重复")
+            if (save.latestStartMinutes !in 1..24 * 60) add("最晚开始时间需要在 1 分钟到 24 小时之间")
+        }
+        if (issues.isNotEmpty()) throw ApiException(400, "invalid_plan", issues.joinToString("；"))
+        val offered = gameRows(userId).singleOrNull { it.id == account.gameId }?.tasks.orEmpty()
+        val chosen = save.tasks.map { wanted -> offered.singleOrNull { it.targetId == wanted.targetId && it.taskId == wanted.taskId }
+            ?: throw ApiException(400, "unknown_task", "计划里有这个账号的游戏没有的任务") }
+        val devices = query("SELECT id FROM devices WHERE user_id = ? AND revoked = 0", userId) { it.getString(1) }.toSet()
+        if (!devices.containsAll(save.deviceIds)) throw ApiException(400, "unknown_device", "计划里有不存在的设备")
+        return save.days.fold(0) { mask, day -> mask or (1 shl (day - 1)) } to chosen
+    }
+    fun createPlan(caller: Caller, accountId: String, save: PlanSave): PlanView {
+        val id = UUID.randomUUID().toString(); val now = clock()
+        db.tx {
+            val (mask, chosen) = checkedPlan(caller.userId, account(caller.userId, accountId), save)
+            update("""INSERT INTO plans (id, user_id, account_id, name, days_mask, minute_of_day, tasks_json, device_ids_json, latest_start_minutes, enabled, revision, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)""", id, caller.userId, accountId, save.name.trim(), mask, save.minuteOfDay, json.encodeToString(tasks, chosen),
+                json.encodeToString(idList, save.deviceIds.distinct()), save.latestStartMinutes, if (save.enabled) 1 else 0, now, now)
+        }
+        pushPlans(caller.userId)
+        return plans(caller).first { it.id == id }
+    }
+    /** A save made from an older copy is refused rather than overwriting someone else's change. */
+    fun updatePlan(caller: Caller, planId: String, save: PlanSave): PlanView {
+        db.tx {
+            val (accountId, revision) = single("SELECT account_id, revision FROM plans WHERE id = ? AND user_id = ?", planId, caller.userId) { it.getString(1) to it.getLong(2) }
+                ?: throw ApiException(404, "not_found", "计划不存在")
+            if (revision != save.revision) throw ApiException(409, "revision_changed", "计划已在别处修改，请刷新后再改")
+            val (mask, chosen) = checkedPlan(caller.userId, account(caller.userId, accountId), save)
+            update("""UPDATE plans SET name = ?, days_mask = ?, minute_of_day = ?, tasks_json = ?, device_ids_json = ?, latest_start_minutes = ?, enabled = ?,
+                revision = revision + 1, updated_at = ? WHERE id = ? AND user_id = ?""", save.name.trim(), mask, save.minuteOfDay, json.encodeToString(tasks, chosen),
+                json.encodeToString(idList, save.deviceIds.distinct()), save.latestStartMinutes, if (save.enabled) 1 else 0, clock(), planId, caller.userId)
+        }
+        pushPlans(caller.userId)
+        return plans(caller).first { it.id == planId }
+    }
+    fun deletePlan(caller: Caller, planId: String) {
+        db.tx { if (update("DELETE FROM plans WHERE id = ? AND user_id = ?", planId, caller.userId) == 0) throw ApiException(404, "not_found", "计划不存在") }
+        pushPlans(caller.userId)
+    }
+
+    /** The account must be of the app's game. Setting the signed-in account is the user's word until the app can read it. */
+    fun setAppAccounts(caller: Caller, deviceId: String, appKey: String, save: AppAccounts) {
+        db.tx {
+            val app = deviceRows(caller.userId, deviceId).singleOrNull()?.apps?.singleOrNull { it.key == appKey } ?: throw ApiException(404, "not_found", "应用不存在")
+            for (id in listOfNotNull(save.accountId, save.defaultAccountId))
+                if (account(caller.userId, id).gameId != app.gameId) throw ApiException(400, "wrong_game", "这个账号不属于该应用的游戏")
+            update("INSERT OR REPLACE INTO app_accounts (device_id, app_key, user_id, account_id, default_account_id) VALUES (?, ?, ?, ?, ?)",
+                deviceId, appKey, caller.userId, save.accountId, save.defaultAccountId)
+        }
+        pushDevice(caller.userId, deviceId)
+    }
+    fun timeZone(caller: Caller, save: TimeZoneSave) {
+        val zone = runCatching { java.time.ZoneId.of(save.timeZone).id }.getOrNull() ?: throw ApiException(400, "invalid_time_zone", "时区无效")
+        db.tx { update("UPDATE users SET time_zone = ? WHERE id = ?", zone, caller.userId) }
+        events.publish(caller.userId, "time-zone", json.encodeToString(TimeZoneSave.serializer(), TimeZoneSave(zone)))
+    }
+    private fun pushAccounts(userId: String) = events.publish(userId, "accounts", json.encodeToString(accountList, db.tx { accountRows(userId) }))
+    private fun pushPlans(userId: String) = events.publish(userId, "plans", json.encodeToString(planList, db.tx { planRows(userId) }))
+    private fun pushGames(userId: String) = events.publish(userId, "games", json.encodeToString(gameList, db.tx { gameRows(userId) }))
+    private fun pushAllDevices(userId: String) = db.tx { deviceRows(userId, null) }.forEach {
+        events.publish(userId, "device", json.encodeToString(DeviceView.serializer(), it)) }
     fun nextJob(caller: Caller): JobLease? {
         val id = device(caller); val now = clock()
         return db.tx {
@@ -329,14 +472,21 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             JobEventView(it.getLong(1), it.getString(2), step, names[step] ?: step, it.getString(4), it.getString(5), it.getLong(6)) }
     }
     /** Online means the device's socket is open right now; [deviceId] null lists them all. */
-    private fun Database.deviceRows(userId: String, deviceId: String?): List<DeviceView> =
-        query("""SELECT id, name, platform, last_seen_at, phase, current_task, queued, tasks_json, apps_json, concurrency FROM devices
+    private fun Database.deviceRows(userId: String, deviceId: String?): List<DeviceView> {
+        val assigned = query("SELECT device_id, app_key, account_id, default_account_id FROM app_accounts WHERE user_id = ?", userId) {
+            (it.getString(1) to it.getString(2)) to (it.getString(3) to it.getString(4)) }.toMap()
+        return query("""SELECT id, name, platform, last_seen_at, phase, current_task, queued, tasks_json, apps_json, concurrency FROM devices
             WHERE user_id = ? AND revoked = 0 AND (? IS NULL OR id = ?) ORDER BY name, id""", userId, deviceId, deviceId) { row ->
             val seen = row.getLong(4).takeUnless { row.wasNull() }
             val id = row.getString(1)
+            val views = json.decodeFromString(apps, row.getString(9)).map { app ->
+                val (current, default) = assigned[id to app.key] ?: (null to null)
+                AppView(app.key, app.gameId, app.name, app.phase, app.currentTask, app.queued, current, default)
+            }
             DeviceView(id, row.getString(2), row.getString(3), sockets.isOnline(id), seen, row.getString(5), row.getString(6), row.getInt(7),
-                json.decodeFromString(tasks, row.getString(8)), json.decodeFromString(apps, row.getString(9)), row.getInt(10))
+                json.decodeFromString(tasks, row.getString(8)), views, row.getInt(10))
         }
+    }
     fun devices(caller: Caller): List<DeviceView> = db.tx { deviceRows(caller.userId, null) }
     /** Devices that sign in again come back; until then this one can neither work nor report. Its socket is closed by the caller. */
     fun revokeDevice(caller: Caller, deviceId: String) {
@@ -355,22 +505,26 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             val offered = single("SELECT tasks_json FROM devices WHERE id = ? AND user_id = ? AND revoked = 0", request.deviceId, caller.userId) { json.decodeFromString(tasks, it.getString(1)) }
                 ?: throw ApiException(404, "not_found", "设备不存在")
             val task = offered.firstOrNull { it.targetId == request.targetId && it.taskId == request.taskId } ?: throw ApiException(400, "unknown_task", "这台设备没有这个任务")
-            // The job keeps a copy of the settings, checked against the version the device runs now.
+            val account = account(caller.userId, request.accountId)
+            if (account.gameId != task.targetId) throw ApiException(400, "wrong_game", "这个账号不属于该任务的游戏")
+            // The job keeps a copy of the account's settings, checked against the version the device runs now.
             val (digest, definition) = deviceTask(caller.userId, request.deviceId, task.targetId, task.taskId)
-            val (values, _) = savedConfig(caller.userId, task.targetId, task.taskId)
+            val (values, _) = savedConfig(account.id, task.targetId, task.taskId)
             val issues = validateConfiguration(definition, values)
-            if (issues.isNotEmpty()) throw ApiException(400, "config_required", "请先在控制台保存「${definition.name}」的设置：" + issues.joinToString("；") { it.reason })
+            if (issues.isNotEmpty()) throw ApiException(400, "config_required", "请先在控制台保存「${account.name}」的「${definition.name}」设置：" + issues.joinToString("；") { it.reason })
             val version = single("SELECT version FROM catalogs WHERE user_id = ? AND digest = ?", caller.userId, digest) { it.getString(1) }.orEmpty()
-            update("INSERT INTO jobs (id, user_id, device_id, target_id, task_id, task_name, state, created_at, updated_at, version, digest, config_json) VALUES (?, ?, ?, ?, ?, ?, 'QUEUED', ?, ?, ?, ?, ?)",
-                id, caller.userId, request.deviceId, task.targetId, task.taskId, task.name, now, now, version, digest, values.toString())
+            update("""INSERT INTO jobs (id, user_id, device_id, target_id, task_id, task_name, state, created_at, updated_at, version, digest, config_json, account_id, account_name)
+                VALUES (?, ?, ?, ?, ?, ?, 'QUEUED', ?, ?, ?, ?, ?, ?, ?)""",
+                id, caller.userId, request.deviceId, task.targetId, task.taskId, task.name, now, now, version, digest, values.toString(), account.id, account.name)
         }
         pushJobs(caller.userId)
         return jobs(caller).first { it.id == id }
     }
     private fun Database.jobRows(userId: String): List<JobView> =
-        query("""SELECT j.id, j.device_id, d.name, j.target_id, j.task_id, j.task_name, j.state, j.detail, j.cancel_requested, j.created_at, j.updated_at
-            FROM jobs j JOIN devices d ON d.id = j.device_id WHERE j.user_id = ? ORDER BY j.created_at DESC, j.id LIMIT 100""", userId) { r ->
-            JobView(r.getString(1), r.getString(2), r.getString(3), r.getString(4), r.getString(5), r.getString(6), JobState.valueOf(r.getString(7)), r.getString(8), r.getInt(9) == 1, r.getLong(10), r.getLong(11)) }
+        query("""SELECT j.id, j.device_id, d.name, j.target_id, j.task_id, j.task_name, j.state, j.detail, j.cancel_requested, j.created_at, j.updated_at,
+            j.account_id, j.account_name FROM jobs j JOIN devices d ON d.id = j.device_id WHERE j.user_id = ? ORDER BY j.created_at DESC, j.id LIMIT 100""", userId) { r ->
+            JobView(r.getString(1), r.getString(2), r.getString(3), r.getString(4), r.getString(5), r.getString(6), JobState.valueOf(r.getString(7)), r.getString(8), r.getInt(9) == 1,
+                r.getLong(10), r.getLong(11), r.getString(12), r.getString(13)) }
     fun jobs(caller: Caller): List<JobView> = db.tx { sweep(); jobRows(caller.userId) }
     /**
      * A queued job is dropped at once; a running one is flagged, and the device is told now if it is connected and
@@ -398,7 +552,12 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         const val WEB_LIFETIME = 7 * 24 * 60 * MINUTE; const val DEVICE_ACCESS_LIFETIME = 60 * MINUTE; const val REFRESH_LIFETIME = 30 * 24 * 60 * MINUTE
         const val LEASE_LIFETIME = 2 * MINUTE; const val ACK_LIFETIME = MINUTE / 2
         private const val MAX_APPS = 32
+        const val DEFAULT_ZONE = "Asia/Shanghai"
         private val jobList = ListSerializer(JobView.serializer())
+        private val accountList = ListSerializer(GameAccountView.serializer())
+        private val planList = ListSerializer(PlanView.serializer())
+        private val gameList = ListSerializer(GameView.serializer())
+        private val idList = ListSerializer(kotlinx.serialization.serializer<String>())
         private const val PURPOSE_VERIFY = "verify"; private const val PURPOSE_LOGIN = "login"; private const val PURPOSE_RESET = "reset"
         private val EMAIL = Regex("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")
         private const val MAX_CATALOG_CHARS = 4_000_000

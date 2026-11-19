@@ -99,13 +99,27 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
         }
         get("/api/jobs") { call.respond(service.jobs(call.caller(service))) }
         post("/api/jobs") { call.respond(HttpStatusCode.Created, service.createJob(call.caller(service), call.receive())) }
-        get("/api/configs/{target}/{task}") {
-            val caller = call.caller(service)
-            call.respond(service.config(caller, call.request.queryParameters["deviceId"] ?: throw ApiException(400, "bad_request", "请选择设备"),
-                call.parameters.getOrFail("target"), call.parameters.getOrFail("task")))
+        put("/api/me/time-zone") { service.timeZone(call.caller(service), call.receive()); call.respond(mapOf("ok" to true)) }
+        get("/api/games") { call.respond(service.games(call.caller(service))) }
+        route("/api/accounts") {
+            get { call.respond(service.gameAccounts(call.caller(service))) }
+            post { call.respond(HttpStatusCode.Created, service.createGameAccount(call.caller(service), call.receive())) }
+            put("/{id}") { call.respond(service.updateGameAccount(call.caller(service), call.parameters.getOrFail("id"), call.receive())) }
+            delete("/{id}") { service.deleteGameAccount(call.caller(service), call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
+            get("/{id}/configs/{target}/{task}") {
+                call.respond(service.config(call.caller(service), call.parameters.getOrFail("id"), call.parameters.getOrFail("target"), call.parameters.getOrFail("task")))
+            }
+            put("/{id}/configs/{target}/{task}") {
+                call.respond(service.saveConfig(call.caller(service), call.parameters.getOrFail("id"), call.parameters.getOrFail("target"), call.parameters.getOrFail("task"), call.receive()))
+            }
+            post("/{id}/plans") { call.respond(HttpStatusCode.Created, service.createPlan(call.caller(service), call.parameters.getOrFail("id"), call.receive())) }
         }
-        put("/api/configs/{target}/{task}") {
-            call.respond(service.saveConfig(call.caller(service), call.parameters.getOrFail("target"), call.parameters.getOrFail("task"), call.receive()))
+        get("/api/plans") { call.respond(service.plans(call.caller(service))) }
+        put("/api/plans/{id}") { call.respond(service.updatePlan(call.caller(service), call.parameters.getOrFail("id"), call.receive())) }
+        delete("/api/plans/{id}") { service.deletePlan(call.caller(service), call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
+        put("/api/devices/{id}/apps/{key}") {
+            service.setAppAccounts(call.caller(service), call.parameters.getOrFail("id"), call.parameters.getOrFail("key"), call.receive())
+            call.respond(mapOf("ok" to true))
         }
         get("/api/jobs/{id}/events") { call.respond(service.events(call.caller(service), call.parameters.getOrFail("id"))) }
         post("/api/jobs/{id}/cancel") {
