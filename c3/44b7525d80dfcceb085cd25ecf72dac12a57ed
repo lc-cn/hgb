@@ -1,0 +1,53 @@
+core/src/main/kotlin/io/github/yysassist/core/cloud/CloudProtocol.kt
+  s_fae32e7f0efe76::t_87c0fbb9b62a02 1-39
+gradle/libs.versions.toml
+  s_fae32e7f0efe76::t_b1657944373312 15-18,52-61
+gradle/verification-metadata.xml
+  s_fae32e7f0efe76::t_605b000cc0d81b 1489-1493,2850-2865,3031-3355,3372-3379,3396-3411,3428-3435,3452-3459,3492-3499,3516-3523,3550-3554,3571-3578,3595-3634,3651-3658,3736-3756,3770-3777,3786-3793,3866-3870,3891-3906,3923-3932,3943-3947,3963-3970,3979-3986,3995-4002,4027-4034,4126-4151,4498-4505,4711-4718,4895-4910,4929-4964,5029-5041,5079-5091,5100-5147,5172-5179,5249-5261,5267-5279,5306-5313
+server/build.gradle.kts
+  s_fae32e7f0efe76::t_3ab51e971cdec2 1-22
+server/gradle.lockfile
+  s_fae32e7f0efe76::t_65548bb341eb46 1-150
+server/src/main/kotlin/io/github/yysassist/server/CloudService.kt
+  s_fae32e7f0efe76::t_f2949e26da9670 1-260
+server/src/main/kotlin/io/github/yysassist/server/Database.kt
+  s_fae32e7f0efe76::t_e824a62bfc92b3 1-59
+server/src/main/kotlin/io/github/yysassist/server/GitHubIdentity.kt
+  s_fae32e7f0efe76::t_344761c9b2058d 1-38
+server/src/main/kotlin/io/github/yysassist/server/Mailer.kt
+  s_fae32e7f0efe76::t_1e39f7654d5a41 1-12
+server/src/main/kotlin/io/github/yysassist/server/Main.kt
+  s_fae32e7f0efe76::t_f4c8da03a594d7 1-14
+server/src/main/kotlin/io/github/yysassist/server/Routes.kt
+  s_fae32e7f0efe76::t_20b39a3bd09c64 1-100
+server/src/main/kotlin/io/github/yysassist/server/Security.kt
+  s_fae32e7f0efe76::t_d9eaa7102f2f58 1-59
+server/src/main/resources/web/app.js
+  s_fae32e7f0efe76::t_5cb4290344e9bb 1-191
+server/src/main/resources/web/index.html
+  s_fae32e7f0efe76::t_3f08349cc10f39 1-14
+server/src/main/resources/web/logo.svg
+  s_fae32e7f0efe76::t_09fa8638a9ba67 1
+server/src/main/resources/web/style.css
+  s_fae32e7f0efe76::t_7a3cada1810f0b 1-58
+server/src/test/kotlin/io/github/yysassist/server/CloudApiTest.kt
+  s_fae32e7f0efe76::t_4ec20160b61775 1-208
+settings.gradle.kts
+  s_fae32e7f0efe76::t_25a7dedc414b6a 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c344b7525d80dfcceb085cd25ecf72dac12a57ed",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
