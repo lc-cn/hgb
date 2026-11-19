@@ -1,0 +1,30 @@
+core/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt
+  s_fae32e7f0efe76::t_34b64fadad1a4b 164
+  s_fae32e7f0efe76::t_97bbf433313ea8 156
+  s_fae32e7f0efe76::t_bc5206f4c0e43f 74-75
+  s_fae32e7f0efe76::t_347c43bb58813f 169
+  s_fae32e7f0efe76::t_9d8a607497170c 23-24
+core/src/test/kotlin/io/github/yysassist/core/content/BundleCodecTest.kt
+  s_fae32e7f0efe76::t_4a3ad9a0f53ce0 47-56
+  s_fae32e7f0efe76::t_3ea8f6b114e72b 26-46
+core/src/main/kotlin/io/github/yysassist/core/content/StepProgram.kt
+  s_fae32e7f0efe76::t_4a3ad9a0f53ce0 154-162
+core/src/main/kotlin/io/github/yysassist/core/content/Routines.kt
+  s_fae32e7f0efe76::t_ecf8000706c304 1-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a64cdad62ad8e9dcbbe2b31f13f805f837ec34ba",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
