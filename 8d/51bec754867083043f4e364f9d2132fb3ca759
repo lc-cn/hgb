@@ -1,0 +1,23 @@
+client/android/app/src/debug/kotlin/io/github/yysassist/debug/LocalTaskTrigger.kt
+  s_fae32e7f0efe76::t_c6470059bad8f7 34-35,53-66
+client/android/app/src/main/kotlin/io/github/yysassist/TaskUpdates.kt
+  s_fae32e7f0efe76::t_c6470059bad8f7 71-79
+client/android/app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_39c17151add3c5 112-114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8d51bec754867083043f4e364f9d2132fb3ca759",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
