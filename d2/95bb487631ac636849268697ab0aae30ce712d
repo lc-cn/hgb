@@ -1,0 +1,58 @@
+docs/PRD-phase-1.md
+  s_fae32e7f0efe76::t_a4ded26cc7c156 3-4
+docs/design/cloud-executor.md
+  s_fae32e7f0efe76::t_c1dce2d2694c43 286
+  s_fae32e7f0efe76::t_9a522a900668a1 128-130,135
+  s_fae32e7f0efe76::t_f42ed3fc29ddae 16-20,23,25,27
+  s_fae32e7f0efe76::t_9642a9f34f9e2b 292-297
+  s_fae32e7f0efe76::t_8241c5dcbd10cb 111-112,114-115
+  s_fae32e7f0efe76::t_50c22ae357c89e 291
+  s_fae32e7f0efe76::t_01758f97c42492 1,7-15,21-22,28,32,34-36,39-40,42,48-50,55,57-64,66,82-90,94-98,101,103,105,110,117,120,122-123,125,127,132,134,136,141,145-146,152,161-162,171-173,181-182,186,190,194,198,200,202,208,214,221-223,227-229,231,236,238,240,242-244,250-251,254-256,264,268-269,275-276,279-285,287-288,298-299,306,310
+  s_fae32e7f0efe76::t_3e7eb9047d0fbd 263
+  s_fae32e7f0efe76::t_86be6cf2b4a39f 313
+  s_fae32e7f0efe76::t_c8946ac85b3453 137
+  s_fae32e7f0efe76::t_9477afdd47c43c 72,74-76
+  s_fae32e7f0efe76::t_ac62ff259dcb59 91-93
+  s_fae32e7f0efe76::t_7373e5f8c56b98 167-169
+  s_fae32e7f0efe76::t_15a10d5b56fbe6 261-262
+  s_fae32e7f0efe76::t_d4991ed06f2b2b 113
+  s_fae32e7f0efe76::t_ca864338f53434 140
+  s_fae32e7f0efe76::t_e36e105a6852a4 133
+  s_fae32e7f0efe76::t_f04d58ca073431 312
+  s_fae32e7f0efe76::t_8afee694504859 290
+  s_fae32e7f0efe76::t_7b62f363053e2f 26
+  s_fae32e7f0efe76::t_f19f58c01d918d 44,47,56,68,70,77,99-100,104,107-108,119,121,126,170,196,233,235,241,246,258,266,271-273,300-304,307-309
+  s_fae32e7f0efe76::t_08293b73449812 3
+  s_fae32e7f0efe76::t_ec27e68be225d3 164,166
+  s_fae32e7f0efe76::t_98cc895e7793d5 5,24,37-38,53-54,65,67,69,71,73,78-81,102,106,131,138-139,142-143,160,237,239,260,277-278,289
+  s_fae32e7f0efe76::t_f002b0a7672934 144,147-151,153-159,163,165,274
+  s_fae32e7f0efe76::t_0558ed152e7bc9 252-253
+  s_fae32e7f0efe76::t_5f7bf94c69df0d 43
+  s_fae32e7f0efe76::t_a383e939b5a74f 109
+  s_fae32e7f0efe76::t_12658b1f93ed83 116
+  s_fae32e7f0efe76::t_5e23b1c5f24e4f 118
+docs/PRD.md
+  s_fae32e7f0efe76::t_048430574999d0 3-4
+docs/design/README.md
+  s_fae32e7f0efe76::t_eadccb33a3d8e4 3-4
+docs/development/cloud-console.md
+  s_fae32e7f0efe76::t_ce7eea38a2ef0b 3-5
+docs/design/ui-design.md
+  s_fae32e7f0efe76::t_11603151a0ea41 3-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d295bb487631ac636849268697ab0aae30ce712d",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
