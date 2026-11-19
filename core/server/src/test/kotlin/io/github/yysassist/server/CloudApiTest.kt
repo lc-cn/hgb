@@ -2,10 +2,15 @@ package io.github.yysassist.server
 
 import io.github.yysassist.core.cloud.*
 import io.github.yysassist.protocol.*
+import io.ktor.client.plugins.websocket.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
+import io.ktor.utils.io.*
+import io.ktor.websocket.*
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import org.junit.Assert.*
@@ -58,14 +63,47 @@ class CloudApiTest {
             beat(token, """[{"targetId":"game","taskId":"gift","name":"每日礼包"}]""")
             return device
         }
-        /** A heartbeat naming the task bundle, uploading it when the cloud asks. */
-        suspend fun beat(token: String, tasks: String): HeartbeatReply {
-            val reply = call(HttpMethod.Post, "/api/device/heartbeat", """{"phase":"IDLE","tasks":$tasks,"catalog":{"version":"v1","digest":"$digest"}}""", token)
-            assertEquals(HttpStatusCode.OK, reply.status)
-            val parsed = json.decodeFromString(HeartbeatReply.serializer(), reply.bodyAsText())
-            if (parsed.needCatalog) assertEquals(HttpStatusCode.OK, call(HttpMethod.Post, "/api/device/catalog",
+        private val sockets by lazy { app.createClient { install(WebSockets) } }
+        /** Opens the device socket with [token] and runs [block] on it; the socket closes when the block ends. */
+        suspend fun <T> socket(token: String, block: suspend DefaultClientWebSocketSession.() -> T): T {
+            var result: T? = null
+            sockets.webSocket(request = { url("/api/device/socket"); bearerAuth(token); header("X-YYS-Client", "device") }) { result = block() }
+            @Suppress("UNCHECKED_CAST") return result as T
+        }
+        /** Messages that arrive within [waitMillis]. */
+        suspend fun DefaultClientWebSocketSession.replies(waitMillis: Long = 300): List<ServerMessage> = buildList {
+            while (true) {
+                val frame = withTimeoutOrNull(waitMillis) { incoming.receive() } ?: break
+                if (frame is Frame.Text) add(json.decodeFromString(ServerMessage.serializer(), frame.readText()))
+            }
+        }
+        fun status(tasks: String = "[]", phase: String = "IDLE", apps: String = "[]") =
+            """{"type":"status","status":{"phase":"$phase","tasks":$tasks,"catalog":{"version":"v1","digest":"$digest"},"apps":$apps}}"""
+        /** One status report naming the task bundle, uploading it when the cloud asks. */
+        suspend fun beat(token: String, tasks: String = "[]", phase: String = "IDLE"): List<ServerMessage> {
+            val replies = socket(token) { send(Frame.Text(status(tasks, phase))); replies() }
+            if (ServerMessage.CatalogNeeded in replies) assertEquals(HttpStatusCode.OK, call(HttpMethod.Post, "/api/device/catalog",
                 json.encodeToString(CatalogUpload.serializer(), CatalogUpload("v1", digest, bundle)), token).status)
-            return parsed
+            return replies
+        }
+        suspend fun devices(token: String) = json.decodeFromString(ListSerializer(DeviceView.serializer()), call(HttpMethod.Get, "/api/devices", token = token).bodyAsText())
+        /** Reads the console stream until [count] events have arrived, running [during] after the first one. */
+        suspend fun stream(token: String, count: Int, lastEventId: Long? = null, during: suspend () -> Unit = {}): List<Pair<String, String>> {
+            val events = mutableListOf<Pair<String, String>>()
+            app.client.prepareGet("/api/events") { bearerAuth(token); lastEventId?.let { header("Last-Event-ID", it.toString()) } }.execute { reply ->
+                assertEquals(ContentType.Text.EventStream, reply.contentType()?.withoutParameters())
+                val body = reply.bodyAsChannel()
+                var id = ""; var name = ""
+                while (events.size < count) {
+                    val line = withTimeout(5_000) { body.readUTF8Line() } ?: break
+                    when {
+                        line.startsWith("id: ") -> id = line.removePrefix("id: ")
+                        line.startsWith("event: ") -> name = line.removePrefix("event: ")
+                        line.startsWith("data: ") -> { events += "$id:$name" to line.removePrefix("data: "); if (events.size == 1) during() }
+                    }
+                }
+            }
+            return events
         }
         suspend fun job(token: String, deviceId: String) = call(HttpMethod.Post, "/api/jobs", """{"deviceId":"$deviceId","targetId":"game","taskId":"gift"}""", token)
         suspend fun next(token: String) = call(HttpMethod.Post, "/api/device/jobs/next?waitMs=0", "{}", token)
@@ -159,7 +197,7 @@ class CloudApiTest {
     }
     @Test fun theCloudAsksForATaskVersionOnceAndRejectsAForgedOne() = api {
         val token = signUp("a@example.com").accessToken!!; enroll(token)
-        assertFalse(beat(token, bothTasks).needCatalog)
+        assertFalse(ServerMessage.CatalogNeeded in beat(token, bothTasks))
         val forged = CatalogUpload("v1", digest, bundle.replace("每日礼包", "别的礼包"))
         assertEquals(HttpStatusCode.BadRequest, call(HttpMethod.Post, "/api/device/catalog", json.encodeToString(CatalogUpload.serializer(), forged), token).status)
     }
@@ -218,31 +256,74 @@ class CloudApiTest {
         assertEquals(JobState.UNKNOWN, jobs(token).single().state)
         assertEquals(HttpStatusCode.OK, report(token, second, JobState.COMPLETED).status)
     }
-    @Test fun aLeaseLostWithItsConnectionReturnsToTheQueueDespiteHeartbeats() = api {
+    @Test fun aLeaseLostWithItsConnectionReturnsToTheQueueDespiteStatusReports() = api {
         val session = signUp("a@example.com"); val token = session.accessToken!!; val device = enroll(token)
         job(token, device.deviceId); val lost = lease(token)
         now += CloudService.ACK_LIFETIME - 1
-        call(HttpMethod.Post, "/api/device/heartbeat", """{"phase":"IDLE"}""", token)
+        beat(token)
         now += 2
         assertEquals(lost.leaseNo + 1, lease(token).leaseNo)
     }
-    @Test fun heartbeatsKeepARunningJobAliveAndDeliverCancelRequests() = api {
+    @Test fun statusReportsKeepARunningJobAliveAndDeliverCancelRequests() = api {
         val session = signUp("a@example.com"); val token = session.accessToken!!; val device = enroll(token)
         val created = json.decodeFromString(JobView.serializer(), job(token, device.deviceId).bodyAsText()); val lease = lease(token)
         report(token, lease, JobState.RUNNING)
         now += CloudService.LEASE_LIFETIME - 1
         call(HttpMethod.Post, "/api/jobs/${created.id}/cancel", "{}", token)
-        val reply = json.decodeFromString(HeartbeatReply.serializer(), call(HttpMethod.Post, "/api/device/heartbeat", """{"phase":"RUNNING"}""", token).bodyAsText())
-        assertEquals(listOf(created.id), reply.cancelJobs)
+        assertEquals(listOf(ServerMessage.Cancel(listOf(created.id))), beat(token, phase = "RUNNING"))
         now += CloudService.LEASE_LIFETIME - 1
         assertEquals(JobState.RUNNING, jobs(token).single().state)
+    }
+    @Test fun aConnectedDeviceIsToldOfACancelAtOnce() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        val created = json.decodeFromString(JobView.serializer(), job(token, device.deviceId).bodyAsText())
+        report(token, lease(token), JobState.RUNNING)
+        val pushed = socket(token) {
+            send(Frame.Text(status(phase = "RUNNING"))); replies()
+            call(HttpMethod.Post, "/api/jobs/${created.id}/cancel", "{}", token)
+            replies()
+        }
+        assertEquals(listOf(ServerMessage.Cancel(listOf(created.id))), pushed)
+    }
+    @Test fun aDeviceIsOnlineOnlyWhileItsSocketIsOpenAndShowsItsApps() = api {
+        val token = signUp("a@example.com").accessToken!!; enroll(token)
+        assertFalse(devices(token).single().online)
+        val app = """[{"key":"test.game","gameId":"game","name":"游戏","phase":"RUNNING","currentTask":"每日礼包","queued":1}]"""
+        val seen = socket(token) { send(Frame.Text(status(apps = app))); replies(); devices(token).single() }
+        assertTrue(seen.online)
+        assertEquals(listOf(AppStatus("test.game", "game", "游戏", "RUNNING", "每日礼包", 1)), seen.apps)
+        assertFalse(devices(token).single().online)
+    }
+    @Test fun aSocketWithoutAValidDeviceSessionIsRefusedWithACode() = api {
+        val token = signUp("a@example.com").accessToken!!
+        assertEquals(SocketClose.NOT_A_DEVICE, socket(token) { closeReason.await()?.code })
+        assertEquals(SocketClose.INVALID_SESSION, socket("forged") { closeReason.await()?.code })
     }
     @Test fun revokingADeviceSignsItOutAndClosesItsWork() = api {
         val session = signUp("a@example.com"); val web = call(HttpMethod.Post, "/api/auth/login", """{"email":"a@example.com","password":"correct horse"}""").bodyAsText().let { json.decodeFromString(AuthResult.serializer(), it) }
         val token = session.accessToken!!; val device = enroll(token); job(token, device.deviceId); report(token, lease(token), JobState.RUNNING); job(token, device.deviceId)
         assertEquals(HttpStatusCode.OK, call(HttpMethod.Delete, "/api/devices/${device.deviceId}", token = web.accessToken).status)
-        assertEquals(HttpStatusCode.Unauthorized, call(HttpMethod.Post, "/api/device/heartbeat", """{"phase":"IDLE"}""", token).status)
+        assertEquals(SocketClose.INVALID_SESSION, socket(token) { closeReason.await()?.code })
         assertEquals(setOf(JobState.UNKNOWN, JobState.CANCELLED), jobs(web.accessToken!!).map { it.state }.toSet())
+    }
+    @Test fun theConsoleStreamStartsWithASnapshotThenSendsChanges() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        val events = stream(token, 3) { job(token, device.deviceId); beat(token) }
+        assertEquals("snapshot", events[0].first.substringAfter(':'))
+        assertEquals(device.deviceId, json.decodeFromString(ConsoleSnapshot.serializer(), events[0].second).devices.single().id)
+        assertEquals("jobs", events[1].first.substringAfter(':'))
+        assertEquals("device", events[2].first.substringAfter(':'))
+        val other = signUp("b@example.com").accessToken!!
+        assertEquals("snapshot", stream(other, 1).single().first.substringAfter(':'))
+        assertTrue(json.decodeFromString(ConsoleSnapshot.serializer(), stream(other, 1).single().second).devices.isEmpty())
+    }
+    @Test fun aReconnectingConsoleGetsOnlyWhatItMissedOrANewSnapshot() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        val first = stream(token, 1).single().first.substringBefore(':').toLong()
+        job(token, device.deviceId)
+        val missed = stream(token, 1, lastEventId = first).single()
+        assertEquals("${first + 1}:jobs", missed.first)
+        assertEquals("snapshot", stream(token, 1, lastEventId = first + 1_000).single().first.substringAfter(':'))
     }
     @Test fun gitHubSignInNeverMergesIntoAnExistingEmailAccountAndKeepsOneLoginMethod() = api {
         val email = signUp("a@example.com")

@@ -1,5 +1,6 @@
 package io.github.yysassist.protocol
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -27,9 +28,30 @@ import kotlinx.serialization.json.JsonObject
 @Serializable data class CatalogRef(val version: String, val digest: String)
 /** Sent once per digest, when the cloud asks for it, so the cloud can read the settings each task declares. */
 @Serializable data class CatalogUpload(val version: String, val digest: String, val bundle: String)
-@Serializable data class DeviceHeartbeat(val phase: String, val currentTask: String? = null, val queued: Int = 0,
-    val tasks: List<CloudTask> = emptyList(), val appVersion: String = "", val catalog: CatalogRef? = null)
-@Serializable data class HeartbeatReply(val cancelJobs: List<String> = emptyList(), val needCatalog: Boolean = false)
+/**
+ * One game instance on a device, the unit that runs tasks. [key] is stable on that device (the Android package, later a
+ * window or clone id); [gameId] is the task bundle's target id.
+ */
+@Serializable data class AppStatus(val key: String, val gameId: String, val name: String, val phase: String = "IDLE",
+    val currentTask: String? = null, val queued: Int = 0)
+/** Everything a device reports about itself. Sent whole, on connect, on change and at least every few seconds. */
+@Serializable data class DeviceStatus(val phase: String, val currentTask: String? = null, val queued: Int = 0,
+    val tasks: List<CloudTask> = emptyList(), val appVersion: String = "", val catalog: CatalogRef? = null,
+    val apps: List<AppStatus> = emptyList(), val concurrency: Int = 1)
+
+/** Messages a device sends on its socket (`/api/device/socket`). */
+@Serializable sealed interface DeviceMessage {
+    @Serializable @SerialName("status") data class Status(val status: DeviceStatus) : DeviceMessage
+}
+/** Messages the server sends on a device's socket. */
+@Serializable sealed interface ServerMessage {
+    /** The server does not have the task bundle the device reported; upload it over HTTP. */
+    @Serializable @SerialName("catalog-needed") data object CatalogNeeded : ServerMessage
+    /** Stop these jobs if they are running here. */
+    @Serializable @SerialName("cancel") data class Cancel(val jobIds: List<String>) : ServerMessage
+}
+/** Close codes the server uses when it refuses a device socket. */
+object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DEVICE: Short = 4403; const val REPLACED: Short = 4409 }
 
 @Serializable enum class JobState { QUEUED, LEASED, RUNNING, COMPLETED, FAILED, UNKNOWN, CANCELLED }
 
@@ -58,6 +80,11 @@ import kotlinx.serialization.json.JsonObject
 /** [revision] is the one the editor started from; a newer save in between is refused rather than overwritten. */
 @Serializable data class ConfigSave(val deviceId: String, val values: JsonObject, val revision: Long)
 @Serializable data class DeviceView(val id: String, val name: String, val platform: String, val online: Boolean, val lastSeenAt: Long?,
-    val phase: String?, val currentTask: String?, val queued: Int, val tasks: List<CloudTask>)
+    val phase: String?, val currentTask: String?, val queued: Int, val tasks: List<CloudTask>, val apps: List<AppStatus> = emptyList(), val concurrency: Int = 1)
+/** First message of the console's event stream (`/api/events`), and what it falls back to after a gap. */
+@Serializable data class ConsoleSnapshot(val devices: List<DeviceView>, val jobs: List<JobView>)
+@Serializable data class RemovedDevice(val id: String)
+/** A job's run log has new lines; consoles that show it fetch them. */
+@Serializable data class JobLogUpdated(val id: String)
 @Serializable data class JobView(val id: String, val deviceId: String, val deviceName: String, val targetId: String, val taskId: String,
     val taskName: String, val state: JobState, val detail: String, val cancelRequested: Boolean, val createdAt: Long, val updatedAt: Long)

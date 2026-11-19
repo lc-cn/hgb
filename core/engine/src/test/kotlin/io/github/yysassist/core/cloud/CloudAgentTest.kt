@@ -15,6 +15,8 @@ import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
 import okhttp3.OkHttpClient
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -36,7 +38,7 @@ class CloudAgentTest {
         """{"jobId":"j1","leaseNo":3,"userId":"$user","deviceId":"$device","targetId":"game","taskId":"gift","expiresAt":1,"version":"v1","digest":"$digest","configuration":{"box":"currency"}}"""
     private val configurations = CopyOnWriteArrayList<kotlinx.serialization.json.JsonObject>()
     private val uploads = CopyOnWriteArrayList<CatalogUpload>()
-    private val heartbeats = CopyOnWriteArrayList<DeviceHeartbeat>()
+    private val statuses = CopyOnWriteArrayList<DeviceStatus>()
     @Volatile private var needCatalog = false
     private val events = CopyOnWriteArrayList<JobEvent>()
     /** When set, an accepted submission immediately shows this run as finished with a few facts. */
@@ -54,6 +56,7 @@ class CloudAgentTest {
         override val state = executorState
         override suspend fun awaitRestored() { restored.await() }
         override fun tasks() = listOf(CloudTask("game", "gift", "每日礼包"))
+        override fun apps() = listOf(CloudApp("test.game", "game", "游戏"))
         override suspend fun catalog() = CloudCatalog("v1", "abc", """{"version":"v1"}""")
         override suspend fun enqueue(targetId: String, taskId: String, commandId: String, digest: String, configuration: kotlinx.serialization.json.JsonObject): CloudEnqueueResult {
             enqueued += commandId; configurations += configuration
@@ -80,8 +83,12 @@ class CloudAgentTest {
                     path == "/api/auth/refresh" -> if (refreshRejected) denied else { accessRejected = false; ok(auth("a2")) }
                     accessRejected -> denied
                     path == "/api/device/register" -> ok("""{"deviceId":"d1","userId":"me"}""")
-                    path == "/api/device/heartbeat" -> { heartbeats += json.decodeFromString(DeviceHeartbeat.serializer(), request.body!!.utf8())
-                        ok(if (needCatalog) """{"needCatalog":true}""" else "{}") }
+                    path == "/api/device/socket" -> MockResponse.Builder().webSocketUpgrade(object : WebSocketListener() {
+                        override fun onMessage(webSocket: WebSocket, text: String) {
+                            statuses += (json.decodeFromString(DeviceMessage.serializer(), text) as DeviceMessage.Status).status
+                            if (needCatalog) webSocket.send(json.encodeToString(ServerMessage.serializer(), ServerMessage.CatalogNeeded))
+                        }
+                    }).build()
                     path == "/api/device/catalog" -> { uploads += json.decodeFromString(CatalogUpload.serializer(), request.body!!.utf8()); needCatalog = false; ok("{}") }
                     path == "/api/device/jobs/next" -> lease?.also { lease = null }?.let(::ok) ?: MockResponse.Builder().code(204).build()
                     path.endsWith("/events") -> { events += json.decodeFromString(JobEvents.serializer(), request.body!!.utf8()).events; ok("{}") }
@@ -128,10 +135,11 @@ class CloudAgentTest {
         assertEquals(listOf(JobState.FAILED), reports.map { it.state })
         assertTrue(enqueued.isEmpty())
     }
-    @Test fun heartbeatsNameTheTaskVersionAndUploadItWhenAsked() = runBlocking<Unit> {
+    @Test fun statusReportsNameTheTaskVersionAndAppsAndUploadTheBundleWhenAsked() = runBlocking<Unit> {
         needCatalog = true; signedIn()
         eventually { uploads.isNotEmpty() }
-        assertEquals(CatalogRef("v1", "abc"), heartbeats.first().catalog)
+        assertEquals(CatalogRef("v1", "abc"), statuses.first().catalog)
+        assertEquals(listOf(AppStatus("test.game", "game", "游戏")), statuses.first().apps)
         assertEquals("abc", uploads.single().digest)
         delay(200)
         assertEquals(1, uploads.size)

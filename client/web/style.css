@@ -65,3 +65,5 @@ h2 { font-size: 15px; font-weight: 600; color: var(--muted); }
 .log-line{display:grid;grid-template-columns:72px minmax(0,1fr);column-gap:10px}
 .log-line > span:last-child{grid-column:2}
 .log-line.fact > span:nth-child(2){font-weight:600}
+.apps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.app-line { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 8px 10px; border-radius: 10px; background: var(--raised); }

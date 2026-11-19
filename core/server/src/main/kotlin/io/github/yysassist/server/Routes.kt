@@ -11,7 +11,18 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.websocket.*
+import io.ktor.utils.io.*
+import io.ktor.websocket.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.onSubscription
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 
@@ -46,6 +57,9 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
         exception<MailUnavailable> { call, error -> call.respond(HttpStatusCode.ServiceUnavailable, ApiError("mail_unavailable", error.message ?: "发信服务未配置")) }
         exception<io.ktor.server.plugins.BadRequestException> { call, _ -> call.respond(HttpStatusCode.BadRequest, ApiError("bad_request", "请求内容无效")) }
     }
+    install(WebSockets) { pingPeriod = 20.seconds; timeout = 45.seconds; maxFrameSize = MAX_DEVICE_FRAME }
+    // A device that went silent while running leaves a lease to settle even when no request comes in.
+    launch { while (isActive) { delay(SWEEP_MILLIS); runCatching { service.sweepAll() } } }
     intercept(ApplicationCallPipeline.Plugins) {
         call.response.headers.append("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
         call.response.headers.append("X-Content-Type-Options", "nosniff")
@@ -78,7 +92,11 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
         }
         get("/api/me") { call.respond(service.account(call.caller(service))) }
         get("/api/devices") { call.respond(service.devices(call.caller(service))) }
-        delete("/api/devices/{id}") { service.revokeDevice(call.caller(service), call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
+        delete("/api/devices/{id}") {
+            val id = call.parameters.getOrFail("id")
+            service.revokeDevice(call.caller(service), id); service.sockets.close(id)
+            call.respond(mapOf("ok" to true))
+        }
         get("/api/jobs") { call.respond(service.jobs(call.caller(service))) }
         post("/api/jobs") { call.respond(HttpStatusCode.Created, service.createJob(call.caller(service), call.receive())) }
         get("/api/configs/{target}/{task}") {
@@ -90,10 +108,14 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
             call.respond(service.saveConfig(call.caller(service), call.parameters.getOrFail("target"), call.parameters.getOrFail("task"), call.receive()))
         }
         get("/api/jobs/{id}/events") { call.respond(service.events(call.caller(service), call.parameters.getOrFail("id"))) }
-        post("/api/jobs/{id}/cancel") { service.cancelJob(call.caller(service), call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
+        post("/api/jobs/{id}/cancel") {
+            service.cancelJob(call.caller(service), call.parameters.getOrFail("id"))?.let { (deviceId, message) -> service.sockets.send(deviceId, service.encode(message)) }
+            call.respond(mapOf("ok" to true))
+        }
+        get("/api/events") { consoleStream(call, service) }
         route("/api/device") {
             post("/register") { call.respond(service.registerDevice(call.caller(service), call.receive())) }
-            post("/heartbeat") { call.respond(service.heartbeat(call.caller(service), call.receive())) }
+            webSocket("/socket") { deviceSocket(this, service) }
             post("/catalog") { service.uploadCatalog(call.caller(service), call.receive()); call.respond(mapOf("ok" to true)) }
             post("/jobs/next") {
                 val caller = call.caller(service)
@@ -110,3 +132,78 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
     }
 }
 private fun Parameters.getOrFail(name: String) = get(name) ?: throw ApiException(400, "bad_request", "请求内容无效")
+
+/**
+ * A device's one connection. The handshake carries the device's bearer token; a bad one is closed with a code the app
+ * understands, so it can renew and come back. Each text frame is a [DeviceMessage]; replies are [ServerMessage]s.
+ */
+private suspend fun deviceSocket(session: DefaultWebSocketServerSession, service: CloudService) = with(session) {
+    val token = call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ")
+    val caller = token?.let(service::authenticate)
+    if (caller == null) { close(CloseReason(SocketClose.INVALID_SESSION, "invalid_session")); return }
+    val deviceId = caller.deviceId
+    if (caller.kind != SessionKind.DEVICE || deviceId == null) { close(CloseReason(SocketClose.NOT_A_DEVICE, "device_only")); return }
+    val (connection, replaced) = service.sockets.attach(caller.userId, deviceId,
+        send = { text -> runCatching { outgoing.send(Frame.Text(text)) }.isSuccess },
+        close = { runCatching { close(CloseReason(SocketClose.REPLACED, "closed")) } })
+    replaced?.close?.invoke()
+    service.connectionChanged(caller.userId, deviceId)
+    try {
+        for (frame in incoming) {
+            if (frame !is Frame.Text) continue
+            val message = runCatching { service.decodeDeviceMessage(frame.readText()) }.getOrNull() ?: continue
+            when (message) {
+                is DeviceMessage.Status -> service.status(caller, message.status).forEach { outgoing.send(Frame.Text(service.encode(it))) }
+            }
+        }
+    } catch (_: ApiException) {
+        close(CloseReason(SocketClose.NOT_A_DEVICE, "device_only"))
+    } finally {
+        if (service.sockets.detach(connection)) service.connectionChanged(caller.userId, deviceId)
+    }
+}
+
+/**
+ * The console's live view (Server-Sent Events). It starts with a snapshot, then sends each change as it happens. A
+ * browser that reconnects names the last event it saw and gets only what it missed, or a new snapshot if that is gone.
+ */
+private suspend fun consoleStream(call: ApplicationCall, service: CloudService) {
+    val caller = call.caller(service)
+    call.response.headers.append(HttpHeaders.CacheControl, "no-cache")
+    call.response.headers.append("X-Accel-Buffering", "no") // proxies must pass each event through at once
+    call.respondBytesWriter(ContentType.Text.EventStream) {
+        suspend fun write(text: String) { writeStringUtf8(text); flush() }
+        suspend fun send(id: Long, name: String, data: String) = write("id: $id\nevent: $name\ndata: $data\n\n")
+        coroutineScope {
+            // Subscribe before reading the snapshot, so nothing published in between is lost.
+            val pending = Channel<ConsoleEvent>(Channel.UNLIMITED)
+            val subscribed = CompletableDeferred<Unit>()
+            val collector = launch {
+                service.events.stream(caller.userId).onSubscription { subscribed.complete(Unit) }.collect { pending.send(it) }
+            }
+            subscribed.await()
+            val lastSeen = call.request.headers["Last-Event-ID"]?.toLongOrNull()
+            val missed = lastSeen?.let { service.events.since(caller.userId, it) }
+            var sentUpTo = if (missed != null) {
+                missed.forEach { send(it.id, it.name, it.data) }
+                missed.lastOrNull()?.id ?: lastSeen
+            } else {
+                val upTo = service.events.latest(caller.userId)
+                send(upTo, "snapshot", service.encode(service.consoleSnapshot(caller.userId))); upTo
+            }
+            write("retry: 3000\n\n")
+            try {
+                while (isActive) {
+                    val event = withTimeoutOrNull(KEEPALIVE_MILLIS) { pending.receive() }
+                    if (event == null) { write(": keep-alive\n\n"); continue }
+                    if (event.id <= sentUpTo) continue
+                    send(event.id, event.name, event.data); sentUpTo = event.id
+                }
+            } finally { collector.cancel() }
+        }
+    }
+}
+
+private const val SWEEP_MILLIS = 30_000L
+private const val KEEPALIVE_MILLIS = 15_000L
+private const val MAX_DEVICE_FRAME = 1L shl 20

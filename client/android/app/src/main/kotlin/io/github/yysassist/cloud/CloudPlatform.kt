@@ -60,7 +60,11 @@ internal class EncryptedCloudStore(private val file: File, private val keyAlias:
 }
 
 internal class RuntimeCloudExecutor(private val runtime: ExecutionRuntime, private val updates: TaskUpdates,
-    private val library: io.github.yysassist.storage.TaskVersionLibrary, private val database: io.github.yysassist.storage.AssistDatabase) : CloudExecutorPort {
+    private val library: io.github.yysassist.storage.TaskVersionLibrary, private val database: io.github.yysassist.storage.AssistDatabase,
+    private val installed: (String) -> Boolean) : CloudExecutorPort {
+    /** One app per installed package the active bundle targets. Clones and work profiles are not told apart yet. */
+    override fun apps(): List<CloudApp> = ((updates.catalog.value as? VersionCatalogState.Ready)?.catalog?.activeContent as? ActiveTaskContent.Available)
+        ?.bundle?.targets.orEmpty().flatMap { target -> target.androidPackages.filter(installed).map { CloudApp(it, target.id, target.name) } }
     override suspend fun traces(runId: Long, after: Long): List<CloudTrace> = withContext(Dispatchers.IO) {
         database.actionTraces().forRun(runId).filter { it.id > after }
             .map { CloudTrace(it.id, it.recordedAt, it.stepId, it.actionId, it.result, it.reason, it.elapsedMillis) }

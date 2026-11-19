@@ -1,6 +1,6 @@
 const root = document.getElementById("app");
-const REFRESH_MS = 5000;
-let timer = null;
+/** The console's live connection; closed when the console is left. */
+let stream = null;
 
 class ApiFailure extends Error {
   constructor(status, code, message) { super(message); this.status = status; this.code = code; }
@@ -39,7 +39,7 @@ function field(label, name, type, extra = {}) {
 }
 
 function brand() {
-  return el("div", { class: "brand" }, el("img", { src: "logo.svg", alt: "" }), el("h1", { text: "阴阳师助手控制台" }));
+  return el("div", { class: "brand" }, el("img", { src: "logo.svg", alt: "" }), el("h1", { text: "护肝宝控制台" }));
 }
 
 function authForm({ fields, submit, onSubmit, after }) {
@@ -104,14 +104,25 @@ const STATES = {
 const ACTIVE = new Set(["QUEUED", "LEASED", "RUNNING"]);
 const time = (value) => value ? new Date(value).toLocaleString("zh-CN", { hour12: false }) : "—";
 
-function deviceCard(device, reload) {
+const PHASES = { IDLE: "空闲", RUNNING: "运行中", PAUSING: "正在暂停", PAUSED: "已暂停", REMOVING: "正在停止", SWITCHING: "切换中", BLOCKED_UNKNOWN: "需要处理" };
+
+/** One game instance on the device: what it is doing and how many tasks wait for it. */
+function appLine(app) {
+  const doing = app.currentTask ? `${PHASES[app.phase] ?? app.phase}：${app.currentTask}` : PHASES[app.phase] ?? app.phase;
+  return el("li", { class: "app-line" }, el("span", { class: "grow", text: app.name }),
+    el("span", { class: "muted", text: [doing, app.queued ? `排队 ${app.queued} 个` : ""].filter(Boolean).join(" · ") }));
+}
+
+function deviceCard(device) {
+  const apps = device.apps ?? [];
   return el("article", { class: "card device" },
     el("div", { class: "row" }, el("b", { class: "grow", text: device.name }), el("span", { class: `pill ${device.online ? "ok" : ""}`, text: device.online ? "在线" : "离线" })),
-    el("p", { class: "muted", text: device.currentTask ? `正在运行：${device.currentTask}` : device.online ? "空闲" : `最后在线：${time(device.lastSeenAt)}` }),
-    el("p", { class: "muted", text: `${device.platform} · 排队 ${device.queued} 个 · 可用任务 ${device.tasks.length} 个` }),
+    el("p", { class: "muted", text: device.online ? `${device.platform} · 可用任务 ${device.tasks.length} 个` : `最后在线：${time(device.lastSeenAt)}` }),
+    apps.length ? el("ul", { class: "apps", "aria-label": "应用" }, ...apps.map(appLine))
+      : el("p", { class: "muted", text: device.online ? "这台设备上还没有护肝宝支持的游戏" : "离线时不显示应用状态" }),
     el("button", { class: "danger", type: "button", text: "解绑设备", onclick: async () => {
       if (!confirm(`解绑“${device.name}”？这台设备会下线，正在运行的作业结果将标记为未知。`)) return;
-      await api(`/api/devices/${encodeURIComponent(device.id)}`, { method: "DELETE" }); reload();
+      await api(`/api/devices/${encodeURIComponent(device.id)}`, { method: "DELETE" });
     } }));
 }
 
@@ -269,33 +280,53 @@ function settingsForm(devices) {
     el("button", { class: "ghost", type: "button", text: "编辑设置", onclick: open })), editor, message);
 }
 
-function stopRefresh() { clearTimeout(timer); timer = null; }
+function stopRefresh() { stream?.close(); stream = null; }
 
 async function showConsole(account) {
   const devicesBox = el("div", { class: "devices" });
   const jobsBox = el("div", { class: "card jobs" });
   const formBox = el("div");
   const settingsBox = el("div");
-  const status = el("p", { class: "message", role: "status" });
+  const status = el("p", { class: "message", role: "status", text: "正在连接…" });
   let formKey = "";
   const expanded = new Set();
-  async function reload() {
-    stopRefresh();
-    try {
-      const [devices, jobs] = await Promise.all([api("/api/devices"), api("/api/jobs")]);
-      status.textContent = "";
-      devicesBox.replaceChildren(...(devices.length ? devices.map((device) => deviceCard(device, reload))
-        : [el("p", { class: "card muted", text: "还没有设备。在手机上打开助手并登录这个账号，设备会自动出现在这里。" })]));
-      jobsBox.replaceChildren(...(jobs.length ? jobs.map((job) => jobRow(job, reload, expanded)) : [el("p", { class: "empty", text: "还没有作业" })]));
-      // Rebuilding the form while someone is choosing a task would reset their selection.
-      const key = JSON.stringify(devices.map((device) => [device.id, device.tasks]));
-      if (key !== formKey) { formKey = key; formBox.replaceChildren(jobForm(devices, reload)); settingsBox.replaceChildren(settingsForm(devices)); }
-    } catch (error) {
-      if (error.status === 401) { showAuth(); return; }
-      status.textContent = error.message;
-    }
-    timer = setTimeout(reload, REFRESH_MS);
+  let devices = new Map();
+  let jobs = [];
+  const nothing = () => {};
+
+  // Each part is redrawn only when its own data changes, so open forms and expanded logs stay as they are.
+  function renderDevices() {
+    const list = [...devices.values()].sort((a, b) => a.name.localeCompare(b.name, "zh-CN") || a.id.localeCompare(b.id));
+    devicesBox.replaceChildren(...(list.length ? list.map(deviceCard)
+      : [el("p", { class: "card muted", text: "还没有设备。在手机上打开护肝宝并登录这个账号，设备会自动出现在这里。" })]));
+    // Rebuilding the forms while someone is choosing a task would reset their selection.
+    const key = JSON.stringify(list.map((device) => [device.id, device.tasks]));
+    if (key !== formKey) { formKey = key; formBox.replaceChildren(jobForm(list, nothing)); settingsBox.replaceChildren(settingsForm(list)); }
   }
+  function renderJobs() {
+    jobsBox.replaceChildren(...(jobs.length ? jobs.map((job) => jobRow(job, renderJobs, expanded)) : [el("p", { class: "empty", text: "还没有作业" })]));
+  }
+  function live(ok, text) { status.textContent = text; status.className = `message ${ok ? "ok" : ""}`; }
+
+  stopRefresh();
+  stream = new EventSource("/api/events");
+  stream.addEventListener("snapshot", (event) => {
+    const snapshot = JSON.parse(event.data);
+    devices = new Map(snapshot.devices.map((device) => [device.id, device]));
+    jobs = snapshot.jobs;
+    renderDevices(); renderJobs();
+  });
+  stream.addEventListener("device", (event) => { const device = JSON.parse(event.data); devices.set(device.id, device); renderDevices(); });
+  stream.addEventListener("device-removed", (event) => { devices.delete(JSON.parse(event.data).id); renderDevices(); });
+  stream.addEventListener("jobs", (event) => { jobs = JSON.parse(event.data); renderJobs(); });
+  // New log lines only matter for a job whose log is open.
+  stream.addEventListener("job-log", (event) => { if (expanded.has(JSON.parse(event.data).id)) renderJobs(); });
+  stream.onopen = () => live(true, "实时连接中");
+  stream.onerror = async () => {
+    live(false, "与服务器的连接断开了，正在重连…");
+    // The browser keeps retrying on its own; only a lost sign-in has to be handled here.
+    try { await api("/api/me"); } catch (error) { if (error.status === 401) { stopRefresh(); showAuth(); } }
+  };
   root.className = "shell";
   root.replaceChildren(
     el("header", { class: "top" }, el("div", { class: "grow" }, brand()), el("span", { class: "who", text: account.email ?? account.githubLogin ?? "" }),
@@ -305,7 +336,6 @@ async function showConsole(account) {
     el("section", {}, el("h2", { text: "任务设置" }), settingsBox),
     el("section", {}, el("h2", { text: "下发作业" }), formBox),
     el("section", {}, el("h2", { text: "作业记录" }), jobsBox));
-  await reload();
 }
 
 async function start() {

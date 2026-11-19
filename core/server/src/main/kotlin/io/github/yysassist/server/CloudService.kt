@@ -21,9 +21,10 @@ data class IssuedSession(val userId: String, val email: String?, val accessToken
 
 /** All business rules. Every query that reads user data is scoped by the caller's user id. */
 class CloudService(private val db: Database, private val mailer: Mailer, val github: GitHubIdentity, private val secret: ByteArray,
-    private val clock: () -> Long = System::currentTimeMillis) {
-    private val json = Json { ignoreUnknownKeys = true }
+    private val clock: () -> Long = System::currentTimeMillis, val events: ConsoleEvents = ConsoleEvents(), val sockets: DeviceSockets = DeviceSockets()) {
+    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val tasks = ListSerializer(CloudTask.serializer())
+    private val apps = ListSerializer(AppStatus.serializer())
     private val loginLimit = RateLimiter(10, 10 * MINUTE, clock)
     private val mailLimit = RateLimiter(5, 10 * MINUTE, clock)
     private val badCredentials get() = ApiException(401, "invalid_credentials", "邮箱或密码不正确")
@@ -167,31 +168,63 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             update("UPDATE devices SET revoked = 0, name = ?, platform = ? WHERE id = ? AND user_id = ?", request.name, request.platform, id, caller.userId)
             update("UPDATE sessions SET device_id = ? WHERE id = ? AND user_id = ?", id, caller.sessionId, caller.userId)
             DeviceRegistered(id, caller.userId)
-        }
+        }.also { pushDevice(caller.userId, it.deviceId) }
     }
     private fun device(caller: Caller): String = caller.deviceId?.takeIf { caller.kind == SessionKind.DEVICE } ?: throw ApiException(403, "device_only", "请先注册设备")
 
-    private fun Database.sweep() {
+    /** Settles expired leases and returns the users whose jobs changed, so their consoles can be told. */
+    private fun Database.sweep(): Set<String> {
         val now = clock()
+        val touched = query("SELECT DISTINCT user_id FROM jobs WHERE state IN ('LEASED', 'RUNNING') AND lease_expires_at < ?", now) { it.getString(1) }.toSet()
+        if (touched.isEmpty()) return touched
         // Never acknowledged, so nothing ran: offer it again. Once started the outcome is unknown and is never retried.
         update("UPDATE jobs SET state = 'QUEUED', lease_expires_at = NULL, updated_at = ? WHERE state = 'LEASED' AND lease_expires_at < ?", now, now)
         update("UPDATE jobs SET state = 'UNKNOWN', detail = '设备失联，结果未确认', lease_expires_at = NULL, updated_at = ? WHERE state = 'RUNNING' AND lease_expires_at < ?", now, now)
+        return touched
     }
-    fun heartbeat(caller: Caller, beat: DeviceHeartbeat): HeartbeatReply {
+    /** Run periodically, so a job whose device went silent is settled even when nobody is looking. */
+    fun sweepAll() { db.tx { sweep() }.forEach(::pushJobs) }
+
+    /**
+     * A device's report over its socket. Returns what the server has to tell it back: whether its task bundle is
+     * missing here, and which of its jobs were cancelled.
+     */
+    fun status(caller: Caller, status: DeviceStatus): List<ServerMessage> {
         val id = device(caller); val now = clock()
-        return db.tx {
-            update("UPDATE devices SET last_seen_at = ?, phase = ?, current_task = ?, queued = ?, tasks_json = ?, catalog_version = ?, catalog_digest = ? WHERE id = ? AND user_id = ?",
-                now, beat.phase.take(40), beat.currentTask?.take(120), beat.queued, json.encodeToString(tasks, beat.tasks.take(500)),
-                beat.catalog?.version?.take(120), beat.catalog?.digest?.take(64), id, caller.userId)
-            val reported = beat.catalog
+        val (replies, swept) = db.tx {
+            update("""UPDATE devices SET last_seen_at = ?, phase = ?, current_task = ?, queued = ?, tasks_json = ?, catalog_version = ?, catalog_digest = ?,
+                apps_json = ?, concurrency = ? WHERE id = ? AND user_id = ?""",
+                now, status.phase.take(40), status.currentTask?.take(120), status.queued, json.encodeToString(tasks, status.tasks.take(500)),
+                status.catalog?.version?.take(120), status.catalog?.digest?.take(64), json.encodeToString(apps, status.apps.take(MAX_APPS).map(::bounded)),
+                status.concurrency.coerceIn(1, MAX_APPS), id, caller.userId)
+            val reported = status.catalog
             val missing = reported != null && single("SELECT 1 FROM catalogs WHERE user_id = ? AND digest = ?", caller.userId, reported.digest) { true } == null
             // Only a started job is kept alive: a lease handed to a connection that died must return to the queue.
             update("UPDATE jobs SET lease_expires_at = ? WHERE device_id = ? AND user_id = ? AND state = 'RUNNING'", now + LEASE_LIFETIME, id, caller.userId)
-            sweep()
-            HeartbeatReply(query("SELECT id FROM jobs WHERE device_id = ? AND user_id = ? AND cancel_requested = 1 AND state IN ('LEASED', 'RUNNING')", id, caller.userId) { it.getString(1) },
-                needCatalog = missing)
+            val swept = sweep()
+            val cancelled = query("SELECT id FROM jobs WHERE device_id = ? AND user_id = ? AND cancel_requested = 1 AND state IN ('LEASED', 'RUNNING')", id, caller.userId) { it.getString(1) }
+            listOfNotNull(ServerMessage.CatalogNeeded.takeIf { missing }, cancelled.takeIf { it.isNotEmpty() }?.let(ServerMessage::Cancel)) to swept
         }
+        pushDevice(caller.userId, id)
+        swept.forEach(::pushJobs)
+        return replies
     }
+    private fun bounded(app: AppStatus) = app.copy(key = app.key.take(120), gameId = app.gameId.take(80), name = app.name.take(80), phase = app.phase.take(40),
+        currentTask = app.currentTask?.take(120))
+    /** Called when a device's socket opens or closes; the console shows it as online only while connected. */
+    fun connectionChanged(userId: String, deviceId: String) {
+        if (sockets.isOnline(deviceId)) db.tx { update("UPDATE devices SET last_seen_at = ? WHERE id = ? AND user_id = ?", clock(), deviceId, userId) }
+        pushDevice(userId, deviceId)
+    }
+
+    private fun pushDevice(userId: String, deviceId: String) {
+        val view = db.tx { deviceRows(userId, deviceId) }.singleOrNull() ?: return
+        events.publish(userId, "device", json.encodeToString(DeviceView.serializer(), view))
+    }
+    private fun pushJobs(userId: String) = events.publish(userId, "jobs", json.encodeToString(jobList, db.tx { jobRows(userId) }))
+    /** What a console shows first, and again whenever it cannot catch up from the event log. */
+    fun consoleSnapshot(userId: String): ConsoleSnapshot = db.tx { sweep(); ConsoleSnapshot(deviceRows(userId, null), jobRows(userId)) }
+    fun encode(snapshot: ConsoleSnapshot) = json.encodeToString(ConsoleSnapshot.serializer(), snapshot)
     /** The bundle text must hash to the digest it claims, so a stored version can never be swapped later. */
     fun uploadCatalog(caller: Caller, upload: CatalogUpload) {
         device(caller)
@@ -246,7 +279,7 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             update("UPDATE jobs SET state = 'LEASED', lease_no = ?, lease_expires_at = ?, updated_at = ? WHERE id = ?", lease, expires, now, job[0])
             JobLease(job[0] as String, lease, caller.userId, id, job[1] as String, job[2] as String, expires, job[4] as String, job[5] as String,
                 json.parseToJsonElement(job[6] as String).jsonObject)
-        }
+        }?.also { pushJobs(caller.userId) }
     }
     fun report(caller: Caller, jobId: String, report: JobReport) {
         val id = device(caller); val now = clock()
@@ -266,6 +299,7 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             val active = report.state == JobState.RUNNING
             update("UPDATE jobs SET state = ?, detail = ?, lease_expires_at = ?, updated_at = ? WHERE id = ?", report.state.name, report.detail.take(500), if (active) now + LEASE_LIFETIME else null, now, jobId)
         }
+        pushJobs(caller.userId)
     }
 
     /** Only the device holding the current lease can add to a job's log; lines past the cap are dropped. */
@@ -282,6 +316,7 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
                     jobId, event.key.take(40), event.at, event.kind.take(40), event.step.take(80), event.action.take(80), event.detail.take(400), event.elapsedMs)
             }
         }
+        events.publish(caller.userId, "job-log", json.encodeToString(JobLogUpdated.serializer(), JobLogUpdated(jobId)))
     }
     /** Step ids are named from the task version the job ran on. */
     fun events(caller: Caller, jobId: String): List<JobEventView> = db.tx {
@@ -293,19 +328,26 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             val step = it.getString(3)
             JobEventView(it.getLong(1), it.getString(2), step, names[step] ?: step, it.getString(4), it.getString(5), it.getLong(6)) }
     }
-    fun devices(caller: Caller): List<DeviceView> = db.tx {
-        query("SELECT id, name, platform, last_seen_at, phase, current_task, queued, tasks_json FROM devices WHERE user_id = ? AND revoked = 0 ORDER BY name, id", caller.userId) { row ->
+    /** Online means the device's socket is open right now; [deviceId] null lists them all. */
+    private fun Database.deviceRows(userId: String, deviceId: String?): List<DeviceView> =
+        query("""SELECT id, name, platform, last_seen_at, phase, current_task, queued, tasks_json, apps_json, concurrency FROM devices
+            WHERE user_id = ? AND revoked = 0 AND (? IS NULL OR id = ?) ORDER BY name, id""", userId, deviceId, deviceId) { row ->
             val seen = row.getLong(4).takeUnless { row.wasNull() }
-            DeviceView(row.getString(1), row.getString(2), row.getString(3), seen != null && clock() - seen < ONLINE_WINDOW, seen, row.getString(5), row.getString(6), row.getInt(7),
-                json.decodeFromString(tasks, row.getString(8)))
+            val id = row.getString(1)
+            DeviceView(id, row.getString(2), row.getString(3), sockets.isOnline(id), seen, row.getString(5), row.getString(6), row.getInt(7),
+                json.decodeFromString(tasks, row.getString(8)), json.decodeFromString(apps, row.getString(9)), row.getInt(10))
         }
-    }
-    /** Devices that sign in again come back; until then this one can neither work nor report. */
-    fun revokeDevice(caller: Caller, deviceId: String) = db.tx {
-        if (update("UPDATE devices SET revoked = 1 WHERE id = ? AND user_id = ?", deviceId, caller.userId) == 0) throw ApiException(404, "not_found", "设备不存在")
-        update("DELETE FROM sessions WHERE device_id = ? AND user_id = ?", deviceId, caller.userId)
-        update("UPDATE jobs SET state = 'CANCELLED', detail = '设备已解绑', updated_at = ? WHERE device_id = ? AND user_id = ? AND state IN ('QUEUED', 'LEASED')", clock(), deviceId, caller.userId)
-        update("UPDATE jobs SET state = 'UNKNOWN', detail = '设备已解绑，结果未确认', updated_at = ? WHERE device_id = ? AND user_id = ? AND state = 'RUNNING'", clock(), deviceId, caller.userId); Unit
+    fun devices(caller: Caller): List<DeviceView> = db.tx { deviceRows(caller.userId, null) }
+    /** Devices that sign in again come back; until then this one can neither work nor report. Its socket is closed by the caller. */
+    fun revokeDevice(caller: Caller, deviceId: String) {
+        db.tx {
+            if (update("UPDATE devices SET revoked = 1 WHERE id = ? AND user_id = ?", deviceId, caller.userId) == 0) throw ApiException(404, "not_found", "设备不存在")
+            update("DELETE FROM sessions WHERE device_id = ? AND user_id = ?", deviceId, caller.userId)
+            update("UPDATE jobs SET state = 'CANCELLED', detail = '设备已解绑', updated_at = ? WHERE device_id = ? AND user_id = ? AND state IN ('QUEUED', 'LEASED')", clock(), deviceId, caller.userId)
+            update("UPDATE jobs SET state = 'UNKNOWN', detail = '设备已解绑，结果未确认', updated_at = ? WHERE device_id = ? AND user_id = ? AND state = 'RUNNING'", clock(), deviceId, caller.userId)
+        }
+        events.publish(caller.userId, "device-removed", json.encodeToString(RemovedDevice.serializer(), RemovedDevice(deviceId)))
+        pushJobs(caller.userId)
     }
     fun createJob(caller: Caller, request: CreateJobRequest): JobView {
         val id = UUID.randomUUID().toString(); val now = clock()
@@ -322,27 +364,41 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             update("INSERT INTO jobs (id, user_id, device_id, target_id, task_id, task_name, state, created_at, updated_at, version, digest, config_json) VALUES (?, ?, ?, ?, ?, ?, 'QUEUED', ?, ?, ?, ?, ?)",
                 id, caller.userId, request.deviceId, task.targetId, task.taskId, task.name, now, now, version, digest, values.toString())
         }
+        pushJobs(caller.userId)
         return jobs(caller).first { it.id == id }
     }
-    fun jobs(caller: Caller): List<JobView> = db.tx {
-        sweep()
+    private fun Database.jobRows(userId: String): List<JobView> =
         query("""SELECT j.id, j.device_id, d.name, j.target_id, j.task_id, j.task_name, j.state, j.detail, j.cancel_requested, j.created_at, j.updated_at
-            FROM jobs j JOIN devices d ON d.id = j.device_id WHERE j.user_id = ? ORDER BY j.created_at DESC, j.id LIMIT 100""", caller.userId) { r ->
+            FROM jobs j JOIN devices d ON d.id = j.device_id WHERE j.user_id = ? ORDER BY j.created_at DESC, j.id LIMIT 100""", userId) { r ->
             JobView(r.getString(1), r.getString(2), r.getString(3), r.getString(4), r.getString(5), r.getString(6), JobState.valueOf(r.getString(7)), r.getString(8), r.getInt(9) == 1, r.getLong(10), r.getLong(11)) }
+    fun jobs(caller: Caller): List<JobView> = db.tx { sweep(); jobRows(caller.userId) }
+    /**
+     * A queued job is dropped at once; a running one is flagged, and the device is told now if it is connected and
+     * otherwise on its next report. Returns the device to notify and the job id, or null when nothing has to be sent.
+     */
+    fun cancelJob(caller: Caller, jobId: String): Pair<String, ServerMessage.Cancel>? {
+        val notify = db.tx {
+            val job = single("SELECT state, device_id FROM jobs WHERE id = ? AND user_id = ?", jobId, caller.userId) { JobState.valueOf(it.getString(1)) to it.getString(2) }
+                ?: throw ApiException(404, "not_found", "作业不存在")
+            when (job.first) {
+                JobState.QUEUED -> { update("UPDATE jobs SET state = 'CANCELLED', detail = '已取消', updated_at = ? WHERE id = ?", clock(), jobId); null }
+                JobState.LEASED, JobState.RUNNING -> { update("UPDATE jobs SET cancel_requested = 1, updated_at = ? WHERE id = ?", clock(), jobId)
+                    job.second to ServerMessage.Cancel(listOf(jobId)) }
+                else -> null
+            }
+        }
+        pushJobs(caller.userId)
+        return notify
     }
-    fun cancelJob(caller: Caller, jobId: String) = db.tx {
-        val state = single("SELECT state FROM jobs WHERE id = ? AND user_id = ?", jobId, caller.userId) { JobState.valueOf(it.getString(1)) } ?: throw ApiException(404, "not_found", "作业不存在")
-        when (state) {
-            JobState.QUEUED -> update("UPDATE jobs SET state = 'CANCELLED', detail = '已取消', updated_at = ? WHERE id = ?", clock(), jobId)
-            JobState.LEASED, JobState.RUNNING -> update("UPDATE jobs SET cancel_requested = 1, updated_at = ? WHERE id = ?", clock(), jobId)
-            else -> Unit
-        }; Unit
-    }
+    fun encode(message: ServerMessage) = json.encodeToString(ServerMessage.serializer(), message)
+    fun decodeDeviceMessage(text: String): DeviceMessage = json.decodeFromString(DeviceMessage.serializer(), text)
 
     companion object {
         const val MINUTE = 60_000L; const val CODE_LIFETIME = 10 * MINUTE; const val MAX_CODE_ATTEMPTS = 5
         const val WEB_LIFETIME = 7 * 24 * 60 * MINUTE; const val DEVICE_ACCESS_LIFETIME = 60 * MINUTE; const val REFRESH_LIFETIME = 30 * 24 * 60 * MINUTE
-        const val LEASE_LIFETIME = 2 * MINUTE; const val ACK_LIFETIME = MINUTE / 2; const val ONLINE_WINDOW = MINUTE
+        const val LEASE_LIFETIME = 2 * MINUTE; const val ACK_LIFETIME = MINUTE / 2
+        private const val MAX_APPS = 32
+        private val jobList = ListSerializer(JobView.serializer())
         private const val PURPOSE_VERIFY = "verify"; private const val PURPOSE_LOGIN = "login"; private const val PURPOSE_RESET = "reset"
         private val EMAIL = Regex("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")
         private const val MAX_CATALOG_CHARS = 4_000_000

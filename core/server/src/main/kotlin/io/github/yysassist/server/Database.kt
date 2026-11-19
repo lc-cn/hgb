@@ -44,7 +44,8 @@ class Database(path: String) : AutoCloseable {
             """CREATE TABLE IF NOT EXISTS oauth_states (state TEXT PRIMARY KEY, verifier TEXT NOT NULL, link_user TEXT, expires_at INTEGER NOT NULL)""",
             """CREATE TABLE IF NOT EXISTS devices (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, install_id TEXT NOT NULL,
                 name TEXT NOT NULL, platform TEXT NOT NULL, revoked INTEGER NOT NULL DEFAULT 0, last_seen_at INTEGER, phase TEXT, current_task TEXT,
-                queued INTEGER NOT NULL DEFAULT 0, tasks_json TEXT NOT NULL DEFAULT '[]', catalog_version TEXT, catalog_digest TEXT, UNIQUE (user_id, install_id))""",
+                queued INTEGER NOT NULL DEFAULT 0, tasks_json TEXT NOT NULL DEFAULT '[]', catalog_version TEXT, catalog_digest TEXT,
+                apps_json TEXT NOT NULL DEFAULT '[]', concurrency INTEGER NOT NULL DEFAULT 1, UNIQUE (user_id, install_id))""",
             // Task bundles devices run, kept per user so settings can be checked against the exact version a job will use.
             """CREATE TABLE IF NOT EXISTS catalogs (user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, digest TEXT NOT NULL,
                 version TEXT NOT NULL, bundle_json TEXT NOT NULL, uploaded_at INTEGER NOT NULL, PRIMARY KEY (user_id, digest))""",

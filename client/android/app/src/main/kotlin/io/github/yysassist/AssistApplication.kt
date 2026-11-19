@@ -113,7 +113,8 @@ class AssistApplication : Application() {
         // request this app has already given up on, and the job is never started.
         val cloudClient = client.newBuilder().readTimeout(35, TimeUnit.SECONDS).callTimeout(40, TimeUnit.SECONDS).build()
         cloud = io.github.yysassist.core.cloud.CloudAgent(cloudClient, io.github.yysassist.cloud.EncryptedCloudStore(File(noBackupFilesDir, "cloud-session.bin"), "io.github.yysassist.cloud.v1"),
-            io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library, database), "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}", "android", BuildConfig.VERSION_NAME, scope)
+            io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library, database) { packageManager.getLaunchIntentForPackage(it) != null },
+            "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}", "android", BuildConfig.VERSION_NAME, scope)
         taskUpdates.pullLatest()
     }
 }
