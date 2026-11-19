@@ -1,0 +1,21 @@
+docs/design/cloud-executor.md
+  s_fae32e7f0efe76::t_4c10dbc3fbd8db 1-157
+docs/development/cloud-console.md
+  s_fae32e7f0efe76::t_c0f2fe819f24eb 1-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5157921fc79108dc5e3423718065672a5b4953b7",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
