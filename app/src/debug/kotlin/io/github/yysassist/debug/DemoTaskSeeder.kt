@@ -36,6 +36,11 @@ class DemoTaskSeeder : BroadcastReceiver() {
                 val text = app.taskCodec.write(demoBundle())
                 val installed = app.versionLibrary.install(text, VERSION, TaskVersionLibrary.sha256(text))
                 Log.i(TAG, "install=$installed activate=${app.versionLibrary.activate(VERSION)}")
+                // Local end-to-end checks only: signs in to a development server with a test account.
+                intent.getStringExtra("cloudServer")?.let { server ->
+                    runCatching { app.cloud.signIn(server, intent.getStringExtra("cloudEmail").orEmpty(), intent.getStringExtra("cloudPassword").orEmpty()) }
+                        .onFailure { Log.w(TAG, "cloud sign-in failed: ${it.javaClass.simpleName}") }
+                }
                 val minutes = intent.getIntExtra("planInMinutes", -1)
                 if (minutes >= 0) {
                     val at = java.time.LocalTime.now().plusMinutes(minutes.toLong())

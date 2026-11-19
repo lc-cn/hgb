@@ -61,6 +61,8 @@ class AssistApplication : Application() {
         private set
     internal lateinit var reactions: io.github.yysassist.reactions.ReactionMonitor
         private set
+    lateinit var cloud: io.github.yysassist.core.cloud.CloudAgent
+        private set
     lateinit var plans: io.github.yysassist.plans.PlanCoordinator
         private set
     internal lateinit var versionLibrary: TaskVersionLibrary
@@ -107,6 +109,9 @@ class AssistApplication : Application() {
             GitHubDeviceAuthorization(BuildConfig.GITHUB_CLIENT_ID, client), GitHubUserApi(client), scope)
         val source = GitHubTaskSource(TaskRepository("lc-cn", "yys-helper"), "https://api.github.com/".toHttpUrl(), client, github)
         taskUpdates = TaskUpdates(library, source, scope)
+        val cloudClient = client.newBuilder().callTimeout(40, TimeUnit.SECONDS).build()
+        cloud = io.github.yysassist.core.cloud.CloudAgent(cloudClient, io.github.yysassist.cloud.EncryptedCloudStore(File(noBackupFilesDir, "cloud-session.bin"), "io.github.yysassist.cloud.v1"),
+            io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates), "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}", "android", BuildConfig.VERSION_NAME, scope)
         taskUpdates.pullLatest()
     }
 }
