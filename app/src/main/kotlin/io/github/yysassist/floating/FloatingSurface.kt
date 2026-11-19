@@ -40,7 +40,7 @@ import kotlin.math.sin
 internal enum class FloatingLayer { DOCKED, BALL, QUICK, COMMON }
 internal object FloatingUi {
     val ball = 44.dp; val dockWidth = 18.dp; val dockHeight = 56.dp
-    val fanWidth = 136.dp; val fanHeight = 220.dp; val fanRadius = 84.dp; val fanButton = 44.dp
+    val fanWidth = 100.dp; val fanHeight = 168.dp; val fanRadius = 60.dp; val fanButton = 44.dp
     val quickWidth = 366.dp; val wideCommonWidth = 560.dp
     val portraitHeight = 480.dp; val landscapeHeight = 340.dp
     val portraitTop = 94.dp; val landscapeTop = 36.dp
