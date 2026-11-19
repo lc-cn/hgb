@@ -1,0 +1,76 @@
+client/android/app/src/main/kotlin/io/github/yysassist/cloud/CloudPlatform.kt
+  s_fae32e7f0efe76::t_93e15248276a1a 63-67
+client/android/app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_122b77512804cb 116-117
+core/server/build.gradle.kts
+  s_fae32e7f0efe76::t_85dd5e7b83beb6 14
+core/server/src/test/kotlin/io/github/yysassist/server/CloudApiTest.kt
+  s_fae32e7f0efe76::t_c008b2f1ad6a2e 200
+  s_fae32e7f0efe76::t_9f31194f4ce451 259,263,267,273,277-301,306,309-327
+  s_fae32e7f0efe76::t_8ee1393e488239 5,10-13
+  s_fae32e7f0efe76::t_032cb0eb43d45d 66-85,87-106
+client/web/style.css
+  s_fae32e7f0efe76::t_f9e1546459f4b2 69
+  s_fae32e7f0efe76::t_a50a51312ce9e2 68
+core/protocol/src/main/kotlin/io/github/yysassist/protocol/CloudProtocol.kt
+  s_fae32e7f0efe76::t_deec899baf8b25 3
+  s_fae32e7f0efe76::t_68f08379af6b1c 31-54
+  s_fae32e7f0efe76::t_28091523f572c1 83-86
+  s_fae32e7f0efe76::t_222686e5de2beb 87-88
+core/server/src/main/kotlin/io/github/yysassist/server/Database.kt
+  s_fae32e7f0efe76::t_f41a81efffb1e0 47-48
+core/engine/src/main/kotlin/io/github/yysassist/core/cloud/CloudAgent.kt
+  s_fae32e7f0efe76::t_5b5b73aaffee69 23-26
+  s_fae32e7f0efe76::t_e3a929707303d3 58-61
+  s_fae32e7f0efe76::t_32971b136ec3a3 189-190,195-199,202-266
+  s_fae32e7f0efe76::t_78cfa34f70a934 88-91,95,97-99
+  s_fae32e7f0efe76::t_9d37544d7ed775 36-37
+  s_fae32e7f0efe76::t_7b229222bc4c57 156
+core/engine/src/test/kotlin/io/github/yysassist/core/cloud/CloudAgentTest.kt
+  s_fae32e7f0efe76::t_d8614160b74aa4 18-19,41,59,86-91,138,141-142
+client/web/index.html
+  s_fae32e7f0efe76::t_26d66964177935 6
+core/server/src/main/kotlin/io/github/yysassist/server/Realtime.kt
+  s_fae32e7f0efe76::t_d95caf2f79a4eb 1-72
+core/server/gradle.lockfile
+  s_fae32e7f0efe76::t_0d6f56a06becd1 49-50,57-58
+client/web/app.js
+  s_fae32e7f0efe76::t_7ad2e554798ad4 322-323
+  s_fae32e7f0efe76::t_ea223e7e1251ad 283,290,293-304,306-321,324-329
+  s_fae32e7f0efe76::t_5f21f01f87f113 2-3
+  s_fae32e7f0efe76::t_3a4c745b9c8028 107-117,120-122,125
+  s_fae32e7f0efe76::t_f6fbbae2914359 42
+core/server/src/main/kotlin/io/github/yysassist/server/CloudService.kt
+  s_fae32e7f0efe76::t_6c2fea9a7a8b44 24-25,27
+  s_fae32e7f0efe76::t_61b6f24f58cb79 302
+  s_fae32e7f0efe76::t_56d0aa35a414f2 399-401
+  s_fae32e7f0efe76::t_b4bf46c7086d98 282
+  s_fae32e7f0efe76::t_f13e2b7f39e65b 331-334,336-338,340-350
+  s_fae32e7f0efe76::t_303ff70781edfa 319
+  s_fae32e7f0efe76::t_d8ff8398a3c301 367,370,372,374-391,393-394
+  s_fae32e7f0efe76::t_02d4908f0b619f 171,175-176,178-179,183,185-192,194-200,204-206,208-210,212-227
+gradle/libs.versions.toml
+  s_fae32e7f0efe76::t_57f150758037e9 56-57
+core/server/src/main/kotlin/io/github/yysassist/server/Routes.kt
+  s_fae32e7f0efe76::t_30298e0d3d19a5 14-19,21-25
+  s_fae32e7f0efe76::t_eee39e76b300b9 60-62
+  s_fae32e7f0efe76::t_1e4fb73e1e7966 95-99
+  s_fae32e7f0efe76::t_e353937bec630e 111-115,118
+  s_fae32e7f0efe76::t_9a7cb759cbc6ef 135-209
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f5d072065aef2c32aed2f28cb5bbcada616ada34",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
