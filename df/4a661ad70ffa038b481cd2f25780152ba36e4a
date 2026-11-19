@@ -1,0 +1,75 @@
+core/server/src/main/kotlin/io/github/yysassist/server/CloudService.kt
+  s_fae32e7f0efe76::t_3409a2726888bc 1-261
+docs/development/cloud-console.md
+  s_fae32e7f0efe76::t_fe8b480a1ffc5f 32-33
+core/server/src/main/kotlin/io/github/yysassist/server/Routes.kt
+  s_fae32e7f0efe76::t_3409a2726888bc 1-101
+docs/development/action-bindings.md
+  s_fae32e7f0efe76::t_fe8b480a1ffc5f 32
+tools/qa/prepare_vision_models.py
+  s_fae32e7f0efe76::t_3409a2726888bc 11
+core/server/build.gradle.kts
+  s_fae32e7f0efe76::t_3409a2726888bc 1-24
+core/engine/build.gradle.kts
+  s_fae32e7f0efe76::t_3409a2726888bc 1-16
+core/engine/src/main/kotlin/io/github/yysassist/core/cloud/CloudAgent.kt
+  s_fae32e7f0efe76::t_3409a2726888bc 1-98,102-222
+  s_fae32e7f0efe76::t_03c53fff0304e5 99-101
+docs/development/versioned-text-observation.md
+  s_fae32e7f0efe76::t_fe8b480a1ffc5f 17,35,42-44
+client/android/app/build.gradle.kts
+  s_fae32e7f0efe76::t_3409a2726888bc 1-79
+docs/development/step-program.md
+  s_fae32e7f0efe76::t_fe8b480a1ffc5f 17
+core/protocol/src/main/kotlin/io/github/yysassist/protocol/CloudProtocol.kt
+  s_fae32e7f0efe76::t_3409a2726888bc 1-39
+core/protocol/build.gradle.kts
+  s_fae32e7f0efe76::t_3409a2726888bc 1-9
+settings.gradle.kts
+  s_fae32e7f0efe76::t_3409a2726888bc 9-12
+client/android/app/src/main/kotlin/io/github/yysassist/cloud/CloudPlatform.kt
+  s_fae32e7f0efe76::t_3409a2726888bc 1-83
+core/protocol/gradle.lockfile
+  s_fae32e7f0efe76::t_cffdce73cf4dc7 1-38
+docs/development/vision-model-comparison.md
+  s_fae32e7f0efe76::t_fe8b480a1ffc5f 11,38
+README.md
+  s_fae32e7f0efe76::t_315abdaff26721 14-30
+  s_fae32e7f0efe76::t_fe8b480a1ffc5f 36,39
+core/engine/src/test/kotlin/io/github/yysassist/core/cloud/CloudAgentTest.kt
+  s_fae32e7f0efe76::t_3409a2726888bc 1-128
+client/android/maaprobe/build.gradle.kts
+  s_fae32e7f0efe76::t_3409a2726888bc 1-64
+client/android/visionprobe/build.gradle.kts
+  s_fae32e7f0efe76::t_3409a2726888bc 1-63
+docs/development/implementation-status.md
+  s_fae32e7f0efe76::t_fe8b480a1ffc5f 23,56
+docs/development/offline-vision-probe.md
+  s_fae32e7f0efe76::t_fe8b480a1ffc5f 3
+docs/development/observation-actions.md
+  s_fae32e7f0efe76::t_fe8b480a1ffc5f 54
+docs/research/native-runtime-feasibility.md
+  s_fae32e7f0efe76::t_fe8b480a1ffc5f 55
+core/server/src/test/kotlin/io/github/yysassist/server/CloudApiTest.kt
+  s_fae32e7f0efe76::t_3409a2726888bc 1-209
+tools/qa/prepare_maa_inputs.py
+  s_fae32e7f0efe76::t_3409a2726888bc 29
+docs/development/maa-recognition-probe.md
+  s_fae32e7f0efe76::t_fe8b480a1ffc5f 42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "df4a661ad70ffa038b481cd2f25780152ba36e4a",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
