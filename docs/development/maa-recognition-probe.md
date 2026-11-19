@@ -39,6 +39,6 @@ JNI使用[固定C API](https://github.com/MaaXYZ/MaaFramework/blob/v5.16.1/inclu
 
 ## 工程隔离与后续
 
-两类探针的准备输入全部移开时，`:core:test :app:assembleDebug :app:lintDebug`仍通过，正式App APK与已测悬浮阶段字节相同；没有新增生产模型、JNI、权限或动作注册。复现、各次APK／源码摘要、正常／故障日志及对齐数据见[证据](build-evidence/maa-probe/README.md)和[模块说明](../../maaprobe/README.md)。私有原图、识别原文及含这些素材的测试APK仅留忽略目录。
+两类探针的准备输入全部移开时，`:core:engine:test :client:android:app:assembleDebug :client:android:app:lintDebug`仍通过，正式App APK与已测悬浮阶段字节相同；没有新增生产模型、JNI、权限或动作注册。复现、各次APK／源码摘要、正常／故障日志及对齐数据见[证据](build-evidence/maa-probe/README.md)和[模块说明](../../client/android/maaprobe/README.md)。私有原图、识别原文及含这些素材的测试APK仅留忽略目录。
 
 后续已补[版本资源](versioned-resources.md)和[识别进程边界实验](maa-process-boundary.md)，仍未将两者接成生产工作器。下一步统一资源租约与观察接口，再决定生产识别接入；补真正留出主题及当前账号／领取前后证据。当前实验不满足真实领取闭环的完成条件。

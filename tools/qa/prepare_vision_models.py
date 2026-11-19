@@ -8,7 +8,7 @@ import tarfile
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[2]
-LOCK = ROOT / "visionprobe/models.lock.json"
+LOCK = ROOT / "client/android/visionprobe/models.lock.json"
 
 def prepare(variant="v6-tiny"):
     lock = json.loads(LOCK.read_text())

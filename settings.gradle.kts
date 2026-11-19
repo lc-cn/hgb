@@ -6,4 +6,7 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 rootProject.name = "YysAssist"
-include(":core", ":app", ":vision", ":visionprobe", ":maaprobe", ":server")
+// Shared: the wire protocol, the task engine (Android and future Windows clients) and the cloud server.
+include(":core:protocol", ":core:engine", ":core:server")
+// Clients. client/web is an npm-free static console, packaged by :core:server; client/windows comes later.
+include(":client:android:app", ":client:android:vision", ":client:android:visionprobe", ":client:android:maaprobe")

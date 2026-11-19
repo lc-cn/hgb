@@ -26,7 +26,7 @@ def fetch_or_cached(path, url, spec):
 
 
 def prepare(native_only=False):
-    lock = json.loads((ROOT / "vision/inputs.lock.json").read_text())
+    lock = json.loads((ROOT / "client/android/vision/inputs.lock.json").read_text())
     folder = ROOT / ".local/maa-probe"
     prepared = ROOT / ".local/maa/prepared"
     spec = lock["distribution"]

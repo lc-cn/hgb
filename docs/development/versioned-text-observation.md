@@ -14,7 +14,7 @@
 
 原 `maaprobe` 的 JNI、IPC、私有服务与 pinned native 输入迁到 `vision` Android library，App 和探针复用同一实现。`MaaNative` 对库外不可见；直接 ABI 测试入口仅在 debug 构建存在。JNI 只调用 resource／tasker 的识别 C API，没有游戏 controller、PostAction、脚本执行或任意 PID 杀进程接口。
 
-本候选只包含 ARM64 native。其他 ABI 返回明确的环境不支持，尚无 Windows x86 模拟器、低版本安卓或 16KiB 内核运行结论。源输入的七库、十二头文件及许可按 `vision/inputs.lock.json` 校验；App 打包可能 strip 符号，源摘要不冒充最终 APK 内库摘要。Maa 仍是集成候选，尚未冻结为最终离线后端。
+本候选只包含 ARM64 native。其他 ABI 返回明确的环境不支持，尚无 Windows x86 模拟器、低版本安卓或 16KiB 内核运行结论。源输入的七库、十二头文件及许可按 `client/android/vision/inputs.lock.json` 校验；App 打包可能 strip 符号，源摘要不冒充最终 APK 内库摘要。Maa 仍是集成候选，尚未冻结为最终离线后端。
 
 生产 App 原本需要 INTERNET 来拉取任务，子进程同 UID 继承该权限；它不是权限隔离沙箱，不能沿用无联网权限探针的结论。此适配器代码只传递本地图像／模型描述符，没有新增网络适配器；未做 native 零联网或安全沙箱承诺。
 
@@ -32,16 +32,16 @@ PNG 编码和识别结果通过内存管道，不由 App 写成截图或结果�
 
 ```sh
 python3 tools/qa/prepare_maa_inputs.py --native-only
-./gradlew :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug :vision:lintDebug
+./gradlew :client:android:app:assembleDebug :client:android:app:assembleDebugAndroidTest :client:android:app:lintDebug :client:android:vision:lintDebug
 ```
 
 真实 OCR 集成测试需显式准备模型并仅在测试 APK 打包：
 
 ```sh
 python3 tools/qa/prepare_maa_inputs.py
-./gradlew :app:assembleDebug :app:assembleDebugAndroidTest -PincludeOcrIntegrationModels=true
-adb -s "$QA_EMULATOR" install -r app/build/outputs/apk/debug/app-debug.apk
-adb -s "$QA_EMULATOR" install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+./gradlew :client:android:app:assembleDebug :client:android:app:assembleDebugAndroidTest -PincludeOcrIntegrationModels=true
+adb -s "$QA_EMULATOR" install -r client/android/app/build/outputs/apk/debug/app-debug.apk
+adb -s "$QA_EMULATOR" install -r client/android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 adb -s "$QA_EMULATOR" shell am instrument -w -r \
   -e class io.github.yysassist.vision.TextObserverLifecycleTest,io.github.yysassist.vision.MaaTextDecoderTest,io.github.yysassist.vision.RecognitionApplicationProcessTest,io.github.yysassist.vision.VersionedMaaIntegrationTest \
   -e allowOcrIntegration true -e allowChildNativeFaults true \

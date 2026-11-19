@@ -14,7 +14,7 @@
 
 数值比较按十进制值，`2` 与 `2.00` 相等，`"2"` 不等于 `2`。分支比较值不能是 null、数组或对象；同值的多个 case 被拒绝。配置计数必须引用必填 NUMBER／RANGE 字段，并在配置保存和执行前再次核对整数与范围。
 
-可直接经 BundleCodec 和原 factory 执行的完整等待夹具见 [task-bundle-program.json](../../core/src/test/resources/task-bundle-program.json)；它无游戏输入、无默认配置、未发布。原[步骤片段](../design/examples/step-control-flow.proposal.json)演示状态分支和重复字段，不是完整任务集，也没有当前游戏的已领证据。
+可直接经 BundleCodec 和原 factory 执行的完整等待夹具见 [task-bundle-program.json](../../core/engine/src/test/resources/task-bundle-program.json)；它无游戏输入、无默认配置、未发布。原[步骤片段](../design/examples/step-control-flow.proposal.json)演示状态分支和重复字段，不是完整任务集，也没有当前游戏的已领证据。
 
 任务集格式仍为1。旧 App 的严格解码会拒绝未知 program／新动作，不能忽略分支后执行；新 App 继续接受旧 actions。任务源、版本摘要、资源及在途锁定沿用原链路，不主动迁移或改写旧 JSON。
 

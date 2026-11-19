@@ -29,8 +29,8 @@
 
 ```bash
 export JAVA_HOME=/opt/homebrew/opt/openjdk@17
-./gradlew :server:installDist
-YYS_SECRET="$(openssl rand -base64 48)" YYS_MAIL_MODE=console YYS_SECURE_COOKIES=false server/build/install/server/bin/server
+./gradlew :core:server:installDist
+YYS_SECRET="$(openssl rand -base64 48)" YYS_MAIL_MODE=console YYS_SECURE_COOKIES=false core/server/build/install/server/bin/server
 ```
 
 打开 <http://127.0.0.1:8787>。`YYS_MAIL_MODE=console` 会把验证码打印到服务端控制台，只能用于本地开发。

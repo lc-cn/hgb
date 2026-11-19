@@ -1,6 +1,6 @@
 # 离线识别 APK 首轮对照
 
-2026-11-16。两个候选已在无 INTERNET 权限的独立 APK 中完成本地识别；**尚未选定生产后端，也没有接入游戏执行器**。商店菜单出现真实漏检／错字，当前结果不足以直接驱动游戏定位。证据在 [vision-probe](build-evidence/vision-probe/)，复现步骤在 [探针说明](../../visionprobe/README.md)。
+2026-11-16。两个候选已在无 INTERNET 权限的独立 APK 中完成本地识别；**尚未选定生产后端，也没有接入游戏执行器**。商店菜单出现真实漏检／错字，当前结果不足以直接驱动游戏定位。证据在 [vision-probe](build-evidence/vision-probe/)，复现步骤在 [探针说明](../../client/android/visionprobe/README.md)。
 
 后续已完成相同 SDK 的 tiny／small 配对实验，并补庭院入口、商品及价格局部，见[模型对照](vision-model-comparison.md)。本文保留首轮原始基线；新的局部与重复不算留出主题，未因此冻结生产后端。
 

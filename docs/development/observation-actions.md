@@ -51,6 +51,6 @@ APK 合同新增工具／观察／核对角色。含观察动作的步骤必须�
 - 实际安装摘要与本轮构建一致；主 APK 的 assets 只有公共域名表及许可证，没有模型或游戏任务夹具。模型仍仅按明确选项进入测试 APK。没有新增依赖或修改 Room schema。
 - 全部画面是自有绘制界面，数据库为独立测试库。没有把夹具装入正式任务目录，没有执行真机游戏、发布 Release、发送通知或验证长期运行。
 
-构建入口仍为 `:core:test :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug`。真实 OCR 测试需 `-PincludeOcrIntegrationModels=true`，测试模型只进入测试 APK；运行 `TextObservationRuntimeTest` 需同时显式开启 `allowDeviceGrantChanges`、`allowOcrIntegration`，原生故障／阻塞用例还需 `allowChildNativeFaults`，并限定 ranchu 模拟器。
+构建入口仍为 `:core:engine:test :client:android:app:assembleDebug :client:android:app:assembleDebugAndroidTest :client:android:app:lintDebug`。真实 OCR 测试需 `-PincludeOcrIntegrationModels=true`，测试模型只进入测试 APK；运行 `TextObservationRuntimeTest` 需同时显式开启 `allowDeviceGrantChanges`、`allowOcrIntegration`，原生故障／阻塞用例还需 `allowChildNativeFaults`，并限定 ranchu 模拟器。
 
 完整分支／循环、输入与副作用核对、账号前提、首次恢复时平台尚未就绪的等待、常用场景判断、私有源客户端授权、真实领取和留出主题仍需继续。本文不将只读画面核对等同于游戏闭环或完整 M4 联验。

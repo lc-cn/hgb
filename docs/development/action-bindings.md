@@ -29,7 +29,7 @@
 ]
 ```
 
-这段是动作列表。完整可解析夹具见 [task-bundle-bindings.json](../../core/src/test/resources/task-bundle-bindings.json)，只作为测试资源，不进入主 APK、正式任务库或 Release。它表达两次等待，不是游戏领取。
+这段是动作列表。完整可解析夹具见 [task-bundle-bindings.json](../../core/engine/src/test/resources/task-bundle-bindings.json)，只作为测试资源，不进入主 APK、正式任务库或 Release。它表达两次等待，不是游戏领取。
 
 配置引用只能读当前任务 schema 中明确必填的字段，实际值取本轮 `TaskSnapshot.configurationJson`。这是首版无条件动作列表的合同：不会把缺失值替换成零、空串或任务作者未声明的默认。类型或值不兼容时明确拒绝，用户不需要写引用表达式；制作器未来可按声明生成选择项。
 

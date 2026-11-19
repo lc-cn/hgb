@@ -20,7 +20,7 @@
 
 以下按实施阶段保留各自范围和计数；最新动作接入及输入记录检查点见文末，不将早期数字作为当前完整结果。
 
-- 当前本机 `:core:test :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug` 通过；核心 63 项测试零失败，Android Lint 无问题。构建依赖有锁文件与 SHA-256 校验元数据。
+- 当前本机 `:core:engine:test :client:android:app:assembleDebug :client:android:app:assembleDebugAndroidTest :client:android:app:lintDebug` 通过；核心 63 项测试零失败，Android Lint 无问题。构建依赖有锁文件与 SHA-256 校验元数据。
 - 开发专用 Android API 36 ARM64 模拟器已安装并运行原生 APK。已实测主题偏好持久化、系统主题跟随、明暗状态栏、横竖切换、历史页选择保留，以及手动授权后取得可读取的 1080 × 2400 截图。该早期探针构建无输入能力；当前桥验证单独记录。
 - 核心迟到结果回归先取得两项失败证据，再修复并通过。证据只覆盖核心命令／回执边界，不证明 Android 输入静默或卡死恢复。
 - Room/KSP 与当前构建实际兼容；7 项 Android 仪器测试在隔离 API 36 设备的真实文件 SQLite 上通过，覆盖进程内数据库关闭／重开持久化、拉取不启用、更新红点使用明确 latest、同版本冲突／损坏、未决引用保留、删除与引用竞争、事务回滚及目录观察一致性。证据见 `build-evidence/version-library/`。重开数据库不是 Android 进程崩溃或断电恢复证明。
@@ -53,7 +53,7 @@
 
 本机 Java／SDK 路径记录在被忽略的 `local.properties` 或构建命令环境中；构建脚本不嵌入个人安装路径。已按用户授权初始化本地 Git，绑定既有私有仓库 `lc-cn/yys-helper`，通过阶段检查后提交推送；没有创建仓库或发布 Release。
 
-Room 核验记录：2026-11-16 [Room 版本页](https://developer.android.com/jetpack/androidx/releases/room)列出 2.8.5，而同日[入门页](https://developer.android.com/training/data-storage/room)示例使用 `androidx.room3` 3.0.3，两处并不一致。本工程没有混用主版本，按实际存在的 2.8.5 依赖及编译／设备结果锁定。[KSP 官方发布](https://github.com/google/ksp/releases/tag/2.3.14)与[目录变化观察 API](https://developer.android.com/reference/kotlin/androidx/room/InvalidationTracker)已核对。Room schema 导出保留于 `app/schemas/`，无破坏性重建回退。
+Room 核验记录：2026-11-16 [Room 版本页](https://developer.android.com/jetpack/androidx/releases/room)列出 2.8.5，而同日[入门页](https://developer.android.com/training/data-storage/room)示例使用 `androidx.room3` 3.0.3，两处并不一致。本工程没有混用主版本，按实际存在的 2.8.5 依赖及编译／设备结果锁定。[KSP 官方发布](https://github.com/google/ksp/releases/tag/2.3.14)与[目录变化观察 API](https://developer.android.com/reference/kotlin/androidx/room/InvalidationTracker)已核对。Room schema 导出保留于 `client/android/app/schemas/`，无破坏性重建回退。
 
 ## 现阶段限制与下一步
 

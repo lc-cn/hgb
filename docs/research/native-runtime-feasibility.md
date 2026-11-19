@@ -52,7 +52,7 @@ MaaFwApp 展示了真实的本机集成：Android 内运行 Shizuku 或 Root 特
 
 ## 二、JNI、ABI 和 Windows 模拟器
 
-MaaFramework 构建 workflow 有 Android aarch64 与 x86_64 产物；MaaFwApp 接入文档默认 APK 包含 `arm64-v8a`、`x86_64`，agent 有 native 依赖时也必须提供匹配的 ABI。其 setup 脚本实际把 Maa `.so` 铺到 `app/src/main/jniLibs/<abi>`，要求核心库及 `libMaaAndroidNativeControlUnit.so`，并检查最低核心版本。[Maa Android workflow][M-build]、[打包接入][F-integration]、[setup 脚本][F-setup]
+MaaFramework 构建 workflow 有 Android aarch64 与 x86_64 产物；MaaFwApp 接入文档默认 APK 包含 `arm64-v8a`、`x86_64`，agent 有 native 依赖时也必须提供匹配的 ABI。其 setup 脚本实际把 Maa `.so` 铺到 `client/android/app/src/main/jniLibs/<abi>`，要求核心库及 `libMaaAndroidNativeControlUnit.so`，并检查最低核心版本。[Maa Android workflow][M-build]、[打包接入][F-integration]、[setup 脚本][F-setup]
 
 MaaFwApp 的 Gradle 实际使用 JNA AAR（提供 native 分发库）调用 Maa C API，同时用 `externalNativeBuild` 编译 bridge；bridge 则使用 JNI 注册 Java 方法。**所以不是“已有官方 Kotlin Maven SDK，加入一个依赖即可全部使用”**。本次未核实存在适合本项目直接使用的官方稳定 Kotlin SDK；可证明的是 C API 与该社区宿主的 JNA＋JNI 集成。[Gradle][F-gradle]、[bridge][F-bridge]
 
