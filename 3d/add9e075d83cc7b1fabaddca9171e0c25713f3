@@ -1,0 +1,63 @@
+docs/development/cloud-console.md
+  s_fae32e7f0efe76::t_7b35921697357c 15-17
+  s_fae32e7f0efe76::t_e6fae4a98b2c69 5
+core/server/src/main/kotlin/io/github/yysassist/server/Database.kt
+  s_fae32e7f0efe76::t_745187a331fe83 52-66
+  s_fae32e7f0efe76::t_9631fe1d37246e 39
+  s_fae32e7f0efe76::t_cdd713eb75dda5 81
+  s_fae32e7f0efe76::t_a32cb8e8eed271 74-75
+core/server/src/test/kotlin/io/github/yysassist/server/CloudApiTest.kt
+  s_fae32e7f0efe76::t_d5c12dc4fddd29 356
+  s_fae32e7f0efe76::t_600f3c4fd6ee34 108-118
+  s_fae32e7f0efe76::t_9b955d557f30b5 206,372,383
+  s_fae32e7f0efe76::t_e37c35d5696c43 214,216-217,220-221,224-228,232-282
+docs/design/cloud-executor.md
+  s_fae32e7f0efe76::t_ba87a54c597a1f 270-271
+core/server/src/main/kotlin/io/github/yysassist/server/CloudService.kt
+  s_fae32e7f0efe76::t_21047e356bad4a 241-243
+  s_fae32e7f0efe76::t_1990e1dda9b567 256-257,259-281,283-285,288,290-384,386-387,389-414
+  s_fae32e7f0efe76::t_f5f870714da0f2 227-231
+  s_fae32e7f0efe76::t_a86b7a026d9f4a 475-478,482-485,487,489
+  s_fae32e7f0efe76::t_ad77d801c3eff8 555,557-559
+  s_fae32e7f0efe76::t_71d5ac205d5d74 560
+  s_fae32e7f0efe76::t_fc473af9dcc19b 121-122
+  s_fae32e7f0efe76::t_2ae36be564c862 524-527
+  s_fae32e7f0efe76::t_6af588216eb826 508-510,512,514,516-518
+core/protocol/src/main/kotlin/io/github/yysassist/protocol/CloudProtocol.kt
+  s_fae32e7f0efe76::t_1b34962478eb98 22
+  s_fae32e7f0efe76::t_9c264427df2c5c 76-79,82-106,108-109,111-112
+  s_fae32e7f0efe76::t_8df42f55104edc 117-118
+core/server/src/main/kotlin/io/github/yysassist/server/Routes.kt
+  s_fae32e7f0efe76::t_054a8e2682219c 102-115,117-122
+client/web/app.js
+  s_fae32e7f0efe76::t_ed9bef9342bc4c 384
+  s_fae32e7f0efe76::t_66db6ed28d8560 265-268,271-272,275,277
+  s_fae32e7f0efe76::t_9a5d5cfdefe616 297-298,304,308-383,385-390,393-402,404-439
+  s_fae32e7f0efe76::t_32ab6dc6f77194 391-392
+  s_fae32e7f0efe76::t_46e7d0052f0bc0 508,510
+  s_fae32e7f0efe76::t_131e5e4d5d7099 198-199,202,204-205,210-216,222,225
+  s_fae32e7f0efe76::t_c3ba4795c719de 448,453-454,460-461,463-471
+  s_fae32e7f0efe76::t_0f09859091dfe6 187
+  s_fae32e7f0efe76::t_1aeb5b96a3ad94 109-121,123-135,138,143
+  s_fae32e7f0efe76::t_8dee7f7dc99c79 484-490,492
+  s_fae32e7f0efe76::t_8e4be0e11c79ca 403
+  s_fae32e7f0efe76::t_8ac270c938eeec 440
+client/web/style.css
+  s_fae32e7f0efe76::t_d9c19791989e82 70-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3dadd9e075d83cc7b1fabaddca9171e0c25713f3",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
