@@ -573,9 +573,10 @@ class CloudApiTest {
     @Test fun aJobRunsToCompletionAndStaleLeasesCannotReport() = api {
         val session = signUp("a@example.com"); val token = session.accessToken!!; val device = enroll(token)
         job(token, device.deviceId); val lease = lease(token)
-        assertTrue(leases(token).isEmpty())
         assertEquals(HttpStatusCode.Conflict, report(token, lease, JobState.RUNNING, lease.leaseNo + 1).status)
         assertEquals(HttpStatusCode.OK, report(token, lease, JobState.RUNNING).status)
+        // Once confirmed it is never handed over again, however often the device reconnects.
+        assertTrue(leases(token).isEmpty())
         assertEquals(HttpStatusCode.OK, report(token, lease, JobState.RUNNING).status)
         assertEquals(HttpStatusCode.OK, report(token, lease, JobState.COMPLETED).status)
         assertEquals(HttpStatusCode.Conflict, report(token, lease, JobState.FAILED).status)
@@ -584,7 +585,7 @@ class CloudApiTest {
     @Test fun aLeaseNeverStartedIsOfferedAgainButAStartedJobIsNeverRetried() = api {
         val session = signUp("a@example.com"); val token = session.accessToken!!; val device = enroll(token)
         job(token, device.deviceId); val first = lease(token)
-        now += CloudService.LEASE_LIFETIME + 1
+        now += CloudService.ACK_LIFETIME + 1; service.tick()
         val second = lease(token)
         assertEquals(first.jobId, second.jobId); assertEquals(first.leaseNo + 1, second.leaseNo)
         assertEquals(HttpStatusCode.Conflict, report(token, first, JobState.RUNNING).status)
@@ -594,13 +595,21 @@ class CloudApiTest {
         assertEquals(JobState.UNKNOWN, jobs(token).single().state)
         assertEquals(HttpStatusCode.OK, report(token, second, JobState.COMPLETED).status)
     }
-    @Test fun aLeaseLostWithItsConnectionReturnsToTheQueueDespiteStatusReports() = api {
+    @Test fun aJobHandedOverALostConnectionIsHandedOverAgainOnReconnectAndTheOldLeaseIsRefused() = api {
         val session = signUp("a@example.com"); val token = session.accessToken!!; val device = enroll(token)
         job(token, device.deviceId); val lost = lease(token)
-        now += CloudService.ACK_LIFETIME - 1
-        beat(token)
-        now += 2
-        assertEquals(lost.leaseNo + 1, lease(token).leaseNo)
+        // No waiting for the lease to expire: the next connection gets it again under a new number.
+        val again = lease(token)
+        assertEquals(lost.jobId, again.jobId); assertEquals(lost.leaseNo + 1, again.leaseNo)
+        assertEquals(HttpStatusCode.Conflict, report(token, lost, JobState.RUNNING).status)
+        assertEquals(HttpStatusCode.OK, report(token, again, JobState.RUNNING).status)
+    }
+    @Test fun anUnconfirmedLeaseStillExpiresWhileTheSameConnectionStaysOpen() = api {
+        val session = signUp("a@example.com"); val token = session.accessToken!!; val device = enroll(token)
+        job(token, device.deviceId); val first = lease(token)
+        now += CloudService.ACK_LIFETIME + 1; service.tick()
+        assertEquals(JobState.QUEUED, jobs(token).single().state)
+        assertEquals(first.leaseNo + 1, lease(token).leaseNo)
     }
     @Test fun statusReportsKeepARunningJobAliveAndDeliverCancelRequests() = api {
         val session = signUp("a@example.com"); val token = session.accessToken!!; val device = enroll(token)

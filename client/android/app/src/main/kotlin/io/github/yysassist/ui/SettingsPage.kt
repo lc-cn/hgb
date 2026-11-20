@@ -101,6 +101,8 @@ internal fun SettingsPage(appearance: AppearanceState, mode: ThemeMode, setTheme
             SettingRow(AssistIcons.History, p.orange, "运行记录", "查看每次运行的结果和步骤", { open("运行记录") }) { Chevron() }
             RowDivider()
             SettingRow(AssistIcons.Data, p.teal, "运行与数据", "存储占用和诊断信息", { open("运行与数据") }) { Chevron() }
+            RowDivider()
+            SettingRow(AssistIcons.Cloud, p.blue, "连接日志", "和服务器的连接、收到和处理作业的经过", { open("连接日志") }) { Chevron() }
         },
         SettingsSection("关于") {
             SettingRow(AssistIcons.Info, p.violet, "版本信息", "当前安装的版本") { SettingValue(BuildConfig.VERSION_NAME) }
@@ -316,6 +318,27 @@ internal fun LocalNoticeSwitch(notices: io.github.yysassist.cloud.LocalNotices) 
     AssistCard {
         SettingRow(AssistIcons.Bell, p.violet, "在这台手机上弹出通知", "要在网页添加“本机通知”渠道") {
             AssistSwitch(shown, label = "在这台手机上弹出通知", change = notices::setEnabled)
+        }
+    }
+}
+
+/** The connection log, newest first; 复制 puts it on the clipboard to send with a problem report. */
+@Composable
+internal fun ConnectionLogPage(log: io.github.yysassist.cloud.ConnectionLog) {
+    val lines by log.lines.collectAsState()
+    val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
+    Column(Modifier.fillMaxSize().padding(UiSpace.page), verticalArrangement = Arrangement.spacedBy(UiSpace.medium)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(UiSpace.gap), verticalAlignment = Alignment.CenterVertically) {
+            Text("${lines.size} 条", Modifier.weight(1f), color = io.github.yysassist.shared.theme.LocalTokens.current.muted, style = MaterialTheme.typography.bodySmall)
+            io.github.yysassist.shared.ui.HgbButton("复制", { clipboard.setText(androidx.compose.ui.text.AnnotatedString(lines.joinToString("\n"))) }, small = true, enabled = lines.isNotEmpty())
+            io.github.yysassist.shared.ui.HgbButton("清空", log::clear, small = true, enabled = lines.isNotEmpty())
+        }
+        if (lines.isEmpty()) Text("还没有记录。", color = io.github.yysassist.shared.theme.LocalTokens.current.muted, style = MaterialTheme.typography.bodyMedium)
+        androidx.compose.foundation.lazy.LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
+            items(lines.asReversed().size) { index ->
+                Text(lines.asReversed()[index], style = MaterialTheme.typography.bodySmall.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace),
+                    modifier = Modifier.padding(vertical = 2.dp))
+            }
         }
     }
 }

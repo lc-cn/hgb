@@ -139,7 +139,9 @@ WantedBy=multi-user.target
 - `/api/events` 关 `proxy_buffering`，读超时 1 小时，控制台的实时事件才能立即送出；
 - 从 Cloudflare 的 IP 段取 `CF-Connecting-IP` 作为访客地址（只影响日志，服务端不用访客 IP）。Cloudflare 的 IP 段变了要更新这份列表。
 
-Cloudflare 会断开 100 秒没有数据的连接；事件流每 15 秒发一次保活，设备长连接每 20 秒 ping 一次，都不受影响。改完 nginx 先 `sudo nginx -t` 再 `sudo systemctl reload nginx`。
+Cloudflare 会断开 100 秒没有数据的连接；事件流每 15 秒发一次保活，设备长连接两端每 30 秒（App）和 20 秒（服务器）各 ping 一次，都不受影响。
+
+**国内移动网络经 Cloudflare 很不稳（2026-11-20 实测）。** 同一台手机（5G）ping 百度、Vercel 上的网站、api.github.com 都不丢包（65～130 ms），ping `api-hgb.l2cl.link`（Cloudflare 免费版）丢包 50%～80%、延迟 300 ms 以上，直连主机 IP 丢包约 10%、280 ms；电脑宽带走两条路都正常。表现是设备连接每分钟因心跳超时断一次，交给手机的作业迟迟确认不了。代码上已经按弱网处理：作业确认期限 2 分钟，App 的请求以“连接 10 秒、20 秒没有数据”判定卡住并重试，心跳 30 秒。网络上的选择（关掉 Cloudflare 代理直连主机，或换国内访问更好的线路）还没定；判断前先在手机上用真实 HTTPS 请求对比两条路，而不只看 ping。改完 nginx 先 `sudo nginx -t` 再 `sudo systemctl reload nginx`。
 
 ## App
 

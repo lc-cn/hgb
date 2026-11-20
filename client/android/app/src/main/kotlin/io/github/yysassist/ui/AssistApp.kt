@@ -241,6 +241,7 @@ internal fun LocalWorkbench(application: AssistApplication, navigation: AppNavig
                     "运行与数据" -> DataUsagePage(executor)
                     "云端控制" -> CloudPage(application.accounts, application::identifyAccount, application.localNotices)
                     "任务来源" -> TaskSourcePage(application.taskSource)
+                    "连接日志" -> ConnectionLogPage(application.connectionLog)
                     "GitHub" -> GitHubAccountPage(github, taskSource.fullName, wide, application.github::signIn, application.github::cancelSignIn,
                         application.github::signOut, { detail = "任务更新" })
                     "任务更新" -> TaskVersionsPage(versions, pull, versionOperation, application.taskUpdates::reloadCatalog,

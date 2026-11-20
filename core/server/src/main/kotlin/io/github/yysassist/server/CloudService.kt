@@ -25,6 +25,8 @@ sealed interface GitHubOutcome {
     data class Merge(val token: String) : GitHubOutcome
 }
 
+private val log = org.slf4j.LoggerFactory.getLogger("hgb")
+
 /** All business rules. Every query that reads user data is scoped by the caller's user id. */
 class CloudService(private val db: Database, private val mailer: Mailer, val github: GitHubIdentity, private val secret: ByteArray,
     private val clock: () -> Long = System::currentTimeMillis, val events: ConsoleEvents = ConsoleEvents(), val sockets: DeviceSockets = DeviceSockets(),
@@ -444,8 +446,10 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             }
             @Suppress("UNREACHABLE_CODE") null to null
         }
-        if (lease != null && !sockets.send(deviceId, encode(ServerMessage.Job(lease)))) {
+        if (lease != null) {
             // Not delivered: the lease expires unacknowledged and the job is offered again.
+            val sent = sockets.send(deviceId, encode(ServerMessage.Job(lease)))
+            log.info("lease job=${lease.jobId.take(8)} no=${lease.leaseNo} device=${deviceId.take(8)} ${if (sent) "sent" else "not sent (device offline or outbox full)"}")
         }
         userId?.let(::pushJobs)
     }
@@ -498,7 +502,15 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
     /** Called when a device's socket opens or closes; the console shows it as online only while connected. */
     fun connectionChanged(userId: String, deviceId: String) {
         // What the device was doing before is stale until its first report on this connection; nothing is sent till then.
-        if (sockets.isOnline(deviceId)) db.tx { update("UPDATE devices SET last_seen_at = ?, phase = 'CONNECTING' WHERE id = ? AND user_id = ?", clock(), deviceId, userId) }
+        if (sockets.isOnline(deviceId)) db.tx {
+            update("UPDATE devices SET last_seen_at = ?, phase = 'CONNECTING' WHERE id = ? AND user_id = ?", clock(), deviceId, userId)
+            // A job handed over the previous connection and not yet confirmed may have been lost with it: it is offered
+            // again now, under a new lease number, instead of waiting out ACK_LIFETIME. A late report on the old lease is
+            // refused, so it can never run twice.
+            val now = clock()
+            update("UPDATE jobs SET state = 'CANCELLED', detail = '已取消', lease_expires_at = NULL, updated_at = ? WHERE device_id = ? AND user_id = ? AND state = 'LEASED' AND cancel_requested = 1", now, deviceId, userId)
+            update("UPDATE jobs SET state = 'QUEUED', lease_expires_at = NULL, updated_at = ? WHERE device_id = ? AND user_id = ? AND state = 'LEASED'", now, deviceId, userId)
+        }
         pushDevice(userId, deviceId)
         if (sockets.isOnline(deviceId)) { pushDeviceData(userId, only = deviceId); assignNow(); dispatch(deviceId) }
     }
@@ -950,7 +962,9 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         val HELD_PHASES = setOf("CONNECTING", "PAUSING", "PAUSED", "BLOCKED_UNKNOWN", "REMOVING", "SWITCHING")
         const val MINUTE = 60_000L; const val CODE_LIFETIME = 10 * MINUTE; const val MAX_CODE_ATTEMPTS = 5
         const val WEB_LIFETIME = 7 * 24 * 60 * MINUTE; const val DEVICE_ACCESS_LIFETIME = 60 * MINUTE; const val REFRESH_LIFETIME = 30 * 24 * 60 * MINUTE
-        const val LEASE_LIFETIME = 2 * MINUTE; const val ACK_LIFETIME = MINUTE / 2
+        const val LEASE_LIFETIME = 2 * MINUTE
+        /** How long a device has to confirm a job it was handed. Generous: on a lossy mobile link one request can take tens of seconds. */
+        const val ACK_LIFETIME = 2 * MINUTE
         /** How long a job started from the console may wait for its app before it is skipped. */
         const val IMMEDIATE_WAIT = 30 * MINUTE
         private const val MAX_APPS = 32

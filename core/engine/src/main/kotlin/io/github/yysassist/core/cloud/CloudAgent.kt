@@ -132,11 +132,22 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
     private val deviceName: String, private val platform: String, private val appVersion: String, private val scope: CoroutineScope,
     private val clock: () -> Long = System::currentTimeMillis, private val heartbeatMillis: Long = 15_000, private val retryMillis: Long = 5_000,
     private val progressMillis: Long = 1_500, private val statusMillis: Long = 1_000, private val dataStore: CloudDataStore? = null,
-    private val watchMillis: Long = 5_000, private val conditionGraceMillis: Long = 60_000) {
+    private val watchMillis: Long = 5_000, private val conditionGraceMillis: Long = 60_000,
+    /** What the connection and the job loop just did, in a sentence, for the 连接日志 a user can read and send in. */
+    private val trace: (String) -> Unit = {}) {
     private val json = Json { ignoreUnknownKeys = true; explicitNulls = false; encodeDefaults = true }
     /** A socket stays open for hours; pings keep it alive through NAT and let both ends notice a dead link. */
+    // OkHttp gives up on a socket whose pong has not come back before the next ping, so on a lossy mobile link a short
+    // interval drops it again and again; the server waits 45 s for its own pings.
     private val sockets = http.newBuilder().readTimeout(0, java.util.concurrent.TimeUnit.MILLISECONDS).callTimeout(0, java.util.concurrent.TimeUnit.MILLISECONDS)
-        .pingInterval(20, java.util.concurrent.TimeUnit.SECONDS).build()
+        .pingInterval(30, java.util.concurrent.TimeUnit.SECONDS).build()
+    /**
+     * Requests fail once they stall: a stuck request on a lossy link is given up after 10 s connecting or 20 s without
+     * data and tried again, with 90 s as the outer bound, inside the two minutes a handed job waits for its report.
+     */
+    private val requests = http.newBuilder().callTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
+        .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS).readTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
+        .writeTimeout(20, java.util.concurrent.TimeUnit.SECONDS).build()
     /** The console stream sends a keep-alive every 15 s, so a minute of silence means the link is gone. */
     private val streams = http.newBuilder().readTimeout(60, java.util.concurrent.TimeUnit.SECONDS).callTimeout(0, java.util.concurrent.TimeUnit.MILLISECONDS).build()
     private val mutex = Mutex()
@@ -167,7 +178,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
     private suspend fun sendText(server: String, path: String, body: String?, token: String?, method: String): String? = withContext(Dispatchers.IO) {
         val request = Request.Builder().url(url(server, path)).header("X-YYS-Client", "device").apply { token?.let { header("Authorization", "Bearer $it") } }
             .method(method, body?.toRequestBody(JSON_TYPE) ?: if (method == "POST") ByteArray(0).toRequestBody(JSON_TYPE) else null).build()
-        http.newCall(request).execute().use { reply ->
+        requests.newCall(request).execute().use { reply ->
             val text = reply.body.string()
             if (!reply.isSuccessful) throw failure(reply.code, text)
             if (reply.code == 204 || text.isBlank()) null else text
@@ -344,11 +355,13 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
                 executor.awaitRestored()
                 val current = mutex.withLock { credentials } ?: throw CancellationException("已退出登录")
                 val usable = if (current.accessExpiresAt - clock() < RENEW_MARGIN) renew(current) else current
+                trace("连接服务器")
                 val code = connectOnce(usable)
+                trace("连接断开（代码 $code）")
                 publish(false, "与服务器的连接已断开，正在重连")
                 if (code == SocketClose.INVALID_SESSION.toInt()) { renew(usable); continue }
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (error: IOException) { publish(false, error.message ?: "无法连接服务器") }
+            catch (error: IOException) { trace("连接失败：${error.message ?: error.javaClass.simpleName}"); publish(false, error.message ?: "无法连接服务器") }
             delay(retryMillis)
         }
     }
@@ -368,13 +381,14 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) { webSocket.close(1000, null); events.trySend(SocketEvent.Closed(code)) }
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { events.trySend(SocketEvent.Closed(code)) }
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                trace("连接出错：${t.message ?: t.javaClass.simpleName}${response?.let { "（HTTP ${it.code}）" } ?: ""}")
                 events.trySend(SocketEvent.Closed(if (response?.code == 401) SocketClose.INVALID_SESSION.toInt() else -1))
             }
         })
         var reporter: Job? = null
         try {
             for (event in events) when (event) {
-                SocketEvent.Opened -> { publish(true); reporter = launch { reportStatus(socket) } }
+                SocketEvent.Opened -> { trace("已连接"); publish(true); reporter = launch { reportStatus(socket) } }
                 is SocketEvent.Text -> handle(event.text)
                 is SocketEvent.Closed -> return@coroutineScope event.code
             }
@@ -420,7 +434,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
                 val active = mutex.withLock { credentials?.activeJob }
                 if (active != null && active.jobId in message.jobIds) listOfNotNull(active.prepRunId, active.runId).forEach(executor::remove)
             }
-            is ServerMessage.Job -> leases.trySend(message.lease)
+            is ServerMessage.Job -> { trace("收到作业 ${message.lease.jobId.take(8)}（第 ${message.lease.leaseNo} 次交付）"); leases.trySend(message.lease) }
             is ServerMessage.Data -> { mutableData.value = message.data; runCatching { dataStore?.write(message.data) } }
             // Pushed at least once: a resend of a notice already shown is not shown again.
             is ServerMessage.Notify -> if (shownNotices.add(message.notice.id)) {
@@ -489,16 +503,18 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         }
     }
     private suspend fun jobs() {
+        // An unexpected error on the same job, in a row; past a few it is given up, so it cannot block every later job.
+        var failingJob: String? = null; var failures = 0
         while (currentCoroutineContext().isActive) {
             try {
                 val deviceId = ensureDevice()
                 val resumed = mutex.withLock { credentials?.activeJob }
-                if (resumed != null) { finish(resumed); continue }
+                if (resumed != null) { trace("接着处理作业 ${resumed.jobId.take(8)}"); finish(resumed); continue }
                 // The server pushes leases over the socket, one at a time; a resend after a lost reply comes the same way.
                 val lease = leases.receive()
                 val mine = mutex.withLock { credentials }
                 // A lease for anyone else is never acted on, whatever the server says.
-                if (lease.userId != mine?.userId || lease.deviceId != deviceId) continue
+                if (lease.userId != mine?.userId || lease.deviceId != deviceId) { trace("作业 ${lease.jobId.take(8)} 不是给这台设备的，忽略"); continue }
                 val job = ActiveCloudJob(lease.jobId, lease.leaseNo, lease.targetId, lease.taskId, digest = lease.digest, configuration = lease.configuration,
                     account = lease.account, restore = lease.restore)
                 remember(job)
@@ -506,13 +522,30 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (rejected: CloudRequestException) {
                 // The server no longer recognizes this lease: nothing further can be reported for it.
+                trace("作业上报被拒（${rejected.status} ${rejected.code}）")
                 if (rejected.code == "stale_lease" || rejected.code == "not_found" || rejected.code == "invalid_transition") remember(null)
                 publish(false, rejected.message); delay(retryMillis)
             }
-            catch (error: IOException) { publish(false, error.message ?: "无法连接服务器"); delay(retryMillis) }
+            catch (error: IOException) { trace("作业上报失败：${error.message ?: error.javaClass.simpleName}"); publish(false, error.message ?: "无法连接服务器"); delay(retryMillis) }
+            // Anything unexpected is recorded and the loop goes on; a job that keeps failing is reported unknown and dropped,
+            // so one bad lease never stops this device taking jobs.
+            catch (error: Exception) {
+                trace("处理作业出错：${error.javaClass.simpleName}")
+                val active = mutex.withLock { credentials?.activeJob }
+                if (active != null) {
+                    if (active.jobId == failingJob) failures++ else { failingJob = active.jobId; failures = 1 }
+                    if (failures >= MAX_JOB_FAILURES) {
+                        trace("作业 ${active.jobId.take(8)} 连续出错 $failures 次，放弃")
+                        runCatching { authorized { report(it, active, JobState.UNKNOWN, "设备处理这个作业时反复出错，结果未确认") } }
+                        remember(null); failingJob = null; failures = 0
+                    }
+                }
+                delay(retryMillis)
+            }
         }
     }
     private suspend fun finish(taken: ActiveCloudJob) {
+        trace("开始处理作业 ${taken.jobId.take(8)}")
         executor.awaitRestored()
         // Identifying and switching are safe to repeat, but an account run left from before a restart may have lost what
         // it read: it is ended, and this attempt runs its own.
@@ -524,11 +557,11 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
             remember(null); return
         }
         // Nothing starts until the server accepts this lease; repeating the report after a restart is harmless.
-        if (job.runId == null) authorized { report(it, job, JobState.RUNNING, "") }
+        if (job.runId == null) { authorized { report(it, job, JobState.RUNNING, "") }; trace("已上报开始运行") }
         // The game must be signed in to the job's account before its run starts; a wrong or unknown account never runs it.
         if (job.runId == null && job.account != null) {
             val ready = ensureAccount(job, job.account, "account")
-            if (ready != null) { authorized { report(it, job, ready.first, ready.second) }; remember(null); return }
+            if (ready != null) { trace("游戏账号没有准备好（${ready.first}）"); authorized { report(it, job, ready.first, ready.second) }; remember(null); return }
         }
         // The same command id returns the original run after a restart, so a job can never start twice.
         val runId = job.runId ?: when (val result = executor.enqueue(job.targetId, job.taskId, "cloud/${job.jobId}/${job.leaseNo}", job.digest, job.configuration)) {
@@ -538,8 +571,8 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
                     save(saved.copy(activeJob = latest.copy(runId = runId))); latest.paused } } == true
                 if (paused) executor.pause(runId)
             }
-            is CloudEnqueueResult.Rejected -> { authorized { report(it, job, JobState.FAILED, result.reason) }; remember(null); return }
-            is CloudEnqueueResult.Unconfirmed -> { authorized { report(it, job, JobState.UNKNOWN, result.reason) }; remember(null); return }
+            is CloudEnqueueResult.Rejected -> { trace("这台设备不能运行这个作业（原因见作业记录）"); authorized { report(it, job, JobState.FAILED, result.reason) }; remember(null); return }
+            is CloudEnqueueResult.Unconfirmed -> { trace("运行结果未确认（原因见作业记录）"); authorized { report(it, job, JobState.UNKNOWN, result.reason) }; remember(null); return }
         }
         val log = RunLog(job.copy(runId = runId), runId)
         val outcome = coroutineScope {
@@ -613,6 +646,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
     }
 
     private companion object {
+        const val MAX_JOB_FAILURES = 3
         const val DETAIL_CHARS = 300
         const val TRACE_SETTLE_MILLIS = 600L
         val JSON_TYPE = "application/json".toMediaType()

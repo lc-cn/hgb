@@ -70,6 +70,8 @@ class AssistApplication : Application() {
     lateinit var updates: io.github.yysassist.update.AppUpdater
         private set
     lateinit var cloud: io.github.yysassist.core.cloud.CloudAgent
+    /** What the cloud connection and job loop did, for 开发 → 设置 → 连接日志. */
+    lateinit var connectionLog: io.github.yysassist.cloud.ConnectionLog
         private set
     /** The signed-in console's data and where the user is in it, kept while the activity is recreated. */
     val console by lazy { io.github.yysassist.shared.ConsoleSession(io.github.yysassist.cloud.AgentTransport(cloud)) }
@@ -125,9 +127,10 @@ class AssistApplication : Application() {
             BuildConfig.VERSION_NAME, scope)
         updates.checkIfDue()
         val cloudExecutor = io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library, database, observedAccounts, localNotices) { packageManager.getLaunchIntentForPackage(it) != null }
+        connectionLog = io.github.yysassist.cloud.ConnectionLog(File(noBackupFilesDir, "connection.log"), scope)
         cloud = io.github.yysassist.core.cloud.CloudAgent(client, io.github.yysassist.cloud.EncryptedCloudStore(File(noBackupFilesDir, "cloud-session.bin"), "io.github.yysassist.cloud.v1"),
             cloudExecutor, "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}", "android", BuildConfig.VERSION_NAME, scope,
-            dataStore = io.github.yysassist.cloud.CloudDataFile(File(noBackupFilesDir, "cloud-data.json")))
+            dataStore = io.github.yysassist.cloud.CloudDataFile(File(noBackupFilesDir, "cloud-data.json")), trace = connectionLog::add)
         accounts = io.github.yysassist.cloud.CloudAccounts(cloud, cloudExecutor::apps)
         configurations = TaskConfigurationRepository(library, accounts)
         taskEditor = TaskConfigurationEditor(configurations, scope)

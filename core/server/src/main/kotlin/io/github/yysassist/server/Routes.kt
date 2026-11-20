@@ -239,6 +239,8 @@ private fun withQuery(url: String, query: String) = url + (if ('?' in url) "&" e
 private fun originOf(url: String): String = runCatching { java.net.URI(url).let { "${it.scheme}://${it.authority}" } }.getOrDefault(url)
 private fun Parameters.getOrFail(name: String) = get(name) ?: throw ApiException(400, "bad_request", "请求内容无效")
 
+private val socketLog = org.slf4j.LoggerFactory.getLogger("hgb.socket")
+
 /**
  * A device's one connection. The handshake carries the device's bearer token; a bad one is closed with a code the app
  * understands, so it can renew and come back. Each text frame is a [DeviceMessage]; replies are [ServerMessage]s.
@@ -252,6 +254,8 @@ private suspend fun deviceSocket(session: DefaultWebSocketServerSession, service
     val (connection, replaced) = service.sockets.attach(caller.userId, deviceId,
         close = { runCatching { close(CloseReason(SocketClose.REPLACED, "closed")) } })
     replaced?.close?.invoke()
+    val openedAt = System.currentTimeMillis()
+    socketLog.info("device=${deviceId.take(8)} connected${if (replaced != null) ", replacing an older connection" else ""}")
     // Everything for this device goes through its outbox, so business code never waits on the network.
     val writer = launch { for (text in connection.outbox) outgoing.send(Frame.Text(text)) }
     service.connectionChanged(caller.userId, deviceId)
@@ -276,7 +280,12 @@ private suspend fun deviceSocket(session: DefaultWebSocketServerSession, service
         }
     } catch (_: ApiException) {
         close(CloseReason(SocketClose.NOT_A_DEVICE, "device_only"))
+    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+        throw cancelled
+    } catch (failure: Exception) {
+        socketLog.info("device=${deviceId.take(8)} connection failed: ${failure.javaClass.simpleName} ${failure.message.orEmpty()}"); throw failure
     } finally {
+        socketLog.info("device=${deviceId.take(8)} disconnected after ${(System.currentTimeMillis() - openedAt) / 1000}s")
         writer.cancel()
         if (service.sockets.detach(connection)) service.connectionChanged(caller.userId, deviceId)
     }
