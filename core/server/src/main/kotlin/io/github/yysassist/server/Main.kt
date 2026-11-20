@@ -22,7 +22,12 @@ fun main() {
         env["YYS_CONSOLE_URL"] ?: "/console/", env["YYS_ALLOWED_ORIGINS"].orEmpty().split(',').map { it.trim().trimEnd('/') }.filter { it.isNotEmpty() }.toSet())
     // YYS_CHANNELS_PRIVATE=allow lets channels post to this machine or a private network: local development only.
     val http = OkChannelHttp(allowPrivate = env["YYS_CHANNELS_PRIVATE"] == "allow")
-    val service = CloudService(Database(env["YYS_DB"] ?: "yys-cloud.db"), mailer, GitHubIdentityClient(env["GITHUB_CLIENT_ID"], env["GITHUB_CLIENT_SECRET"]), secret,
+    val database = Database(env["YYS_DB"] ?: "yys-cloud.db")
+    val service = CloudService(database, mailer, GitHubIdentityClient(env["GITHUB_CLIENT_ID"], env["GITHUB_CLIENT_SECRET"]), secret,
         channelHttp = http)
-    embeddedServer(Netty, host = env["YYS_HOST"] ?: "127.0.0.1", port = env["YYS_PORT"]?.toInt() ?: 8787) { cloudModule(service, config) }.start(wait = true)
+    // YYS_TASK_REPO_TOKEN: a token the task repository's owner issued for this server (reads collaborator permissions,
+    // later publishes releases). Without it the developer workbench answers "not configured".
+    val workbench = Workbench(database, env["YYS_TASK_REPO_TOKEN"]?.takeIf { it.isNotBlank() }?.let {
+        GitHubRepoPermissions(env["YYS_TASK_REPO"] ?: "lc-cn/hgb-tasks", it) })
+    embeddedServer(Netty, host = env["YYS_HOST"] ?: "127.0.0.1", port = env["YYS_PORT"]?.toInt() ?: 8787) { cloudModule(service, config, workbench) }.start(wait = true)
 }

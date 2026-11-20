@@ -35,6 +35,11 @@ class Database(path: String) : AutoCloseable {
 
     private companion object {
         val SCHEMA = listOf(
+            // Developer workbench drafts and their patch history.
+            """CREATE TABLE IF NOT EXISTS dev_drafts (user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, target_id TEXT NOT NULL,
+                base_version TEXT NOT NULL, revision INTEGER NOT NULL, body TEXT NOT NULL, updated_at INTEGER NOT NULL, PRIMARY KEY (user_id, target_id))""",
+            """CREATE TABLE IF NOT EXISTS dev_patches (user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, target_id TEXT NOT NULL,
+                revision INTEGER NOT NULL, source TEXT NOT NULL, at INTEGER NOT NULL, patches TEXT NOT NULL, PRIMARY KEY (user_id, target_id, revision))""",
             """CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE, email_verified INTEGER NOT NULL DEFAULT 0,
                 password_hash TEXT, created_at INTEGER NOT NULL, time_zone TEXT NOT NULL DEFAULT 'Asia/Shanghai')""",
             """CREATE TABLE IF NOT EXISTS identities (provider TEXT NOT NULL, subject TEXT NOT NULL, login TEXT, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

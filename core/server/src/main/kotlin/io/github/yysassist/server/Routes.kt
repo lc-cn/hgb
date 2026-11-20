@@ -61,7 +61,7 @@ private suspend fun ApplicationCall.respondSession(config: ServerConfig, session
 }
 
 @OptIn(ExperimentalSerializationApi::class)
-fun Application.cloudModule(service: CloudService, config: ServerConfig) {
+fun Application.cloudModule(service: CloudService, config: ServerConfig, workbench: Workbench? = null) {
     install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true; explicitNulls = false; encodeDefaults = true }) }
     install(StatusPages) {
         exception<ApiException> { call, error -> call.respond(HttpStatusCode.fromValue(error.status), ApiError(error.code, error.message)) }
@@ -100,6 +100,32 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
     }
     val callback = "${config.publicUrl.trimEnd('/')}/api/auth/github/callback"
     routing {
+        // The developer workbench: only for GitHub accounts that can write to the task repository.
+        route("/api/dev") {
+            fun ApplicationCall.developer(): Caller {
+                val caller = caller(service, config)
+                // Bodies are read whole, so their size is checked before anything is read.
+                if (request.httpMethod != HttpMethod.Get && request.contentLength() == null) throw ApiException(411, "length_required", "请求需带长度")
+                if ((request.contentLength() ?: 0) > Workbench.MAX_BUNDLE_CHARS) throw ApiException(413, "too_large", "请求太大")
+                (workbench ?: throw ApiException(503, "workbench_unconfigured", "服务端还没有配置任务仓库，开发工作台不可用")).requireDeveloper(caller)
+                return caller
+            }
+            get("/catalog") { call.developer(); call.respond(workbench!!.catalog()) }
+            post("/check") { call.developer(); call.respond(workbench!!.check(call.receiveText())) }
+            route("/drafts/{target}") {
+                get { val caller = call.developer(); call.respond(workbench!!.drafts.get(caller.userId, call.parameters.getOrFail("target"))) }
+                put { val caller = call.developer(); call.respond(workbench!!.drafts.import(caller.userId, call.parameters.getOrFail("target"), call.receive())) }
+                post("/patches") {
+                    val caller = call.developer()
+                    val result = workbench!!.drafts.patch(caller.userId, call.parameters.getOrFail("target"), call.receive())
+                    call.respond(if (result.conflicts.isEmpty()) HttpStatusCode.OK else HttpStatusCode.Conflict, result)
+                }
+                get("/patches") {
+                    val caller = call.developer()
+                    call.respond(workbench!!.drafts.since(caller.userId, call.parameters.getOrFail("target"), call.request.queryParameters["since"]?.toLongOrNull() ?: 0))
+                }
+            }
+        }
         route("/api/auth") {
             get("/options") { call.respond(service.authOptions) }
             post("/register") { service.register(call.receive()); call.respond(HttpStatusCode.Accepted, mapOf("ok" to true)) }
