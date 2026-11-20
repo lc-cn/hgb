@@ -29,7 +29,7 @@ class GitHubAccountPageTest {
         var state by mutableStateOf<GitHubSessionState>(GitHubSessionState.SigningIn(GitHubDevicePrompt("TEST-CODE", GitHubDeviceAuthorization.VERIFICATION_URI, 900)))
         var copied: String? = null; var opened: String? = null
         compose.setContent { AssistTheme(ThemeMode.LIGHT) { Surface(Modifier.fillMaxSize()) {
-            GitHubAccountPage(state, false, {}, { state = GitHubSessionState.SignedOut() }, {}, {},
+            GitHubAccountPage(state, "lc-cn/hgb-tasks", false, {}, { state = GitHubSessionState.SignedOut() }, {}, {},
                 { opened = it }, { copied = it })
         } } }
         compose.onNodeWithContentDescription("GitHub 设备码：TEST-CODE").assertIsDisplayed()
@@ -45,7 +45,7 @@ class GitHubAccountPageTest {
         compose.waitUntil(10_000) { compose.activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE }
         var updates = 0; var logout = 0
         compose.setContent { AssistTheme(ThemeMode.DARK) { Surface(Modifier.fillMaxSize()) {
-            GitHubAccountPage(GitHubSessionState.Connected("fixture-owner"), true, {}, {}, { logout++ }, { updates++ })
+            GitHubAccountPage(GitHubSessionState.Connected("fixture-owner"), "lc-cn/hgb-tasks", true, {}, {}, { logout++ }, { updates++ })
         } } }
         compose.onNodeWithText("@fixture-owner").assertIsDisplayed()
         screenshot("connected-landscape-dark")
@@ -59,7 +59,7 @@ class GitHubAccountPageTest {
     @Test fun loadingSavingOfflineAndPermissionErrorsKeepTheirRecoveryControlsDistinct() {
         var state by mutableStateOf<GitHubSessionState>(GitHubSessionState.Loading)
         compose.setContent { AssistTheme(ThemeMode.DARK) { Surface(Modifier.fillMaxSize()) {
-            GitHubAccountPage(state, false, {}, {}, {}, {})
+            GitHubAccountPage(state, "lc-cn/hgb-tasks", false, {}, {}, {}, {})
         } } }
         compose.onNodeWithContentDescription("读取登录资料").assertIsDisplayed()
         compose.runOnIdle { state = GitHubSessionState.Saving }

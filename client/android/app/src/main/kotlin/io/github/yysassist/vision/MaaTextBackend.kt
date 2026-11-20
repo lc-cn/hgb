@@ -47,7 +47,7 @@ internal interface TextBackend {
 
 /** First integration candidate behind a replaceable observation boundary, not a cross-theme claim. */
 internal class MaaTextBackend(private val context: Context) : TextBackend {
-    companion object { const val CONTRACT = "maa.ppocr.v1"; private val decoder = Executors.newCachedThreadPool() }
+    companion object { const val CONTRACT = io.github.yysassist.core.actions.TEXT_RECOGNIZER; private val decoder = Executors.newCachedThreadPool() }
     override val modelContract = CONTRACT
     override val rawPixels = true
     override fun start(models: Map<String, ModelInput>, imageRead: ParcelFileDescriptor, width: Int, height: Int, onQuiet: () -> Unit): TextBackendCall {
