@@ -1,36 +1,56 @@
 import { useState } from "react";
 import { api, enc } from "../../api/client";
-import type { Device, Game, GameAccount, Plan, PlanSave } from "../../api/types";
-import { Button, Check, Choices, Field, Form, Grow, Message, Muted, Pill, Row } from "../../components/ui";
+import type { Device, Game, GameAccount, Job, Plan, PlanSave } from "../../api/types";
+import { Button, Card, Check, Choices, Facts, Field, Form, Message, Muted, Row, Switch } from "../../components/ui";
 import { orAlert, useAction } from "../../components/useAction";
-import { clockText, planRule, WEEK } from "../../format";
+import { clockText, JOB_STATES, planRule, shortTime, WEEK } from "../../format";
 import s from "./Accounts.module.css";
 
+const saveOf = (plan: Plan, change: Partial<PlanSave> = {}): PlanSave => ({
+  name: plan.name, days: plan.days, minuteOfDay: plan.minuteOfDay, tasks: plan.tasks, deviceIds: plan.deviceIds,
+  latestStartMinutes: plan.latestStartMinutes, enabled: plan.enabled, revision: plan.revision, ...change,
+});
+
 /** The account's plans. Changes that arrive while one is being edited do not touch the editor. */
-export function PlanList({ account, game, plans, devices }: { account: GameAccount; game?: Game; plans: Plan[]; devices: Device[] }) {
-  const [editing, setEditing] = useState<Plan | "new" | null>(null);
+export function PlanList({ account, game, plans, devices, jobs }: { account: GameAccount; game?: Game; plans: Plan[]; devices: Device[]; jobs: Job[] }) {
+  const [editing, setEditing] = useState<string | "new" | null>(null);
   const mine = plans.filter((plan) => plan.accountId === account.id);
-  const remove = (plan: Plan) => { if (confirm(`删除计划“${plan.name}”？`)) orAlert(() => api(`/api/plans/${enc(plan.id)}`, { method: "DELETE" })); };
+  const deviceNames = (plan: Plan) => plan.deviceIds.length
+    ? `只在 ${plan.deviceIds.map((id) => devices.find((device) => device.id === id)?.name ?? "已解绑的设备").join("、")}` : `所有装了${game?.name ?? "这个游戏"}的设备`;
+  const lastRun = (plan: Plan) => {
+    const job = jobs.find((item) => item.planId === plan.id);
+    return job ? [shortTime(job.updatedAt), job.deviceName, JOB_STATES[job.state][0]].filter(Boolean).join(" · ") : "还没有运行过";
+  };
   return (
-    <div className={s.plans}>
+    <Card as="section" flush aria-label="计划">
+      <Row>
+        <Muted as="span" className={s.grow}>计划由服务端计时，到点按顺序找应用：登录着{account.name}的应用 → 空闲、没设默认账号、能切号的应用 → 等待。</Muted>
+        <Button onClick={() => setEditing("new")} disabled={editing === "new"}>新建计划</Button>
+      </Row>
+      {editing === "new" && <div className={s.editorWrap}><PlanEditor account={account} game={game} devices={devices} plan={null} close={() => setEditing(null)} /></div>}
       {mine.map((plan) => (
-        <div key={plan.id} className={s.planRow}>
-          <Grow>
-            <div className={s.settingName}>{plan.name}</div>
-            <Muted>{[planRule(plan), plan.tasks.map((task) => task.name).join("、"), plan.deviceIds.length ? `${plan.deviceIds.length} 台设备` : "所有设备",
-              `最晚 ${plan.latestStartMinutes} 分钟内开始`].join(" · ")}</Muted>
-          </Grow>
-          <Pill tone={plan.enabled ? "ok" : ""}>{plan.enabled ? "已启用" : "已停用"}</Pill>
-          <Button onClick={() => orAlert(() => api(`/api/plans/${enc(plan.id)}/run`, { method: "POST", body: {} }))}>立即运行</Button>
-          <Button onClick={() => setEditing(plan)}>编辑</Button>
-          <Button onClick={() => remove(plan)}>删除</Button>
+        <div key={plan.id}>
+          <Row top>
+            <span className={s.planMain}>
+              <b className={s.semi}>{plan.name}</b><br />
+              <Muted as="span">{planRule(plan)} · {plan.tasks.map((task) => task.name).join("、") || "没有任务"}</Muted><br />
+              <span className={s.days} aria-label={`运行日：${planRule(plan)}`}>
+                {WEEK.map((label, i) => <span key={label} aria-hidden="true" className={plan.days.includes(i + 1) ? `${s.day} ${s.dayOn}` : s.day}>{label}</span>)}
+              </span>
+            </span>
+            <Facts className={s.planFacts} items={[["可运行设备", deviceNames(plan)], ["最晚开始", `到点后 ${plan.latestStartMinutes} 分钟`], ["上次", lastRun(plan)]]} />
+            <span className={s.planOps}>
+              <Switch label={`启用计划：${plan.name}`} checked={plan.enabled}
+                onChange={(on) => orAlert(() => api(`/api/plans/${enc(plan.id)}`, { method: "PUT", body: saveOf(plan, { enabled: on }) }))} />
+              <Button small onClick={() => orAlert(() => api(`/api/plans/${enc(plan.id)}/run`, { method: "POST", body: {} }))}>立即运行</Button>
+              <Button small onClick={() => setEditing(editing === plan.id ? null : plan.id)} aria-expanded={editing === plan.id}>编辑</Button>
+            </span>
+          </Row>
+          {editing === plan.id && <div className={s.editorWrap}><PlanEditor key={plan.id} account={account} game={game} devices={devices} plan={plan} close={() => setEditing(null)} /></div>}
         </div>
       ))}
-      {mine.length === 0 && <Muted>这个账号还没有计划。</Muted>}
-      {editing ? <PlanEditor key={editing === "new" ? "new" : editing.id} account={account} game={game} devices={devices}
-        plan={editing === "new" ? null : editing} close={() => setEditing(null)} />
-        : <Button onClick={() => setEditing("new")}>新建计划</Button>}
-    </div>
+      {mine.length === 0 && editing !== "new" && <Muted className={s.cardNote}>这个账号还没有计划。</Muted>}
+    </Card>
   );
 }
 
@@ -54,22 +74,37 @@ function PlanEditor({ account, game, devices, plan, close }: { account: GameAcco
     else await api(`/api/accounts/${enc(account.id)}/plans`, { method: "POST", body });
     close();
   });
+  const remove = () => { if (plan && confirm(`删除计划“${plan.name}”？`)) orAlert(async () => { await api(`/api/plans/${enc(plan.id)}`, { method: "DELETE" }); close(); }); };
   return (
     <Form onSubmit={submit} className={s.editor}>
-      <Field label="计划名称"><input type="text" required maxLength={40} value={name} onChange={(e) => setName(e.target.value)} /></Field>
-      <div className={s.settingName}>运行周期</div>
-      <Choices>{WEEK.map((label, i) => <Check key={label} label={`周${label}`} checked={days.has(i + 1)} onChange={(on) => setDays(flip(days, i + 1, on))} />)}</Choices>
-      <Field label="运行时间"><input type="time" required value={at} onChange={(e) => setAt(e.target.value)} /></Field>
-      <div className={s.settingName}>按顺序运行的任务</div>
-      <Choices>{(game?.tasks ?? []).map((task) => <Check key={task.taskId} label={task.name} checked={tasks.has(task.taskId)} onChange={(on) => setTasks(flip(tasks, task.taskId, on))} />)}</Choices>
-      <div className={s.settingName}>可以在哪些设备上运行（都不选就是所有装了这个游戏的设备）</div>
-      <Choices>{devices.map((device) => <Check key={device.id} label={device.name} checked={where.has(device.id)} onChange={(on) => setWhere(flip(where, device.id, on))} />)}</Choices>
-      <Field label="到点后最晚多少分钟内开始，超过就跳过"><input type="number" min={1} max={1440} required value={late} onChange={(e) => setLate(e.target.value)} /></Field>
-      <Check label="启用" checked={enabled} onChange={setEnabled} />
-      <Row>
+      <div className={s.editorRow}>
+        <Field label="计划名称"><input type="text" required maxLength={40} value={name} onChange={(e) => setName(e.target.value)} /></Field>
+        <Field label="运行时间"><input type="time" required value={at} onChange={(e) => setAt(e.target.value)} /></Field>
+        <Field label="到点后最晚多少分钟内开始"><input type="number" min={1} max={1440} required value={late} onChange={(e) => setLate(e.target.value)} /></Field>
+      </div>
+      <fieldset className={s.plainSet}>
+        <legend className={s.legend}>运行周期</legend>
+        <div className={s.days}>
+          {WEEK.map((label, i) => (
+            <button key={label} type="button" role="checkbox" aria-checked={days.has(i + 1)} aria-label={`周${label}`}
+              className={days.has(i + 1) ? `${s.dayPick} ${s.dayOn}` : s.dayPick} onClick={() => setDays(flip(days, i + 1, !days.has(i + 1)))}>{label}</button>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset className={s.plainSet}>
+        <legend className={s.legend}>按顺序运行的任务</legend>
+        <Choices>{(game?.tasks ?? []).map((task) => <Check key={task.taskId} label={task.name} checked={tasks.has(task.taskId)} onChange={(on) => setTasks(flip(tasks, task.taskId, on))} />)}</Choices>
+      </fieldset>
+      <fieldset className={s.plainSet}>
+        <legend className={s.legend}>可以在哪些设备上运行（都不选就是所有装了这个游戏的设备）</legend>
+        <Choices>{devices.map((device) => <Check key={device.id} label={device.name} checked={where.has(device.id)} onChange={(on) => setWhere(flip(where, device.id, on))} />)}</Choices>
+      </fieldset>
+      <label className={s.switchLine}><Switch label="启用" checked={enabled} onChange={setEnabled} /><span>启用</span></label>
+      <div className={s.formButtons}>
         <Button variant="primary" type="submit" disabled={busy}>{plan ? "保存计划" : "新建计划"}</Button>
         <Button onClick={close}>取消</Button>
-      </Row>
+        {plan && <Button variant="danger" onClick={remove} className={s.pushEnd}>删除计划</Button>}
+      </div>
       <Message text={message?.text} ok={message?.ok} />
     </Form>
   );

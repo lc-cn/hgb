@@ -1,32 +1,155 @@
-/*
- * Design tokens: every colour, radius and spacing the console uses. Components read these variables and never hard-code
- * values, so a theme is only a different set of them. Light is the default; dark follows the system unless the user
- * picks one with data-theme on <html>.
- */
+/* Generated from design/tokens.json by scripts/tokens.mjs. Do not edit. */
+
 :root {
   color-scheme: light;
-  --color-bg: #f6f6f6; --color-surface: #ffffff; --color-raised: #ededed; --color-ink: #181818; --color-muted: #555555;
-  --color-line: #d3d3d3; --color-primary: #202020; --color-on-primary: #ffffff; --color-accent: #c8392b;
-  --color-ok: #276547; --color-warn: #7d5315; --color-bad: #a1333a; --color-info: #2868b2;
-
+  --color-bg: #f6f6f8;
+  --color-surface: #ffffff;
+  --color-surface-head: #fafafb;
+  --color-line: #e6e5eb;
+  --color-line-soft: #f0eff4;
+  --color-control: #d9d7e0;
+  --color-ink: #1c1b22;
+  --color-muted: #5e5c69;
+  --color-faint: #6e6c7a;
+  --color-nav: #3a3946;
+  --color-primary: #5b3fb0;
+  --color-primary-hover: #432c8c;
+  --color-on-primary: #ffffff;
+  --color-nav-current-bg: #eeeaf8;
+  --color-nav-current: #4a2f9e;
+  --color-primary-soft: #f3f0fb;
+  --color-primary-line: #dcd3f3;
+  --color-track: #e6e5eb;
+  --color-switch-off: #c4c2cc;
+  --color-ok-bg: #e6f4ec;
+  --color-ok: #1e6b45;
+  --color-run-bg: #e7f0fe;
+  --color-run: #1f4e9e;
+  --color-warn-bg: #fff4e5;
+  --color-warn: #8a4b00;
+  --color-warn-soft: #fff8ee;
+  --color-warn-line: #f3d9b1;
+  --color-warn-ink: #5c3300;
+  --color-danger-bg: #fbeae8;
+  --color-danger: #a3261f;
+  --color-neutral-bg: #f0eff4;
+  --color-neutral: #5e5c69;
+  --color-live: #1e8e5a;
+  --color-lost: #a3261f;
+  --color-focus: #5b3fb0;
+  --color-logo-star: #ffd9a8;
+  --color-hero-bg: #1c1b22;
+  --color-hero-ink: #edecf2;
+  --color-hero-muted: #a9a7b5;
   --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  --text-sm: 13px; --text-xs: 12px; --text-md: 15px; --text-lg: 16px; --text-xl: 20px;
-
-  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px;
-  --radius-sm: 9px; --radius-md: 10px; --radius-lg: 12px; --radius-xl: 14px; --radius-pill: 999px;
-  --control-height: 44px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 15px;
+  --text-xl: 16px;
+  --text-2xl: 18px;
+  --text-title: 24px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 999px;
+  --control-height: 40px;
+  --control-height-lg: 44px;
+  --control-height-sm: 36px;
 }
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --color-bg: #161616; --color-surface: #232323; --color-raised: #2e2e2e; --color-ink: #f2f2f2; --color-muted: #bcbcbc;
-    --color-line: #414141; --color-primary: #eeeeee; --color-on-primary: #171717; --color-accent: #f08a7c;
-    --color-ok: #a4d5b4; --color-warn: #f1ce8e; --color-bad: #ffb4b8; --color-info: #a8cff9;
+    --color-bg: #141318;
+    --color-surface: #1d1c23;
+    --color-surface-head: #222128;
+    --color-line: #34323d;
+    --color-line-soft: #2a2931;
+    --color-control: #45434f;
+    --color-ink: #edecf2;
+    --color-muted: #a9a7b5;
+    --color-faint: #9a98a6;
+    --color-nav: #cfcdd8;
+    --color-primary: #b3a1f2;
+    --color-primary-hover: #c9bcf7;
+    --color-on-primary: #1a1233;
+    --color-nav-current-bg: #2e2650;
+    --color-nav-current: #d6ccfa;
+    --color-primary-soft: #262140;
+    --color-primary-line: #3d3466;
+    --color-track: #34323d;
+    --color-switch-off: #4c4a56;
+    --color-ok-bg: #17331f;
+    --color-ok: #8fd6ae;
+    --color-run-bg: #172a47;
+    --color-run: #9dc1f5;
+    --color-warn-bg: #3a2a12;
+    --color-warn: #f2c27a;
+    --color-warn-soft: #2c2214;
+    --color-warn-line: #5a4320;
+    --color-warn-ink: #f5d29e;
+    --color-danger-bg: #3d1c1a;
+    --color-danger: #ff9c94;
+    --color-neutral-bg: #2a2931;
+    --color-neutral: #b5b3c0;
+    --color-live: #4cc38a;
+    --color-lost: #ff9c94;
+    --color-focus: #b3a1f2;
+    --color-logo-star: #ffd9a8;
+    --color-hero-bg: #0e0d12;
+    --color-hero-ink: #edecf2;
+    --color-hero-muted: #a9a7b5;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-bg: #161616; --color-surface: #232323; --color-raised: #2e2e2e; --color-ink: #f2f2f2; --color-muted: #bcbcbc;
-  --color-line: #414141; --color-primary: #eeeeee; --color-on-primary: #171717; --color-accent: #f08a7c;
-  --color-ok: #a4d5b4; --color-warn: #f1ce8e; --color-bad: #ffb4b8; --color-info: #a8cff9;
+  --color-bg: #141318;
+  --color-surface: #1d1c23;
+  --color-surface-head: #222128;
+  --color-line: #34323d;
+  --color-line-soft: #2a2931;
+  --color-control: #45434f;
+  --color-ink: #edecf2;
+  --color-muted: #a9a7b5;
+  --color-faint: #9a98a6;
+  --color-nav: #cfcdd8;
+  --color-primary: #b3a1f2;
+  --color-primary-hover: #c9bcf7;
+  --color-on-primary: #1a1233;
+  --color-nav-current-bg: #2e2650;
+  --color-nav-current: #d6ccfa;
+  --color-primary-soft: #262140;
+  --color-primary-line: #3d3466;
+  --color-track: #34323d;
+  --color-switch-off: #4c4a56;
+  --color-ok-bg: #17331f;
+  --color-ok: #8fd6ae;
+  --color-run-bg: #172a47;
+  --color-run: #9dc1f5;
+  --color-warn-bg: #3a2a12;
+  --color-warn: #f2c27a;
+  --color-warn-soft: #2c2214;
+  --color-warn-line: #5a4320;
+  --color-warn-ink: #f5d29e;
+  --color-danger-bg: #3d1c1a;
+  --color-danger: #ff9c94;
+  --color-neutral-bg: #2a2931;
+  --color-neutral: #b5b3c0;
+  --color-live: #4cc38a;
+  --color-lost: #ff9c94;
+  --color-focus: #b3a1f2;
+  --color-logo-star: #ffd9a8;
+  --color-hero-bg: #0e0d12;
+  --color-hero-ink: #edecf2;
+  --color-hero-muted: #a9a7b5;
 }

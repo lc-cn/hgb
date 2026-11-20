@@ -7,6 +7,8 @@ export interface ConsoleData {
   devices: Device[]; jobs: Job[]; accounts: GameAccount[]; plans: Plan[]; games: Game[]; timeZone: string;
   /** Bumped when a job's log grows, so an open log knows to read it again. */
   logVersion: Record<string, number>;
+  /** Bumped when a rule notices something or the rules change, so the 通知 page knows to read them again. */
+  noticeVersion: number;
   /** Bumped by every snapshot: after a gap, anything read before may be stale. */
   epoch: number;
 }
@@ -21,14 +23,15 @@ type Action =
   | { type: "plans"; plans: Plan[] }
   | { type: "games"; games: Game[] }
   | { type: "time-zone"; timeZone: string }
-  | { type: "job-log"; id: string };
+  | { type: "job-log"; id: string }
+  | { type: "notices" };
 
-const empty: ConsoleData = { devices: [], jobs: [], accounts: [], plans: [], games: [], timeZone: "Asia/Shanghai", logVersion: {}, epoch: 0 };
+const empty: ConsoleData = { devices: [], jobs: [], accounts: [], plans: [], games: [], timeZone: "Asia/Shanghai", logVersion: {}, noticeVersion: 0, epoch: 0 };
 const byName = (a: Device, b: Device) => a.name.localeCompare(b.name, "zh-CN") || a.id.localeCompare(b.id);
 
 function reduce(state: ConsoleData, action: Action): ConsoleData {
   switch (action.type) {
-    case "snapshot": return { ...action.snapshot, devices: [...action.snapshot.devices].sort(byName), logVersion: {}, epoch: state.epoch + 1 };
+    case "snapshot": return { ...action.snapshot, devices: [...action.snapshot.devices].sort(byName), logVersion: {}, noticeVersion: state.noticeVersion + 1, epoch: state.epoch + 1 };
     case "device": return { ...state, devices: [...state.devices.filter((d) => d.id !== action.device.id), action.device].sort(byName) };
     case "device-removed": return { ...state, devices: state.devices.filter((d) => d.id !== action.id) };
     case "jobs": return { ...state, jobs: action.jobs };
@@ -36,6 +39,7 @@ function reduce(state: ConsoleData, action: Action): ConsoleData {
     case "plans": return { ...state, plans: action.plans };
     case "games": return { ...state, games: action.games };
     case "time-zone": return { ...state, timeZone: action.timeZone };
+    case "notices": return { ...state, noticeVersion: state.noticeVersion + 1 };
     case "job-log": return { ...state, logVersion: { ...state.logVersion, [action.id]: (state.logVersion[action.id] ?? 0) + 1 } };
   }
 }
@@ -70,6 +74,8 @@ export function useConsoleStream(signedOut: () => void): { data: ConsoleData; co
       current.addEventListener("games", (event) => dispatch({ type: "games", games: json(event) }));
       current.addEventListener("time-zone", (event) => dispatch({ type: "time-zone", timeZone: json(event).timeZone }));
       current.addEventListener("job-log", (event) => dispatch({ type: "job-log", id: json(event).id }));
+      current.addEventListener("notice", () => dispatch({ type: "notices" }));
+      current.addEventListener("rules", () => dispatch({ type: "notices" }));
       current.onopen = () => setConnection("live");
       current.onerror = async () => {
         setConnection("lost");

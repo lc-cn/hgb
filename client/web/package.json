@@ -4,8 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "tokens": "node scripts/tokens.mjs",
+    "dev": "node scripts/tokens.mjs && vite",
+    "build": "node scripts/tokens.mjs && tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview"
   },

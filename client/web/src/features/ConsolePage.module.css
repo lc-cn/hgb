@@ -1,5 +1,0 @@
-.shell { max-width: 1040px; margin: 0 auto; padding: var(--space-4); display: grid; gap: var(--space-5); }
-.top { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
-.who { color: var(--color-muted); font-size: var(--text-sm); overflow-wrap: anywhere; }
-.section { display: grid; gap: var(--space-2); }
-.section h2 { font-size: var(--text-md); font-weight: 600; color: var(--color-muted); }

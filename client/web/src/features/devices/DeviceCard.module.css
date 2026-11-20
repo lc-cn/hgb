@@ -1,7 +1,0 @@
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-3); }
-.device { display: grid; gap: var(--space-2); }
-.name { flex: 1; min-width: 0; font-size: var(--text-lg); font-weight: 600; overflow-wrap: anywhere; }
-.apps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
-.app { display: grid; gap: var(--space-1); padding: var(--space-2) 10px; border-radius: var(--radius-md); background: var(--color-raised); }
-.accounts { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin-top: 6px; }
-.accounts select { width: auto; min-height: 36px; }

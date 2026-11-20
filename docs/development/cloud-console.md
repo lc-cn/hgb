@@ -17,7 +17,7 @@
 | 计划 | 属于游戏账号，存服务端：运行周期、时间、任务、可运行设备（默认所有）、最晚开始时间（默认 30 分钟）、启用；保存按版本号防覆盖。计划时区按护肝宝账号设置，默认 Asia/Shanghai。服务端每 5 秒检查一次：到点的计划按任务顺序生成作业；保存计划之前已过的时间不补；服务端停机错过的时间记为“已跳过” |
 | 调度和下发 | 作业先“等可用应用”，服务端把它交给在线、登录着这个账号、在计划允许设备上的应用（暂不切号）；超过最晚开始时间（计划可设，立即运行为 30 分钟）就跳过。每台设备同一时间只拿一个作业：服务端经 WebSocket 推给设备，30 秒内没确认就收回重发，已开始的绝不重发。网页立即运行可选“自动分配”或指定应用；运行中的作业可暂停、继续、停止 |
 | 任务版本 | 设备状态里带当前任务包的版本和摘要，云端缺这一版时经 socket 通知设备上传一次；配置按设备实际运行的版本校验 |
-| Web 控制台 | 独立的 React + TypeScript + Vite 项目（`client/web`），和服务端分开构建、分开部署；登录注册、设备和应用当前账号、游戏账号（设置、计划）、下发作业、作业记录。颜色、间距等在 `src/theme/tokens.css` 里统一定义，浅色、深色两套 |
+| Web 控制台 | 独立的 React + TypeScript + Vite 项目（`client/web`），和服务端分开构建、分开部署，挂在 `/console` 下（`/` 和 `/docs` 留给首页和文档站）。按设计稿分页，每页有自己的地址（`src/router.tsx`，history API，路径都相对 `/console`）：设备 `/devices`、设备或应用详情 `/devices/:id`、`/devices/:id/apps/:key`、游戏账号 `/accounts`、账号详情 `/accounts/:id`（`/plans`、`/runs`）、运行记录详情 `/jobs/:id`、任务库 `/library`、通知 `/notices`（`?tab=rules`、`?tab=channels`）、我的 `/me`。外框按三档切换导航（`src/shell`）：宽于 1024 侧边栏，600～1024 图标栏，窄于 600 顶部品牌栏加底部导航。颜色、字号、间距、圆角和断点只在仓库根目录的 `design/tokens.json` 里定义，`pnpm dev`、`pnpm build` 先运行 `scripts/tokens.mjs` 生成 `src/theme/tokens.css` 和 `tokens.ts`（生成文件，不要手改）；浅色、深色两套，外观选择存在浏览器本地 |
 | App | 设置 → 云端控制：登录、选择这台设备上的游戏当前登录的游戏账号。任务设置和计划页读写服务端（显示当前账号的），断网时只能看。联网时“运行”由服务端给本机建作业，同一账号不会在两台设备上同时运行；断网时用服务端上次推来的设置在本机运行。本机不再保存设置和计划，也不再自己定时 |
 
 作业状态规则：
@@ -51,9 +51,9 @@ YYS_SECRET="$(openssl rand -base64 48)" YYS_MAIL_MODE=console YYS_SECURE_COOKIES
 pnpm --dir client/web dev
 ```
 
-打开 <http://127.0.0.1:5173>。Vite 把 `/api` 转发到 `http://127.0.0.1:8787`（可用环境变量 `YYS_API` 改），页面和接口同源，会话 cookie 照常生效。本地用 GitHub 登录时，`YYS_PUBLIC_URL` 设为网页地址（`http://127.0.0.1:5173`），回调经 Vite 转发。`YYS_MAIL_MODE=console` 会把验证码打印到服务端控制台，只能用于本地开发。
+打开 <http://127.0.0.1:5173/console/>（控制台挂在 `/console` 下，`/` 和 `/docs` 留给首页和文档站）。Vite 把 `/api` 转发到 `http://127.0.0.1:8787`（可用环境变量 `YYS_API` 改），页面和接口同源，会话 cookie 照常生效。本地用 GitHub 登录时，`YYS_PUBLIC_URL` 设为网页地址（`http://127.0.0.1:5173`），回调经 Vite 转发。`YYS_MAIL_MODE=console` 会把验证码打印到服务端控制台，只能用于本地开发。
 
-网页构建：`pnpm --dir client/web build`，产物在 `client/web/dist`。上线时放到 CDN 或对象存储，并在同一个域名下把 `/api` 路由到服务端（设计文档 C34）。
+网页构建：`pnpm --dir client/web build`，产物在 `client/web/dist`。上线时放到 CDN 或对象存储的 `/console/` 下，并在同一个域名下把 `/api` 路由到服务端（设计文档 C34、C42）。`/console/` 下的任何地址都要回退到 `/console/index.html`，否则直接打开或刷新深层地址会 404。
 
 模拟器里的调试版 App 用 `http://10.0.2.2:8787` 连接本机服务。正式版只接受 https 地址。
 

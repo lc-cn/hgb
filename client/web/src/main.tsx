@@ -3,5 +3,8 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import "./theme/tokens.css";
 import "./theme/base.css";
+import { applyAppearance, readAppearance } from "./theme/appearance";
+
+applyAppearance(readAppearance());
 
 createRoot(document.getElementById("root")!).render(<StrictMode><App /></StrictMode>);

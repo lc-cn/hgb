@@ -1,42 +1,57 @@
-import { api } from "../api/client";
+import { useState, type ReactNode } from "react";
 import type { Account } from "../api/types";
-import { Brand, Button, Grow, Message, Muted, Row } from "../components/ui";
-import { orAlert } from "../components/useAction";
+import { ButtonLink, Card, Empty, Message, ui } from "../components/ui";
+import { match, paths, usePath } from "../router";
+import { Shell, type Section } from "../shell/Shell";
 import { useConsoleStream } from "../state/console";
-import { AccountsPanel } from "./accounts/Accounts";
-import { DeviceList } from "./devices/DeviceCard";
-import { JobForm, JobList } from "./jobs/Jobs";
-import s from "./ConsolePage.module.css";
+import { ConsoleContext } from "../state/context";
+import { AccountDetailPage } from "./accounts/AccountDetailPage";
+import { GameAccountsPage } from "./accounts/GameAccountsPage";
+import { AppPage } from "./devices/AppPage";
+import { DevicePage } from "./devices/DevicePage";
+import { DevicesPage } from "./devices/DevicesPage";
+import { JobPage } from "./jobs/JobPage";
+import { LibraryPage } from "./library/LibraryPage";
+import { MePage } from "./me/MePage";
+import { NoticesPage } from "./notices/NoticesPage";
 
-/** The signed-in console: devices, game accounts, running a task and the job records, all kept live by the stream. */
+/** The signed-in console: one page per address, all kept live by the event stream. */
 export function ConsolePage({ account, signedOut }: { account: Account; signedOut: () => void }) {
   const { data, connection, loaded } = useConsoleStream(signedOut);
-  const changeZone = () => {
-    const next = prompt("计划按哪个时区计时？例如 Asia/Shanghai", data.timeZone);
-    if (next && next !== data.timeZone) orAlert(() => api("/api/me/time-zone", { method: "PUT", body: { timeZone: next } }));
-  };
-  const logout = () => orAlert(async () => { await api("/api/auth/logout", { method: "POST", body: {} }); signedOut(); });
+  const path = usePath();
+  const [section, page] = route(path);
+  // Binding GitHub from 我的 comes back here; a failure says so once, and is dropped from the address.
+  const [linkFailed] = useState(() => {
+    const failed = new URLSearchParams(location.search).get("error") === "github";
+    if (failed) history.replaceState(null, "", location.pathname);
+    return failed;
+  });
   return (
-    <main className={s.shell}>
-      <header className={s.top}>
-        <Grow><Brand /></Grow>
-        <span className={s.who}>{account.email ?? account.githubLogin ?? ""}</span>
-        <Button onClick={logout}>退出登录</Button>
-      </header>
-      <Row>
-        <Grow><Message text={connection === "live" ? "实时连接中" : connection === "lost" ? "与服务器的连接断开了，正在重连…" : "正在连接…"} ok={connection === "live"} /></Grow>
-        <Muted>计划时区：{data.timeZone} <Button variant="link" onClick={changeZone}>修改</Button></Muted>
-      </Row>
-      {loaded && <>
-        <section className={s.section}><h2>设备</h2><DeviceList devices={data.devices} accounts={data.accounts} /></section>
-        <section className={s.section}>
-          <h2>游戏账号</h2>
-          <Muted>任务设置、计划和运行记录都属于游戏账号，不属于某台设备。</Muted>
-          <AccountsPanel accounts={data.accounts} games={data.games} plans={data.plans} devices={data.devices} />
-        </section>
-        <section className={s.section}><h2>下发作业</h2><JobForm devices={data.devices} accounts={data.accounts} games={data.games} /></section>
-        <section className={s.section}><h2>作业记录</h2><JobList jobs={data.jobs} logVersion={data.logVersion} epoch={data.epoch} /></section>
-      </>}
-    </main>
+    <ConsoleContext.Provider value={{ data, account, signedOut }}>
+      <Shell section={section} connection={connection}>
+        {linkFailed && <Message text="绑定 GitHub 没有完成，请在“我的”里重试" />}
+        {loaded ? page : <Empty>正在加载…</Empty>}
+      </Shell>
+    </ConsoleContext.Provider>
   );
+}
+
+function route(path: string): [Section, ReactNode] {
+  let p: Record<string, string> | null;
+  if (path === "/" || path === paths.devices) return ["devices", <DevicesPage />];
+  if ((p = match("/devices/:id", path))) return ["devices", <DevicePage key={p.id} id={p.id} />];
+  if ((p = match("/devices/:id/apps/:key", path))) return ["devices", <AppPage key={p.id + p.key} deviceId={p.id} appKey={p.key} />];
+  if (path === paths.accounts) return ["accounts", <GameAccountsPage />];
+  if ((p = match("/accounts/:id", path))) return ["accounts", <AccountDetailPage key={p.id} id={p.id} tab="tasks" />];
+  if ((p = match("/accounts/:id/plans", path))) return ["accounts", <AccountDetailPage key={p.id} id={p.id} tab="plans" />];
+  if ((p = match("/accounts/:id/runs", path))) return ["accounts", <AccountDetailPage key={p.id} id={p.id} tab="runs" />];
+  if ((p = match("/jobs/:id", path))) return ["devices", <JobPage key={p.id} id={p.id} />];
+  if (path === paths.library) return ["library", <LibraryPage />];
+  if (path === paths.notices) return ["notices", <NoticesPage />];
+  if (path === paths.me) return ["me", <MePage />];
+  return ["devices", <NotFound text="没有这个页面" />];
+}
+
+export function NotFound({ text, back = paths.devices, backText = "回到设备" }: { text: string; back?: string; backText?: string }) {
+  return <Card><Empty>{text}</Empty><div className={ui.center}><ButtonLink to={back}>{backText}</ButtonLink></div></Card>;
 }

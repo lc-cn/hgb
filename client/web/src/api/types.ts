@@ -42,3 +42,11 @@ export interface ConfigView {
 export interface ConsoleSnapshot {
   devices: Device[]; jobs: Job[]; accounts: GameAccount[]; plans: Plan[]; games: Game[]; timeZone: string;
 }
+
+/** How an event rule decides; see EventRuleView on the server. */
+export type RuleKind = "INSTANT" | "COUNT" | "DURATION" | "RESULT";
+export type PlanOutcome = "COMPLETED" | "PARTIAL_FAILED" | "FAILED" | "CANCELLED";
+/** One of the user's event rules; [threshold] is minutes or a count by [kind], [suggested] only fills the editor. */
+export interface EventRule { ruleId: string; name: string; kind: RuleKind; description: string; enabled: boolean; threshold?: number | null; suggested?: number | null; results: PlanOutcome[] }
+/** Something a rule noticed. */
+export interface Notice { id: string; ruleId: string; ruleName: string; at: number; title: string; detail: string; jobId?: string | null; deviceId?: string | null; accountId?: string | null; planId?: string | null }

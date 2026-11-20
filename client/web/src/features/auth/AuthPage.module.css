@@ -1,3 +1,36 @@
-.page { min-height: 100vh; display: grid; place-items: center; padding: var(--space-6) var(--space-4); }
+/* Wide: the brand on a dark panel beside the form. Below 1024 the panel shrinks to a band; below 600 only the form. */
+.page { min-height: 100vh; display: flex; background: var(--color-bg); }
+.hero {
+  flex: 1 1 50%; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: var(--space-6);
+  padding: 40px clamp(24px, 5vw, 64px); background: var(--color-hero-bg); color: var(--color-hero-ink);
+}
+.hero::after {
+  content: ""; position: absolute; right: -80px; top: -60px; width: 340px; height: 340px; opacity: .18; pointer-events: none;
+  background: no-repeat center / contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M27 9.5 A15 15 0 1 0 39 31 A12 12 0 1 1 27 9.5 Z' fill='%23b3a1f2'/%3E%3C/svg%3E");
+}
+.heroBrand { display: flex; align-items: center; gap: 10px; color: var(--color-hero-ink); text-decoration: none; font-size: 20px; font-weight: 900; letter-spacing: 1px; }
+.heroBrand:hover { color: var(--color-hero-ink); }
+.heroText { margin-top: auto; max-width: 440px; display: grid; gap: var(--space-3); position: relative; }
+.heroText h1 { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.2; font-weight: 900; }
+.heroText p { color: var(--color-hero-muted); }
+.main { flex: 1 1 50%; display: flex; align-items: center; justify-content: center; padding: 40px var(--space-6); }
 .box { width: min(100%, 400px); display: grid; gap: var(--space-4); }
-.card { display: grid; gap: var(--space-3); }
+.narrowBrand { display: none; }
+.title { font-size: 26px; font-weight: 800; }
+.sub { color: var(--color-muted); margin-top: var(--space-1); }
+.submit { min-height: 48px; }
+.or { display: flex; align-items: center; gap: var(--space-3); color: var(--color-muted); font-size: var(--text-sm); }
+.or span { flex: 1; height: 1px; background: var(--color-line); }
+.github { gap: 10px; min-height: 48px; }
+
+@media (max-width: 1023px) {
+  .page { flex-direction: column; }
+  .hero { flex: none; padding: var(--space-6); gap: var(--space-4); }
+  .heroText { margin-top: 0; }
+  .heroText h1 { font-size: 26px; }
+}
+@media (max-width: 599px) {
+  .hero { display: none; }
+  .narrowBrand { display: block; }
+  .main { align-items: flex-start; padding: var(--space-8) var(--space-4); }
+}

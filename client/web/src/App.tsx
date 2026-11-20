@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiFailure } from "./api/client";
 import type { Account } from "./api/types";
+import { Empty } from "./components/ui";
 import { AuthPage } from "./features/auth/AuthPage";
 import { ConsolePage } from "./features/ConsolePage";
 
@@ -18,8 +19,8 @@ export function App() {
   }, []);
   useEffect(() => { void check(); }, [check]);
   switch (session.kind) {
-    case "loading": return <p style={{ padding: 48, textAlign: "center", color: "var(--color-muted)" }}>正在加载…</p>;
-    case "failed": return <p style={{ padding: 48, textAlign: "center" }}>{session.message}</p>;
+    case "loading": return <Empty>正在加载…</Empty>;
+    case "failed": return <Empty>{session.message}</Empty>;
     case "signed-out": return <AuthPage signedIn={check} />;
     case "signed-in": return <ConsolePage key={session.account.userId} account={session.account} signedOut={() => setSession({ kind: "signed-out" })} />;
   }

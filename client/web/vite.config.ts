@@ -8,6 +8,8 @@ const server = process.env.YYS_API ?? "http://127.0.0.1:8787";
 
 export default defineConfig({
   plugins: [react()],
+  // The site's home page and docs own "/"; the console is served under /console (C42).
+  base: "/console/",
   server: { port: 5173, proxy: { "/api": { target: server, changeOrigin: false } } },
   build: { outDir: "dist", sourcemap: true },
 });
