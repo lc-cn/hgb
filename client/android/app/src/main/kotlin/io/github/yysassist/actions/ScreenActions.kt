@@ -647,9 +647,11 @@ internal class ScreenActions(
                 is InspectionValue.Text -> value.candidates.filter { it.text == text && it.confidence.isFinite() && BigDecimal.valueOf(it.confidence) >= minimum }
                 is InspectionValue.Image -> value.matches.filter { BigDecimal.valueOf(it.score) >= minimum }.map { RecognizedText("", it.score, it.bounds) }
             }
+            if (accepted.isEmpty() && (inputs["optional"] as? JsonPrimitive)?.booleanOrNull == true)
+                return ActionResult.Produced(buildJsonObject { put("target", ""); put("found", false) }, buildJsonObject { put("kind", action.capability); put("found", false) })
             val match = accepted.singleOrNull() ?: return ActionResult.Unavailable(if (accepted.isEmpty()) "查找区域内没有达到要求的目标" else "查找区域内有 ${accepted.size} 处目标，不能唯一定位")
             val token = token(); targets[token] = Target(observation, text, minimum, match, template)
-            return ActionResult.Produced(buildJsonObject { put("target", token) }, buildJsonObject { put("kind", action.capability); region(match.bounds); put("confidence", match.confidence) })
+            return ActionResult.Produced(buildJsonObject { put("target", token); put("found", true) }, buildJsonObject { put("kind", action.capability); region(match.bounds); put("confidence", match.confidence) })
         }
         private suspend fun screenState(action: ActionDefinition, inputs: JsonObject): ActionResult {
             val observation = observations[inputs.text("observation")] ?: return ActionResult.Unavailable("本步骤的画面观察不可用")
@@ -765,10 +767,11 @@ internal class ScreenActions(
                 // A detector box with nothing recognized is not text; any recognized character, at any
                 // confidence, still refuses the press.
                 val found = candidates.filter { it.text.isNotBlank() }
-                trace = buildJsonObject { put("kind", TAP_REGION); region(bounds); put("emptyDetections", candidates.size - found.size) }
+                // What the text said stays in the local trace; the reason, which may leave the phone, only counts it.
+                trace = buildJsonObject { put("kind", TAP_REGION); region(bounds); put("emptyDetections", candidates.size - found.size)
+                    if (found.isNotEmpty()) put("texts", JsonArray(found.map { JsonPrimitive("「${it.text}」%.2f".format(it.confidence)) })) }
                 if (found.isNotEmpty()) return ActionResult.Unavailable(
-                    "目标区域（${bounds.left},${bounds.top},${bounds.width}×${bounds.height}）内识别到 ${found.size} 处文字，不点击：" +
-                        found.joinToString("、") { "「${it.text}」%.2f".format(it.confidence) }, trace)
+                    "目标区域（${bounds.left},${bounds.top},${bounds.width}×${bounds.height}）内识别到 ${found.size} 处文字，不点击", trace)
             }
             return deliver(action, bridge, trace, null) { it.gestureCall(fresh.result.stamp, listOf(point), checkNotNull(duration(inputs))) }
         }

@@ -17,12 +17,15 @@ sealed interface ProgramNode {
     @Serializable @SerialName("repeat")
     data class Repeat(val count: JsonElement, val program: List<ProgramNode>, val id: String? = null) : ProgramNode
     /**
-     * Runs [program] until [value] (an output of one of its own top-level actions) equals [equals], at
-     * most [maximum] times. Reaching the maximum is never success: the step becomes unknown.
+     * Runs [program] until [value] (an output of one of its own top-level actions) equals [equals], or any of [or]
+     * holds, at most [maximum] times. Reaching the maximum is never success: the step becomes unknown.
      */
     @Serializable @SerialName("until")
     data class Until(val value: ActionInputBinding, val equals: JsonPrimitive, val maximum: JsonElement, val program: List<ProgramNode>,
-        val id: String? = null) : ProgramNode
+        val id: String? = null, val or: List<UntilCondition> = emptyList()) : ProgramNode {
+        /** Every condition that ends the loop, the first one first. */
+        val conditions: List<UntilCondition> get() = listOf(UntilCondition(value, equals)) + or
+    }
     /**
      * Runs a [Snippet] here, with [with] for its parameters. Only in published text: expanded when read, so the
      * engine never sees one.
@@ -65,6 +68,10 @@ internal fun ProgramNode.children(): List<List<ProgramNode>> = when (this) {
 internal fun List<ProgramNode>.walk(): List<ProgramNode> = flatMap { node -> listOf(node) + node.children().flatMap { it.walk() } }
 private fun List<ProgramNode>.allActions(): List<ActionDefinition> = walk().filterIsInstance<ProgramNode.Action>().map { it.action }
 internal fun List<ProgramNode>.repeats(): List<ProgramNode.Repeat> = walk().filterIsInstance<ProgramNode.Repeat>()
+/** One way an [ProgramNode.Until] loop ends: [value] equals [equals]. */
+@Serializable
+data class UntilCondition(val value: ActionInputBinding, val equals: JsonPrimitive)
+
 internal fun List<ProgramNode>.untils(): List<ProgramNode.Until> = walk().filterIsInstance<ProgramNode.Until>()
 /** Ids an [ProgramNode.Exit] may name, and the outputs of a [ProgramNode.Block] after it ends. */
 internal fun ProgramNode.loopId(): String? = when (this) {
@@ -230,13 +237,15 @@ internal fun programIssues(bundle: TaskBundle, task: TaskDefinition, step: StepD
                             field.valueType() != ActionValueType.NUMBER || field.minimum?.decimalOrNull()?.let { it >= BigDecimal.ONE } != true))
                         issue(location, "循环上限需为 1–10000 的整数，或最小值不小于 1 的必填数值配置")
                     if (node.program.isEmpty()) issue(location, "循环体不能为空")
-                    val source = node.value as? ActionInputBinding.Output
-                    val producer = source?.let { s -> node.program.filterIsInstance<ProgramNode.Action>().map { it.action }.singleOrNull { it.id == s.actionId } }
-                    val type = producer?.let(::contract)?.outputTypes?.get(source.field)
-                    if (producer == null || type !in setOf(ActionValueType.STRING, ActionValueType.NUMBER, ActionValueType.BOOLEAN))
-                        issue(location, "循环条件必须引用循环体顶层动作的字符串、布尔或数值输出")
-                    else if (producer.let(::contract)?.outputHandles?.containsKey(source.field) == true) issue(location, "循环条件不能比较观察、目标或区域句柄")
-                    if (type != null && primitiveType(node.equals) != type) issue(location, "循环条件值类型不匹配")
+                    node.conditions.forEach { condition ->
+                        val source = condition.value as? ActionInputBinding.Output
+                        val producer = source?.let { s -> node.program.filterIsInstance<ProgramNode.Action>().map { it.action }.singleOrNull { it.id == s.actionId } }
+                        val type = producer?.let(::contract)?.outputTypes?.get(source.field)
+                        if (producer == null || type !in setOf(ActionValueType.STRING, ActionValueType.NUMBER, ActionValueType.BOOLEAN))
+                            issue(location, "循环条件必须引用循环体顶层动作的字符串、布尔或数值输出")
+                        else if (producer.let(::contract)?.outputHandles?.containsKey(source.field) == true) issue(location, "循环条件不能比较观察、目标或区域句柄")
+                        if (type != null && primitiveType(condition.equals) != type) issue(location, "循环条件值类型不匹配")
+                    }
                     // Every iteration starts from the outer flow with earlier-iteration locals discarded.
                     val inner = enclosing + listOfNotNull(node.id)
                     val first = block(node.program, flow, "$location/until", inner)

@@ -58,7 +58,7 @@ data class CheckResult(val ok: Boolean, val issues: List<CheckIssue>, val tasks:
  * The server side of the developer workbench. Checks run the engine's own reader with the App's own action contracts,
  * so what passes here is what the App will accept.
  */
-class Workbench(private val db: Database, private val permissions: RepoPermissions?, files: java.io.File,
+class Workbench(internal val db: Database, private val permissions: RepoPermissions?, files: java.io.File,
                 releases: ReleaseHost? = null, private val clock: () -> Long = System::currentTimeMillis) {
     private val provider = object : ActionProvider {
         override val contracts = screenContracts

@@ -17,7 +17,7 @@ object Format {
         JobState.UNKNOWN to ("结果未知" to Tone.WARN), JobState.CANCELLED to ("已取消" to Tone.NEUTRAL), JobState.SKIPPED to ("已跳过" to Tone.WARN),
     )
     val ACTIVE = setOf(JobState.WAITING, JobState.QUEUED, JobState.LEASED, JobState.RUNNING)
-    val PHASES = mapOf("CONNECTING" to "连接中", "IDLE" to "空闲", "RUNNING" to "运行中", "PAUSING" to "正在暂停", "PAUSED" to "已暂停",
+    val PHASES = mapOf("CONNECTING" to "连接中", "IDLE" to "空闲", "DEVELOPING" to "调试中", "RUNNING" to "运行中", "PAUSING" to "正在暂停", "PAUSED" to "已暂停",
         "REMOVING" to "正在停止", "SWITCHING" to "切换中", "BLOCKED_UNKNOWN" to "需要处理")
     val WEEK = listOf("一", "二", "三", "四", "五", "六", "日")
 

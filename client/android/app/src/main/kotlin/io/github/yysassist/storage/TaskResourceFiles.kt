@@ -60,6 +60,9 @@ class TaskResourceFiles(private val root: File) {
         return File(blobs, digest)
     }
 
+    /** The stored copy of a resource with this digest, if one is kept; for reading only. */
+    internal fun cached(digest: String): File? = runCatching { blob(digest) }.getOrNull()?.takeIf { it.isFile }
+
     internal class Prepared(val directory: File, val resources: List<TaskResource>) : Closeable {
         override fun close() {
             if (!directory.deleteRecursively()) throw IOException("无法清理资源暂存文件")

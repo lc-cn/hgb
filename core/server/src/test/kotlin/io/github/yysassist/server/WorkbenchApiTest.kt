@@ -1,10 +1,14 @@
 package io.github.yysassist.server
 
 import io.github.yysassist.protocol.AuthResult
+import io.github.yysassist.protocol.*
+import io.ktor.client.plugins.websocket.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
+import io.ktor.websocket.*
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -246,6 +250,47 @@ class WorkbenchApiTest {
         assertTrue(next.getValue("uploads").jsonArray.isEmpty())
         assertEquals(3, next.getValue("reused").jsonArray.map { it.jsonObject.getValue("assetName").jsonPrimitive.content }.toSet().size)
         assertEquals(setOf("models-1", "v1.2.0"), next.getValue("reused").jsonArray.map { it.jsonObject.getValue("release").jsonPrimitive.content }.toSet())
+    }
+
+    @Test fun phoneCommandsGoOnlyToAnIdleConnectedPhoneAndItsReportComesBack() = api(repo) {
+        val writer = signIn("writer")
+        send(HttpMethod.Put, "/api/dev/drafts/game", """{"baseVersion":"v1","body":${bundle("control.wait")}}""", writer)
+        val device = body(send(HttpMethod.Post, "/api/device/register", """{"installId":"i1","name":"手机","platform":"android"}""", writer).also {
+            assertEquals(HttpStatusCode.OK, it.status) }).getValue("deviceId").jsonPrimitive.content
+        val start = """{"kind":"trial","target":"game","device":"$device","task":"t"}"""
+        assertEquals(HttpStatusCode.Conflict, send(HttpMethod.Post, "/api/dev/runs", start, writer).status)
+        createClient { install(WebSockets) }.webSocket(request = { url("/api/device/socket"); bearerAuth(writer); header("X-YYS-Client", "device") }) {
+            suspend fun status(phase: String) = send(Frame.Text("""{"type":"status","status":{"phase":"$phase"}}"""))
+            suspend fun next(): ServerMessage.Dev = withTimeout(5000) {
+                while (true) { val frame = incoming.receive() as? Frame.Text ?: continue
+                    (Json { ignoreUnknownKeys = true }.decodeFromString(ServerMessage.serializer(), frame.readText()) as? ServerMessage.Dev)?.let { return@withTimeout it } }
+                @Suppress("UNREACHABLE_CODE") error("")
+            }
+            status("IDLE"); kotlinx.coroutines.delay(300)
+            val created = send(HttpMethod.Post, "/api/dev/runs", start, writer)
+            assertEquals(HttpStatusCode.Created, created.status)
+            val run = body(created).getValue("id").jsonPrimitive.content
+            val command = next().command
+            assertEquals(run, command.id)
+            assertEquals(DevKind.RUN, command.kind)
+            val compiled = Json.parseToJsonElement(command.bundle!!).jsonObject
+            assertTrue(compiled.getValue("version").jsonPrimitive.content.startsWith("dev-"))
+            assertEquals("t", command.task)
+            // Only one at a time.
+            assertEquals(HttpStatusCode.Conflict, send(HttpMethod.Post, "/api/dev/runs", start, writer).status)
+            val reported = send(HttpMethod.Post, "/api/dev/runs/$run/report", """{"state":"FINISHED","detail":"完成","facts":[{"type":"task-completed"}]}""", writer)
+            assertEquals(HttpStatusCode.OK, reported.status)
+            val view = Json.parseToJsonElement(get("/api/dev/runs/$run", writer).bodyAsText()).jsonObject
+            assertEquals(JsonPrimitive("FINISHED"), view["state"])
+            // Someone else cannot read it; a phone running a job gets none.
+            assertEquals(HttpStatusCode.NotFound, get("/api/dev/runs/$run", signIn("second")).status)
+            status("RUNNING"); kotlinx.coroutines.delay(300)
+            assertEquals(HttpStatusCode.Conflict, send(HttpMethod.Post, "/api/dev/runs", start, writer).status)
+            status("IDLE"); kotlinx.coroutines.delay(300)
+            // A probe needs a vision profile in the draft; this one has none.
+            assertEquals(HttpStatusCode.BadRequest, send(HttpMethod.Post, "/api/dev/runs",
+                """{"kind":"probe","target":"game","device":"$device","states":["home"]}""", writer).status)
+        }
     }
 }
 

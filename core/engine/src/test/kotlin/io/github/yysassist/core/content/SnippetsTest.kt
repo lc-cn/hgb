@@ -111,4 +111,14 @@ class SnippetsTest {
         val unused = bundle(listOf(StepDefinition("go", "Go", program = listOf(check("done")))), listOf(press))
         assertTrue(reasons(unused).any { it.contains("未被任何任务使用") })
     }
+
+    @Test fun untilEndsOnAnyOfItsConditionsAndChecksEachOne() {
+        fun loop(vararg or: UntilCondition) = StepDefinition("go", "Go", program = listOf(ProgramNode.Until(ActionInputBinding.Output("a", "ok"),
+            JsonPrimitive(true), JsonPrimitive(5), listOf(check("a"), check("b")), "scan", or.toList()), check("end")))
+        val good = bundle(listOf(loop(UntilCondition(ActionInputBinding.Output("b", "ok"), JsonPrimitive(true)))))
+        assertTrue(read(good).toString(), read(good) is BundleReadResult.Valid)
+        assertEquals(1, ((program(good).first()) as ProgramNode.Until).or.size)
+        assertTrue(reasons(bundle(listOf(loop(UntilCondition(ActionInputBinding.Output("b", "ok"), JsonPrimitive("yes")))))).any { it.contains("类型不匹配") })
+        assertTrue(reasons(bundle(listOf(loop(UntilCondition(ActionInputBinding.Output("elsewhere", "ok"), JsonPrimitive(true)))))).any { it.contains("顶层动作") })
+    }
 }

@@ -89,6 +89,10 @@ class Publisher(private val workbench: Workbench, private val drafts: Drafts, pr
         val host = host ?: throw ApiException(503, "workbench_unconfigured", "服务端还没有配置任务仓库，不能发布")
         if (!request.version.matches(Regex("v?[0-9]+(\\.[0-9]+){1,3}"))) throw ApiException(400, "bad_version", "版本号形如 v1.2.0")
         if (!request.minApp.matches(Regex("[0-9]+\\.[0-9]+\\.[0-9]+"))) throw ApiException(400, "bad_min_app", "最低 App 版本形如 0.2.0")
+        // What the workbench writes (snippets, libraries, assets in other releases, until-or, optional finds) is only
+        // read by Apps from this version on; an older one would reject the whole version.
+        if (io.github.yysassist.core.update.AppReleases.isNewer(WORKBENCH_APP, request.minApp))
+            throw ApiException(400, "min_app_too_old", "工作台写的任务需要 App $WORKBENCH_APP 及以上")
         // The App reads the last such line, which is ours; one in the notes is dropped all the same.
         val changelog = request.changelog.lines().filterNot { it.trim().startsWith(GitHubTaskSource.MIN_APP_PREFIX) }.joinToString("\n").trim().take(2000)
             .ifEmpty { throw ApiException(400, "no_changelog", "请写更新说明") }
@@ -97,26 +101,8 @@ class Publisher(private val workbench: Workbench, private val drafts: Drafts, pr
         if (taken.any { !it.draft }) throw ApiException(409, "version_taken", "版本 ${request.version} 已存在")
         // A draft of the same version is what an interrupted publish left; publishes run one at a time, so it is ours to clear.
         if (taken.isNotEmpty() && !request.dryRun) { taken.forEach { host.discard(it.id) }; releases = host.releases() }
-        // Published copies of each asset by content, newest first.
-        val published = releases.filter { !it.draft }.flatMap { r -> r.assets.filter { it.sha256 != null }.map { r.tag to it } }
-            .groupBy { (_, a) -> a.sha256 to a.bytes }
-        val claimed = mutableSetOf<String>()
         val body = drafts.get(userId, target).body
-        val resources = (body["resources"] as? JsonArray)?.let { json.decodeFromJsonElement(ListSerializer(TaskResource.serializer()), it) }.orEmpty()
-        val uploads = mutableListOf<Pair<TaskResource, java.io.File>>()
-        val placed = resources.map { resource ->
-            // Same content under the same name first; two resources never share one attachment name.
-            published[resource.sha256 to resource.bytes].orEmpty().filter { (_, a) -> a.name !in claimed }
-                .sortedByDescending { (_, a) -> a.name == resource.assetName }.firstOrNull()?.let { (tag, asset) ->
-                    claimed += asset.name
-                    return@map resource.copy(assetName = asset.name, release = tag)
-                }
-            claimed += resource.assetName
-            val file = assets.publishable(userId, target, resource.sha256)?.takeIf { it.length() == resource.bytes }
-                ?: throw ApiException(400, "missing_asset", "素材 ${resource.id} 既没有已发布的附件，也没有裁好的模板文件")
-            uploads += resource.copy(release = null) to file
-            resource.copy(release = null)
-        }
+        val (placed, uploads) = place(userId, target, body, releases)
         val bundle = JsonObject(body + mapOf("version" to JsonPrimitive(request.version), "updatedAt" to JsonPrimitive(Instant.ofEpochMilli(clock()).toString()),
             "changelog" to JsonPrimitive(changelog), "resources" to json.encodeToJsonElement(ListSerializer(TaskResource.serializer()), placed)))
         val text = Json.encodeToString(JsonObject.serializer(), bundle)
@@ -139,5 +125,46 @@ class Publisher(private val workbench: Workbench, private val drafts: Drafts, pr
             throw failure
         }
         return result.copy(published = true)
+    }
+
+    /** The task repository's releases; empty when no repository is configured (then nothing counts as published). */
+    fun releases(): List<HostRelease> {
+        val now = clock()
+        cached?.takeIf { now - it.first < RELEASES_TTL }?.let { return it.second }
+        return host?.releases().orEmpty().also { cached = now to it }
+    }
+    @Volatile private var cached: Pair<Long, List<HostRelease>>? = null
+    companion object {
+        private const val RELEASES_TTL = 60_000L
+        /** The first App that reads everything the workbench writes. */
+        const val WORKBENCH_APP = "0.2.0"
+    }
+
+    /**
+     * Where each of [body]'s resources comes from: a published copy of the same content is referenced (`release` set),
+     * anything else must be one of this developer's templates, returned with its file to upload (or, for a trial, to
+     * serve from the workbench).
+     */
+    fun place(userId: String, target: String, body: JsonObject, releases: List<HostRelease>): Pair<List<TaskResource>, List<Pair<TaskResource, java.io.File>>> {
+        // Published copies of each asset by content, newest first.
+        val published = releases.filter { !it.draft }.flatMap { r -> r.assets.filter { it.sha256 != null }.map { r.tag to it } }
+            .groupBy { (_, a) -> a.sha256 to a.bytes }
+        val claimed = mutableSetOf<String>()
+        val resources = (body["resources"] as? JsonArray)?.let { json.decodeFromJsonElement(ListSerializer(TaskResource.serializer()), it) }.orEmpty()
+        val uploads = mutableListOf<Pair<TaskResource, java.io.File>>()
+        val placed = resources.map { resource ->
+            // Same content under the same name first; two resources never share one attachment name.
+            published[resource.sha256 to resource.bytes].orEmpty().filter { (_, a) -> a.name !in claimed }
+                .sortedByDescending { (_, a) -> a.name == resource.assetName }.firstOrNull()?.let { (tag, asset) ->
+                    claimed += asset.name
+                    return@map resource.copy(assetName = asset.name, release = tag)
+                }
+            claimed += resource.assetName
+            val file = assets.publishable(userId, target, resource.sha256)?.takeIf { it.length() == resource.bytes }
+                ?: throw ApiException(400, "missing_asset", "素材 ${resource.id} 既没有已发布的附件，也没有裁好的模板文件")
+            uploads += resource.copy(release = null) to file
+            resource.copy(release = null)
+        }
+        return placed to uploads
     }
 }

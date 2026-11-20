@@ -3,6 +3,7 @@ package io.github.yysassist.core.cloud
 import io.github.yysassist.protocol.*
 
 import io.github.yysassist.core.execution.ExecutorSnapshot
+import io.github.yysassist.core.execution.ExecutorPhase
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -97,6 +98,10 @@ interface CloudExecutorPort {
     suspend fun traces(runId: Long, after: Long): List<CloudTrace> = emptyList()
     /** Why the device cannot start the next step right now (no accessibility, no screen, game not in front), or null. */
     fun blocked(): String? = null
+    /** A developer workbench command. The port runs it on its own and reports back itself; this must not block. */
+    fun develop(command: DevCommand) {}
+    /** Whether a workbench command is running here: the device then reports itself busy, so no job is sent meanwhile. */
+    fun developing(): Boolean = false
     /** Shows a notice named [key] on the device as a system notification; false when nothing was shown (turned off, not allowed). */
     fun notify(key: String, title: String, text: String): Boolean = false
 }
@@ -196,6 +201,19 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
      */
     suspend fun request(method: String, path: String, body: String? = null): String? =
         authorized { sendText(it.serverUrl, path, body, it.accessToken, method) }
+
+    /** Like [request] with raw bytes either way (images); null when the reply is empty. */
+    suspend fun requestBytes(method: String, path: String, body: ByteArray? = null, type: String = "application/octet-stream"): ByteArray? = authorized { saved ->
+        withContext(Dispatchers.IO) {
+            val request = Request.Builder().url(url(saved.serverUrl, path)).header("X-YYS-Client", "device").header("Authorization", "Bearer ${saved.accessToken}")
+                .method(method, body?.toRequestBody(type.toMediaType())).build()
+            requests.newCall(request).execute().use { reply ->
+                val bytes = reply.body.bytes()
+                if (!reply.isSuccessful) throw failure(reply.code, bytes.decodeToString())
+                bytes.takeIf { it.isNotEmpty() }
+            }
+        }
+    }
 
     /**
      * The console's event stream (/api/events) while collected: [ConsoleStreamEvent.Opened] and a snapshot, then changes.
@@ -421,7 +439,8 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
             AppStatus(app.key, app.gameId, app.name, if (running != null) snapshot.phase.name else "IDLE", running?.task?.name,
                 snapshot.waiting.count { it.request.context.targetId == app.gameId }, app.switchable, executor.observedAccount(app.gameId))
         }
-        return DeviceStatus(snapshot.phase.name, snapshot.current?.task?.name, snapshot.waiting.size, executor.tasks(), appVersion,
+        val phase = if (snapshot.phase == ExecutorPhase.IDLE && executor.developing()) "DEVELOPING" else snapshot.phase.name
+        return DeviceStatus(phase, snapshot.current?.task?.name, snapshot.waiting.size, executor.tasks(), appVersion,
             catalog?.let { CatalogRef(it.version, it.digest) }, apps, executor.concurrency)
     }
     private suspend fun handle(text: String) {
@@ -439,6 +458,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
                 val active = mutex.withLock { credentials?.activeJob }
                 if (active != null && active.jobId in message.jobIds) listOfNotNull(active.prepRunId, active.runId).forEach(executor::remove)
             }
+            is ServerMessage.Dev -> { trace("收到调试命令 ${message.command.id.take(8)}"); executor.develop(message.command) }
             is ServerMessage.Job -> { trace("收到作业 ${message.lease.jobId.take(8)}（第 ${message.lease.leaseNo} 次交付）"); leases.trySend(message.lease) }
             is ServerMessage.Data -> { mutableData.value = message.data; runCatching { dataStore?.write(message.data) } }
             // Pushed at least once: a resend of a notice already shown is not shown again.
@@ -523,6 +543,8 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
                 val job = ActiveCloudJob(lease.jobId, lease.leaseNo, lease.targetId, lease.taskId, digest = lease.digest, configuration = lease.configuration,
                     account = lease.account, restore = lease.restore)
                 remember(job)
+                // A workbench command on this phone finishes first: the two would drive the same screen.
+                while (executor.developing()) delay(1000)
                 finish(job)
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (rejected: CloudRequestException) {

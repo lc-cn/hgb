@@ -7,7 +7,7 @@ export const JOB_STATES: Record<JobState, [string, Tone]> = {
 };
 export const ACTIVE = new Set<JobState>(["WAITING", "QUEUED", "LEASED", "RUNNING"]);
 export const PHASES: Record<string, string> = {
-  CONNECTING: "连接中", IDLE: "空闲", RUNNING: "运行中", PAUSING: "正在暂停", PAUSED: "已暂停", REMOVING: "正在停止", SWITCHING: "切换中", BLOCKED_UNKNOWN: "需要处理",
+  CONNECTING: "连接中", IDLE: "空闲", DEVELOPING: "调试中", RUNNING: "运行中", PAUSING: "正在暂停", PAUSED: "已暂停", REMOVING: "正在停止", SWITCHING: "切换中", BLOCKED_UNKNOWN: "需要处理",
 };
 export const dateTime = (value: number | null | undefined) => value ? new Date(value).toLocaleString("zh-CN", { hour12: false }) : "—";
 export const clock = (value: number) => new Date(value).toLocaleTimeString("zh-CN", { hour12: false });

@@ -959,7 +959,8 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
     fun decodeDeviceMessage(text: String): DeviceMessage = json.decodeFromString(DeviceMessage.serializer(), text)
 
     companion object {
-        val HELD_PHASES = setOf("CONNECTING", "PAUSING", "PAUSED", "BLOCKED_UNKNOWN", "REMOVING", "SWITCHING")
+        // DEVELOPING: running a developer workbench command, which keeps managed jobs away.
+        val HELD_PHASES = setOf("CONNECTING", "PAUSING", "PAUSED", "BLOCKED_UNKNOWN", "REMOVING", "SWITCHING", "DEVELOPING")
         const val MINUTE = 60_000L; const val CODE_LIFETIME = 10 * MINUTE; const val MAX_CODE_ATTEMPTS = 5
         const val WEB_LIFETIME = 7 * 24 * 60 * MINUTE; const val DEVICE_ACCESS_LIFETIME = 60 * MINUTE; const val REFRESH_LIFETIME = 30 * 24 * 60 * MINUTE
         const val LEASE_LIFETIME = 2 * MINUTE

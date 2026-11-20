@@ -76,7 +76,26 @@ import kotlinx.serialization.json.JsonObject
     @Serializable @SerialName("data") data class Data(val data: DeviceData) : ServerMessage
     /** Show this notice on the device: a local-notification channel for this device is subscribed to its rule. */
     @Serializable @SerialName("notify") data class Notify(val notice: DeviceNotice) : ServerMessage
+    /** A developer workbench command for this phone; it answers with a [DevReport]. */
+    @Serializable @SerialName("dev") data class Dev(val command: DevCommand) : ServerMessage
 }
+
+/**
+ * SAMPLE: capture the game, read the whole frame and add it to the author's samples as [name].
+ * RUN: run [task] of [bundle] (a bundle the workbench compiled: a trial, a probe or a judgement) once, with
+ * [configuration], against the screen or, with [sample], against that sample shown as a still screen that no input
+ * changes. Assets the bundle names without a `release` come from the workbench.
+ */
+@Serializable enum class DevKind { SAMPLE, RUN }
+@Serializable data class DevCommand(val id: String, val kind: DevKind, val target: String, val name: String = "", val bundle: String? = null,
+    val task: String? = null, val configuration: JsonObject = JsonObject(emptyMap()), val sample: String? = null, val timeoutMs: Long = 600_000)
+@Serializable enum class DevState { RUNNING, FINISHED, FAILED }
+/** One action as it ran. [trace] keeps numbers, states and template ids only: recognized text never leaves the phone. */
+@Serializable data class DevTrace(val step: String, val action: String, val capability: String, val result: String, val reason: String? = null,
+    val elapsedMs: Long = 0, val trace: JsonObject? = null)
+@Serializable data class DevFact(val type: String, val detail: String = "")
+@Serializable data class DevReport(val state: DevState, val detail: String = "", val sample: String? = null,
+    val facts: List<DevFact> = emptyList(), val traces: List<DevTrace> = emptyList())
 /** Close codes the server uses when it refuses a device socket. */
 object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DEVICE: Short = 4403; const val REPLACED: Short = 4409 }
 

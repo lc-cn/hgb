@@ -101,6 +101,7 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig, workben
     val callback = "${config.publicUrl.trimEnd('/')}/api/auth/github/callback"
     routing {
         // The developer workbench: only for GitHub accounts that can write to the task repository.
+        val devRuns = workbench?.let { DevRuns(it, service) }
         route("/api/dev") {
             fun ApplicationCall.developer(limit: Int = Workbench.MAX_BUNDLE_CHARS): Caller {
                 val caller = caller(service, config)
@@ -133,7 +134,28 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig, workben
                         workbench!!.publisher.publish(caller.userId, call.parameters.getOrFail("target"), request) })
                 }
             }
+            route("/runs") {
+                post { val caller = call.developer(); call.respond(HttpStatusCode.Created, kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    devRuns!!.start(caller.userId, call.receive()) }) }
+                get { val caller = call.developer(); call.respond(devRuns!!.list(caller.userId)) }
+                get("/{id}") { val caller = call.developer(); call.respond(devRuns!!.get(caller.userId, call.parameters.getOrFail("id"))) }
+                // From the phone that ran it.
+                // Not gated on GitHub again: a run that started must be able to finish even if GitHub is unreachable now.
+                post("/{id}/report") {
+                    val caller = call.caller(service, config)
+                    if ((call.request.contentLength() ?: 0) > Workbench.MAX_BUNDLE_CHARS) throw ApiException(413, "too_large", "请求太大")
+                    val runs = devRuns ?: throw ApiException(503, "workbench_unconfigured", "开发工作台不可用")
+                    call.respond(runs.report(caller, call.parameters.getOrFail("id"), call.receive()))
+                }
+            }
             route("/games/{target}") {
+                // A template a phone needs for a trial before it is published, by digest.
+                get("/assets/{sha}") {
+                    val caller = call.developer()
+                    val file = workbench!!.assets.publishable(caller.userId, call.parameters.getOrFail("target"), call.parameters.getOrFail("sha"))
+                        ?: throw ApiException(404, "no_asset", "没有这个素材")
+                    call.respondBytes(file.readBytes(), ContentType.Image.PNG)
+                }
                 // A sample is the PNG itself; its name and device ride in the query.
                 post("/samples") {
                     val caller = call.developer(Assets.MAX_SAMPLE_BYTES)

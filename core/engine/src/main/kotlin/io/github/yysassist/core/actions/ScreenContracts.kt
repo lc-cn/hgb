@@ -152,8 +152,16 @@ fun awaitTiming(inputs: JsonObject): Triple<Long, Long, Long>? {
     val stable = integer(inputs["stableMs"])?.takeIf { it in 0..5000 } ?: return null
     return Triple(timeout, interval.toLong(), stable.toLong())
 }
-fun locateInIssue(inputs: JsonObject, name: String, valid: Boolean): String? =
-    if (inputs.text("observation").isNullOrBlank() || !valid || rectangle(inputs["within"]) == null || reference(inputs) == null) "请指定观察、$name、查找区域及参考截图尺寸" else null
+fun locateInIssue(inputs: JsonObject, name: String, valid: Boolean): String? = when {
+    inputs.text("observation").isNullOrBlank() || !valid || rectangle(inputs["within"]) == null || reference(inputs) == null -> "请指定观察、$name、查找区域及参考截图尺寸"
+    "optional" in inputs && (inputs["optional"] as? JsonPrimitive)?.booleanOrNull == null -> "“没找到不算失败”需为是或否"
+    else -> null
+}
+/**
+ * Region finds may be `optional`: nothing found is then `found = false` instead of failing, and `target` is empty, so
+ * only a branch on `found` should use it (a tap given an empty target fails). Several matches still fail.
+ */
+val locateInOutputs = mapOf("target" to ActionValueType.STRING, "found" to ActionValueType.BOOLEAN)
 val wholeObservation = mapOf("observation" to HandleRequirement(setOf(OBSERVATION), forbiddenAncestors = setOf(REGION)))
 fun screenStatesIssue(bundle: TaskBundle, action: ActionDefinition): String? = when {
     "states" in action.bindings || "otherwise" in action.bindings -> "状态证据必须由任务版本明确指定"
@@ -433,14 +441,16 @@ val screenContracts: List<CapabilityContract> = listOf(
             awaitTiming(inputs) == null || reference(inputs) == null) "请指定视觉配置、带查找区域的页面状态、等待时长及参考截图尺寸" else null
     },
     CapabilityContract(LOCATE_IMAGE_IN, 1, inputTypes = mapOf("observation" to ActionValueType.STRING, "template" to ActionValueType.STRING,
-        "minimumScore" to ActionValueType.NUMBER, "within" to ActionValueType.ARRAY, "referenceWidth" to ActionValueType.NUMBER, "referenceHeight" to ActionValueType.NUMBER),
-        outputTypes = mapOf("target" to ActionValueType.STRING), outputHandles = mapOf("target" to TARGET), inputHandles = wholeObservation,
+        "minimumScore" to ActionValueType.NUMBER, "within" to ActionValueType.ARRAY, "referenceWidth" to ActionValueType.NUMBER, "referenceHeight" to ActionValueType.NUMBER,
+        "optional" to ActionValueType.BOOLEAN),
+        outputTypes = locateInOutputs, outputHandles = mapOf("target" to TARGET), inputHandles = wholeObservation,
         validateDefinition = { bundle, _, _, action -> if (bundle.resources.none { it.id == action.inputs.text("template") }) "图像定位引用了未声明的模板资源" else null }) { inputs ->
         locateInIssue(inputs, "模板和得分", !inputs.text("template").isNullOrBlank() && unit(inputs["minimumScore"]) != null)
     },
     CapabilityContract(LOCATE_TEXT_IN, 1, inputTypes = mapOf("observation" to ActionValueType.STRING, "text" to ActionValueType.STRING,
-        "minimumConfidence" to ActionValueType.NUMBER, "within" to ActionValueType.ARRAY, "referenceWidth" to ActionValueType.NUMBER, "referenceHeight" to ActionValueType.NUMBER),
-        outputTypes = mapOf("target" to ActionValueType.STRING), outputHandles = mapOf("target" to TARGET), inputHandles = wholeObservation) { inputs ->
+        "minimumConfidence" to ActionValueType.NUMBER, "within" to ActionValueType.ARRAY, "referenceWidth" to ActionValueType.NUMBER, "referenceHeight" to ActionValueType.NUMBER,
+        "optional" to ActionValueType.BOOLEAN),
+        outputTypes = locateInOutputs, outputHandles = mapOf("target" to TARGET), inputHandles = wholeObservation) { inputs ->
         locateInIssue(inputs, "文字和置信度", !inputs.text("text").isNullOrBlank() && threshold(inputs) != null)
     },
     // Which page is on screen, from recognized text and whole-frame templates. An unrecognized page reports

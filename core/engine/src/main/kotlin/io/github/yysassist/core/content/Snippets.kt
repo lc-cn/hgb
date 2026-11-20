@@ -189,7 +189,8 @@ private class Expander(
                 ProgramCase((value(case.equals, scope) as? JsonPrimitive) ?: case.equals, expand(case.program, scope), case.id?.let { scope.prefix + it })
             }, node.id?.let { scope.prefix + it }))
             is ProgramNode.Until -> listOf(ProgramNode.Until(binding(node.value, scope), (value(node.equals, scope) as? JsonPrimitive) ?: node.equals,
-                value(node.maximum, scope) ?: node.maximum, expand(node.program, scope), node.id?.let(scope::rename)))
+                value(node.maximum, scope) ?: node.maximum, expand(node.program, scope), node.id?.let(scope::rename),
+                node.or.map { UntilCondition(binding(it.value, scope), (value(it.equals, scope) as? JsonPrimitive) ?: it.equals) }))
             is ProgramNode.Repeat -> listOf(ProgramNode.Repeat(value(node.count, scope) ?: node.count, expand(node.program, scope), node.id?.let(scope::rename)))
             is ProgramNode.Block -> listOf(ProgramNode.Block(scope.rename(node.id), expand(node.program, scope)))
             is ProgramNode.Exit -> {

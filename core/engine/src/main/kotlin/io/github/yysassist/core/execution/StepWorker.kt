@@ -134,7 +134,7 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                                             // The final iteration is unknown in advance; no iteration retains completion.
                                             val halt = executeBlock(node.program, local, false)
                                             if (halt != null && (halt.loop == null || halt.loop != node.id)) return halt
-                                            if (halt != null || sameProgramValue(resolveProgramValue(node.value, configuration, local), node.equals)) {
+                                            if (halt != null || node.conditions.any { sameProgramValue(resolveProgramValue(it.value, configuration, local), it.equals) }) {
                                                 reached = true; node.id?.let { outputs[it] = loopOutputs(halt) }; break
                                             }
                                             iteration++

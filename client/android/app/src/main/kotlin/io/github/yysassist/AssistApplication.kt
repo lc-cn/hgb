@@ -41,6 +41,8 @@ class AssistApplication : Application() {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     lateinit var executor: ExecutionRuntime
         private set
+    /** Developer workbench commands on this phone; null until the app has set up. */
+    internal var devRunner: io.github.yysassist.cloud.DevRunner? = null
     lateinit var floating: FloatingPreferences
         private set
     private val foregroundActivities = mutableSetOf<MainActivity>()
@@ -107,7 +109,8 @@ class AssistApplication : Application() {
             accountObserved = { context, uid, nickname -> observedAccounts.update { it + (context.targetId to
                 io.github.yysassist.protocol.ObservedAccount(uid, nickname, System.currentTimeMillis())) } }), actionTraces)
         taskCodec = BundleCodec(workers.contracts)
-        val library = TaskVersionLibrary(database, taskCodec, TaskResourceFiles(File(noBackupFilesDir, "task-resources")))
+        val resourceFiles = TaskResourceFiles(File(noBackupFilesDir, "task-resources"))
+        val library = TaskVersionLibrary(database, taskCodec, resourceFiles)
         versionLibrary = library
         textObserver = VersionedTextObserver(library, MaaTextBackend(this))
         executor = ExecutionRuntime(ExecutionStateStore(database, library), library,
@@ -129,7 +132,11 @@ class AssistApplication : Application() {
             io.github.yysassist.core.update.AppReleases({ BuildConfig.CODE_REPO }, "https://api.github.com/".toHttpUrl(), downloads),
             BuildConfig.VERSION_NAME, scope)
         updates.checkIfDue()
-        val cloudExecutor = io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library, database, observedAccounts, localNotices) { packageManager.getLaunchIntentForPackage(it) != null }
+        // Before the cloud agent, so a command that arrives as soon as it connects has somewhere to go.
+        devRunner = io.github.yysassist.cloud.DevRunner(this, { cloud }, executor, resourceFiles, { textObserver },
+            { ((taskUpdates.catalog.value as? VersionCatalogState.Ready)?.catalog?.activeContent as? io.github.yysassist.storage.ActiveTaskContent.Available)?.bundle }, source, scope)
+        val cloudExecutor = io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library, database, observedAccounts, localNotices,
+            dev = { devRunner }) { packageManager.getLaunchIntentForPackage(it) != null }
         connectionLog = io.github.yysassist.cloud.ConnectionLog(File(noBackupFilesDir, "connection.log"), scope)
         cloud = io.github.yysassist.core.cloud.CloudAgent(client, io.github.yysassist.cloud.EncryptedCloudStore(File(noBackupFilesDir, "cloud-session.bin"), "io.github.yysassist.cloud.v1"),
             cloudExecutor, "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}", "android", BuildConfig.VERSION_NAME, scope,

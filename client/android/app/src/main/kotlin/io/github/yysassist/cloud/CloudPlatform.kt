@@ -64,7 +64,10 @@ internal class RuntimeCloudExecutor(private val runtime: ExecutionRuntime, priva
     private val library: io.github.yysassist.storage.TaskVersionLibrary, private val database: io.github.yysassist.storage.AssistDatabase,
     private val observed: kotlinx.coroutines.flow.StateFlow<Map<String, ObservedAccount>>,
     private val notices: LocalNotices? = null,
+    private val dev: () -> DevRunner? = { null },
     private val installed: (String) -> Boolean) : CloudExecutorPort {
+    override fun develop(command: DevCommand) { dev()?.start(command) }
+    override fun developing(): Boolean = dev()?.busy == true
     /** The executor waits before a step for a reason only the phone sees: no accessibility, no screen, game not in front. */
     override fun blocked(): String? = (runtime.status.value as? io.github.yysassist.RuntimeStatus.Waiting)?.message
         ?.takeIf { it in io.github.yysassist.device.CAPABILITY_WAITS }
