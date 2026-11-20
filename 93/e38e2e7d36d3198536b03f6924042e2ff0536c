@@ -1,0 +1,79 @@
+core/server/src/main/kotlin/io/github/yysassist/server/CloudService.kt
+  s_fae32e7f0efe76::t_618a7e865abc39 962-963
+core/engine/src/main/kotlin/io/github/yysassist/core/execution/StepWorker.kt
+  s_fae32e7f0efe76::t_e63d00a84ce6f8 137
+core/server/src/main/kotlin/io/github/yysassist/server/Publisher.kt
+  s_fae32e7f0efe76::t_f2d9a4415298b4 131-136
+  s_fae32e7f0efe76::t_93556973674592 92-95,137-141,169
+  s_fae32e7f0efe76::t_3617c3e1ef3460 105,129-130,142-168
+core/server/src/main/kotlin/io/github/yysassist/server/Workbench.kt
+  s_fae32e7f0efe76::t_618a7e865abc39 61
+core/protocol/src/main/kotlin/io/github/yysassist/protocol/CloudProtocol.kt
+  s_fae32e7f0efe76::t_66a51f2e0b5388 79-80,82-98
+client/android/app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt
+  s_fae32e7f0efe76::t_b9f9f7eb2acd34 770-772,774
+  s_fae32e7f0efe76::t_d6094528c3f4e8 650-651,654
+client/android/app/src/main/kotlin/io/github/yysassist/storage/TaskResourceFiles.kt
+  s_fae32e7f0efe76::t_25253690c17c2d 63-65
+client/android/app/src/main/kotlin/io/github/yysassist/cloud/DevRunner.kt
+  s_fae32e7f0efe76::t_ce89405636a22d 75-77,79
+  s_fae32e7f0efe76::t_c3226a28f27f1b 56-63,65-69,117,128,147-151,163-169,175,177-178
+  s_fae32e7f0efe76::t_8b5dc50723b8c2 99,105
+  s_fae32e7f0efe76::t_a6942efe006206 1-55,64,70-74,78,80-98,100-104,106-116,118-127,129-146,152-162,170-174,176,179-200
+client/android/app/src/main/kotlin/io/github/yysassist/device/StillScreen.kt
+  s_fae32e7f0efe76::t_c3226a28f27f1b 13
+  s_fae32e7f0efe76::t_25253690c17c2d 1-12,14-32
+client/web/src/format.ts
+  s_fae32e7f0efe76::t_b9f9f7eb2acd34 10
+client/android/app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_b9f9f7eb2acd34 135-137
+  s_fae32e7f0efe76::t_930f906359e29d 44-45
+  s_fae32e7f0efe76::t_8f25f11f4fafc2 112-113,138-139
+core/engine/src/main/kotlin/io/github/yysassist/core/cloud/CloudAgent.kt
+  s_fae32e7f0efe76::t_64e4a1cbd14416 101-104,205-217,442-443,461
+  s_fae32e7f0efe76::t_b9f9f7eb2acd34 546-547
+  s_fae32e7f0efe76::t_7362de7e2232e5 6
+core/engine/src/main/kotlin/io/github/yysassist/core/content/Snippets.kt
+  s_fae32e7f0efe76::t_e63d00a84ce6f8 192-193
+client/android/app/src/debug/kotlin/io/github/yysassist/debug/DevCommandTrigger.kt
+  s_fae32e7f0efe76::t_44d6f59e509c3f 1-40
+client/shared/src/commonMain/kotlin/io/github/yysassist/shared/ui/Format.kt
+  s_fae32e7f0efe76::t_b9f9f7eb2acd34 20
+core/server/src/main/kotlin/io/github/yysassist/server/DevRuns.kt
+  s_fae32e7f0efe76::t_f70fa29951656d 56
+  s_fae32e7f0efe76::t_f2d9a4415298b4 34-35,61,65-66,75-84,90,113-115,185
+  s_fae32e7f0efe76::t_7205d7024a2f32 1-33,36-55,57-60,62-64,67-74,85-89,91-112,116-184,186-189
+core/server/src/test/kotlin/io/github/yysassist/server/WorkbenchApiTest.kt
+  s_fae32e7f0efe76::t_07be524c3db661 4-5,10-11,254-293
+  s_fae32e7f0efe76::t_7b4ebee2d0a075 294
+client/android/app/src/main/kotlin/io/github/yysassist/cloud/CloudPlatform.kt
+  s_fae32e7f0efe76::t_8f25f11f4fafc2 67,69-70
+core/engine/src/test/kotlin/io/github/yysassist/core/content/SnippetsTest.kt
+  s_fae32e7f0efe76::t_e82959b3f6e7cd 114-123
+client/android/app/src/debug/AndroidManifest.xml
+  s_fae32e7f0efe76::t_44d6f59e509c3f 14-17
+core/server/src/main/kotlin/io/github/yysassist/server/Routes.kt
+  s_fae32e7f0efe76::t_3862c696de29d2 147-148
+  s_fae32e7f0efe76::t_f2d9a4415298b4 143-146,149
+  s_fae32e7f0efe76::t_618a7e865abc39 104,137-142,150,152-158
+core/engine/src/main/kotlin/io/github/yysassist/core/content/StepProgram.kt
+  s_fae32e7f0efe76::t_e63d00a84ce6f8 20-21,25-28,71-74,240-248
+core/engine/src/main/kotlin/io/github/yysassist/core/actions/ScreenContracts.kt
+  s_fae32e7f0efe76::t_d6094528c3f4e8 155-164,444-446,451-453
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "93e38e2e7d36d3198536b03f6924042e2ff0536c",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
