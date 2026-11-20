@@ -1,0 +1,47 @@
+core/server/src/main/kotlin/io/github/yysassist/server/Routes.kt
+  s_fae32e7f0efe76::t_f8b807783e3ad9 99
+client/shared/src/commonMain/kotlin/io/github/yysassist/shared/pages/SignInPage.kt
+  s_fae32e7f0efe76::t_51356916ad9829 48-50,62-64,67-70,72
+  s_fae32e7f0efe76::t_a456cd588cae6b 65-66
+client/android/app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt
+  s_fae32e7f0efe76::t_51356916ad9829 140-147,150-151,171
+docs/development/deploy.md
+  s_fae32e7f0efe76::t_fefc8c11a44528 71
+  s_fae32e7f0efe76::t_be40213d477470 68-70,137
+  s_fae32e7f0efe76::t_c6194e77b45586 39,41,43-51,72-77,79-89,93,97,99-100,102,107,110-111,117,119,121-127,129
+client/web/src/api/types.ts
+  s_fae32e7f0efe76::t_d0a3c1cffeeb87 3-4
+core/protocol/src/main/kotlin/io/github/yysassist/protocol/CloudProtocol.kt
+  s_fae32e7f0efe76::t_f8b807783e3ad9 17-18
+docs/design/cloud-executor.md
+  s_fae32e7f0efe76::t_be40213d477470 389,399-400
+core/engine/src/main/kotlin/io/github/yysassist/core/cloud/CloudAgent.kt
+  s_fae32e7f0efe76::t_51356916ad9829 249-250
+client/web/src/features/notices/Channels.tsx
+  s_fae32e7f0efe76::t_c50bedeea4e2ea 1,89-92,120
+  s_fae32e7f0efe76::t_e076dc8b943228 3
+core/server/src/main/kotlin/io/github/yysassist/server/CloudService.kt
+  s_fae32e7f0efe76::t_f8b807783e3ad9 28-29
+client/web/src/features/auth/AuthPage.tsx
+  s_fae32e7f0efe76::t_d0a3c1cffeeb87 1,24-26,42,53-54,56
+  s_fae32e7f0efe76::t_0f3ae24b29c0f8 3
+  s_fae32e7f0efe76::t_a456cd588cae6b 52
+core/server/src/test/kotlin/io/github/yysassist/server/CloudApiTest.kt
+  s_fae32e7f0efe76::t_f8b807783e3ad9 865-871
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1bff7c37e73ca53745e3edade4d13bbd657fbfdf",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
