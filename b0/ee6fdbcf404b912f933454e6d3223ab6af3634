@@ -1,0 +1,26 @@
+client/android/app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt
+  s_fae32e7f0efe76::t_58d7ac7f57a03e 5,30-45,47,49-50,52-55,64
+core/engine/src/main/kotlin/io/github/yysassist/core/actions/ScreenContracts.kt
+  s_fae32e7f0efe76::t_58d7ac7f57a03e 1-65,67-479
+  s_fae32e7f0efe76::t_cf2539d5aa2edf 66
+client/android/app/src/main/kotlin/io/github/yysassist/vision/MaaTextBackend.kt
+  s_fae32e7f0efe76::t_cfe72f09b4f91a 50
+client/android/app/src/androidTest/kotlin/io/github/yysassist/ui/GitHubAccountPageTest.kt
+  s_fae32e7f0efe76::t_18be424c5177d0 32,48,62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b0ee6fdbcf404b912f933454e6d3223ab6af3634",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
