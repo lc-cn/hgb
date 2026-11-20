@@ -19,14 +19,34 @@ class WorkbenchApiTest {
     }
     private var asked = 0
     /** GitHub logins and their permission on the task repository. */
-    private val repo = RepoPermissions { _, login -> asked++; mapOf("writer" to "write", "reader" to "read")[login] ?: "none" }
+    private val repo = RepoPermissions { _, login -> asked++; mapOf("writer" to "write", "second" to "admin", "reader" to "read")[login] ?: "none" }
+
+    /** A task repository's releases in memory. */
+    private class FakeHost : ReleaseHost {
+        val list = mutableListOf<HostRelease>()
+        val bodies = mutableMapOf<Long, String>()
+        val files = mutableMapOf<Pair<Long, String>, ByteArray>()
+        var latest: Boolean? = null
+        var failUpload = false
+        override fun releases() = list.reversed()
+        override fun create(tag: String, body: String): Long { val id = (list.maxOfOrNull { it.id } ?: 0) + 1; list += HostRelease(id, tag, true, emptyList()); bodies[id] = body; return id }
+        override fun upload(release: Long, name: String, bytes: ByteArray, type: String) {
+            if (failUpload) throw ApiException(502, "github_failed", "boom")
+            files[release to name] = bytes
+            list.replaceAll { if (it.id == release) it.copy(assets = it.assets + HostAsset(name, bytes.size.toLong(), sha(bytes))) else it }
+        }
+        override fun publish(release: Long, latest: Boolean) { this.latest = latest; list.replaceAll { if (it.id == release) it.copy(draft = false) else it } }
+        override fun discard(release: Long) { list.removeAll { it.id == release } }
+    }
+    private val host = FakeHost()
 
     private fun api(permissions: RepoPermissions?, block: suspend ApplicationTestBuilder.() -> Unit) {
         val file = File.createTempFile("workbench", ".db")
+        val dir = kotlin.io.path.createTempDirectory("workbench").toFile()
         val db = Database(file.path)
         val service = CloudService(db, { _, _, _ -> }, github, ByteArray(32) { 7 }, { 1_000_000L })
-        try { testApplication { application { cloudModule(service, ServerConfig("http://localhost", false), Workbench(db, permissions)) }; block() } }
-        finally { db.close(); file.delete() }
+        try { testApplication { application { cloudModule(service, ServerConfig("http://localhost", false), Workbench(db, permissions, dir, host)) }; block() } }
+        finally { db.close(); file.delete(); dir.deleteRecursively() }
     }
     private suspend fun ApplicationTestBuilder.signIn(login: String): String {
         val reply = client.post("/api/auth/github/token") { contentType(ContentType.Application.Json); header("X-YYS-Client", "device"); setBody("""{"accessToken":"gh$login"}""") }
@@ -125,4 +145,108 @@ class WorkbenchApiTest {
     @Test fun withoutARepositoryTokenTheWorkbenchSaysItIsNotConfigured() = api(null) {
         assertEquals(HttpStatusCode.ServiceUnavailable, get("/api/dev/catalog", signIn("writer")).status)
     }
+
+    private fun png(width: Int, height: Int): ByteArray {
+        val image = java.awt.image.BufferedImage(width, height, java.awt.image.BufferedImage.TYPE_INT_RGB)
+        for (x in 0 until width) for (y in 0 until height) image.setRGB(x, y, (x * 7 + y * 13) and 0xffffff)
+        return java.io.ByteArrayOutputStream().also { javax.imageio.ImageIO.write(image, "png", it) }.toByteArray()
+    }
+    private fun body(reply: HttpResponse) = kotlinx.coroutines.runBlocking { Json.parseToJsonElement(reply.bodyAsText()).jsonObject }
+
+    @Test fun templatesAreCutSmallFromSamplesAndNeverOverPlayerInformation() = api(repo) {
+        val writer = signIn("writer")
+        val upload = client.post("/api/dev/games/game/samples?name=寮&device=phone") { bearerAuth(writer); contentType(ContentType.Image.PNG); setBody(png(200, 100)) }
+        assertEquals(HttpStatusCode.Created, upload.status)
+        val sample = body(upload).getValue("id").jsonPrimitive.content
+        assertEquals(HttpStatusCode.BadRequest, client.post("/api/dev/games/game/samples") { bearerAuth(writer); setBody("not a png".toByteArray()) }.status)
+        val other = signIn("second")
+        send(HttpMethod.Patch, "/api/dev/samples/$sample", """{"texts":[{"text":"寄养","box":[10,10,20,10]}],"privateRegions":[[150,0,50,30]]}""", writer)
+        assertEquals(HttpStatusCode.NotFound, get("/api/dev/samples/$sample", other).status)
+        assertEquals(HttpStatusCode.NotFound, send(HttpMethod.Patch, "/api/dev/samples/$sample", """{"name":"x"}""", other).status)
+        // A tiny file claiming a huge picture is refused before it is decoded.
+        val bomb = png(1, 1).also { b -> java.nio.ByteBuffer.wrap(b, 16, 8).putInt(60000).putInt(60000) }
+        assertEquals(HttpStatusCode.BadRequest, client.post("/api/dev/games/game/samples") { bearerAuth(writer); setBody(bomb) }.status)
+        fun cut(id: String, rect: String, extra: String = "") = """{"id":"$id","sample":"$sample","rect":$rect$extra}"""
+        // Others cannot see or touch it, and nothing is cut before the phone said what it recognized.
+        assertEquals(HttpStatusCode.Forbidden, get("/api/dev/samples/$sample", signIn("reader")).status)
+        val fresh = body(client.post("/api/dev/games/game/samples") { bearerAuth(writer); contentType(ContentType.Image.PNG); setBody(png(20, 20)) }).getValue("id").jsonPrimitive.content
+        assertEquals(HttpStatusCode.Conflict, send(HttpMethod.Post, "/api/dev/games/game/templates", """{"id":"early","sample":"$fresh","rect":[0,0,8,8]}""", writer).status)
+        // Text inside the box must be confirmed as the game's own.
+        val unconfirmed = send(HttpMethod.Post, "/api/dev/games/game/templates", cut("foster", "[0,0,40,40]"), writer)
+        assertEquals(HttpStatusCode.Conflict, unconfirmed.status)
+        assertTrue(body(unconfirmed).toString().contains("寄养"))
+        assertEquals(HttpStatusCode.BadRequest, send(HttpMethod.Post, "/api/dev/games/game/templates", cut("name", "[140,0,20,20]"), writer).status)
+        assertEquals(HttpStatusCode.BadRequest, send(HttpMethod.Post, "/api/dev/games/game/templates", cut("wide", "[0,50,100,20]"), writer).status)
+        val made = send(HttpMethod.Post, "/api/dev/games/game/templates", cut("foster", "[0,0,40,40]", ",\"confirmedTexts\":[\"寄养\"]"), writer)
+        assertEquals(HttpStatusCode.Created, made.status)
+        val template = body(made)
+        assertTrue(template.getValue("assetName").jsonPrimitive.content.matches(Regex("foster\\.[0-9a-f]{8}\\.png")))
+        val image = javax.imageio.ImageIO.read(client.get("/api/dev/games/game/templates/foster/image") { bearerAuth(writer) }.readRawBytes().inputStream())
+        assertEquals(40 to 40, image.width to image.height)
+        // A wide one with a reason is kept; the same picture under another name is pointed out.
+        assertEquals(HttpStatusCode.Created, send(HttpMethod.Post, "/api/dev/games/game/templates", cut("wide", "[0,50,100,20]", ",\"reason\":\"整条标题\""), writer).status)
+        send(HttpMethod.Post, "/api/dev/games/game/templates", cut("again", "[0,0,40,40]", ",\"confirmedTexts\":[\"寄养\"]"), writer)
+        val listed = Json.parseToJsonElement(get("/api/dev/games/game/templates", writer).bodyAsText()).jsonArray.associateBy { it.jsonObject.getValue("id").jsonPrimitive.content }
+        assertEquals(JsonArray(listOf(JsonPrimitive("again"))), listed.getValue("foster").jsonObject["sameAs"])
+        // Browsers send DELETE without a length.
+        assertEquals(HttpStatusCode.OK, client.delete("/api/dev/games/game/templates/again") { bearerAuth(writer) }.status)
+        assertEquals(HttpStatusCode.OK, client.delete("/api/dev/samples/$sample") { bearerAuth(writer) }.status)
+        assertEquals(HttpStatusCode.NotFound, get("/api/dev/samples/$sample", writer).status)
+    }
+
+    @Test fun publishingUploadsOnlyNewAssetsAndOldAppsKeepTheirVersion() = api(repo) {
+        val writer = signIn("writer")
+        val model = "model".toByteArray()
+        host.list += HostRelease(100, "models-1", false, listOf(HostAsset("det.onnx", model.size.toLong(), sha(model))))
+        client.post("/api/dev/games/game/samples") { bearerAuth(writer); contentType(ContentType.Image.PNG); setBody(png(64, 64)) }
+        val sample = Json.parseToJsonElement(get("/api/dev/games/game/samples", writer).bodyAsText()).jsonArray.single().jsonObject.getValue("id").jsonPrimitive.content
+        send(HttpMethod.Patch, "/api/dev/samples/$sample", """{"texts":[]}""", writer)
+        val template = body(send(HttpMethod.Post, "/api/dev/games/game/templates", """{"id":"plus","sample":"$sample","rect":[0,0,16,16]}""", writer))
+        // The same picture under a second name: each keeps its own attachment on every publish.
+        val twin = body(send(HttpMethod.Post, "/api/dev/games/game/templates", """{"id":"twin","sample":"$sample","rect":[0,0,16,16]}""", writer))
+        fun entry(t: JsonObject) = """{"id":"${t.getValue("id").jsonPrimitive.content}","assetName":"${t.getValue("assetName").jsonPrimitive.content}","bytes":${t.getValue("bytes")},"sha256":"${t.getValue("sha256").jsonPrimitive.content}"}"""
+        val resources = """[{"id":"det","assetName":"det.onnx","bytes":${model.size},"sha256":"${sha(model)}"},${entry(template)},${entry(twin)}]"""
+        val draft = Json.parseToJsonElement(bundle("control.wait")).jsonObject.let { JsonObject(it + ("resources" to Json.parseToJsonElement(resources))) }
+        send(HttpMethod.Put, "/api/dev/drafts/game", """{"baseVersion":"v1","body":$draft}""", writer)
+        val request = """{"version":"v1.2.0","changelog":"寄养","minApp":"0.2.0""""
+        val plan = body(send(HttpMethod.Post, "/api/dev/drafts/game/publish", "$request,\"dryRun\":true}", writer))
+        assertEquals(JsonPrimitive(false), plan["published"])
+        assertEquals(listOf("plus", "twin"), plan.getValue("uploads").jsonArray.map { it.jsonObject.getValue("id").jsonPrimitive.content })
+        assertEquals(HttpStatusCode.Forbidden, send(HttpMethod.Post, "/api/dev/drafts/game/publish", "$request}", signIn("reader")).status)
+        // Old Apps read the latest release and know nothing of assets kept elsewhere.
+        assertEquals(HttpStatusCode.BadRequest, send(HttpMethod.Post, "/api/dev/drafts/game/publish", "$request,\"latest\":true}", writer).status)
+        assertEquals(JsonPrimitive("models-1"), plan.getValue("reused").jsonArray.single().jsonObject["release"])
+        assertEquals(1, host.list.size)
+        // A failed upload leaves no half-made release behind.
+        host.failUpload = true
+        assertEquals(HttpStatusCode.BadGateway, send(HttpMethod.Post, "/api/dev/drafts/game/publish", "$request}", writer).status)
+        assertEquals(1, host.list.size)
+        host.failUpload = false
+        val done = send(HttpMethod.Post, "/api/dev/drafts/game/publish", "$request}", writer)
+        assertEquals(HttpStatusCode.OK, done.status)
+        val release = host.list.last()
+        assertEquals("v1.2.0", release.tag)
+        assertFalse(release.draft)
+        assertEquals(false, host.latest)
+        assertTrue(host.bodies.getValue(release.id).lines().contains("min-app: 0.2.0"))
+        val published = Json.parseToJsonElement(host.files.getValue(release.id to "task-bundle.json").decodeToString()).jsonObject
+        val placed = published.getValue("resources").jsonArray.associateBy { it.jsonObject.getValue("id").jsonPrimitive.content }
+        assertEquals(JsonPrimitive("models-1"), placed.getValue("det").jsonObject["release"])
+        assertNull(placed.getValue("plus").jsonObject["release"])
+        assertEquals(setOf("task-bundle.json", template.getValue("assetName").jsonPrimitive.content, twin.getValue("assetName").jsonPrimitive.content),
+            host.files.keys.filter { it.first == release.id }.map { it.second }.toSet())
+        // The same version twice is refused; the next one reuses the template now in v1.2.0.
+        assertEquals(HttpStatusCode.Conflict, send(HttpMethod.Post, "/api/dev/drafts/game/publish", "$request}", writer).status)
+        // An interrupted publish leaves a draft of its version; publishing again clears it. A min-app line in the notes is dropped.
+        host.list += HostRelease(50, "v1.2.1", true, emptyList())
+        val next = body(send(HttpMethod.Post, "/api/dev/drafts/game/publish", """{"version":"v1.2.1","changelog":"修\nmin-app: 0.0.1","minApp":"0.2.0"}""", writer))
+        assertEquals(JsonPrimitive(true), next["published"])
+        assertEquals(listOf("v1.2.1"), host.list.filter { it.tag == "v1.2.1" }.map { it.tag })
+        assertFalse(host.bodies.getValue(host.list.last().id).contains("0.0.1"))
+        assertTrue(next.getValue("uploads").jsonArray.isEmpty())
+        assertEquals(3, next.getValue("reused").jsonArray.map { it.jsonObject.getValue("assetName").jsonPrimitive.content }.toSet().size)
+        assertEquals(setOf("models-1", "v1.2.0"), next.getValue("reused").jsonArray.map { it.jsonObject.getValue("release").jsonPrimitive.content }.toSet())
+    }
 }
+
+private fun sha(bytes: ByteArray) = java.security.MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }

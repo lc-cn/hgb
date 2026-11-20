@@ -213,4 +213,35 @@ class GitHubTaskSourceTest {
         assertTrue(returned.get()); assertEquals(1, calls.get())
         withTimeout(2_000) { while (client.dispatcher.runningCallsCount() != 0) delay(10) }
     }
+
+    @Test fun anAppSkipsReleasesThatNeedANewerAppAndFetchesSharedAssetsFromTheirRelease() = runBlocking {
+        val app = GitHubTaskSource({ TaskRepository("test-owner", "test-repo") }, server.url("/"), client, appVersion = "0.1.6")
+        val icon = "图"
+        val newer = release().replace("\"v-test\"", "\"v2\"").replace("\"draft\"", "\"body\":\"说明\\nmin-app: 0.2.0\",\"draft\"")
+        val older = release().replace("\"v-test\"", "\"v1\"").replace("\"draft\"", "\"body\":\"min-app: 0.1.6\",\"draft\"")
+        server.enqueue(MockResponse().setBody("[$newer,$older]"))
+        val version = app.latest()!!
+        assertEquals("v1", version.version)
+        assertEquals("/repos/test-owner/test-repo/releases?per_page=30", server.takeRequest().path)
+        // A resource kept in an earlier release is looked up there, once, and still checked against the manifest.
+        val shared = """{"tag_name":"v0","draft":false,"prerelease":false,"assets":[{"name":"icon.png","id":7,"size":${icon.toByteArray().size},"state":"uploaded","digest":"sha256:${hash(icon)}"}]}"""
+        server.enqueue(MockResponse().setBody(shared))
+        server.enqueue(MockResponse().setBody(icon))
+        server.enqueue(MockResponse().setBody(icon))
+        val resource = TaskResource("icon", "icon.png", icon.toByteArray().size.toLong(), hash(icon), release = "v0")
+        repeat(2) { ByteArrayOutputStream().also { app.downloadResource(version, resource, it); assertEquals(icon, it.toString(Charsets.UTF_8)) } }
+        assertEquals("/repos/test-owner/test-repo/releases/tags/v0", server.takeRequest().path)
+        assertEquals("/repos/test-owner/test-repo/releases/assets/7", server.takeRequest().path)
+        assertEquals("/repos/test-owner/test-repo/releases/assets/7", server.takeRequest().path)
+        // With nothing it can run, there is nothing new; an unreadable min-app line counts as "cannot run".
+        val garbled = older.replace("min-app: 0.1.6", "min-app: 0.2")
+        server.enqueue(MockResponse().setBody("[$newer,$garbled]"))
+        assertNull(app.latest())
+        server.takeRequest()
+        // The highest version wins over the most recently made one (a later fix for older Apps), and the last min-app line counts.
+        val fix = release().replace("\"v-test\"", "\"v1.1.1\"")
+        val line = release().replace("\"v-test\"", "\"v1.2.0\"").replace("\"draft\"", "\"body\":\"min-app: 9.9.9\\nmin-app: 0.1.0\",\"draft\"")
+        server.enqueue(MockResponse().setBody("[$fix,$line]"))
+        assertEquals("v1.2.0", app.latest()!!.version)
+    }
 }

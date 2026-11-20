@@ -102,11 +102,13 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig, workben
     routing {
         // The developer workbench: only for GitHub accounts that can write to the task repository.
         route("/api/dev") {
-            fun ApplicationCall.developer(): Caller {
+            fun ApplicationCall.developer(limit: Int = Workbench.MAX_BUNDLE_CHARS): Caller {
                 val caller = caller(service, config)
                 // Bodies are read whole, so their size is checked before anything is read.
-                if (request.httpMethod != HttpMethod.Get && request.contentLength() == null) throw ApiException(411, "length_required", "请求需带长度")
-                if ((request.contentLength() ?: 0) > Workbench.MAX_BUNDLE_CHARS) throw ApiException(413, "too_large", "请求太大")
+                // Only methods with a body; browsers send DELETE without a length.
+                if (request.httpMethod in setOf(HttpMethod.Post, HttpMethod.Put, HttpMethod.Patch) && request.contentLength() == null)
+                    throw ApiException(411, "length_required", "请求需带长度")
+                if ((request.contentLength() ?: 0) > limit) throw ApiException(413, "too_large", "请求太大")
                 (workbench ?: throw ApiException(503, "workbench_unconfigured", "服务端还没有配置任务仓库，开发工作台不可用")).requireDeveloper(caller)
                 return caller
             }
@@ -123,6 +125,45 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig, workben
                 get("/patches") {
                     val caller = call.developer()
                     call.respond(workbench!!.drafts.since(caller.userId, call.parameters.getOrFail("target"), call.request.queryParameters["since"]?.toLongOrNull() ?: 0))
+                }
+                // Publishing waits on GitHub, so it runs off the request threads.
+                post("/publish") {
+                    val caller = call.developer(); val request = call.receive<PublishRequest>()
+                    call.respond(kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        workbench!!.publisher.publish(caller.userId, call.parameters.getOrFail("target"), request) })
+                }
+            }
+            route("/games/{target}") {
+                // A sample is the PNG itself; its name and device ride in the query.
+                post("/samples") {
+                    val caller = call.developer(Assets.MAX_SAMPLE_BYTES)
+                    val q = call.request.queryParameters
+                    call.respond(HttpStatusCode.Created, workbench!!.assets.addSample(caller.userId, call.parameters.getOrFail("target"),
+                        q["name"].orEmpty(), q["device"].orEmpty(), call.receive<ByteArray>()))
+                }
+                get("/samples") { val caller = call.developer(); call.respond(workbench!!.assets.samples(caller.userId, call.parameters.getOrFail("target"))) }
+                get("/templates") { val caller = call.developer(); call.respond(workbench!!.assets.templatesOf(caller.userId, call.parameters.getOrFail("target"))) }
+                post("/templates") {
+                    val caller = call.developer()
+                    call.respond(HttpStatusCode.Created, workbench!!.assets.cut(caller.userId, call.parameters.getOrFail("target"), call.receive()))
+                }
+                get("/templates/{id}/image") {
+                    val caller = call.developer()
+                    call.respondBytes(workbench!!.assets.templateImage(caller.userId, call.parameters.getOrFail("target"), call.parameters.getOrFail("id")), ContentType.Image.PNG)
+                }
+                delete("/templates/{id}") {
+                    val caller = call.developer()
+                    workbench!!.assets.deleteTemplate(caller.userId, call.parameters.getOrFail("target"), call.parameters.getOrFail("id"))
+                    call.respond(mapOf("ok" to true))
+                }
+            }
+            route("/samples/{id}") {
+                get { val caller = call.developer(); call.respond(workbench!!.assets.sample(caller.userId, call.parameters.getOrFail("id"))) }
+                patch { val caller = call.developer(); call.respond(workbench!!.assets.changeSample(caller.userId, call.parameters.getOrFail("id"), call.receive())) }
+                delete { val caller = call.developer(); workbench!!.assets.deleteSample(caller.userId, call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
+                get("/image") {
+                    val caller = call.developer()
+                    call.respondBytes(workbench!!.assets.sampleImage(caller.userId, call.parameters.getOrFail("id")), ContentType.Image.PNG)
                 }
             }
         }

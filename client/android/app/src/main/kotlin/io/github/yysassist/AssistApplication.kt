@@ -121,7 +121,7 @@ class AssistApplication : Application() {
             GitHubDeviceAuthorization(BuildConfig.GITHUB_CLIENT_ID, client), GitHubUserApi(client), scope)
         taskSource = TaskSourceSetting(this, BuildConfig.TASK_REPO)
         standby = io.github.yysassist.standby.StandbyMode(this, scope)
-        val source = GitHubTaskSource({ taskSource.current.value }, "https://api.github.com/".toHttpUrl(), client, github)
+        val source = GitHubTaskSource({ taskSource.current.value }, "https://api.github.com/".toHttpUrl(), client, github, BuildConfig.VERSION_NAME)
         taskUpdates = TaskUpdates(library, source, scope)
         // The APK is tens of megabytes on a slow link: no overall limit, but a stalled read still fails.
         val downloads = client.newBuilder().callTimeout(0, TimeUnit.SECONDS).readTimeout(60, TimeUnit.SECONDS).build()

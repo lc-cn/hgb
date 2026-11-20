@@ -58,7 +58,8 @@ data class CheckResult(val ok: Boolean, val issues: List<CheckIssue>, val tasks:
  * The server side of the developer workbench. Checks run the engine's own reader with the App's own action contracts,
  * so what passes here is what the App will accept.
  */
-class Workbench(private val db: Database, private val permissions: RepoPermissions?, private val clock: () -> Long = System::currentTimeMillis) {
+class Workbench(private val db: Database, private val permissions: RepoPermissions?, files: java.io.File,
+                releases: ReleaseHost? = null, private val clock: () -> Long = System::currentTimeMillis) {
     private val provider = object : ActionProvider {
         override val contracts = screenContracts
         override fun open(attempt: StepAttempt, bundle: TaskBundle): ActionSession = error("服务端不执行动作")
@@ -68,6 +69,8 @@ class Workbench(private val db: Database, private val permissions: RepoPermissio
     /** (user, GitHub account) -> allowed, when decided. Keyed by the account so unlinking or relinking takes effect at once. */
     private val decided = ConcurrentHashMap<Pair<String, String>, Pair<Boolean, Long>>()
     val drafts = Drafts(db, clock)
+    val assets = Assets(db, files, clock)
+    val publisher = Publisher(this, drafts, assets, releases, clock)
 
     /** Only a GitHub account that can write to the task repository may use the workbench. */
     fun requireDeveloper(caller: Caller) {

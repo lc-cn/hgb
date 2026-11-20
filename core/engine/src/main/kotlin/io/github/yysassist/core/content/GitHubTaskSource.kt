@@ -20,6 +20,7 @@ import java.security.MessageDigest
 import io.github.yysassist.core.auth.GitHubToken
 import io.github.yysassist.core.auth.GitHubAuthorization
 import io.github.yysassist.core.auth.GitHubAuthException
+import io.github.yysassist.core.update.AppReleases.Companion.isNewer
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -46,13 +47,17 @@ class GitHubTaskSource(
     private val apiBase: HttpUrl,
     private val calls: Call.Factory,
     private val authorization: GitHubAuthorization = GitHubAuthorization { null },
+    /** This App's version; null reads the newest release whatever it needs. */
+    private val appVersion: String? = null,
 ) {
     constructor(repository: TaskRepository, apiBase: HttpUrl, calls: Call.Factory, authorization: GitHubAuthorization = GitHubAuthorization { null }) :
         this({ repository }, apiBase, calls, authorization)
     private val repository: TaskRepository get() = repositoryOf()
     private val json = Json { ignoreUnknownKeys = true }
     @Serializable private data class Repository(val full_name: String)
-    @Serializable private data class Release(val tag_name: String, val draft: Boolean, val prerelease: Boolean, val assets: List<Asset>)
+    @Serializable private data class Release(val tag_name: String, val draft: Boolean, val prerelease: Boolean, val assets: List<Asset>, val body: String? = null)
+    /** Assets of other releases a version's resources point at, by tag. */
+    private val elsewhere = java.util.concurrent.ConcurrentHashMap<String, List<RemoteReleaseAsset>>()
     @Serializable private data class Asset(val id: Long, val name: String, val state: String, val size: Long, val digest: String? = null)
     private enum class ResponseOrigin { API, REDIRECT, NO_RESPONSE }
     private data class Payload(val code: Int, val bytes: ByteArray, val origin: ResponseOrigin)
@@ -61,7 +66,50 @@ class GitHubTaskSource(
         if (response.request.url.let { it.scheme == request.url.scheme && it.host == request.url.host && it.port == request.url.port })
             ResponseOrigin.API else ResponseOrigin.REDIRECT
 
+    /** The last `min-app:` line (the publisher writes it after the notes); "" when the line is there but unreadable. */
+    private fun minimumApp(body: String?): String? = body?.lineSequence()?.map { it.trim() }
+        ?.lastOrNull { it.startsWith(MIN_APP_PREFIX) }?.removePrefix(MIN_APP_PREFIX)?.trim()
+        ?.let { if (it.matches(Regex("[0-9]+\\.[0-9]+\\.[0-9]+"))) it else "" }
+    private fun runs(release: Release, app: String): Boolean = when (val needed = minimumApp(release.body)) {
+        null -> true
+        "" -> false
+        else -> !isNewer(needed, app)
+    }
+    /** Tag as numbers (`v1.2.0` -> 1, 2, 0), to pick the highest version rather than the most recently made release. */
+    private fun order(tag: String): List<Int>? = tag.removePrefix("v").split('.').map { it.toIntOrNull() ?: return null }
+    /** Unreadable tags sort lowest; equal ones fall back to list order (newest first). */
+    private fun compareTags(a: List<Int>?, b: List<Int>?): Int = when {
+        a == null || b == null -> (if (a == null) 0 else 1) - (if (b == null) 0 else 1)
+        else -> (0 until maxOf(a.size, b.size)).map { (a.getOrNull(it) ?: 0).compareTo(b.getOrNull(it) ?: 0) }.firstOrNull { it != 0 } ?: 0
+    }
+    private fun version(release: Release): RemoteTaskVersion {
+        val assets = release.assets.filter { it.name == BUNDLE_ASSET }
+        if (assets.size != 1) invalidResponse("远端版本未提供完整任务文件")
+        val asset = assets.single()
+        val digest = asset.digest?.removePrefix("sha256:")
+        if (asset.id <= 0 || asset.size <= 0 || asset.state != "uploaded" ||
+            asset.digest?.startsWith("sha256:") != true || digest?.matches(Regex("[0-9a-f]{64}")) != true)
+            invalidResponse("远端任务文件缺少有效摘要或尚未上传完成")
+        return RemoteTaskVersion(release.tag_name, asset.id, asset.size, digest,
+            release.assets.map { RemoteReleaseAsset(it.id, it.name, it.state, it.size, it.digest) })
+    }
+
+    /**
+     * The newest version this App can run. A release whose notes carry a line `min-app: x.y.z` newer than [appVersion]
+     * is skipped, so an App keeps the last version it understands instead of pulling one it would reject.
+     */
     suspend fun latest(): RemoteTaskVersion? {
+        appVersion?.let { app ->
+            val listed = get("releases", "per_page" to "30")
+            if (listed.code == 404) throw TaskSourceException(TaskSourceProblem.REPOSITORY_UNAVAILABLE, "任务仓库不存在或当前不可访问", 404)
+            ensureSuccess(listed)
+            val eligible = decode<List<Release>>(listed.bytes).filter { !it.draft && !it.prerelease && it.tag_name.isNotBlank() && runs(it, app) }
+            // A fix for older Apps published after a newer line must not pull newer Apps back to it.
+            val release = eligible.withIndex().maxWithOrNull { x, y ->
+                compareTags(order(x.value.tag_name), order(y.value.tag_name)).takeIf { it != 0 } ?: (y.index - x.index)
+            }?.value ?: return null
+            return version(release)
+        }
         val response = get("releases/latest")
         if (response.code == 404) {
             // GitHub also uses 404 for inaccessible repositories. Verify access before claiming absence.
@@ -79,15 +127,7 @@ class GitHubTaskSource(
         ensureSuccess(response)
         val release = decode<Release>(response.bytes)
         if (release.draft || release.prerelease || release.tag_name.isBlank()) invalidResponse("任务源没有返回有效的正式版本")
-        val assets = release.assets.filter { it.name == BUNDLE_ASSET }
-        if (assets.size != 1) invalidResponse("远端版本未提供完整任务文件")
-        val asset = assets.single()
-        val digest = asset.digest?.removePrefix("sha256:")
-        if (asset.id <= 0 || asset.size <= 0 || asset.state != "uploaded" ||
-            asset.digest?.startsWith("sha256:") != true || digest?.matches(Regex("[0-9a-f]{64}")) != true)
-            invalidResponse("远端任务文件缺少有效摘要或尚未上传完成")
-        return RemoteTaskVersion(release.tag_name, asset.id, asset.size, digest,
-            release.assets.map { RemoteReleaseAsset(it.id, it.name, it.state, it.size, it.digest) })
+        return version(release)
     }
 
     suspend fun download(version: RemoteTaskVersion): String {
@@ -106,8 +146,19 @@ class GitHubTaskSource(
 
     /** Streams data into caller-owned staging. Cancellation waits for the callback to stop using the sink. */
     suspend fun downloadResource(version: RemoteTaskVersion, resource: TaskResource, sink: OutputStream) {
-        val asset = version.assets.filter { it.name == resource.assetName }.singleOrNull()
-            ?: invalidResponse("远端版本缺少唯一的资源附件：${resource.assetName}")
+        val key = resource.release?.takeIf { it != version.version }?.let { "${repository.fullName}/$it" }
+        val assets = resource.release?.takeIf { it != version.version }?.let { tag ->
+            elsewhere[key!!] ?: run {
+                // The bundle checks tags to letters, digits and . _ -, so the tag is one plain path segment.
+                val response = get("releases/tags/$tag")
+                ensureSuccess(response)
+                val release = decode<Release>(response.bytes)
+                if (release.draft || release.tag_name != tag) invalidResponse("资源所在的版本不可用：$tag")
+                release.assets.map { RemoteReleaseAsset(it.id, it.name, it.state, it.size, it.digest) }.also { elsewhere[key] = it }
+            }
+        } ?: version.assets
+        val asset = assets.filter { it.name == resource.assetName }.singleOrNull()
+            ?: run { key?.let(elsewhere::remove); invalidResponse("远端版本缺少唯一的资源附件：${resource.assetName}") }
         if (asset.id <= 0 || asset.state != "uploaded" || asset.bytes != resource.bytes ||
             asset.digest != "sha256:${resource.sha256}") invalidResponse("资源附件与任务清单不一致：${resource.assetName}")
         val request = request("releases/assets/${asset.id}", accept = "application/octet-stream")
@@ -199,5 +250,9 @@ class GitHubTaskSource(
         if (payload.code != 200) throw TaskSourceException(TaskSourceProblem.HTTP, "任务源请求失败（HTTP ${payload.code}）", payload.code)
     }
     private fun invalidResponse(message: String): Nothing = throw TaskSourceException(TaskSourceProblem.INVALID_RESPONSE, message)
-    companion object { const val BUNDLE_ASSET = "task-bundle.json" }
+    companion object {
+        const val BUNDLE_ASSET = "task-bundle.json"
+        /** A line in the release notes naming the oldest App that can run the version. */
+        const val MIN_APP_PREFIX = "min-app:"
+    }
 }

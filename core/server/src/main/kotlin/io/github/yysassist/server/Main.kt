@@ -27,7 +27,10 @@ fun main() {
         channelHttp = http)
     // YYS_TASK_REPO_TOKEN: a token the task repository's owner issued for this server (reads collaborator permissions,
     // later publishes releases). Without it the developer workbench answers "not configured".
-    val workbench = Workbench(database, env["YYS_TASK_REPO_TOKEN"]?.takeIf { it.isNotBlank() }?.let {
-        GitHubRepoPermissions(env["YYS_TASK_REPO"] ?: "lc-cn/hgb-tasks", it) })
+    // YYS_DATA_DIR: where samples and templates are kept.
+    val token = env["YYS_TASK_REPO_TOKEN"]?.takeIf { it.isNotBlank() }
+    val taskRepo = env["YYS_TASK_REPO"] ?: "lc-cn/hgb-tasks"
+    val workbench = Workbench(database, token?.let { GitHubRepoPermissions(taskRepo, it) }, java.io.File(env["YYS_DATA_DIR"] ?: "yys-data"),
+        token?.let { GitHubReleaseHost(taskRepo, it) })
     embeddedServer(Netty, host = env["YYS_HOST"] ?: "127.0.0.1", port = env["YYS_PORT"]?.toInt() ?: 8787) { cloudModule(service, config, workbench) }.start(wait = true)
 }

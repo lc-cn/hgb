@@ -40,6 +40,13 @@ class Database(path: String) : AutoCloseable {
                 base_version TEXT NOT NULL, revision INTEGER NOT NULL, body TEXT NOT NULL, updated_at INTEGER NOT NULL, PRIMARY KEY (user_id, target_id))""",
             """CREATE TABLE IF NOT EXISTS dev_patches (user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, target_id TEXT NOT NULL,
                 revision INTEGER NOT NULL, source TEXT NOT NULL, at INTEGER NOT NULL, patches TEXT NOT NULL, PRIMARY KEY (user_id, target_id, revision))""",
+            // Samples and templates; the images themselves are files.
+            """CREATE TABLE IF NOT EXISTS dev_samples (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, target_id TEXT NOT NULL,
+                name TEXT NOT NULL, device TEXT NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL, bytes INTEGER NOT NULL, sha256 TEXT NOT NULL,
+                texts TEXT NOT NULL, private_regions TEXT NOT NULL, recognized INTEGER NOT NULL, created_at INTEGER NOT NULL)""",
+            """CREATE TABLE IF NOT EXISTS dev_templates (user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, target_id TEXT NOT NULL, id TEXT NOT NULL,
+                asset_name TEXT NOT NULL, bytes INTEGER NOT NULL, sha256 TEXT NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL, sample_id TEXT,
+                rect TEXT NOT NULL, reason TEXT, created_at INTEGER NOT NULL, PRIMARY KEY (user_id, target_id, id))""",
             """CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE, email_verified INTEGER NOT NULL DEFAULT 0,
                 password_hash TEXT, created_at INTEGER NOT NULL, time_zone TEXT NOT NULL DEFAULT 'Asia/Shanghai')""",
             """CREATE TABLE IF NOT EXISTS identities (provider TEXT NOT NULL, subject TEXT NOT NULL, login TEXT, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

@@ -31,7 +31,9 @@ data class TaskBundle(
 data class VisionProfile(val id: String, val targetId: String, val packageName: String, val recognizer: String, val models: Map<String, String>)
 /** Data attachments from the same Release, never executable capabilities or arbitrary URLs. */
 @Serializable
-data class TaskResource(val id: String, val assetName: String, val bytes: Long, val sha256: String)
+data class TaskResource(val id: String, val assetName: String, val bytes: Long, val sha256: String,
+    /** The release (tag) holding the asset when it is not this version's own: unchanged assets are uploaded once. */
+    val release: String? = null)
 @Serializable
 enum class IdentityPolicy { NONE, OPTIONAL, REQUIRED }
 @Serializable
@@ -222,6 +224,7 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
             if (!resource.assetName.matches(Regex("[A-Za-z0-9][A-Za-z0-9._-]*")) || resource.assetName == "task-bundle.json")
                 issue(location, "资源必须引用独立的 Release 附件名称")
             if (resource.bytes <= 0 || !resource.sha256.matches(Regex("[0-9a-f]{64}"))) issue(location, "资源缺少有效长度或 SHA-256")
+            if (resource.release != null && !resource.release.matches(Regex("[A-Za-z0-9][A-Za-z0-9._-]{0,63}"))) issue(location, "资源所在版本名不合法")
         }
         if (bundle.resources.groupBy { it.sha256 }.values.any { resources -> resources.map { it.bytes }.distinct().size != 1 })
             issue("resources", "相同摘要的资源长度不一致")
