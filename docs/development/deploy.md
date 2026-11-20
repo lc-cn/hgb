@@ -129,6 +129,23 @@ Cloudflare 会断开 100 秒没有数据的连接；事件流每 15 秒发一次
 
 App 的“云端控制”里，服务器地址填 `https://api-hgb.l2cl.link`。正式版只接受 https 地址。
 
+### 发布安卓版
+
+推送形如 `v1.2.3` 的标签，GitHub Actions 的“Release App”工作流（`.github/workflows/release-app.yml`）会：
+
+1. 装好 SDK 37、构建工具 36、NDK 和 CMake，按 `client/android/vision/inputs.lock.json` 下载并核对 MaaFramework 原生库；
+2. 跑引擎、共用模块和 App 的单元测试；
+3. 用仓库 Secret `HGB_ANDROID_KEYSTORE`（base64 的 PKCS12）和 `HGB_ANDROID_KEYSTORE_PASSWORD` 签名打包，版本名取标签（`1.2.3`），版本号是 `1×10000 + 2×100 + 3`；
+4. 核对签名证书后，在本仓库建同名发布，附 `hgb-1.2.3.apk` 和它的 `.sha256`。
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+签名密钥：别名 `hgb`，证书 SHA-256 `B4:8C:9F:15:D0:9C:69:77:DB:0A:0B:2F:9D:DA:AF:7D:DA:6D:2A:D0:FE:54:A2:D3:96:41:AE:3B:D7:20:07:77`。密钥文件和密码由维护者离线保管，丢失后无法再发布能覆盖安装的更新。原生库在 APK 里压缩存放（约 67 MB），安装时由系统解压。
+
+本仓库的发布只放安装包；任务包发布在 `lc-cn/hgb-tasks`（设计文档 C46）。
+
 ## 还没解决的
 
 - **发信服务**：首次上线不接（设计文档 C45），只用 GitHub 登录。服务端没有发信服务时，`/api/auth/options` 返回 `email: false`，网页和 App 的登录页只显示 GitHub 登录，通知渠道里也没有“邮件”。以后接发信时走 SMTP。`YYS_MAIL_MODE=console` 只是把验证码打印到服务端日志，仅限本地开发，线上不要用。

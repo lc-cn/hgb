@@ -18,12 +18,27 @@ android {
         applicationId = "io.github.yysassist"
         minSdk = 30
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0-dev"
+        // A release build gets these from the tag (see .github/workflows/release-app.yml); local builds stay dev.
+        versionCode = providers.gradleProperty("appVersionCode").orNull?.toInt() ?: 1
+        versionName = providers.gradleProperty("appVersionName").orNull ?: "0.1.0-dev"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "GITHUB_CLIENT_ID", JsonOutput.toJson(githubClientId))
     }
     buildFeatures { compose = true; buildConfig = true }
+    // The release key never lives in the repository: CI writes it from the HGB_ANDROID_KEYSTORE secret and passes its
+    // path and password here. Without them only debug builds are signed.
+    val releaseStore = providers.environmentVariable("HGB_SIGNING_STORE_FILE").orNull
+    if (releaseStore != null) signingConfigs.create("release") {
+        storeFile = file(releaseStore)
+        storeType = "pkcs12"
+        storePassword = providers.environmentVariable("HGB_SIGNING_STORE_PASSWORD").get()
+        keyAlias = providers.environmentVariable("HGB_SIGNING_KEY_ALIAS").orElse("hgb").get()
+        keyPassword = storePassword
+    }
+    buildTypes.getByName("release") { if (releaseStore != null) signingConfig = signingConfigs.getByName("release") }
+    // The vision libraries are ~140 MB stored, ~40 MB compressed. Compressing them makes the download small; Android
+    // extracts them at install, which costs about the same space on the phone.
+    packaging { jniLibs { useLegacyPackaging = true } }
     sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

@@ -1,10 +1,10 @@
 {
   "formatVersion": 1,
-  "status": "proposed-settings-user-reported-created-and-installed-live-auth-unverified",
+  "status": "installed-on-lc-cn-hgb-tasks-user-reported-2026-11-20",
   "userReportedApp": {
     "appId": 5794664,
     "name": "yys-helper",
-    "installedRepository": "lc-cn/hgb",
+    "installedRepository": "lc-cn/hgb-tasks",
     "configuredRepositoryPermissions": {
       "contents": "write"
     }
