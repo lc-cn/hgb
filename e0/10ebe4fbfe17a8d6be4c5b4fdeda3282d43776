@@ -1,0 +1,40 @@
+client/web/src/components/ui.tsx
+  s_fae32e7f0efe76::t_7a4acd8a8d9dce 141-156,166-167
+  s_fae32e7f0efe76::t_8c5e9399dc9745 1
+client/android/app/build.gradle.kts
+  s_fae32e7f0efe76::t_ebe172e5624415 54-57
+tools/tasks/chores_1120.py
+  s_fae32e7f0efe76::t_05319c445bd4e0 66-69,72,88-89,92-93
+  s_fae32e7f0efe76::t_7d74b96b29e87b 1-28,30-43,50-60,62-65,70-71,80-87,90-91,94-96,98-106,108-112,114-119,123,128-137,140-179,184-203
+  s_fae32e7f0efe76::t_a99ba854fbe490 120-122
+  s_fae32e7f0efe76::t_30e4c7887f6d73 180-183
+  s_fae32e7f0efe76::t_9a607b92c1cd3f 44-49,97,107
+  s_fae32e7f0efe76::t_f85d947e227016 29,124-127
+  s_fae32e7f0efe76::t_02f3a2d71a8a0d 61
+  s_fae32e7f0efe76::t_4318ef11d0ec4c 73-79,113
+  s_fae32e7f0efe76::t_a028a35f84f791 138-139
+client/site/src/content/docs/docs/games/onmyoji.md
+  s_fae32e7f0efe76::t_ea8b1df0c57a49 8-13,15,29-34
+client/web/src/components/ui.module.css
+  s_fae32e7f0efe76::t_7a4acd8a8d9dce 92
+tools/tasks/build_release.py
+  s_fae32e7f0efe76::t_f6216913bac51d 25,61,73-80
+  s_fae32e7f0efe76::t_87a39d2ec4053a 85-90
+  s_fae32e7f0efe76::t_c10b5c0fad72f3 8-9,24,81-84,124,126
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e010ebe4fbfe17a8d6be4c5b4fdeda3282d43776",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
