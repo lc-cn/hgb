@@ -39,7 +39,7 @@ fun MePage(local: LocalParts) = Page {
     var offer by remember { mutableStateOf<io.github.yysassist.protocol.MergeOffer?>(null) }
     var deleting by remember { mutableStateOf(false) }
     val who = account?.email ?: account?.githubLogin ?: ""
-    if (unlinking) Confirm("解绑 GitHub？之后只能用邮箱登录。", "解绑", { console.act { console.api.unlinkGitHub(); account = console.api.me() } }, { unlinking = false })
+    if (unlinking) Confirm("解绑 GitHub？之后只能用邮箱登录。", "解绑", { console.act { console.api.unlinkGitHub(); account = console.api.me().also(console.accountChanged) } }, { unlinking = false })
     unbinding?.let { (id, name) -> Confirm("解绑“$name”？这台设备会下线，正在运行的作业结果将标记为未知。", "解绑", { console.act { console.api.removeDevice(id) } }, { unbinding = null }) }
     if (leaving) Confirm("退出登录？这台设备会停止接收任务。", "退出登录", { console.act { local.signOut() } }, { leaving = false })
 
@@ -63,7 +63,7 @@ fun MePage(local: LocalParts) = Page {
                 }
                 if (account != null && account?.email == null && !binding) HgbButton("绑定邮箱", { binding = true }, small = true)
             }
-            if (binding && offer == null) BindEmail({ account = it; binding = false }, { offer = it })
+            if (binding && offer == null) BindEmail({ account = it; console.accountChanged(it); binding = false }, { offer = it })
             ListRow(last = true) {
                 Column(Modifier.weight(1f)) {
                     Text("GitHub", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
@@ -73,7 +73,7 @@ fun MePage(local: LocalParts) = Page {
             }
         }
     }
-    offer?.let { current -> MergeCard(current) { merged -> offer = null; binding = false; if (merged != null) account = merged } }
+    offer?.let { current -> MergeCard(current) { merged -> offer = null; binding = false; if (merged != null) { account = merged; console.accountChanged(merged) } } }
     Block("偏好") {
         Card {
             local.appearance?.let { (look, choose) ->

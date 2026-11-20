@@ -14,7 +14,14 @@ import io.github.yysassist.shared.console.ConsoleStore
 import io.github.yysassist.shared.console.ConsoleTransport
 import io.github.yysassist.shared.pages.*
 import io.github.yysassist.shared.ui.*
+import io.github.yysassist.shared.console.Connection
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.IOException
 
@@ -65,7 +72,25 @@ class ConsoleSession(transport: ConsoleTransport) {
     val store = ConsoleStore(transport)
     val api = ConsoleApi(transport)
     var nav = ConsoleNav(); private set
-    fun reset() { store.clear(); nav = ConsoleNav() }
+    private val mutableAccount = MutableStateFlow<AccountView?>(null)
+    /** Who is signed in, once read; kept here so a recreated window never shows it blank. */
+    val account: StateFlow<AccountView?> = mutableAccount.asStateFlow()
+    fun accountChanged(account: AccountView) { mutableAccount.value = account }
+    /**
+     * Reads who is signed in each time the stream (re)connects, trying again every [retryMillis] while it stays
+     * connected, so one failed request never leaves 我的 blank. Runs while the console is shown.
+     */
+    suspend fun followAccount(retryMillis: Long = 3_000, failed: (Exception) -> Unit = {}) {
+        store.connection.collectLatest { state ->
+            if (state != Connection.LIVE) return@collectLatest
+            while (true) {
+                try { mutableAccount.value = api.me(); return@collectLatest }
+                catch (cancelled: CancellationException) { throw cancelled }
+                catch (problem: Exception) { failed(problem); delay(retryMillis) }
+            }
+        }
+    }
+    fun reset() { store.clear(); nav = ConsoleNav(); mutableAccount.value = null }
 }
 
 /** What every page reads: the live data, who is signed in, how to move and how to act. */
@@ -74,6 +99,8 @@ class ConsoleContext(
     val api: ConsoleApi,
     val nav: ConsoleNav,
     val account: AccountView?,
+    /** Tells the session the account changed here (an email bound, another account merged in). */
+    val accountChanged: (AccountView) -> Unit,
     /** This device's id on the server, on an end that runs games; its card says “这台手机”. */
     val thisDevice: String?,
     private val scope: CoroutineScope,
@@ -110,14 +137,16 @@ class LocalParts(
 
 /** The signed-in console, the same pages on every end (C40). */
 @Composable
-fun ConsoleApp(store: ConsoleStore, api: ConsoleApi, nav: ConsoleNav, account: AccountView?, thisDevice: String?, local: LocalParts = LocalParts()) {
+fun ConsoleApp(session: ConsoleSession, thisDevice: String?, local: LocalParts = LocalParts()) {
+    val store = session.store; val api = session.api; val nav = session.nav
+    val account by session.account.collectAsState()
     val data by store.data.collectAsState()
     val connection by store.connection.collectAsState()
     val loaded by store.loaded.collectAsState()
     LaunchedEffect(store) { store.follow() }
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
-    val context = ConsoleContext(data, api, nav, account, thisDevice, scope, snackbar)
+    val context = ConsoleContext(data, api, nav, account, session::accountChanged, thisDevice, scope, snackbar)
     CompositionLocalProvider(LocalConsole provides context) {
         val route = nav.current
         ConsoleShell(route.section, nav::open, connection, local.entries, (route as? Route.Local)?.id, nav::openLocal, local.runStrip) {

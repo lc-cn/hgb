@@ -15,11 +15,9 @@ import androidx.compose.ui.unit.dp
 import io.github.yysassist.*
 import io.github.yysassist.core.cloud.CloudState
 import io.github.yysassist.core.execution.*
-import io.github.yysassist.protocol.AccountView
 import io.github.yysassist.shared.ConsoleApp
 import io.github.yysassist.shared.LocalParts
 import io.github.yysassist.shared.Route
-import io.github.yysassist.shared.console.Connection
 import io.github.yysassist.shared.ui.HgbIcons
 import io.github.yysassist.shared.ui.HgbMark
 import io.github.yysassist.shared.ui.LocalEntry
@@ -57,15 +55,11 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
 @Composable
 private fun SignedIn(application: AssistApplication, mode: ThemeMode, navigation: AppNavigation?, navigationHandled: () -> Unit) {
     val session = application.console
-    val store = session.store; val api = session.api; val nav = session.nav
+    val nav = session.nav
     val scope = rememberCoroutineScope()
-    var account by remember { mutableStateOf<AccountView?>(null) }
     var thisDevice by remember { mutableStateOf<String?>(null) }
-    // Read again each time the stream (re)connects, so a start without the network fills in once it is back.
-    val connection by store.connection.collectAsState()
-    LaunchedEffect(connection == Connection.LIVE) {
-        if (connection == Connection.LIVE) account = try { api.me() } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled } catch (_: Exception) { account }
-    }
+    // Who is signed in lives in the session, read on every (re)connect until it succeeds.
+    LaunchedEffect(session) { session.followAccount { problem -> android.util.Log.w("hgb", "reading the account failed: $problem") } }
     LaunchedEffect(application) { while (thisDevice == null) { thisDevice = application.cloud.registeredDevice(); if (thisDevice == null) kotlinx.coroutines.delay(1_000) } }
     // A notification or the floating ball asking for a task's settings opens 开发, where this phone's task list is.
     LaunchedEffect(navigation?.id) { if (navigation != null) nav.openLocal(DEVELOP) }
@@ -90,7 +84,7 @@ private fun SignedIn(application: AssistApplication, mode: ThemeMode, navigation
         },
         signOut = { application.cloud.signOut() },
     )
-    ConsoleApp(store, api, nav, account, thisDevice, local)
+    ConsoleApp(session, thisDevice, local)
 }
 
 /** Signed out: sign in to the server, or use 开发 on this phone alone (it works offline). */
