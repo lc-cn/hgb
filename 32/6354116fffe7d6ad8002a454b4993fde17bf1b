@@ -1,0 +1,39 @@
+tools/qa/stage_daily_gift_draft.py
+  s_fae32e7f0efe76::t_16adce907603d2 100-102,167,181-184,432
+  s_fae32e7f0efe76::t_b4ef85c9df432b 64-65
+  s_fae32e7f0efe76::t_ce8d9193b61c9e 107-111,202-204,210-211,361-362,374,384
+core/engine/src/test/kotlin/io/github/yysassist/core/execution/StepProgramTest.kt
+  s_fae32e7f0efe76::t_588b988d3d81e1 99,106-107
+  s_fae32e7f0efe76::t_2387780b9cd0e5 93,95-96
+  s_fae32e7f0efe76::t_2f551eb8d9ac37 79-92,94,97-98,100-105,108-109
+core/engine/src/main/kotlin/io/github/yysassist/core/execution/StepWorker.kt
+  s_fae32e7f0efe76::t_94389f022726f1 28-34,51,54-55,101,157-160,182-184,205-206
+  s_fae32e7f0efe76::t_f4d29cb5348396 52-53,104-106,112,202-204
+core/engine/src/main/kotlin/io/github/yysassist/core/cloud/CloudAgent.kt
+  s_fae32e7f0efe76::t_f4d29cb5348396 125-126,597
+  s_fae32e7f0efe76::t_94389f022726f1 123-124
+core/engine/src/main/kotlin/io/github/yysassist/core/content/StepProgram.kt
+  s_fae32e7f0efe76::t_d79dc9c0f820f3 142-143
+tools/tasks/chores_1120.py
+  s_fae32e7f0efe76::t_ce8d9193b61c9e 53,85,92,151,172-173,193,252
+  s_fae32e7f0efe76::t_f4d29cb5348396 146,186,216,234
+  s_fae32e7f0efe76::t_4c765d62085536 63-65,67-69
+  s_fae32e7f0efe76::t_40b7d89ccbdf6c 35,169-170,174-178
+  s_fae32e7f0efe76::t_b4ef85c9df432b 141-142
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "326354116fffe7d6ad8002a454b4993fde17bf1b",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
