@@ -1,0 +1,26 @@
+client/android/app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt
+  s_fae32e7f0efe76::t_5eaca88f070a91 106-138,140-163
+core/engine/src/main/kotlin/io/github/yysassist/core/cloud/CloudAgent.kt
+  s_fae32e7f0efe76::t_8858cd7cf2b3fa 249-260
+client/shared/src/commonMain/kotlin/io/github/yysassist/shared/pages/MePage.kt
+  s_fae32e7f0efe76::t_3ac8b0a7db5d91 105
+client/shared/src/commonMain/kotlin/io/github/yysassist/shared/pages/SignInPage.kt
+  s_fae32e7f0efe76::t_8241a672609470 34-37,94,108-110,120,122,125,131,138,140,142,148,150,154,161
+  s_fae32e7f0efe76::t_61554ef17fe41d 1-33,38-93,95-107,111-119,121,123-124,126-130,132-137,139,141,143-147,149,151-153,155-160,162-163
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3b8bd1fdddf35934226debadc7294a04ca5f0e14",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
