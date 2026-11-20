@@ -32,6 +32,7 @@ internal class DeviceExecutionReadiness(
             DeviceAvailability.WRONG_FOREGROUND -> if (opensTarget) StepStartCondition.Ready else StepStartCondition.Waiting(WAIT_FOREGROUND)
             DeviceAvailability.DISCONNECTED -> StepStartCondition.Waiting(WAIT_ACCESSIBILITY)
             DeviceAvailability.DISPLAY_UNAVAILABLE -> StepStartCondition.Waiting(WAIT_DISPLAY)
+            DeviceAvailability.LOCKED -> StepStartCondition.Waiting(WAIT_UNLOCK)
             DeviceAvailability.UNCONFIRMED -> StepStartCondition.Unconfirmed("前台应用暂无法确认，请检查目标应用与授权")
         }
     }
@@ -41,4 +42,5 @@ internal class DeviceExecutionReadiness(
 internal const val WAIT_FOREGROUND = "等待目标应用回到前台"
 internal const val WAIT_ACCESSIBILITY = "等待无障碍连接，请在设置的运行环境中授权"
 internal const val WAIT_DISPLAY = "等待屏幕可用"
-internal val CAPABILITY_WAITS = setOf(WAIT_FOREGROUND, WAIT_ACCESSIBILITY, WAIT_DISPLAY)
+internal const val WAIT_UNLOCK = "等待解锁手机"
+internal val CAPABILITY_WAITS = setOf(WAIT_FOREGROUND, WAIT_ACCESSIBILITY, WAIT_DISPLAY, WAIT_UNLOCK)

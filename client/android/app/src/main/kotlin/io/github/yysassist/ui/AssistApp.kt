@@ -76,7 +76,7 @@ private fun SignedIn(application: AssistApplication, mode: ThemeMode, navigation
                 { id, resume -> application.executor.submit(id?.let { ExecutorCommand.ResumeCurrent(it, resume) } ?: ExecutorCommand.Resume(resume)) },
                 { executor.current?.let { application.executor.submit(ExecutorCommand.StopCurrent(it.runId)) } })
         }),
-        settings = { LocalDeviceSettings(floating, application.floating::setVisible, application.floating::setAutoDock, application.floating::reload, { nav.openLocal(DEVELOP) }, application.updates) },
+        settings = { LocalDeviceSettings(floating, application.floating::setVisible, application.floating::setAutoDock, application.floating::reload, { nav.openLocal(DEVELOP) }, application.updates, application.standby) },
         notices = { LocalNoticeSwitch(application.localNotices) },
         appearance = when (mode) { ThemeMode.SYSTEM -> "auto"; ThemeMode.LIGHT -> "light"; ThemeMode.DARK -> "dark" } to { look ->
             scope.launch { runCatching { application.appearance.setTheme(when (look) { "light" -> ThemeMode.LIGHT; "dark" -> ThemeMode.DARK; else -> ThemeMode.SYSTEM }) } }

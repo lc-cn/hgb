@@ -35,7 +35,8 @@ internal class ScreenFrame(val bitmap: Bitmap, val stamp: FrameStamp) : Closeabl
     override fun close() { bitmap.recycle() }
 }
 internal enum class DeviceRejection { DISCONNECTED, WRONG_FOREGROUND, SCREEN_CHANGED, NOT_OWNER, BUSY, INVALID_GESTURE, PLATFORM_REJECTED, DECODE_FAILED }
-internal enum class DeviceAvailability { READY, DISCONNECTED, WRONG_FOREGROUND, DISPLAY_UNAVAILABLE, UNCONFIRMED }
+/** [LOCKED]: the screen is on but the lock screen covers it; no app can open over a secure one, so a run waits for the user. */
+internal enum class DeviceAvailability { READY, DISCONNECTED, WRONG_FOREGROUND, DISPLAY_UNAVAILABLE, LOCKED, UNCONFIRMED }
 internal sealed interface FrameResult {
     data class Ready(val frame: ScreenFrame) : FrameResult
     data class Unavailable(val reason: DeviceRejection, val platformCode: Int? = null) : FrameResult
@@ -120,6 +121,7 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
                 !connected || connection !== epoch -> DeviceAvailability.DISCONNECTED
                 display == null -> DeviceAvailability.UNCONFIRMED
                 display.state != Display.STATE_ON -> DeviceAvailability.DISPLAY_UNAVAILABLE
+                service.getSystemService(android.app.KeyguardManager::class.java)?.isKeyguardLocked == true -> DeviceAvailability.LOCKED
                 focusedPackage == null -> DeviceAvailability.UNCONFIRMED
                 focusedPackage !in expectedPackages -> DeviceAvailability.WRONG_FOREGROUND
                 else -> DeviceAvailability.READY

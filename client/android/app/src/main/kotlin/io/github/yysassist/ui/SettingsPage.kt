@@ -268,15 +268,40 @@ internal fun DataUsagePage(state: io.github.yysassist.core.execution.ExecutorSna
 /** This device's own switches, in 我的 → 本机: what it needs to run games, and the floating ball. */
 @Composable
 internal fun LocalDeviceSettings(floating: FloatingPreferencesState, setVisible: (Boolean) -> Unit, setAutoDock: (Boolean) -> Unit, reload: () -> Unit, openFavorites: () -> Unit,
-    updates: io.github.yysassist.update.AppUpdater) {
+    updates: io.github.yysassist.update.AppUpdater, standby: io.github.yysassist.standby.StandbyMode) {
     val service by GameAccessibilityService.connection.collectAsState()
     val notifications = rememberNotificationAccess()
     Column {
         VersionRow(updates); RowDivider()
+        StandbyRows(standby); RowDivider()
         AccessibilityRow(service != null); RowDivider()
         NotificationAccessContent(notifications.access, notifications.request, notifications.openSettings); RowDivider()
         ScreenshotRow(); RowDivider()
         FloatingRows(floating, setVisible, setAutoDock, reload, openFavorites)
+    }
+}
+
+/**
+ * 待命 and what it needs: the switch, then — while it is on — whether Android leaves 护肝宝 running overnight. Read
+ * again on returning from the system's page.
+ */
+@Composable
+private fun StandbyRows(standby: io.github.yysassist.standby.StandbyMode) {
+    val p = LocalAssistPalette.current
+    val on by standby.enabled.collectAsState()
+    val plugged by standby.plugged.collectAsState()
+    var background by remember { mutableStateOf(standby.runsInBackground()) }
+    androidx.lifecycle.compose.LifecycleEventEffect(androidx.lifecycle.Lifecycle.Event.ON_RESUME) { background = standby.runsInBackground() }
+    SettingRow(AssistIcons.Shield, p.violet, "待命",
+        when { !on -> "到点自动运行计划：常驻后台保持连接，插电时保持亮屏"; plugged -> "插着电，屏幕保持常亮，到点直接运行"
+            else -> "没插电：到点时如果锁着屏，要等你解锁后才运行" }) {
+        AssistSwitch(on, label = "待命", change = standby::setEnabled)
+    }
+    if (on) {
+        RowDivider()
+        SettingRow(AssistIcons.Cloud, p.blue, "后台运行", if (background) null else "允许后，夜里手机休眠也不会断开连接") {
+            if (background) SettingValue("已允许", p.success) else SmallAction("去允许", onClick = standby::requestBackgroundRunning)
+        }
     }
 }
 

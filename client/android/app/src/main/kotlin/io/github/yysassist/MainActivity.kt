@@ -23,7 +23,11 @@ class MainActivity : ComponentActivity() {
     }
     private val navigation = MutableStateFlow<AppNavigation?>(null)
     private var handledRequest: String? = null
-    override fun onStart() { super.onStart(); (application as AssistApplication).mainStarted(this) }
+    override fun onStart() {
+        super.onStart(); (application as AssistApplication).mainStarted(this)
+        // In the foreground Android always lets the standby service start.
+        (application as AssistApplication).standby.ensureRunning()
+    }
     override fun onStop() { (application as AssistApplication).mainStopped(this); super.onStop() }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

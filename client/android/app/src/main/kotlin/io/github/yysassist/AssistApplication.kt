@@ -66,6 +66,8 @@ class AssistApplication : Application() {
         private set
     /** Which repository task versions are pulled from. */
     lateinit var taskSource: TaskSourceSetting
+    /** 待命: staying connected, and keeping the screen on while plugged in, so planned jobs run unattended. */
+    lateinit var standby: io.github.yysassist.standby.StandbyMode
     /** Updating the App itself from the code repository's releases (我的 → 本机 → 版本). */
     lateinit var updates: io.github.yysassist.update.AppUpdater
         private set
@@ -118,6 +120,7 @@ class AssistApplication : Application() {
             EncryptedGitHubSessionStore(File(noBackupFilesDir, "github-session.bin"), "io.github.yysassist.github.v1"),
             GitHubDeviceAuthorization(BuildConfig.GITHUB_CLIENT_ID, client), GitHubUserApi(client), scope)
         taskSource = TaskSourceSetting(this, BuildConfig.TASK_REPO)
+        standby = io.github.yysassist.standby.StandbyMode(this, scope)
         val source = GitHubTaskSource({ taskSource.current.value }, "https://api.github.com/".toHttpUrl(), client, github)
         taskUpdates = TaskUpdates(library, source, scope)
         // The APK is tens of megabytes on a slow link: no overall limit, but a stalled read still fails.

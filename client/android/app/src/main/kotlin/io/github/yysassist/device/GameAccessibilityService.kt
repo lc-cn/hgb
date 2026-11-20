@@ -38,6 +38,7 @@ class GameAccessibilityService : AccessibilityService() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     internal var floating: FloatingOverlayWindow? = null
         private set
+    private var keepAwake: io.github.yysassist.standby.StandbyScreen? = null
     private var displayManager: DisplayManager? = null
     private var displayState: Int? = null
     private val displayListener = object : DisplayManager.DisplayListener {
@@ -56,6 +57,13 @@ class GameAccessibilityService : AccessibilityService() {
         floating?.close()
         floating = FloatingOverlayWindow(this, application as AssistApplication)
         bridge.obstruction = floating
+        val standby = (application as AssistApplication).standby
+        keepAwake?.close()
+        keepAwake = io.github.yysassist.standby.StandbyScreen(this, application as AssistApplication).also { it.start(scope) }
+        // Captures and gestures wait for both the floating ball and the screen saver to step aside.
+        bridge.obstruction = CombinedObstruction(listOfNotNull(floating, keepAwake))
+        // A process brought back by the system for this service can start standby without the App being opened.
+        standby.ensureRunning()
         stopDisplayObservation()
         displayManager = getSystemService(DisplayManager::class.java).also {
             displayState = it.getDisplay(Display.DEFAULT_DISPLAY)?.state
@@ -75,6 +83,7 @@ class GameAccessibilityService : AccessibilityService() {
         bridge.disconnected()
         stopDisplayObservation()
         floating?.close(); floating = null; bridge.obstruction = null
+        keepAwake?.close(); keepAwake = null
         if (mutableConnection.value === this) mutableConnection.value = null
         return super.onUnbind(intent)
     }
@@ -82,6 +91,7 @@ class GameAccessibilityService : AccessibilityService() {
         bridge.disconnected()
         stopDisplayObservation()
         floating?.close(); floating = null; bridge.obstruction = null
+        keepAwake?.close(); keepAwake = null
         if (mutableConnection.value === this) mutableConnection.value = null
         scope.cancel()
         super.onDestroy()

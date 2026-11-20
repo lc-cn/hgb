@@ -4,6 +4,11 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Updating itself from the code repository's releases; the system asks the user before each install. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- 待命: a foreground service keeps the App connected while the phone sits idle, and Android is asked, in its own
+         dialog, to leave its battery use alone so the connection survives the night. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- Launcher entries only, to open the game a task version names; no broad package visibility. -->
     <queries>
         <intent>
@@ -21,6 +26,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.YysAssist">
         <receiver android:name=".update.InstallResultReceiver" android:exported="false" />
+        <service android:name=".standby.StandbyService" android:exported="false" android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Waits for jobs the user planned in the console and runs them on this phone while it stands by." />
+        </service>
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

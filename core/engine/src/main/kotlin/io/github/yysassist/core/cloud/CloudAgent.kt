@@ -292,6 +292,8 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         authorized { send<R>(it.serverUrl, path, body, it.accessToken, method) }
     /** This device's id on the server, once it has registered; the console marks its own card with it. */
     suspend fun registeredDevice(): String? = mutex.withLock { credentials?.deviceId }
+    /** The same without waiting for the lock, for display only (the 待命 screen saver's next plan). */
+    fun registeredDeviceNow(): String? = credentials?.deviceId
     private suspend fun deviceId(): String = mutex.withLock { credentials?.deviceId } ?: throw CloudRequestException(0, "not_registered", "设备还没有连上服务器")
     suspend fun saveConfig(accountId: String, targetId: String, taskId: String, values: JsonObject, revision: Long): ConfigView =
         checkNotNull(call<ConfigView>("PUT", "/api/accounts/$accountId/configs/$targetId/$taskId", json.encodeToString(ConfigSave(values, revision))))
