@@ -51,6 +51,10 @@ android {
         keyPassword = storePassword
     }
     buildTypes.getByName("release") { if (releaseStore != null) signingConfig = signingConfigs.getByName("release") }
+    // -PsignDebugWithRelease: a debug build (with the adb-only task trigger) that installs over the released App on a
+    // developer's own phone, keeping its data and permissions. Only with the release key at hand, never in CI.
+    if (releaseStore != null && providers.gradleProperty("signDebugWithRelease").isPresent)
+        buildTypes.getByName("debug") { signingConfig = signingConfigs.getByName("release") }
     // The vision libraries are ~140 MB stored, ~40 MB compressed. Compressing them makes the download small; Android
     // extracts them at install, which costs about the same space on the phone.
     packaging { jniLibs { useLegacyPackaging = true } }

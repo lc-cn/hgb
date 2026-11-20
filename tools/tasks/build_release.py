@@ -5,7 +5,8 @@ TASKS, then only the resources those tasks reference. The icon templates are cro
 so this runs only where those captures are; the crops themselves are plain game interface icons (no account data),
 published with the user's approval on 2026-11-20 (art belongs to NetEase, removed on request).
 
-Usage: python tools/tasks/build_release.py v1.0.0 "本次更新说明"
+Usage: python tools/tasks/build_release.py v1.1.0 "本次更新说明" [task-id ...]
+Without task ids it builds TASKS.
 Writes .local/task-release/<version>/ and prints each file's size and SHA-256. Publishing is a separate, manual step.
 Needs Pillow (for the crops).
 """
@@ -20,8 +21,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / ".local/task-release"
-# The first public version: claiming the free daily gift, with the steps it needs and nothing else.
-TASKS = ["daily-gift"]
+# What a public version holds unless the command names tasks. v1.0.0 was ["daily-gift"].
+TASKS = ["daily-gift", "flower-chore", "pets-chore", "daily-tour", "mail-claim", "daily-lottery", "friendship-points", "guild-funds"]
 
 
 def draft_module():
@@ -57,7 +58,7 @@ def used_routines(node, found):
     return found
 
 
-def build(version, changelog):
+def build(version, changelog, wanted=TASKS):
     if not re.fullmatch(r"v\d+\.\d+\.\d+", version):
         sys.exit("版本号要像 v1.2.3")
     draft = draft_module()
@@ -69,10 +70,24 @@ def build(version, changelog):
     jade = io.BytesIO()
     Image.open(io.BytesIO(frame)).convert("RGBA").crop((576, 449, 576 + 36, 449 + 43)).save(jade, format="PNG")
     bundle, files = draft.daily_gift(jade.getvalue())
+    # The free daily chores sampled on 2026-11-20, with their icons.
+    import importlib.util as util
+    spec = util.spec_from_file_location("chores", Path(__file__).with_name("chores_1120.py"))
+    chores = util.module_from_spec(spec); spec.loader.exec_module(chores)
+    extra, _ = chores.build(draft)
+    bundle["tasks"] += extra
+    for name, data in chores.icons(draft.crop).items():
+        bundle["resources"].append(draft.resource(name.removesuffix(".png"), name, data)); files[name] = data
 
-    tasks = [task for task in bundle["tasks"] if task["id"] in TASKS]
-    if [task["id"] for task in tasks] != TASKS:
-        sys.exit("a task in TASKS is missing from the draft")
+    tasks = [task for task in bundle["tasks"] if task["id"] in wanted]
+    if sorted(task["id"] for task in tasks) != sorted(wanted):
+        sys.exit(f"tasks missing from the draft: {sorted(set(wanted) - {task['id'] for task in tasks})}")
+    # A task sent on its own must not assume the game already sits in the courtyard: it starts by getting there,
+    # with the same entry step 领取每日礼包 uses.
+    enter = next(step for task in bundle["tasks"] if task["id"] == "daily-gift" for step in task["steps"] if step["id"] == "enter")
+    for task in tasks:
+        if task["steps"][0].get("use") != enter["use"]:
+            task["steps"] = [enter] + task["steps"]
     routines = used_routines(tasks, set())
     kept_routines = [routine for routine in bundle["routines"] if routine["id"] in routines]
     templates = used_templates([tasks, kept_routines], set())
@@ -106,6 +121,6 @@ def build(version, changelog):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    if len(sys.argv) < 3:
         sys.exit(__doc__)
-    build(sys.argv[1], sys.argv[2])
+    build(sys.argv[1], sys.argv[2], sys.argv[3:] or TASKS)

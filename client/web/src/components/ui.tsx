@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ButtonHTMLAttributes, type FormEvent, type HTMLAttributes, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type FormEvent, type HTMLAttributes, type ReactNode } from "react";
 import type { Tone } from "../format";
 import { Link } from "../router";
 import s from "./ui.module.css";
@@ -138,6 +138,22 @@ export const ui = s;
 export function Popover({ label, trigger, children, align = "start", plain }: { label: string; trigger: ReactNode; children: (close: () => void) => ReactNode; align?: "start" | "end"; plain?: boolean }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLSpanElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  // Placed on the page, not inside its card: a card clips what overflows it, which hid all but the first menu items.
+  const [place, setPlace] = useState<CSSProperties>({});
+  useLayoutEffect(() => {
+    if (!open) return;
+    const at = () => {
+      const rect = button.current?.getBoundingClientRect(); if (!rect) return;
+      const below = window.innerHeight - rect.bottom; const vertical: CSSProperties = below < 240 && rect.top > below
+        ? { bottom: window.innerHeight - rect.top + 4 } : { top: rect.bottom + 4 };
+      setPlace({ ...vertical, ...(align === "end" ? { right: Math.max(8, window.innerWidth - rect.right) } : { left: Math.max(8, rect.left) }) });
+    };
+    at();
+    // The page or a list scrolling moves the button; the menu follows it.
+    window.addEventListener("resize", at); window.addEventListener("scroll", at, true);
+    return () => { window.removeEventListener("resize", at); window.removeEventListener("scroll", at, true); };
+  }, [open, align]);
   useEffect(() => {
     if (!open) return;
     const away = (event: MouseEvent) => { if (!box.current?.contains(event.target as Node)) setOpen(false); };
@@ -147,8 +163,8 @@ export function Popover({ label, trigger, children, align = "start", plain }: { 
   }, [open]);
   return (
     <span ref={box} className={s.popover}>
-      <button type="button" className={plain ? s.plainTrigger : s.iconButton} aria-label={label} aria-expanded={open} onClick={() => setOpen(!open)}>{trigger}</button>
-      {open && <div className={join(s.panel, align === "end" && s.panelEnd)} role="menu">{children(() => setOpen(false))}</div>}
+      <button ref={button} type="button" className={plain ? s.plainTrigger : s.iconButton} aria-label={label} aria-expanded={open} onClick={() => setOpen(!open)}>{trigger}</button>
+      {open && <div className={s.panel} style={place} role="menu">{children(() => setOpen(false))}</div>}
     </span>
   );
 }

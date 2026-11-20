@@ -89,11 +89,10 @@
 .iconButton { display: inline-grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: var(--radius-md); background: none; color: var(--color-muted); padding: 0; }
 .iconButton:hover, .iconButton[aria-expanded="true"] { background: var(--color-bg); color: var(--color-ink); }
 .panel {
-  position: absolute; z-index: 5; top: calc(100% + 4px); left: 0; min-width: 220px; max-width: min(340px, 90vw); padding: var(--space-1) 0;
+  position: fixed; z-index: 50; min-width: 220px; max-width: min(340px, 90vw); max-height: 70vh; overflow-y: auto; padding: var(--space-1) 0;
   background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-lg); box-shadow: 0 8px 24px rgb(0 0 0 / .12);
   display: flex; flex-direction: column; font-size: var(--text-md); font-weight: 400;
 }
-.panelEnd { left: auto; right: 0; }
 .menuItem { display: flex; align-items: center; gap: var(--space-2); min-height: 40px; padding: 0 var(--space-4); border: 0; background: none; color: var(--color-ink); text-align: left; white-space: nowrap; text-decoration: none; }
 .menuItem:hover:not(:disabled) { background: var(--color-bg); }
 .menuItem:disabled { cursor: default; }
