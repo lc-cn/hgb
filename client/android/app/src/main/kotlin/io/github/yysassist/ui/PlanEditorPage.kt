@@ -1,5 +1,6 @@
 package io.github.yysassist.ui
 
+import io.github.yysassist.core.content.userTasks
 import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -43,7 +44,7 @@ internal fun PlanEditorPage(plan: PlanView?, targetId: String, initialTask: Stri
     var issues by remember { mutableStateOf(emptyList<String>()) }
     var picking by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
-    val definitions = bundle?.tasks.orEmpty().filter { it.targetId == targetId }
+    val definitions = bundle?.userTasks.orEmpty().filter { it.targetId == targetId }
     val chosenDays = if (daily == true) DayOfWeek.entries.toSet() else if (daily == false) days.map(DayOfWeek::of).toSet() else emptySet()
     Column(Modifier.fillMaxSize().imePadding()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = UiSpace.medium, end = UiSpace.medium, bottom = UiSpace.medium)) {

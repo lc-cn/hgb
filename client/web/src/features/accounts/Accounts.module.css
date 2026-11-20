@@ -8,8 +8,8 @@
 .uid { color: var(--color-muted); font-size: var(--text-sm); }
 .detail { display: grid; gap: var(--space-2); align-content: start; }
 .heading { margin: var(--space-2) 0 0; }
-.addForm { grid-template-columns: 1fr 1fr 1fr auto; }
-.detail .addForm { grid-template-columns: 1fr 1fr auto; }
+.addForm { grid-template-columns: 1fr 1fr 1fr 1fr auto; }
+.detail .addForm { grid-template-columns: 1fr 1fr 1fr auto; }
 @media (max-width: 640px) { .addForm, .detail .addForm { grid-template-columns: 1fr; } }
 .settings { display: grid; gap: 14px; }
 .taskSelect { width: auto; flex: 1; min-width: 160px; }

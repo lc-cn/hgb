@@ -1,5 +1,6 @@
 package io.github.yysassist.ui
 
+import io.github.yysassist.core.content.userTasks
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,7 +37,7 @@ import io.github.yysassist.storage.TaskAddress
 
 private data class TaskGroup(val key: String, val name: String, val index: Int, val tasks: List<TaskDefinition>)
 
-private fun taskGroups(bundle: TaskBundle): List<TaskGroup> = bundle.tasks.groupBy { it.targetId to it.category }.map { (id, tasks) ->
+private fun taskGroups(bundle: TaskBundle): List<TaskGroup> = bundle.userTasks.groupBy { it.targetId to it.category }.map { (id, tasks) ->
     val target = bundle.targets.single { it.id == id.first }
     val index = target.categories.indexOfFirst { it.id == id.second }
     val category = target.categories[index].name

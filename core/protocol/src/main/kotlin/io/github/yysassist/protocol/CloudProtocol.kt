@@ -32,8 +32,16 @@ import kotlinx.serialization.json.JsonObject
  * One game instance on a device, the unit that runs tasks. [key] is stable on that device (the Android package, later a
  * window or clone id); [gameId] is the task bundle's target id.
  */
+/**
+ * One game instance on the device. [switchable] when its task version can identify and switch accounts; [observed] is
+ * the account the app last read on screen, which the server matches to a saved game account.
+ */
 @Serializable data class AppStatus(val key: String, val gameId: String, val name: String, val phase: String = "IDLE",
-    val currentTask: String? = null, val queued: Int = 0)
+    val currentTask: String? = null, val queued: Int = 0, val switchable: Boolean = false, val observed: ObservedAccount? = null)
+/** An account as the game shows it: its number and in-game nickname, and when it was read. */
+@Serializable data class ObservedAccount(val uid: String, val nickname: String, val at: Long)
+/** The account a job must run on; the device makes sure the game is signed in to it, switching by [nickname]. */
+@Serializable data class AccountTarget(val accountId: String, val name: String, val uid: String, val nickname: String)
 /** Everything a device reports about itself. Sent whole, on connect, on change and at least every few seconds. */
 @Serializable data class DeviceStatus(val phase: String, val currentTask: String? = null, val queued: Int = 0,
     val tasks: List<CloudTask> = emptyList(), val appVersion: String = "", val catalog: CatalogRef? = null,
@@ -71,7 +79,11 @@ object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DE
  * task bundle [digest] with exactly [configuration], the settings saved in the cloud when the job was created.
  */
 @Serializable data class JobLease(val jobId: String, val leaseNo: Long, val userId: String, val deviceId: String,
-    val targetId: String, val taskId: String, val expiresAt: Long, val version: String, val digest: String, val configuration: JsonObject)
+    val targetId: String, val taskId: String, val expiresAt: Long, val version: String, val digest: String, val configuration: JsonObject,
+    /** Present when the account is known by number: the device checks it, and switches to it first when needed. */
+    val account: AccountTarget? = null,
+    /** The app's default account, to switch back to after this job; absent when the next job uses the same account. */
+    val restore: AccountTarget? = null)
 @Serializable data class JobReport(val leaseNo: Long, val state: JobState, val detail: String = "")
 
 /**
@@ -96,8 +108,10 @@ object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DE
 @Serializable data class ConfigSave(val values: JsonObject, val revision: Long)
 
 /** A game account; settings, plans and run records belong to it. [uid] is optional until the app can read it. */
-@Serializable data class GameAccountView(val id: String, val gameId: String, val name: String, val uid: String? = null, val createdAt: Long)
-@Serializable data class GameAccountSave(val gameId: String = "", val name: String, val uid: String? = null)
+/** [uid] is the game's own number for the account and [nickname] its name in the game; both are needed to switch to it. */
+@Serializable data class GameAccountView(val id: String, val gameId: String, val name: String, val uid: String? = null, val createdAt: Long,
+    val nickname: String? = null)
+@Serializable data class GameAccountSave(val gameId: String = "", val name: String, val uid: String? = null, val nickname: String? = null)
 /** A game the user's devices can run, from the task bundles they reported. */
 @Serializable data class GameView(val id: String, val name: String, val tasks: List<CloudTask>)
 
@@ -114,7 +128,7 @@ object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DE
 
 /** An app as the console shows it: what the device reports plus the accounts the user assigned to it. */
 @Serializable data class AppView(val key: String, val gameId: String, val name: String, val phase: String, val currentTask: String?, val queued: Int,
-    val accountId: String? = null, val defaultAccountId: String? = null)
+    val accountId: String? = null, val defaultAccountId: String? = null, val switchable: Boolean = false, val observed: ObservedAccount? = null)
 /** Until the app can tell which account is signed in, the user says so. Null clears it. */
 @Serializable data class AppAccounts(val accountId: String? = null, val defaultAccountId: String? = null)
 

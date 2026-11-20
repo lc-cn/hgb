@@ -51,7 +51,8 @@ class Database(path: String) : AutoCloseable {
                 version TEXT NOT NULL, bundle_json TEXT NOT NULL, uploaded_at INTEGER NOT NULL, PRIMARY KEY (user_id, digest))""",
             // Game accounts own settings, plans and run records; they are not tied to a device.
             """CREATE TABLE IF NOT EXISTS game_accounts (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                game_id TEXT NOT NULL, name TEXT NOT NULL, uid TEXT, created_at INTEGER NOT NULL, UNIQUE (user_id, game_id, name))""",
+                game_id TEXT NOT NULL, name TEXT NOT NULL, uid TEXT, nickname TEXT, created_at INTEGER NOT NULL, UNIQUE (user_id, game_id, name))""",
+            "CREATE UNIQUE INDEX IF NOT EXISTS game_accounts_by_uid ON game_accounts (user_id, game_id, uid) WHERE uid IS NOT NULL",
             // The server is the one place task settings are kept, per game account; jobs carry a copy taken when they are created.
             """CREATE TABLE IF NOT EXISTS task_configs (user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 account_id TEXT NOT NULL REFERENCES game_accounts(id) ON DELETE CASCADE, target_id TEXT NOT NULL, task_id TEXT NOT NULL,

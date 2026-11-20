@@ -30,13 +30,22 @@ import java.util.UUID
 @Serializable data class ActiveCloudJob(val jobId: String, val leaseNo: Long, val targetId: String, val taskId: String, val runId: Long? = null,
     val digest: String = "", val configuration: JsonObject = JsonObject(emptyMap()),
     /** Whether the console last asked for this job to be paused; kept across restarts so only a change is acted on. */
-    val paused: Boolean = false)
+    val paused: Boolean = false,
+    /** The account the job must run on, and the one to return to afterwards; see [JobLease]. */
+    val account: AccountTarget? = null, val restore: AccountTarget? = null,
+    /** The run identifying or switching the account before the job's own run, so a stop can end it too. */
+    val prepRunId: Long? = null,
+    /** How many times this job was taken up, counting restarts; account runs of an earlier attempt are not reused. */
+    val attempt: Int = 0)
 /** One action the device performed for a run, as kept in its local trace log. */
 data class CloudTrace(val id: Long, val at: Long, val stepId: String, val actionId: String, val result: String, val reason: String?, val elapsedMillis: Long)
 /** The active task bundle as text, with the digest the cloud uses to name it. */
 data class CloudCatalog(val version: String, val digest: String, val text: String)
 /** One game instance on this device that tasks can run in. [gameId] is the bundle's target id. */
-data class CloudApp(val key: String, val gameId: String, val name: String)
+/** [switchable] when the active task version can identify and switch this game's accounts. */
+data class CloudApp(val key: String, val gameId: String, val name: String, val switchable: Boolean = false)
+/** The account tasks of a game: identify reads the signed-in account, switch signs in to the one with a nickname. */
+enum class AccountTask { IDENTIFY, SWITCH }
 @Serializable data class CloudCredentials(val serverUrl: String, val userId: String, val email: String?, val accessToken: String, val refreshToken: String,
     val accessExpiresAt: Long, val installId: String, val deviceId: String? = null, val activeJob: ActiveCloudJob? = null) {
     override fun toString() = "CloudCredentials(<redacted>)"
@@ -74,6 +83,11 @@ interface CloudExecutorPort {
     /** Pauses or resumes [runId] if it is the run in progress. */
     fun pause(runId: Long) {}
     fun resume(runId: Long) {}
+    /** The account the game last showed on screen, from an identify run or any task that read it. */
+    fun observedAccount(targetId: String): ObservedAccount? = null
+    /** Runs the game's identify or switch task on bundle [digest]; [nickname] is the account to switch to. */
+    suspend fun enqueueAccountTask(targetId: String, task: AccountTask, commandId: String, digest: String, nickname: String? = null): CloudEnqueueResult =
+        CloudEnqueueResult.Rejected("这个游戏不支持识别和切换账号")
     /** Actions recorded for [runId] after trace [after], oldest first. */
     suspend fun traces(runId: Long, after: Long): List<CloudTrace> = emptyList()
 }
@@ -178,6 +192,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         checkNotNull(call<ConfigView>("PUT", "/api/accounts/$accountId/configs/$targetId/$taskId", json.encodeToString(ConfigSave(values, revision))))
     suspend fun createPlan(accountId: String, save: PlanSave): PlanView = checkNotNull(call<PlanView>("POST", "/api/accounts/$accountId/plans", json.encodeToString(save)))
     suspend fun updatePlan(planId: String, save: PlanSave): PlanView = checkNotNull(call<PlanView>("PUT", "/api/plans/$planId", json.encodeToString(save)))
+    suspend fun createAccount(save: GameAccountSave): GameAccountView = checkNotNull(call<GameAccountView>("POST", "/api/accounts", json.encodeToString(save)))
     suspend fun deletePlan(planId: String) { call<Unit>("DELETE", "/api/plans/$planId", null) }
     suspend fun runPlan(planId: String) { call<Unit>("POST", "/api/plans/$planId/run", "{}") }
     /** Says which account the app on this device is signed in to, until the app can tell by itself. */
@@ -290,7 +305,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         val apps = executor.apps().map { app ->
             val running = snapshot.current?.takeIf { it.request.context.targetId == app.gameId }
             AppStatus(app.key, app.gameId, app.name, if (running != null) snapshot.phase.name else "IDLE", running?.task?.name,
-                snapshot.waiting.count { it.request.context.targetId == app.gameId })
+                snapshot.waiting.count { it.request.context.targetId == app.gameId }, app.switchable, executor.observedAccount(app.gameId))
         }
         return DeviceStatus(snapshot.phase.name, snapshot.current?.task?.name, snapshot.waiting.size, executor.tasks(), appVersion,
             catalog?.let { CatalogRef(it.version, it.digest) }, apps, executor.concurrency)
@@ -308,7 +323,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
             }
             is ServerMessage.Cancel -> {
                 val active = mutex.withLock { credentials?.activeJob }
-                if (active?.runId != null && active.jobId in message.jobIds) executor.remove(active.runId)
+                if (active != null && active.jobId in message.jobIds) listOfNotNull(active.prepRunId, active.runId).forEach(executor::remove)
             }
             is ServerMessage.Job -> leases.trySend(message.lease)
             is ServerMessage.Data -> { mutableData.value = message.data; runCatching { dataStore?.write(message.data) } }
@@ -342,7 +357,8 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
                 val mine = mutex.withLock { credentials }
                 // A lease for anyone else is never acted on, whatever the server says.
                 if (lease.userId != mine?.userId || lease.deviceId != deviceId) continue
-                val job = ActiveCloudJob(lease.jobId, lease.leaseNo, lease.targetId, lease.taskId, digest = lease.digest, configuration = lease.configuration)
+                val job = ActiveCloudJob(lease.jobId, lease.leaseNo, lease.targetId, lease.taskId, digest = lease.digest, configuration = lease.configuration,
+                    account = lease.account, restore = lease.restore)
                 remember(job)
                 finish(job)
             } catch (cancelled: CancellationException) { throw cancelled }
@@ -354,8 +370,12 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
             catch (error: IOException) { publish(false, error.message ?: "无法连接服务器"); delay(retryMillis) }
         }
     }
-    private suspend fun finish(job: ActiveCloudJob) {
+    private suspend fun finish(taken: ActiveCloudJob) {
         executor.awaitRestored()
+        // Identifying and switching are safe to repeat, but an account run left from before a restart may have lost what
+        // it read: it is ended, and this attempt runs its own.
+        taken.prepRunId?.let { runCatching { executor.remove(it) } }
+        val job = taken.copy(prepRunId = null, attempt = taken.attempt + 1).also { remember(it) }
         if (job.runId == null && executor.catalog()?.digest != job.digest) {
             // The settings were checked against another version: running them here could mean something else.
             authorized { report(it, job, JobState.FAILED, "设备当前的任务版本与作业不一致，请等设备上报新版本后重新下发") }
@@ -363,6 +383,11 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         }
         // Nothing starts until the server accepts this lease; repeating the report after a restart is harmless.
         if (job.runId == null) authorized { report(it, job, JobState.RUNNING, "") }
+        // The game must be signed in to the job's account before its run starts; a wrong or unknown account never runs it.
+        if (job.runId == null && job.account != null) {
+            val ready = ensureAccount(job, job.account, "account")
+            if (ready != null) { authorized { report(it, job, ready.first, ready.second) }; remember(null); return }
+        }
         // The same command id returns the original run after a restart, so a job can never start twice.
         val runId = job.runId ?: when (val result = executor.enqueue(job.targetId, job.taskId, "cloud/${job.jobId}/${job.leaseNo}", job.digest, job.configuration)) {
             is CloudEnqueueResult.Accepted -> result.runId.also { runId ->
@@ -385,8 +410,46 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         if (outcome.first == JobState.UNKNOWN && executor.state.value.unresolved.any { it.attempt.ticket.runId == runId }) executor.remove(runId)
         delay(TRACE_SETTLE_MILLIS) // the trace writer stores the last actions just after the run ends
         log.flush()
-        authorized { report(it, job.copy(runId = runId), outcome.first, outcome.second) }
+        // Back to the app's default account, whatever the job's outcome, before the job is reported: the server sends
+        // the next job only then, so it never waits on a device still switching back. A failed return is left for the
+        // user rather than retried, and said in the job's result.
+        val returned = job.restore?.let { home -> ensureAccount(job.copy(runId = runId), home, "restore")?.let { "；没能切回「${home.name}」：${it.second}" } }.orEmpty()
+        authorized { report(it, job.copy(runId = runId), outcome.first, outcome.second + returned) }
         remember(null)
+    }
+
+    /**
+     * Makes sure the game is signed in to [target]: identifies the account, and when it is another one, switches by
+     * nickname and identifies again. Null when it is; otherwise the job's state and why.
+     */
+    private suspend fun ensureAccount(job: ActiveCloudJob, target: AccountTarget, purpose: String): Pair<JobState, String>? {
+        val started = clock()
+        fun signedIn() = executor.observedAccount(job.targetId)?.takeIf { it.at >= started }
+        val identified = prepare(job, AccountTask.IDENTIFY, "$purpose-identify", null) ?: return JobState.FAILED to "没能识别游戏当前登录的账号"
+        if (identified.first == JobState.CANCELLED) return identified
+        if (identified.first == JobState.COMPLETED && signedIn()?.uid == target.uid) return null
+        val switched = prepare(job, AccountTask.SWITCH, "$purpose-switch", target.nickname) ?: return JobState.FAILED to "这个游戏不能切换账号"
+        if (switched.first == JobState.CANCELLED) return switched
+        val now = signedIn()
+        return when {
+            switched.first == JobState.COMPLETED && now?.uid == target.uid -> null
+            now != null -> JobState.FAILED to "切号后登录的是编号 ${now.uid}（${now.nickname}），不是「${target.name}」，作业未执行"
+            else -> JobState.FAILED to "切换到「${target.name}」没有完成：${switched.second.ifEmpty { "结果未确认" }}"
+        }
+    }
+    /** Runs one account task for [job] and waits for its end; null when the game has no such task. */
+    private suspend fun prepare(job: ActiveCloudJob, task: AccountTask, tag: String, nickname: String?): Pair<JobState, String>? {
+        val runId = when (val result = executor.enqueueAccountTask(job.targetId, task, "cloud/${job.jobId}/${job.leaseNo}/${job.attempt}/$tag", job.digest, nickname)) {
+            is CloudEnqueueResult.Accepted -> result.runId
+            is CloudEnqueueResult.Rejected -> return null
+            is CloudEnqueueResult.Unconfirmed -> return JobState.UNKNOWN to result.reason
+        }
+        mutex.withLock { credentials?.let { saved -> saved.activeJob?.takeIf { it.jobId == job.jobId }?.let { save(saved.copy(activeJob = it.copy(prepRunId = runId))) } } }
+        val log = RunLog(job, runId)
+        val outcome = executor.state.first { cloudOutcome(it, runId) != null }.let { checkNotNull(cloudOutcome(it, runId)) }
+        if (outcome.first == JobState.UNKNOWN && executor.state.value.unresolved.any { it.attempt.ticket.runId == runId }) executor.remove(runId)
+        delay(TRACE_SETTLE_MILLIS); log.flush()
+        return outcome
     }
 
     /** Remembers what was already sent for one run; a failed send is retried with the same keys next time. */

@@ -1,5 +1,6 @@
 package io.github.yysassist.floating
 
+import io.github.yysassist.core.content.userTasks
 import io.github.yysassist.*
 import io.github.yysassist.storage.*
 import kotlinx.coroutines.*
@@ -25,7 +26,7 @@ internal fun floatingTasks(preferences: FloatingPreferences, versions: StateFlow
                 val selected = prefs.settings.favorites
                 val bundle = (catalog.catalog.activeContent as? ActiveTaskContent.Available)?.bundle
                 var unknown = false
-                val tasks = bundle?.tasks.orEmpty().mapNotNull { task ->
+                val tasks = bundle?.userTasks.orEmpty().mapNotNull { task ->
                     val address = TaskAddress(task.targetId, task.id)
                     if (address !in selected || task.trigger != null) null else when (runtime.assessStart(address)) {
                         TaskStartAvailability.READY -> FloatingTask(address, task.name)

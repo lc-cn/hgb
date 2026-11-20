@@ -42,6 +42,11 @@ class CloudAgentTest {
     @Volatile private var needCatalog = false
     @Volatile private var socket: WebSocket? = null
     private val paused = CopyOnWriteArrayList<Long>()
+    private val accountRuns = CopyOnWriteArrayList<String>()
+    private val accountCommands = CopyOnWriteArrayList<String>()
+    @Volatile private var signedInUid = "111"
+    @Volatile private var signedIn: ObservedAccount? = null
+    @Volatile private var switchesTo: String? = null
     private val resumed = CopyOnWriteArrayList<Long>()
     private val events = CopyOnWriteArrayList<JobEvent>()
     /** When set, an accepted submission immediately shows this run as finished with a few facts. */
@@ -75,6 +80,17 @@ class CloudAgentTest {
             listOf(CloudTrace(9, 1_001, "claim", "tap", "PRODUCED", null, 80)).filter { it.id > after && runId == finishedRun }
         override fun remove(runId: Long) = Unit
         override fun pause(runId: Long) { paused += runId }
+        override fun observedAccount(targetId: String) = signedIn
+        /** Identify reports [signedIn]; switching signs in to [switchesTo] (a wrong one when set so). */
+        override suspend fun enqueueAccountTask(targetId: String, task: AccountTask, commandId: String, digest: String, nickname: String?): CloudEnqueueResult {
+            accountRuns += "$task:${nickname.orEmpty()}"; accountCommands += commandId
+            val run = 100L + accountRuns.size
+            if (task == AccountTask.SWITCH) signedInUid = switchesTo ?: nickname!!.removePrefix("昵称")
+            signedIn = ObservedAccount(signedInUid, "昵称$signedInUid", System.currentTimeMillis() + 1)
+            fun fact(id: Long, type: String) = ExecutionFact(type, run, "a", "", "账号", ExecutionContext("game", Principal.Anonymous), "v1", 1_000 + id, run * 10 + id, null)
+            executorState.value = executorState.value.copy(facts = executorState.value.facts + fact(1, "task-completed"))
+            return CloudEnqueueResult.Accepted(run)
+        }
         override fun resume(runId: Long) { resumed += runId }
     }
     private val dataStore = object : CloudDataStore {
@@ -199,6 +215,41 @@ class CloudAgentTest {
         assertEquals(data, dataStore.value)
         agent.signOut()
         assertEquals(null, agent.data.value); assertEquals(null, dataStore.value)
+    }
+    private fun accountLease(uid: String) = leaseJson().dropLast(1) + ""","account":{"accountId":"a","name":"小号","uid":"$uid","nickname":"昵称$uid"}}"""
+    @Test fun aJobOnTheSignedInAccountOnlyIdentifiesItFirst() = runBlocking<Unit> {
+        enqueueResult = CloudEnqueueResult.Rejected("止于此"); lease = accountLease("111"); signedIn()
+        eventually { reports.size == 2 }
+        assertEquals(listOf("IDENTIFY:"), accountRuns); assertEquals(listOf("cloud/j1/3"), enqueued)
+    }
+    @Test fun aJobOnAnotherAccountSwitchesAndChecksTheNumberBeforeRunning() = runBlocking<Unit> {
+        enqueueResult = CloudEnqueueResult.Rejected("止于此"); lease = accountLease("222"); signedIn()
+        eventually { reports.size == 2 }
+        assertEquals(listOf("IDENTIFY:", "SWITCH:昵称222"), accountRuns); assertEquals(listOf("cloud/j1/3"), enqueued)
+    }
+    @Test fun aSwitchThatLandsOnAnotherAccountNeverRunsTheJob() = runBlocking<Unit> {
+        switchesTo = "333"; lease = accountLease("222"); signedIn()
+        eventually { reports.size == 2 }
+        assertEquals(JobState.FAILED, reports.last().state); assertTrue(reports.last().detail.contains("333"))
+        assertTrue(enqueued.isEmpty())
+    }
+    @Test fun theAppReturnsToItsDefaultAccountBeforeTheJobIsReported() = runBlocking<Unit> {
+        finishedRun = 5; enqueueResult = CloudEnqueueResult.Accepted(5)
+        lease = accountLease("222").dropLast(1) + ""","restore":{"accountId":"m","name":"主号","uid":"111","nickname":"昵称111"}}"""
+        signedIn()
+        eventually { reports.size == 2 }
+        // The server sends the next job once this one is reported, so the way back is already done by then.
+        assertEquals(listOf("IDENTIFY:", "SWITCH:昵称222", "IDENTIFY:", "SWITCH:昵称111"), accountRuns)
+        assertEquals(JobState.COMPLETED, reports.last().state); assertEquals("111", signedInUid)
+    }
+    @Test fun aRestartWhileSwitchingRunsTheAccountTasksAgainUnderNewIds() = runBlocking<Unit> {
+        enqueueResult = CloudEnqueueResult.Rejected("止于此")
+        store.value = CloudCredentials(base, "me", "a@example.test", "a1", "r-a1", System.currentTimeMillis() + 3_600_000, "install", "d1",
+            ActiveCloudJob("j1", 3, "game", "gift", digest = "abc", account = AccountTarget("a", "小号", "222", "昵称222"), prepRunId = 101, attempt = 1))
+        agent()
+        eventually { reports.size == 2 }
+        assertEquals(listOf("IDENTIFY:", "SWITCH:昵称222"), accountRuns)
+        assertEquals(listOf("cloud/j1/3/2/account-identify", "cloud/j1/3/2/account-switch"), accountCommands)
     }
     @Test fun anUnconfirmedSubmissionIsNeverReportedAsAFailure() = runBlocking<Unit> {
         enqueueResult = CloudEnqueueResult.Unconfirmed("提交结果未确认"); lease = leaseJson(); signedIn()

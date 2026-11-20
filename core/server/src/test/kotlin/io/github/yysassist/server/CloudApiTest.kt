@@ -376,6 +376,88 @@ class CloudApiTest {
         assertEquals(HttpStatusCode.Created, call(HttpMethod.Post, "/api/jobs", """{"deviceId":"${other.deviceId}","targetId":"game","taskId":"gift","accountId":"$main"}""", token, device = false).status)
         assertTrue(leases(second).isEmpty())
     }
+    private val switchingApp = """[{"key":"test.game","gameId":"game","name":"游戏","switchable":true}]"""
+    private fun seeing(uid: String) = """[{"key":"test.game","gameId":"game","name":"游戏","switchable":true,"observed":{"uid":"$uid","nickname":"昵称$uid","at":1}}]"""
+    @Test fun anAppThatReadsItsAccountIsSignedInToTheSavedAccountWithThatNumber() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        val saved = json.decodeFromString(GameAccountView.serializer(), call(HttpMethod.Post, "/api/accounts",
+            """{"gameId":"game","name":"主号","uid":"111","nickname":"归"}""", token).bodyAsText())
+        assertEquals(HttpStatusCode.Conflict, call(HttpMethod.Post, "/api/accounts", """{"gameId":"game","name":"另一个","uid":"111"}""", token).status)
+        socket(token) { send(Frame.Text(status(apps = seeing("111")))); replies() }
+        val app = devices(token).single { it.id == device.deviceId }.apps.single()
+        assertEquals(saved.id, app.accountId); assertEquals("111", app.observed?.uid)
+        // Signed in to an account that is not saved: no account, but what the game showed is still there to save.
+        socket(token) { send(Frame.Text(status(apps = seeing("222")))); replies() }
+        assertEquals(null, devices(token).single().apps.single().accountId)
+    }
+    @Test fun aJobForAnotherAccountGoesToAnIdleSwitchableAppAndCarriesTheAccountAndTheWayBack() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        suspend fun account(name: String, uid: String) = json.decodeFromString(GameAccountView.serializer(), call(HttpMethod.Post, "/api/accounts",
+            """{"gameId":"game","name":"$name","uid":"$uid","nickname":"昵称$uid"}""", token).bodyAsText()).id
+        val main = account("主号", "111"); val alt = account("小号", "222")
+        val pushed = socket(token) {
+            send(Frame.Text(status(apps = seeing("111")))); replies()
+            call(HttpMethod.Put, "/api/devices/${device.deviceId}/apps/test.game", """{"accountId":"$main","defaultAccountId":"$main"}""", token)
+            replies()
+            // Run now for the other account, with no app signed in to it: the idle app switches, then switches back.
+            assertEquals(HttpStatusCode.Created, call(HttpMethod.Post, "/api/jobs", """{"targetId":"game","taskId":"gift","accountId":"$alt"}""", token).status)
+            replies()
+        }
+        val lease = pushed.filterIsInstance<ServerMessage.Job>().single().lease
+        assertEquals("222", lease.account?.uid); assertEquals("昵称222", lease.account?.nickname)
+        assertEquals("111", lease.restore?.uid)
+    }
+    @Test fun aPlanRunDoesNotTakeAnAppWithADefaultAccountToSwitch() = api {
+        now = justAfterPlan - 10 * CloudService.MINUTE
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        val main = json.decodeFromString(GameAccountView.serializer(), call(HttpMethod.Post, "/api/accounts", """{"gameId":"game","name":"主号","uid":"111","nickname":"归"}""", token).bodyAsText()).id
+        val alt = json.decodeFromString(GameAccountView.serializer(), call(HttpMethod.Post, "/api/accounts", """{"gameId":"game","name":"小号","uid":"222","nickname":"浪"}""", token).bodyAsText()).id
+        call(HttpMethod.Post, "/api/accounts/$alt/plans", plan(), token)
+        socket(token) {
+            send(Frame.Text(status(apps = seeing("111")))); replies()
+            call(HttpMethod.Put, "/api/devices/${device.deviceId}/apps/test.game", """{"accountId":"$main","defaultAccountId":"$main"}""", token); replies()
+            now = justAfterPlan; service.tick(); replies()
+        }
+        assertEquals(JobState.WAITING, jobs(token).single().state)
+    }
+    @Test fun aPlanRunForTheAppsDefaultAccountTakesItBackFromAnotherAccount() = api {
+        now = justAfterPlan - 10 * CloudService.MINUTE
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        val main = json.decodeFromString(GameAccountView.serializer(), call(HttpMethod.Post, "/api/accounts", """{"gameId":"game","name":"主号","uid":"111","nickname":"归"}""", token).bodyAsText()).id
+        call(HttpMethod.Post, "/api/accounts", """{"gameId":"game","name":"小号","uid":"222","nickname":"浪"}""", token)
+        call(HttpMethod.Post, "/api/accounts/$main/plans", plan(), token)
+        val pushed = socket(token) {
+            // Left on the other account, say after a failed way back.
+            send(Frame.Text(status(apps = seeing("222")))); replies()
+            call(HttpMethod.Put, "/api/devices/${device.deviceId}/apps/test.game", """{"accountId":null,"defaultAccountId":"$main"}""", token); replies()
+            now = justAfterPlan; service.tick(); replies()
+        }
+        assertEquals("111", pushed.filterIsInstance<ServerMessage.Job>().single().lease.account?.uid)
+    }
+    @Test fun aJobWhoseAccountCanNoLongerBeSwitchedToFailsInsteadOfRunningOnTheSignedInOne() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        val alt = json.decodeFromString(GameAccountView.serializer(), call(HttpMethod.Post, "/api/accounts", """{"gameId":"game","name":"小号","uid":"222","nickname":"浪"}""", token).bodyAsText()).id
+        call(HttpMethod.Post, "/api/accounts", """{"gameId":"game","name":"主号","uid":"111","nickname":"归"}""", token)
+        val pushed = socket(token) {
+            // Held on the device, so the job waits there while its account loses the nickname to switch by.
+            send(Frame.Text(status(phase = "PAUSED", apps = seeing("111")))); replies()
+            assertEquals(HttpStatusCode.Created, call(HttpMethod.Post, "/api/jobs", """{"deviceId":"${device.deviceId}","targetId":"game","taskId":"gift","accountId":"$alt"}""", token).status)
+            call(HttpMethod.Put, "/api/accounts/$alt", """{"name":"小号","uid":"222","nickname":null}""", token)
+            send(Frame.Text(status(apps = seeing("111")))); replies()
+        }
+        assertTrue(pushed.none { it is ServerMessage.Job })
+        assertEquals(JobState.FAILED, jobs(token).single().state)
+    }
+    @Test fun aChosenAppThatCanSwitchTakesAJobForAnotherAccount() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        val alt = json.decodeFromString(GameAccountView.serializer(), call(HttpMethod.Post, "/api/accounts", """{"gameId":"game","name":"小号","uid":"222","nickname":"浪"}""", token).bodyAsText()).id
+        val noNumber = json.decodeFromString(GameAccountView.serializer(), call(HttpMethod.Post, "/api/accounts", """{"gameId":"game","name":"旧号"}""", token).bodyAsText()).id
+        socket(token) { send(Frame.Text(status(apps = seeing("111")))); replies() }
+        suspend fun run(account: String) = call(HttpMethod.Post, "/api/jobs", """{"deviceId":"${device.deviceId}","targetId":"game","taskId":"gift","accountId":"$account"}""", token)
+        assertEquals(HttpStatusCode.Created, run(alt).status)
+        assertEquals(HttpStatusCode.Conflict, run(noNumber).status)
+        socket(token) { send(Frame.Text(status(apps = switchingApp))); replies() }
+    }
     @Test fun aDeviceHeldOnItsOwnIsNotSentJobs() = api {
         val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
         job(token, device.deviceId)

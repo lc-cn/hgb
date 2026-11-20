@@ -29,6 +29,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import io.github.yysassist.auth.EncryptedGitHubSessionStore
 import io.github.yysassist.auth.GitHubSession
@@ -72,6 +73,8 @@ class AssistApplication : Application() {
         private set
     internal lateinit var taskCodec: BundleCodec
         private set
+    /** The account each game last showed on screen, by target; read by an identify task or any task that reports it. */
+    val observedAccounts = MutableStateFlow<Map<String, io.github.yysassist.protocol.ObservedAccount>>(emptyMap())
     /** The server sent new accounts or settings; tasks that may start can differ now. */
     private val settingsChanged = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     override fun onCreate() {
@@ -85,7 +88,9 @@ class AssistApplication : Application() {
         actionTraces = ActionTraceLog(database, scope)
         val workers = BuiltInStepWorkFactory(ScreenActions({ textObserver }, { executor.permitsInput(it) },
             journal = { command -> executor.submit(command).await() }, notifier = LocalNotifier(this)::post,
-            textObserved = { context, texts -> reactions.observed(context, texts) }), actionTraces)
+            textObserved = { context, texts -> reactions.observed(context, texts) },
+            accountObserved = { context, uid, nickname -> observedAccounts.update { it + (context.targetId to
+                io.github.yysassist.protocol.ObservedAccount(uid, nickname, System.currentTimeMillis())) } }), actionTraces)
         taskCodec = BundleCodec(workers.contracts)
         val library = TaskVersionLibrary(database, taskCodec, TaskResourceFiles(File(noBackupFilesDir, "task-resources")))
         versionLibrary = library
@@ -101,7 +106,7 @@ class AssistApplication : Application() {
             GitHubDeviceAuthorization(BuildConfig.GITHUB_CLIENT_ID, client), GitHubUserApi(client), scope)
         val source = GitHubTaskSource(TaskRepository("lc-cn", "yys-helper"), "https://api.github.com/".toHttpUrl(), client, github)
         taskUpdates = TaskUpdates(library, source, scope)
-        val cloudExecutor = io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library, database) { packageManager.getLaunchIntentForPackage(it) != null }
+        val cloudExecutor = io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library, database, observedAccounts) { packageManager.getLaunchIntentForPackage(it) != null }
         cloud = io.github.yysassist.core.cloud.CloudAgent(client, io.github.yysassist.cloud.EncryptedCloudStore(File(noBackupFilesDir, "cloud-session.bin"), "io.github.yysassist.cloud.v1"),
             cloudExecutor, "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}", "android", BuildConfig.VERSION_NAME, scope,
             dataStore = io.github.yysassist.cloud.CloudDataFile(File(noBackupFilesDir, "cloud-data.json")))
@@ -117,6 +122,12 @@ class AssistApplication : Application() {
      * game is signed in to, so that account never runs on two devices at once. Offline, it runs here with the
      * settings the server last sent.
      */
+    /** Reads which account the game is signed in to, with the game's own identify task; works offline too. */
+    fun identifyAccount(targetId: String) {
+        val bundle = ((taskUpdates.catalog.value as? VersionCatalogState.Ready)?.catalog?.activeContent as? io.github.yysassist.storage.ActiveTaskContent.Available)?.bundle
+        val task = bundle?.targets?.firstOrNull { it.id == targetId }?.accounts?.identify ?: return executor.notify("这个游戏还不能识别账号")
+        executor.enqueueTask(io.github.yysassist.storage.TaskAddress(targetId, task))
+    }
     fun runTask(task: io.github.yysassist.storage.TaskAddress) {
         scope.launch {
             val app = accounts.app(task.targetId)

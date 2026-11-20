@@ -1,5 +1,6 @@
 package io.github.yysassist.cloud
 
+import io.github.yysassist.core.content.userTasks
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.AtomicFile
@@ -61,10 +62,23 @@ internal class EncryptedCloudStore(private val file: File, private val keyAlias:
 
 internal class RuntimeCloudExecutor(private val runtime: ExecutionRuntime, private val updates: TaskUpdates,
     private val library: io.github.yysassist.storage.TaskVersionLibrary, private val database: io.github.yysassist.storage.AssistDatabase,
+    private val observed: kotlinx.coroutines.flow.StateFlow<Map<String, ObservedAccount>>,
     private val installed: (String) -> Boolean) : CloudExecutorPort {
+    private fun bundle() = ((updates.catalog.value as? VersionCatalogState.Ready)?.catalog?.activeContent as? ActiveTaskContent.Available)?.bundle
+    override fun observedAccount(targetId: String): ObservedAccount? = observed.value[targetId]
+    /** The game's own account tasks, with the nickname as the switch task's only setting. */
+    override suspend fun enqueueAccountTask(targetId: String, task: AccountTask, commandId: String, digest: String, nickname: String?): CloudEnqueueResult {
+        val procedures = bundle()?.targets?.firstOrNull { it.id == targetId }?.accounts ?: return CloudEnqueueResult.Rejected("这个游戏不支持识别和切换账号")
+        val (taskId, settings) = when (task) {
+            AccountTask.IDENTIFY -> procedures.identify to kotlinx.serialization.json.JsonObject(emptyMap())
+            AccountTask.SWITCH -> procedures.switchTo to kotlinx.serialization.json.buildJsonObject {
+                put(io.github.yysassist.core.content.AccountProcedures.NICKNAME_FIELD, kotlinx.serialization.json.JsonPrimitive(checkNotNull(nickname))) }
+        }
+        return enqueue(targetId, taskId, commandId, digest, settings)
+    }
     /** One app per installed package the active bundle targets. Clones and work profiles are not told apart yet. */
-    override fun apps(): List<CloudApp> = ((updates.catalog.value as? VersionCatalogState.Ready)?.catalog?.activeContent as? ActiveTaskContent.Available)
-        ?.bundle?.targets.orEmpty().flatMap { target -> target.androidPackages.filter(installed).map { CloudApp(it, target.id, target.name) } }
+    override fun apps(): List<CloudApp> = bundle()?.targets.orEmpty()
+        .flatMap { target -> target.androidPackages.filter(installed).map { CloudApp(it, target.id, target.name, target.accounts != null) } }
     override suspend fun traces(runId: Long, after: Long): List<CloudTrace> = withContext(Dispatchers.IO) {
         database.actionTraces().forRun(runId).filter { it.id > after }
             .map { CloudTrace(it.id, it.recordedAt, it.stepId, it.actionId, it.result, it.reason, it.elapsedMillis) }
@@ -76,7 +90,7 @@ internal class RuntimeCloudExecutor(private val runtime: ExecutionRuntime, priva
     }
     /** Passive tasks start from what appears on screen, so they are never offered as jobs. */
     override fun tasks(): List<CloudTask> = ((updates.catalog.value as? VersionCatalogState.Ready)?.catalog?.activeContent as? ActiveTaskContent.Available)
-        ?.bundle?.tasks.orEmpty().filter { it.trigger == null }.map { CloudTask(it.targetId, it.id, it.name) }
+        ?.bundle?.userTasks.orEmpty().filter { it.trigger == null }.map { CloudTask(it.targetId, it.id, it.name) }
     override suspend fun catalog(): CloudCatalog? = withContext(Dispatchers.IO) {
         runCatching { library.activeSource() }.getOrNull()?.let { CloudCatalog(it.version, it.digest, it.json) }
     }

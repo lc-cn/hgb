@@ -22,6 +22,8 @@ internal class ScreenActions(
     private val notifier: ((String, String) -> Boolean)? = null,
     /** Text of every completed observation, for passive tasks; must return at once and is never stored. */
     private val textObserved: ((ExecutionContext, List<String>) -> Unit)? = null,
+    /** Which game account the screen showed: its number and nickname; must return at once. */
+    private val accountObserved: ((ExecutionContext, String, String) -> Unit)? = null,
 ) : ActionProvider {
     companion object {
         const val READ = "screen.readText"; const val EXPECT = "screen.expectText"
@@ -38,6 +40,7 @@ internal class ScreenActions(
         const val SELECT_TEXT = "screen.selectText"; const val SELECT_IMAGE = "screen.selectImage"
         const val MATCH_COLOR = "screen.matchColor"; const val COMPARE = "screen.compareFrames"
         const val LAUNCH = "app.launch"; const val AWAIT_FOREGROUND = "app.awaitForeground"; const val NOTIFY = "notify.local"
+        const val ACCOUNT_REPORT = "account.report"
         private const val MAX_FOREGROUND_WAIT_MS = 120_000L; private const val FOREGROUND_POLL_MS = 500L
         /** The platform refuses accessibility screenshots taken closer together than about a third of a second. */
         private const val MIN_POLL_MS = 350
@@ -370,6 +373,13 @@ internal class ScreenActions(
             validateDefinition = { bundle, task, _, action -> if ("profile" in action.bindings) "视觉配置必须由任务版本明确指定" else
                 profileIssue(bundle, task, action.copy(bindings = emptyMap())) }) { inputs ->
             if (inputs.keys != setOf("profile", "timeoutMs") || inputs.text("profile").isNullOrBlank() || foregroundWait(inputs) == null) "请指定视觉配置和等待时长" else null
+        },
+        // The game account on screen: the number read from the screen and the nickname region's text. The App tells
+        // the server, which then knows which saved account this app is signed in to. Nothing else is done with them.
+        CapabilityContract(ACCOUNT_REPORT, 1, inputTypes = mapOf("uid" to ActionValueType.NUMBER, "observation" to ActionValueType.STRING),
+            outputTypes = mapOf("uid" to ActionValueType.STRING, "name" to ActionValueType.STRING), inputHandles = observationHandle,
+            validateDefinition = { _, _, _, action -> if ("uid" !in action.bindings) "编号必须来自本步骤读到的数值" else null }) { inputs ->
+            if (inputs.keys != setOf("uid", "observation") || integer(inputs["uid"]) == null || inputs.text("observation").isNullOrBlank()) "请指定读到的编号和昵称区域" else null
         },
         // Text only, never a screenshot. A disallowed notification is reported, not a task failure.
         CapabilityContract(NOTIFY, 1, inputTypes = mapOf("title" to ActionValueType.STRING, "text" to ActionValueType.STRING),
@@ -814,6 +824,16 @@ internal class ScreenActions(
                 SELECT_TEXT, SELECT_IMAGE -> select(action, inputs)
                 LAUNCH -> launch(action, inputs)
                 AWAIT_FOREGROUND -> awaitForeground(inputs)
+                ACCOUNT_REPORT -> {
+                    val observation = observations[inputs.text("observation")] ?: return ActionResult.Unavailable("本步骤的画面观察不可用")
+                    // The nickname box holds one line: its pieces left to right, as read with any confidence the read accepted.
+                    val name = observation.result.candidates.filter { it.confidence.isFinite() }.sortedBy { it.bounds.left }
+                        .joinToString("") { it.text.trim() }.take(40)
+                    if (name.isBlank()) return ActionResult.Unavailable("昵称区域没有读到文字")
+                    val uid = checkNotNull(integer(inputs["uid"])).toString()
+                    runCatching { accountObserved?.invoke(attempt.run.request.context, uid, name) }
+                    ActionResult.Produced(buildJsonObject { put("uid", uid); put("name", name) }, buildJsonObject { put("kind", ACCOUNT_REPORT); put("uid", uid); put("name", name) })
+                }
                 NOTIFY -> {
                     val delivered = notifier?.invoke(checkNotNull(inputs.text("title")), checkNotNull(inputs.text("text"))) == true
                     ActionResult.Produced(buildJsonObject { put("delivered", delivered) }, buildJsonObject { put("kind", NOTIFY); put("delivered", delivered) })

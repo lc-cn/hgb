@@ -36,6 +36,20 @@ data class TaskResource(val id: String, val assetName: String, val bytes: Long, 
 enum class IdentityPolicy { NONE, OPTIONAL, REQUIRED }
 @Serializable
 data class TaskCategory(val id: String, val name: String)
+/** The tasks a user can start or schedule: without the account tasks the App runs by itself. */
+val TaskBundle.userTasks: List<TaskDefinition> get() {
+    val hidden = targets.flatMap { target -> target.accountTasks.map { target.id to it } }.toSet()
+    return tasks.filter { (it.targetId to it.id) !in hidden }
+}
+/**
+ * How the target's game accounts are handled, by two tasks of the same target: [identify] reads which account is
+ * signed in (ending with an account.report action), [switchTo] signs in to the account whose game nickname is given in
+ * its [NICKNAME_FIELD] setting and then identifies it. Both are run by the App, never offered as ordinary tasks.
+ */
+@Serializable
+data class AccountProcedures(val identify: String, val switchTo: String) {
+    companion object { const val NICKNAME_FIELD = "nickname" }
+}
 @Serializable
 data class TargetProfile(
     val id: String,
@@ -43,7 +57,11 @@ data class TargetProfile(
     val androidPackages: List<String>,
     val identityPolicy: IdentityPolicy,
     val categories: List<TaskCategory>,
+    /** Absent when the game's accounts cannot be told apart or switched; jobs then run on whatever account is signed in. */
+    val accounts: AccountProcedures? = null,
 ) {
+    /** Tasks only the App runs, for accounts; not listed for users to start. */
+    val accountTasks: Set<String> get() = setOfNotNull(accounts?.identify, accounts?.switchTo)
     /** Identity policy does not prove foreground ownership; the Android input adapter must also check it. */
     fun acceptsContext(context: ExecutionContext?): Boolean {
         if (context == null || !context.isValid() || context.targetId != id) return false
@@ -220,6 +238,16 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
                 target.androidPackages.distinct().size != target.androidPackages.size) issue("target/${target.id}", "目标包名为空或重复")
             if (target.categories.isEmpty() || target.categories.any { it.id.isBlank() || it.name.isBlank() } ||
                 target.categories.map { it.id }.distinct().size != target.categories.size) issue("target/${target.id}", "分类为空或身份重复")
+            target.accounts?.let { procedures ->
+                val identify = bundle.tasks.find { it.targetId == target.id && it.id == procedures.identify }
+                val switch = bundle.tasks.find { it.targetId == target.id && it.id == procedures.switchTo }
+                if (identify == null || switch == null || identify.id == switch.id) issue("target/${target.id}/accounts", "识别账号和切换账号需为本目标下两个不同的任务")
+                else {
+                    if (identify.fields.isNotEmpty() || identify.trigger != null) issue("target/${target.id}/accounts", "识别账号任务不能有设置或触发条件")
+                    if (switch.trigger != null || switch.fields.singleOrNull()?.let { it.id == AccountProcedures.NICKNAME_FIELD && it.widget == FieldWidget.TEXT && it.required } != true)
+                        issue("target/${target.id}/accounts", "切换账号任务只能有一个必填文本设置 nickname")
+                }
+            }
         }
         if (bundle.tasks.map { it.targetId to it.id }.distinct().size != bundle.tasks.size) issue("tasks", "任务身份重复")
         bundle.tasks.forEach { task ->

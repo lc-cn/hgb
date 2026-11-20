@@ -1,5 +1,6 @@
 package io.github.yysassist.server
 
+import io.github.yysassist.core.content.userTasks
 import io.github.yysassist.core.cloud.*
 import io.github.yysassist.core.content.ConfigurationField
 import io.github.yysassist.core.content.TaskBundle
@@ -247,14 +248,16 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
     }
 
     /**
-     * Gives each waiting job to an online app signed in to its account, among the devices it may use. Switching
-     * accounts is not supported yet, so a job no such app can take waits, and is skipped after its latest start.
+     * Gives each waiting job to an app among the devices it may use: first an online app signed in to its account, busy
+     * or not; otherwise an idle app that can switch accounts and has no default account (a job run now, not a plan, may
+     * also take one with a default account, which switches back afterwards). A job none can take waits, and is skipped
+     * after its latest start.
      */
     private fun Database.assignWaiting(now: Long): Set<String> {
         val touched = mutableSetOf<String>()
-        val waiting = query("""SELECT id, user_id, target_id, task_id, account_id, allowed_devices_json, latest_start_at FROM jobs
+        val waiting = query("""SELECT id, user_id, target_id, task_id, account_id, allowed_devices_json, latest_start_at, plan_id FROM jobs
             WHERE state = 'WAITING' ORDER BY created_at, sequence, id""") {
-            listOf(it.getString(1), it.getString(2), it.getString(3), it.getString(4), it.getString(5), it.getString(6), it.getLong(7)) }
+            listOf(it.getString(1), it.getString(2), it.getString(3), it.getString(4), it.getString(5), it.getString(6), it.getLong(7), it.getString(8)) }
         val devicesOf = HashMap<String, List<DeviceView>>()
         for (job in waiting) {
             val (id, userId) = job[0] as String to job[1] as String
@@ -264,8 +267,14 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             }
             val allowed = json.decodeFromString(idList, job[5] as String).toSet()
             val devices = devicesOf.getOrPut(userId) { deviceRows(userId, null) }
-            val target = devices.asSequence().filter { it.online && (allowed.isEmpty() || it.id in allowed) && it.tasks.any { t -> t.targetId == job[2] && t.taskId == job[3] } }
-                .flatMap { device -> device.apps.filter { it.gameId == job[2] && it.accountId != null && it.accountId == job[4] }.map { device to it } }
+            val usable = devices.filter { it.online && (allowed.isEmpty() || it.id in allowed) && it.tasks.any { t -> t.targetId == job[2] && t.taskId == job[3] } }
+            // Idle, or already holding this account's jobs (a run's earlier tasks, which switch first): later ones follow them.
+            fun free(device: DeviceView) = query("SELECT DISTINCT account_id FROM jobs WHERE device_id = ? AND state IN ('QUEUED', 'LEASED', 'RUNNING')", device.id) { it.getString(1) }
+                .all { it == job[4] }
+            val switchTo = target(userId, job[4] as String?)
+            val target = (usable.asSequence().flatMap { device -> device.apps.filter { it.gameId == job[2] && it.accountId != null && it.accountId == job[4] }.map { device to it } }
+                .ifEmpty { if (switchTo == null) emptySequence() else usable.asSequence().filter(::free).flatMap { device ->
+                    device.apps.filter { it.gameId == job[2] && it.switchable && (it.defaultAccountId == null || it.defaultAccountId == job[4] || job[7] == null) }.map { device to it } } })
                 // A device already holding this account's jobs keeps getting them, so one run's tasks stay in order on one
                 // device; otherwise the least busy one.
                 .minWithOrNull(compareBy({ (device, _) -> if (single("SELECT 1 FROM jobs WHERE device_id = ? AND account_id = ? AND state IN ('QUEUED', 'LEASED', 'RUNNING') LIMIT 1",
@@ -277,6 +286,24 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         return touched
     }
 
+    private fun Database.target(userId: String, accountId: String?): AccountTarget? = accountId?.let {
+        single("SELECT id, name, uid, nickname FROM game_accounts WHERE id = ? AND user_id = ? AND uid IS NOT NULL AND nickname IS NOT NULL", it, userId) { r ->
+            AccountTarget(r.getString(1), r.getString(2), r.getString(3), r.getString(4)) } }
+    /**
+     * The account a job must run on, when its app can identify and switch accounts and the account is known by number
+     * and nickname; and the app's default account to return to afterwards, unless the app's next job uses the same one.
+     * Null when the app is signed in to another account and cannot be switched to this one (any more): the job must not
+     * run there.
+     */
+    private fun Database.accountTargets(userId: String, deviceId: String, appKey: String?, accountId: String?, createdAt: Long, sequence: Int): Pair<AccountTarget?, AccountTarget?>? {
+        val app = deviceRows(userId, deviceId).singleOrNull()?.apps?.firstOrNull { it.key == appKey } ?: return null to null
+        val elsewhere = app.accountId != null && app.accountId != accountId
+        val account = target(userId, accountId)?.takeIf { app.switchable } ?: return (null to null).takeUnless { elsewhere }
+        val fallback = target(userId, app.defaultAccountId)?.takeIf { it.accountId != account.accountId } ?: return account to null
+        val next = single("""SELECT account_id FROM jobs WHERE device_id = ? AND state = 'QUEUED' AND (created_at > ? OR (created_at = ? AND sequence > ?))
+            ORDER BY created_at, sequence, id LIMIT 1""", deviceId, createdAt, createdAt, sequence) { it.getString(1) }
+        return account to fallback.takeIf { next != account.accountId }
+    }
     /**
      * Sends [deviceId] its next queued job when it is connected and has none in hand. A job past its latest start is
      * skipped; one whose settings no longer fit the device's task version fails without being sent.
@@ -293,11 +320,12 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             while (true) {
                 // An account runs on one device at a time: its job waits while another device has the account's job in hand,
                 // or has an older one of the account still queued, so the device that just finished cannot keep the account.
-                val job = single("""SELECT id, target_id, task_id, lease_no, config_json, latest_start_at FROM jobs j WHERE device_id = ? AND state = 'QUEUED'
+                val job = single("""SELECT id, target_id, task_id, lease_no, config_json, latest_start_at, account_id, app_key, created_at, sequence FROM jobs j WHERE device_id = ? AND state = 'QUEUED'
                     AND NOT EXISTS (SELECT 1 FROM jobs o WHERE o.account_id = j.account_id AND o.device_id <> j.device_id AND (o.state IN ('LEASED', 'RUNNING')
                         OR (o.state = 'QUEUED' AND (o.created_at < j.created_at OR (o.created_at = j.created_at AND o.sequence < j.sequence)))))
                     ORDER BY created_at, sequence, id LIMIT 1""", deviceId) {
-                    listOf(it.getString(1), it.getString(2), it.getString(3), it.getLong(4), it.getString(5), it.getLong(6).takeUnless { _ -> it.wasNull() }) }
+                    listOf(it.getString(1), it.getString(2), it.getString(3), it.getLong(4), it.getString(5), it.getLong(6).takeUnless { _ -> it.wasNull() },
+                        it.getString(7), it.getString(8), it.getLong(9), it.getInt(10)) }
                     ?: return@tx null to owner.takeIf { touched }
                 val jobId = job[0] as String
                 val latest = job[5] as Long?
@@ -312,12 +340,19 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
                 if (issue != null) {
                     update("UPDATE jobs SET state = 'FAILED', detail = ?, updated_at = ? WHERE id = ?", issue.take(500), now, jobId); touched = true; continue
                 }
+                val targets = accountTargets(owner, deviceId, job[7] as String?, job[6] as String?, job[8] as Long, job[9] as Int)
+                if (targets == null) {
+                    // Sent without an account to switch to, it would run on whichever account the game is signed in to.
+                    update("UPDATE jobs SET state = 'FAILED', detail = ?, updated_at = ? WHERE id = ?",
+                        "应用登录着别的账号，又不能切到这个账号（需要应用支持切号，账号填好编号和游戏昵称）", now, jobId); touched = true; continue
+                }
+                val (account, restore) = targets
                 val digest = checked.getOrThrow().first
                 val version = single("SELECT version FROM catalogs WHERE user_id = ? AND digest = ?", owner, digest) { it.getString(1) }.orEmpty()
                 val leaseNo = (job[3] as Long) + 1; val expires = now + ACK_LIFETIME
                 update("UPDATE jobs SET state = 'LEASED', lease_no = ?, lease_expires_at = ?, version = ?, digest = ?, updated_at = ? WHERE id = ?",
                     leaseNo, expires, version, digest, now, jobId)
-                return@tx JobLease(jobId, leaseNo, owner, deviceId, job[1] as String, job[2] as String, expires, version, digest, values) to owner
+                return@tx JobLease(jobId, leaseNo, owner, deviceId, job[1] as String, job[2] as String, expires, version, digest, values, account, restore) to owner
             }
             @Suppress("UNREACHABLE_CODE") null to null
         }
@@ -342,6 +377,17 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
                 now, status.phase.take(40), status.currentTask?.take(120), status.queued, json.encodeToString(tasks, status.tasks.take(500).map { it.copy(targetId = it.targetId.take(80), taskId = it.taskId.take(80), name = it.name.take(80)) }),
                 status.catalog?.version?.take(120), status.catalog?.digest?.take(64), json.encodeToString(apps, status.apps.take(MAX_APPS).map(::bounded)),
                 status.concurrency.coerceIn(1, MAX_APPS), id, caller.userId)
+            // An app that read its account on screen is signed in to the saved account with that number, or to none.
+            var accountsChanged = false
+            for (app in status.apps.take(MAX_APPS)) {
+                val seen = app.observed ?: continue
+                val match = single("SELECT id FROM game_accounts WHERE user_id = ? AND game_id = ? AND uid = ?", caller.userId, app.gameId, seen.uid.take(40)) { it.getString(1) }
+                val stored = single("SELECT account_id FROM app_accounts WHERE device_id = ? AND app_key = ?", id, app.key) { it.getString(1) to true }
+                if (stored != null && stored.first == match) continue
+                update("""INSERT INTO app_accounts (device_id, app_key, user_id, account_id) VALUES (?, ?, ?, ?)
+                    ON CONFLICT (device_id, app_key) DO UPDATE SET account_id = excluded.account_id""", id, app.key.take(120), caller.userId, match)
+                accountsChanged = true
+            }
             val reported = status.catalog
             val missing = reported != null && single("SELECT 1 FROM catalogs WHERE user_id = ? AND digest = ?", caller.userId, reported.digest) { true } == null
             // Only a started job is kept alive: a lease handed to a connection that died must return to the queue.
@@ -352,15 +398,15 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             // with a dropped socket, still arrives. The device acts only on a change.
             val running = query("SELECT id, pause_requested FROM jobs WHERE device_id = ? AND user_id = ? AND state = 'RUNNING' AND cancel_requested = 0", id, caller.userId) {
                 if (it.getInt(2) == 1) ServerMessage.Pause(it.getString(1)) else ServerMessage.Resume(it.getString(1)) }
-            listOfNotNull(ServerMessage.CatalogNeeded.takeIf { missing }, cancelled.takeIf { it.isNotEmpty() }?.let(ServerMessage::Cancel)) + running to swept
-        }
+            Triple(listOfNotNull(ServerMessage.CatalogNeeded.takeIf { missing }, cancelled.takeIf { it.isNotEmpty() }?.let(ServerMessage::Cancel)) + running, swept, accountsChanged)
+        }.let { (replies, swept, changed) -> if (changed) { pushDeviceData(caller.userId); assignNow() }; replies to swept }
         pushDevice(caller.userId, id)
         swept.forEach(::pushJobs)
         dispatch(id)
         return replies
     }
     private fun bounded(app: AppStatus) = app.copy(key = app.key.take(120), gameId = app.gameId.take(80), name = app.name.take(80), phase = app.phase.take(40),
-        currentTask = app.currentTask?.take(120))
+        currentTask = app.currentTask?.take(120), observed = app.observed?.let { it.copy(uid = it.uid.take(40), nickname = it.nickname.take(40)) })
     /** Called when a device's socket opens or closes; the console shows it as online only while connected. */
     fun connectionChanged(userId: String, deviceId: String) {
         // What the device was doing before is stale until its first report on this connection; nothing is sent till then.
@@ -464,8 +510,8 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         catalogsNewestFirst(userId).firstNotNullOfOrNull { (version, bundle) -> bundle.tasks.singleOrNull { it.targetId == targetId && it.id == taskId }?.let { version to it } }
             ?: throw ApiException(404, "unknown_task", "还没有设备上报过这个任务")
     private fun Database.account(userId: String, accountId: String): GameAccountView =
-        single("SELECT id, game_id, name, uid, created_at FROM game_accounts WHERE id = ? AND user_id = ?", accountId, userId) {
-            GameAccountView(it.getString(1), it.getString(2), it.getString(3), it.getString(4), it.getLong(5)) } ?: throw ApiException(404, "not_found", "游戏账号不存在")
+        single("SELECT id, game_id, name, uid, created_at, nickname FROM game_accounts WHERE id = ? AND user_id = ?", accountId, userId) {
+            GameAccountView(it.getString(1), it.getString(2), it.getString(3), it.getString(4), it.getLong(5), it.getString(6)) } ?: throw ApiException(404, "not_found", "游戏账号不存在")
     fun config(caller: Caller, accountId: String, targetId: String, taskId: String): ConfigView = db.tx {
         val account = account(caller.userId, accountId)
         if (account.gameId != targetId) throw ApiException(400, "unknown_task", "这个任务不属于该账号的游戏")
@@ -494,23 +540,31 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
     private fun Database.gameRows(userId: String): List<GameView> {
         val seen = LinkedHashMap<String, GameView>()
         for ((_, bundle) in catalogsNewestFirst(userId)) for (target in bundle.targets) if (target.id !in seen)
-            seen[target.id] = GameView(target.id, target.name, bundle.tasks.filter { it.targetId == target.id && it.trigger == null }.map { CloudTask(it.targetId, it.id, it.name) })
+            seen[target.id] = GameView(target.id, target.name, bundle.userTasks.filter { it.targetId == target.id && it.trigger == null }.map { CloudTask(it.targetId, it.id, it.name) })
         return seen.values.toList()
     }
     fun games(caller: Caller): List<GameView> = db.tx { gameRows(caller.userId) }
     private fun Database.accountRows(userId: String): List<GameAccountView> =
-        query("SELECT id, game_id, name, uid, created_at FROM game_accounts WHERE user_id = ? ORDER BY game_id, created_at, id", userId) {
-            GameAccountView(it.getString(1), it.getString(2), it.getString(3), it.getString(4), it.getLong(5)) }
+        query("SELECT id, game_id, name, uid, created_at, nickname FROM game_accounts WHERE user_id = ? ORDER BY game_id, created_at, id", userId) {
+            GameAccountView(it.getString(1), it.getString(2), it.getString(3), it.getString(4), it.getLong(5), it.getString(6)) }
     fun gameAccounts(caller: Caller): List<GameAccountView> = db.tx { accountRows(caller.userId) }
     private fun accountName(save: GameAccountSave) = save.name.trim().takeIf { it.length in 1..40 } ?: throw ApiException(400, "invalid_account", "账号名称需要 1 到 40 个字")
-    private fun accountUid(save: GameAccountSave) = save.uid?.trim()?.takeIf { it.isNotEmpty() }?.also { if (it.length > 40) throw ApiException(400, "invalid_account", "UID 太长") }
+    private fun accountUid(save: GameAccountSave) = save.uid?.trim()?.takeIf { it.isNotEmpty() }?.also { if (it.length > 40) throw ApiException(400, "invalid_account", "编号太长") }
+    private fun accountNickname(save: GameAccountSave) = save.nickname?.trim()?.takeIf { it.isNotEmpty() }?.also { if (it.length > 40) throw ApiException(400, "invalid_account", "游戏昵称太长") }
+    /** One game account per number: the number is how the app tells which account is signed in. */
+    private fun Database.uidTaken(userId: String, gameId: String, uid: String?, except: String?) {
+        if (uid != null && single("SELECT 1 FROM game_accounts WHERE user_id = ? AND game_id = ? AND uid = ? AND id IS NOT ?", userId, gameId, uid, except) { true } == true)
+            throw ApiException(409, "uid_exists", "已有游戏账号用了这个编号")
+    }
     fun createGameAccount(caller: Caller, save: GameAccountSave): GameAccountView {
         val name = accountName(save); val uid = accountUid(save); val id = UUID.randomUUID().toString()
         db.tx {
             if (gameRows(caller.userId).none { it.id == save.gameId }) throw ApiException(400, "unknown_game", "还没有设备上报过这个游戏")
             if (single("SELECT 1 FROM game_accounts WHERE user_id = ? AND game_id = ? AND name = ?", caller.userId, save.gameId, name) { true } == true)
                 throw ApiException(409, "account_exists", "这个游戏已经有同名账号")
-            update("INSERT INTO game_accounts (id, user_id, game_id, name, uid, created_at) VALUES (?, ?, ?, ?, ?, ?)", id, caller.userId, save.gameId, name, uid, clock())
+            uidTaken(caller.userId, save.gameId, uid, null)
+            update("INSERT INTO game_accounts (id, user_id, game_id, name, uid, nickname, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", id, caller.userId, save.gameId, name, uid,
+                accountNickname(save), clock())
         }
         pushAccounts(caller.userId)
         return db.tx { account(caller.userId, id) }
@@ -522,7 +576,8 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             val current = account(caller.userId, accountId)
             if (single("SELECT 1 FROM game_accounts WHERE user_id = ? AND game_id = ? AND name = ? AND id <> ?", caller.userId, current.gameId, name, accountId) { true } == true)
                 throw ApiException(409, "account_exists", "这个游戏已经有同名账号")
-            update("UPDATE game_accounts SET name = ?, uid = ? WHERE id = ? AND user_id = ?", name, uid, accountId, caller.userId)
+            uidTaken(caller.userId, account(caller.userId, accountId).gameId, uid, accountId)
+            update("UPDATE game_accounts SET name = ?, uid = ?, nickname = ? WHERE id = ? AND user_id = ?", name, uid, accountNickname(save), accountId, caller.userId)
             update("UPDATE jobs SET account_name = ? WHERE account_id = ? AND user_id = ?", name, accountId, caller.userId)
         }
         pushAccounts(caller.userId); pushJobs(caller.userId); pushAllDevices(caller.userId)
@@ -667,12 +722,17 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         }
         events.publish(caller.userId, "job-log", json.encodeToString(JobLogUpdated.serializer(), JobLogUpdated(jobId)))
     }
-    /** Step ids are named from the task version the job ran on. */
+    /**
+     * Step ids are named from the task version the job ran on: the job's own task, and the game's account tasks that
+     * identified or switched the account around it. The job's own step names win where ids repeat.
+     */
     fun events(caller: Caller, jobId: String): List<JobEventView> = db.tx {
         val job = single("SELECT digest, target_id, task_id FROM jobs WHERE id = ? AND user_id = ?", jobId, caller.userId) {
             Triple(it.getString(1), it.getString(2), it.getString(3)) } ?: throw ApiException(404, "not_found", "作业不存在")
-        val names = catalog(caller.userId, job.first)?.tasks?.singleOrNull { it.targetId == job.second && it.id == job.third }
-            ?.steps?.associate { it.id to it.name }.orEmpty()
+        val bundle = catalog(caller.userId, job.first)
+        val around = bundle?.targets?.singleOrNull { it.id == job.second }?.accountTasks.orEmpty()
+        val names = (around.toList() + job.third).flatMap { taskId -> bundle?.tasks?.singleOrNull { it.targetId == job.second && it.id == taskId }?.steps.orEmpty() }
+            .associate { it.id to it.name }
         query("SELECT at, kind, step, action, detail, elapsed_ms FROM job_events WHERE job_id = ? ORDER BY at, key", jobId) {
             val step = it.getString(3)
             JobEventView(it.getLong(1), it.getString(2), step, names[step] ?: step, it.getString(4), it.getString(5), it.getLong(6)) }
@@ -687,7 +747,7 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             val id = row.getString(1)
             val views = json.decodeFromString(apps, row.getString(9)).map { app ->
                 val (current, default) = assigned[id to app.key] ?: (null to null)
-                AppView(app.key, app.gameId, app.name, app.phase, app.currentTask, app.queued, current, default)
+                AppView(app.key, app.gameId, app.name, app.phase, app.currentTask, app.queued, current, default, app.switchable, app.observed)
             }
             DeviceView(id, row.getString(2), row.getString(3), sockets.isOnline(id), seen, row.getString(5), row.getString(6), row.getInt(7),
                 json.decodeFromString(tasks, row.getString(8)), views, row.getInt(10))
@@ -726,8 +786,10 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
                 val candidates = device.apps.filter { it.gameId == task.targetId && (request.appKey == null || it.key == request.appKey) }
                 val app = candidates.singleOrNull() ?: throw ApiException(400, if (candidates.isEmpty()) "unknown_app" else "choose_app",
                     if (candidates.isEmpty()) "这台设备上没有这个游戏的应用" else "这台设备上有多个这个游戏的应用，请选择一个")
-                if (app.accountId != account.id) throw ApiException(409, "account_mismatch",
-                    "${app.name}当前登录的不是「${account.name}」，暂不支持切号：请先在游戏里登录这个账号，并在设备的应用里标明")
+                // Another account is fine when the app can switch to this one by its number and nickname.
+                if (app.accountId != account.id && !(app.switchable && target(caller.userId, account.id) != null)) throw ApiException(409, "account_mismatch",
+                    if (app.switchable) "${app.name}当前登录的不是「${account.name}」：先给「${account.name}」填上游戏里的编号和昵称，才能切过去"
+                    else "${app.name}当前登录的不是「${account.name}」，这个游戏不支持切号：请先在游戏里登录这个账号")
                 // A run started on the device itself does not wait: it is refused while the account runs elsewhere.
                 if (caller.kind == SessionKind.DEVICE && caller.deviceId == device.id) single("""SELECT d.name FROM jobs j JOIN devices d ON d.id = j.device_id
                     WHERE j.account_id = ? AND j.device_id <> ? AND j.state IN ('LEASED', 'RUNNING') LIMIT 1""", account.id, device.id) { it.getString(1) }

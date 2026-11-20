@@ -29,14 +29,14 @@ internal fun cloudServerIssue(server: String, debug: Boolean = BuildConfig.DEBUG
 }
 
 @Composable
-internal fun CloudPage(accounts: CloudAccounts) {
+internal fun CloudPage(accounts: CloudAccounts, identify: (String) -> Unit) {
     val agent = accounts.agent
     val state by agent.state.collectAsState()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(start = UiSpace.medium, end = UiSpace.medium, bottom = UiSpace.medium)) {
         when (val current = state) {
             CloudState.Loading -> CircularProgressIndicator(Modifier.padding(UiSpace.page))
             is CloudState.SignedOut -> CloudSignIn(agent, current.message)
-            is CloudState.SignedIn -> { CloudAccount(agent, current); GameAccounts(accounts, current.online) }
+            is CloudState.SignedIn -> { CloudAccount(agent, current); GameAccounts(accounts, current.online, identify) }
         }
     }
 }
@@ -64,7 +64,7 @@ private fun CloudAccount(agent: CloudAgent, state: CloudState.SignedIn) {
  * settings, plans and runs on this phone follow it.
  */
 @Composable
-private fun GameAccounts(accounts: CloudAccounts, online: Boolean) {
+private fun GameAccounts(accounts: CloudAccounts, online: Boolean, identify: (String) -> Unit) {
     val data by accounts.agent.data.collectAsState()
     val scope = rememberCoroutineScope()
     val p = LocalAssistPalette.current
@@ -78,8 +78,22 @@ private fun GameAccounts(accounts: CloudAccounts, online: Boolean) {
         apps.forEachIndexed { index, app ->
             if (index > 0) RowDivider()
             val current = accounts.current(app.gameId, data)
-            SettingRow(AssistIcons.User, p.violet, app.name, "当前登录：${current?.name ?: "未指定"}") {
-                Box {
+            val seen = data?.apps?.firstOrNull { it.key == app.key }?.observed
+            SettingRow(AssistIcons.User, p.violet, app.name, "当前登录：${current?.name ?: if (seen != null) "未保存的账号" else "未指定"}" +
+                (seen?.let { "\n游戏里：${it.nickname}（编号 ${it.uid}）" } ?: "")) {
+                Row(horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+                    if (app.switchable) SmallAction("识别") { identify(app.gameId) }
+                    if (seen != null && current == null) SmallAction("保存", enabled = online) {
+                        error = null
+                        scope.launch {
+                            try { accounts.agent.createAccount(io.github.yysassist.protocol.GameAccountSave(app.gameId, seen.nickname, seen.uid, seen.nickname)) }
+                            catch (rejected: CloudRequestException) { error = rejected.message }
+                            catch (_: IOException) { error = "没有连上服务器，请稍后再试" }
+                        }
+                    }
+                }
+                // Read from the game once it can identify the account; chosen by hand only for games it cannot.
+                if (seen == null) Box {
                     SmallAction("选择", enabled = online) { choosing = app.key }
                     DropdownMenu(choosing == app.key, { choosing = null }) {
                         val saved = data?.apps?.firstOrNull { it.key == app.key }
@@ -98,7 +112,7 @@ private fun GameAccounts(accounts: CloudAccounts, online: Boolean) {
             }
         }
     }
-    Text(error ?: if (online) "游戏账号在 Web 控制台的“游戏账号”里添加。护肝宝还不能自己认出游戏里登录的账号，换号后请在这里改。"
+    Text(error ?: if (online) "点“识别”让护肝宝读出游戏里登录的账号；没保存过的点“保存”存为游戏账号。不能识别的游戏，换号后在这里手动选。"
         else "没有连上服务器，当前账号只能查看。", Modifier.padding(start = UiSpace.gap, top = UiSpace.gap),
         color = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
 }

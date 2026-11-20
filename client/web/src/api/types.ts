@@ -2,9 +2,11 @@
 
 export interface Account { userId: string; email: string | null; hasPassword: boolean; githubLogin: string | null; timeZone: string }
 export interface CloudTask { targetId: string; taskId: string; name: string }
+/** The account the app last read on screen. */
+export interface ObservedAccount { uid: string; nickname: string; at: number }
 export interface App {
   key: string; gameId: string; name: string; phase: string; currentTask: string | null; queued: number;
-  accountId: string | null; defaultAccountId: string | null;
+  accountId: string | null; defaultAccountId: string | null; switchable?: boolean; observed?: ObservedAccount | null;
 }
 export interface Device {
   id: string; name: string; platform: string; online: boolean; lastSeenAt: number | null; phase: string | null;
@@ -18,7 +20,7 @@ export interface Job {
   latestStartAt: number | null; pauseRequested: boolean;
 }
 export interface JobEvent { at: number; kind: string; step: string; stepName: string; action: string; detail: string; elapsedMs: number }
-export interface GameAccount { id: string; gameId: string; name: string; uid: string | null; createdAt: number }
+export interface GameAccount { id: string; gameId: string; name: string; uid: string | null; createdAt: number; nickname?: string | null }
 export interface Game { id: string; name: string; tasks: CloudTask[] }
 export interface Plan {
   id: string; accountId: string; name: string; days: number[]; minuteOfDay: number; tasks: CloudTask[]; deviceIds: string[];

@@ -27,6 +27,23 @@ function DeviceCard({ device, accounts }: { device: Device; accounts: GameAccoun
   );
 }
 
+/** What the game showed, and a way to keep it as a game account when it is not one yet. */
+function Observed({ app, accounts }: { app: App; accounts: GameAccount[] }) {
+  const seen = app.observed!;
+  const saved = accounts.some((account) => account.uid === seen.uid);
+  const keep = () => {
+    const name = prompt("给这个账号起个名字，例如 主号", seen.nickname);
+    if (!name) return;
+    api("/api/accounts", { method: "POST", body: { gameId: app.gameId, name, uid: seen.uid, nickname: seen.nickname } }).catch((error: Error) => alert(error.message));
+  };
+  return (
+    <Row>
+      <Grow><Muted>游戏里：{seen.nickname}（编号 {seen.uid}）{app.switchable ? " · 可切号" : ""}</Muted></Grow>
+      {!saved && <Button onClick={keep}>保存为游戏账号</Button>}
+    </Row>
+  );
+}
+
 /**
  * One game instance on the device: what it is doing, and which accounts it uses. Until the app can read the signed-in
  * account, the user picks it here.
@@ -57,9 +74,14 @@ function AppLine({ device, app, accounts }: { device: Device; app: App; accounts
   return (
     <li className={s.app}>
       <Row><Grow>{app.name}</Grow><Muted>{[doing, app.queued ? `排队 ${app.queued} 个` : ""].filter(Boolean).join(" · ")}</Muted></Row>
+      {app.observed && <Observed app={app} accounts={mine} />}
       {mine.length
-        ? <div className={s.accounts}>{select("当前登录", current, (id) => save(id, fallback))}{select("默认账号", fallback, (id) => save(current, id))}</div>
-        : <Muted>先在“游戏账号”里添加这个游戏的账号</Muted>}
+        ? <div className={s.accounts}>
+          {/* Once the app reads its account on screen, the server keeps 当前登录 in step; choosing it by hand is for games it cannot read. */}
+          {app.observed ? <Muted>当前登录：{mine.find((item) => item.id === app.accountId)?.name ?? "未保存的账号"}</Muted> : select("当前登录", current, (id) => save(id, fallback))}
+          {select("默认账号", fallback, (id) => save(current, id))}
+        </div>
+        : !app.observed && <Muted>先在“游戏账号”里添加这个游戏的账号</Muted>}
     </li>
   );
 }

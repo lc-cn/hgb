@@ -25,7 +25,7 @@ export function AccountsPanel({ accounts, games, plans, devices }: { accounts: G
                 {mine.map((item) => (
                   <button key={item.id} type="button" className={item.id === selected ? `${s.account} ${s.on}` : s.account}
                     aria-pressed={item.id === selected} onClick={() => setSelected(item.id)}>
-                    <span>{item.name}</span>{item.uid && <span className={s.uid}>UID {item.uid}</span>}
+                    <span>{item.name}</span>{item.uid && <span className={s.uid}>编号 {item.uid}</span>}
                   </button>
                 ))}
               </div>
@@ -44,20 +44,21 @@ export function AccountsPanel({ accounts, games, plans, devices }: { accounts: G
 
 function AddAccount({ games, added }: { games: Game[]; added: (id: string) => void }) {
   const [gameId, setGameId] = useState(games[0]?.id ?? "");
-  const [name, setName] = useState(""); const [uid, setUid] = useState("");
+  const [name, setName] = useState(""); const [uid, setUid] = useState(""); const [nickname, setNickname] = useState("");
   const { busy, message, run } = useAction();
   if (games.length === 0) return <Muted>设备上线并上传任务包后，就能为它的游戏添加账号。</Muted>;
   const game = games.some((item) => item.id === gameId) ? gameId : games[0].id;
   return (
     <>
       <Form inline className={s.addForm} onSubmit={() => run(async () => {
-        const created = await api<GameAccount>("/api/accounts", { method: "POST", body: { gameId: game, name, uid: uid || null } });
-        setName(""); setUid(""); added(created.id);
+        const created = await api<GameAccount>("/api/accounts", { method: "POST", body: { gameId: game, name, uid: uid || null, nickname: nickname || null } });
+        setName(""); setUid(""); setNickname(""); added(created.id);
       })}>
         <Field label="游戏"><select aria-label="游戏" value={game} onChange={(e) => setGameId(e.target.value)}>
           {games.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field>
         <Field label="名称"><input type="text" placeholder="账号名称，如主号" required maxLength={40} value={name} onChange={(e) => setName(e.target.value)} /></Field>
-        <Field label="UID"><input type="text" placeholder="UID（可不填）" maxLength={40} value={uid} onChange={(e) => setUid(e.target.value)} /></Field>
+        <Field label="编号"><input type="text" placeholder="游戏里的编号（可不填）" maxLength={40} value={uid} onChange={(e) => setUid(e.target.value)} /></Field>
+        <Field label="游戏昵称"><input type="text" placeholder="游戏里的昵称（可不填）" maxLength={40} value={nickname} onChange={(e) => setNickname(e.target.value)} /></Field>
         <Button type="submit" disabled={busy}>添加账号</Button>
       </Form>
       <Message text={message?.text} ok={message?.ok} />
@@ -68,7 +69,8 @@ function AddAccount({ games, added }: { games: Game[]; added: (id: string) => vo
 function AccountDetail({ account, game, plans, devices, deleted }: { account: GameAccount; game?: Game; plans: Plan[]; devices: Device[]; deleted: () => void }) {
   const [name, setName] = useState(account.name);
   const [uid, setUid] = useState(account.uid ?? "");
-  useEffect(() => { setName(account.name); setUid(account.uid ?? ""); }, [account.name, account.uid]);
+  const [nickname, setNickname] = useState(account.nickname ?? "");
+  useEffect(() => { setName(account.name); setUid(account.uid ?? ""); setNickname(account.nickname ?? ""); }, [account.name, account.uid, account.nickname]);
   const remove = () => {
     if (!confirm(`删除“${account.name}”？它的任务设置和计划也会删除，过去的作业记录保留。`)) return;
     orAlert(async () => { await api(`/api/accounts/${enc(account.id)}`, { method: "DELETE" }); deleted(); });
@@ -76,9 +78,10 @@ function AccountDetail({ account, game, plans, devices, deleted }: { account: Ga
   return (
     <div className={s.detail}>
       <Row><Grow><h3>{`${game?.name ?? account.gameId} · ${account.name}`}</h3></Grow><Button variant="danger" onClick={remove}>删除账号</Button></Row>
-      <Form inline className={s.addForm} onSubmit={() => orAlert(() => api(`/api/accounts/${enc(account.id)}`, { method: "PUT", body: { name, uid: uid || null } }))}>
+      <Form inline className={s.addForm} onSubmit={() => orAlert(() => api(`/api/accounts/${enc(account.id)}`, { method: "PUT", body: { name, uid: uid || null, nickname: nickname || null } }))}>
         <Field label="名称"><input type="text" aria-label="账号名称" maxLength={40} value={name} onChange={(e) => setName(e.target.value)} /></Field>
-        <Field label="UID"><input type="text" aria-label="UID" maxLength={40} value={uid} onChange={(e) => setUid(e.target.value)} /></Field>
+        <Field label="编号"><input type="text" aria-label="编号" maxLength={40} value={uid} onChange={(e) => setUid(e.target.value)} /></Field>
+        <Field label="游戏昵称"><input type="text" aria-label="游戏昵称" maxLength={40} value={nickname} onChange={(e) => setNickname(e.target.value)} /></Field>
         <Button type="submit">保存</Button>
       </Form>
       <h4 className={s.heading}>任务设置</h4>
