@@ -1,0 +1,87 @@
+core/server/src/main/kotlin/io/github/yysassist/server/Database.kt
+  s_fae32e7f0efe76::t_d77b5e6dea89fc 54-55
+client/android/app/src/main/kotlin/io/github/yysassist/cloud/CloudPlatform.kt
+  s_fae32e7f0efe76::t_83bb1a89d7357c 93
+  s_fae32e7f0efe76::t_13f7fdf3262820 65,67-78,80-81
+  s_fae32e7f0efe76::t_ed770a81e1112d 3
+client/web/src/features/devices/DeviceCard.tsx
+  s_fae32e7f0efe76::t_1331c7851ce041 30-46,77,79-84
+client/android/app/src/main/kotlin/io/github/yysassist/ui/CloudPage.kt
+  s_fae32e7f0efe76::t_7c626a475b182a 32,39,67,81-96,115
+client/android/app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_7c626a475b182a 125-130
+  s_fae32e7f0efe76::t_13f7fdf3262820 32,76-77,91-93,109
+core/engine/src/test/kotlin/io/github/yysassist/core/cloud/CloudAgentTest.kt
+  s_fae32e7f0efe76::t_fb8987cc77624f 46,86,252
+  s_fae32e7f0efe76::t_24c5e353e366bb 235-251,253
+  s_fae32e7f0efe76::t_9424733a842e1d 45,47-49,83-85,87-93,219-234
+docs/design/cloud-executor.md
+  s_fae32e7f0efe76::t_64beae20c7d569 167-171,174
+  s_fae32e7f0efe76::t_e9b61f8c03dc85 172
+  s_fae32e7f0efe76::t_8f3cee355badab 173
+client/android/app/src/main/kotlin/io/github/yysassist/ui/TaskListPage.kt
+  s_fae32e7f0efe76::t_83bb1a89d7357c 40
+  s_fae32e7f0efe76::t_ed770a81e1112d 3
+client/android/app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt
+  s_fae32e7f0efe76::t_7c626a475b182a 146
+client/android/app/src/main/kotlin/io/github/yysassist/floating/FloatingTasks.kt
+  s_fae32e7f0efe76::t_83bb1a89d7357c 29
+  s_fae32e7f0efe76::t_ed770a81e1112d 3
+core/server/src/main/kotlin/io/github/yysassist/server/CloudService.kt
+  s_fae32e7f0efe76::t_dd821d8fbeb4ab 725-728,732-735
+  s_fae32e7f0efe76::t_18a53d2dcb90eb 289-294,297,299,302-306,323,327-328,355
+  s_fae32e7f0efe76::t_2a58491ac3a3c4 251-254,258,260,270,274-275
+  s_fae32e7f0efe76::t_b9e159440b3b9e 277
+  s_fae32e7f0efe76::t_83bb1a89d7357c 543
+  s_fae32e7f0efe76::t_96ba0ee1531684 789-792
+  s_fae32e7f0efe76::t_2e19c75dc61351 295-296,298,300
+  s_fae32e7f0efe76::t_8c9817f77ea605 301
+  s_fae32e7f0efe76::t_4a336b8611e040 271-273,276
+  s_fae32e7f0efe76::t_ed770a81e1112d 3
+  s_fae32e7f0efe76::t_2ca9cb12704ac4 343-349
+  s_fae32e7f0efe76::t_d77b5e6dea89fc 380-390,401-402,409,513-514,548-549,552-558,565-567,579-580,750
+core/protocol/src/main/kotlin/io/github/yysassist/protocol/CloudProtocol.kt
+  s_fae32e7f0efe76::t_918c46cd43230c 35-38,40-44,82-86,111-114,131
+core/engine/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt
+  s_fae32e7f0efe76::t_9c40d6a044f366 44-52,60-61,63-64,241-250
+  s_fae32e7f0efe76::t_83bb1a89d7357c 39-43
+client/web/src/features/accounts/Accounts.tsx
+  s_fae32e7f0efe76::t_1331c7851ce041 28,47,54-55,60-61,72-73,81,83-84
+core/server/src/test/kotlin/io/github/yysassist/server/CloudApiTest.kt
+  s_fae32e7f0efe76::t_4727d2d9a0c297 379-394,396-422,451-455,457-460
+  s_fae32e7f0efe76::t_e36060677979f2 395,456
+  s_fae32e7f0efe76::t_5be7bb3a650810 423-450
+client/android/app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt
+  s_fae32e7f0efe76::t_c503456139325e 25-26,43,377-383,827-836
+core/engine/src/main/kotlin/io/github/yysassist/core/cloud/CloudAgent.kt
+  s_fae32e7f0efe76::t_0efa925dfd1207 33-36,45-48,86-90,308,326,360-361,386-390,421-441,443-453
+  s_fae32e7f0efe76::t_aa1991fe19487d 442
+  s_fae32e7f0efe76::t_f0407ff36aabee 373,375-378
+  s_fae32e7f0efe76::t_7c626a475b182a 195
+  s_fae32e7f0efe76::t_c392c2758f406a 413-417
+  s_fae32e7f0efe76::t_173bb64ab338e5 37-39
+  s_fae32e7f0efe76::t_97560a12e2574c 454
+client/web/src/api/types.ts
+  s_fae32e7f0efe76::t_1331c7851ce041 5-6,9,23
+client/web/src/features/accounts/Accounts.module.css
+  s_fae32e7f0efe76::t_1331c7851ce041 11-12
+client/android/app/src/main/kotlin/io/github/yysassist/ui/PlanEditorPage.kt
+  s_fae32e7f0efe76::t_ed770a81e1112d 3
+  s_fae32e7f0efe76::t_83bb1a89d7357c 47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "10bd2302e1b7d70dc324912bd57dd47db0d7c399",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
