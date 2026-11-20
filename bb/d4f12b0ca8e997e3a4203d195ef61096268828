@@ -1,0 +1,62 @@
+client/android/app/src/debug/kotlin/io/github/yysassist/debug/DebugProbe.kt
+  s_fae32e7f0efe76::t_f08622b250c3a6 46-47,53-62,65,69,71-72,75,77-79,101,117,119-120,133,139,142-143
+  s_fae32e7f0efe76::t_c4360c485bd519 1-45,48-52,63-64,66-68,70,73-74,76,80-100,102-116,118,121-132,134-138,140-141,144-148
+tools/tasks/foster_1120.py
+  s_fae32e7f0efe76::t_869e26dd606e21 34,36,82,133
+  s_fae32e7f0efe76::t_bc4d64e32d6d05 88,98,100,104,106,110-111,201,205
+  s_fae32e7f0efe76::t_bfbf63c92f284a 135,143-147,166-168,170-174,206-207,210-214,218-226
+  s_fae32e7f0efe76::t_4aae2eadfdbb91 17-18,40-43,81,83-86,121-123,126-127,130-132,134,165,203
+  s_fae32e7f0efe76::t_6d811d1eb4ac3d 80,107-109,128,159-162,164
+  s_fae32e7f0efe76::t_fc537e58eec5e8 92-95,97,99,103,105,115,118
+  s_fae32e7f0efe76::t_e031c8c8add15c 129,149-158,163
+  s_fae32e7f0efe76::t_871d2205764bd4 192-193
+  s_fae32e7f0efe76::t_86a3887f19f24a 72-74,169
+  s_fae32e7f0efe76::t_594903af3594b8 1-16,19-33,35,37-39,44-71,77-79,87,89-91,96,101-102,116-117,119-120,124-125,148,175-191,194-200,202,204,208-209,215-217,228-244
+  s_fae32e7f0efe76::t_d02b919e12531c 75-76
+  s_fae32e7f0efe76::t_405b334db5b8e7 112-114,136-142,227
+docs/design/developer-workbench.md
+  s_fae32e7f0efe76::t_38a3940daf0caf 69-71,74-75
+  s_fae32e7f0efe76::t_8b2867e1c2e4e3 14
+  s_fae32e7f0efe76::t_aad73a8ab6384e 34,66,68,72
+  s_fae32e7f0efe76::t_e0ff6b532c040c 1-2,4-13,15-33,35-49,51-59,61-65,67
+  s_fae32e7f0efe76::t_ba9bfd29f43d7c 60
+  s_fae32e7f0efe76::t_e0e3f5bf15087e 3,50,73
+tools/tasks/build_release.py
+  s_fae32e7f0efe76::t_d02b919e12531c 26,87-93
+  s_fae32e7f0efe76::t_0fc5b4fa07f2bc 94
+tools/qa/probe.py
+  s_fae32e7f0efe76::t_b647b79beec238 1-44,46-47,50-71
+  s_fae32e7f0efe76::t_f08622b250c3a6 45,48-49
+docs/development/region-actions.md
+  s_fae32e7f0efe76::t_e7f1472b023cfa 43
+client/android/app/src/debug/AndroidManifest.xml
+  s_fae32e7f0efe76::t_eb7a6c772264a3 10-13
+docs/design/developer-workbench-tech.md
+  s_fae32e7f0efe76::t_3aa593a12f4aed 11,36,42,44,51,65,67,78,80,85,94,97-99,101,103-105,110-111,113,115,117,119,133,149-151,155-156,158,164,166-169,174,178-179,181,183-184
+  s_fae32e7f0efe76::t_70cabedd6725e1 33,38,41,48,57,60,68,74-76,135
+  s_fae32e7f0efe76::t_a454c7c509dc40 3-5,13-22,24,26-31,35,37,39-40,43,45-47,49-50,52-56,58-59,61-64,66,69-73,77,79,81-84,86-89,92,96,100,102,106-109,112,114,116,118,120,124,126,130,132,134,136-146,152-154,160-162,170-173,175-176,180,182,186,188,192,194,198,200-204
+  s_fae32e7f0efe76::t_1cff42e30dc103 1-2,6-10,12,23,25,32,34,90-91,93,95,121-123,125,127-129,131,147-148,157,159,163,165,177,185,187,189-191,193,195-197,199
+client/android/app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt
+  s_fae32e7f0efe76::t_e96c30345094fd 38,283-298,807,1169-1182
+  s_fae32e7f0efe76::t_dbea81a6392a90 48
+  s_fae32e7f0efe76::t_8f25ba5f924ec2 1063
+  s_fae32e7f0efe76::t_f08622b250c3a6 1003,1005,1040-1053
+client/android/app/src/debug/kotlin/io/github/yysassist/debug/LocalTaskTrigger.kt
+  s_fae32e7f0efe76::t_e031c8c8add15c 108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bbd4f12b0ca8e997e3a4203d195ef61096268828",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
