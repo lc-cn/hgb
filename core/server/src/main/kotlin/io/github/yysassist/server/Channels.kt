@@ -62,7 +62,11 @@ class OkChannelHttp(private val allowPrivate: Boolean = false) : ChannelHttp {
  * sealed with a key derived from the server's secret and never returned.
  */
 class Channels(private val db: Database, private val clock: () -> Long, private val events: ConsoleEvents, private val mailer: Mailer,
-    serverSecret: ByteArray, private val http: ChannelHttp = OkChannelHttp()) {
+    serverSecret: ByteArray, private val http: ChannelHttp = OkChannelHttp(),
+    /** Pushes a notice to a connected device to show; false when the device is not connected. */
+    private val push: (deviceId: String, notice: DeviceNotice) -> Boolean = { _, _ -> false }) {
+    /** Told when channels change, so devices learn which rules to show themselves. */
+    var changedChannels: (String) -> Unit = {}
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val stringMap = MapSerializer(String.serializer(), String.serializer())
     private val ruleIds = ListSerializer(String.serializer())
@@ -77,8 +81,9 @@ class Channels(private val db: Database, private val clock: () -> Long, private 
         ChannelKind.BARK to listOf(Field("server", false, false), Field("key", true, true)),
         ChannelKind.EMAIL to emptyList(),
         ChannelKind.WEBHOOK to listOf(Field("url", true, true), Field("header", true, false)),
+        ChannelKind.LOCAL to listOf(Field("device", false, true)),
     )
-    private val kindNames = mapOf(ChannelKind.DINGTALK to "钉钉", ChannelKind.WECOM to "企业微信", ChannelKind.BARK to "Bark", ChannelKind.EMAIL to "邮件", ChannelKind.WEBHOOK to "Webhook")
+    private val kindNames = mapOf(ChannelKind.DINGTALK to "钉钉", ChannelKind.WECOM to "企业微信", ChannelKind.BARK to "Bark", ChannelKind.EMAIL to "邮件", ChannelKind.WEBHOOK to "Webhook", ChannelKind.LOCAL to "本机通知")
 
     // ---- channels ----
 
@@ -104,6 +109,8 @@ class Channels(private val db: Database, private val clock: () -> Long, private 
         ChannelKind.BARK -> "${host(channel.config["server"] ?: BARK)} · 设备密钥已填写"
         ChannelKind.EMAIL -> verifiedEmail(channel.userId) ?: "账号没有已验证的邮箱"
         ChannelKind.WEBHOOK -> host(channel.secrets["url"].orEmpty()) + if ("header" in channel.secrets) " · 带认证头" else ""
+        ChannelKind.LOCAL -> single("SELECT name FROM devices WHERE id = ? AND user_id = ? AND revoked = 0", channel.config["device"], channel.userId) { it.getString(1) }
+            ?: "设备已解绑"
     }
     private fun host(url: String) = runCatching { URI(url).host }.getOrNull() ?: "地址无效"
     private fun Database.verifiedEmail(userId: String) = single("SELECT email FROM users WHERE id = ? AND email_verified = 1", userId) { it.getString(1) }
@@ -147,6 +154,8 @@ class Channels(private val db: Database, private val clock: () -> Long, private 
                 }
             }
             ChannelKind.EMAIL -> if (verifiedEmail(userId) == null) throw ApiException(400, "no_email", "邮件发到账号已验证的邮箱；这个账号还没有")
+            ChannelKind.LOCAL -> if (single("SELECT 1 FROM devices WHERE id = ? AND user_id = ? AND revoked = 0", config["device"], userId) { true } != true)
+                throw ApiException(400, "invalid_device", "选一台已绑定的设备")
         }
         return config to secrets
     }
@@ -155,7 +164,7 @@ class Channels(private val db: Database, private val clock: () -> Long, private 
         if (uri == null || uri.scheme !in setOf("https", "http") || uri.host.isNullOrBlank()) throw ApiException(400, "invalid_url", "$what 需要是 http 或 https 地址")
     }
     private fun label(kind: ChannelKind, id: String) = when (id) {
-        "url" -> if (kind == ChannelKind.WEBHOOK) "地址" else "机器人 Webhook 地址"; "key" -> "设备密钥"; "sign" -> "加签密钥"; "server" -> "服务器"; else -> "认证头"
+        "url" -> if (kind == ChannelKind.WEBHOOK) "地址" else "机器人 Webhook 地址"; "key" -> "设备密钥"; "sign" -> "加签密钥"; "server" -> "服务器"; "device" -> "设备"; else -> "认证头"
     }
 
     /** All mail goes to the same address, so one mail channel is enough; more would only multiply the same message. */
@@ -177,7 +186,7 @@ class Channels(private val db: Database, private val clock: () -> Long, private 
                 json.encodeToString(stringMap, config), secrets.takeIf { it.isNotEmpty() }?.let(::seal), now, now)
             view(stored(userId, id)!!)
         }
-        changed(userId); return view
+        changed(userId); changedChannels(userId); return view
     }
     fun change(userId: String, id: String, save: ChannelSave): ChannelView {
         val view = db.tx {
@@ -189,11 +198,11 @@ class Channels(private val db: Database, private val clock: () -> Long, private 
                 secrets.takeIf { it.isNotEmpty() }?.let(::seal), clock(), id, userId)
             view(stored(userId, id)!!)
         }
-        changed(userId); return view
+        changed(userId); changedChannels(userId); return view
     }
     fun delete(userId: String, id: String) {
         db.tx { if (update("DELETE FROM channels WHERE id = ? AND user_id = ?", id, userId) == 0) throw ApiException(404, "not_found", "渠道不存在") }
-        changed(userId)
+        changed(userId); changedChannels(userId)
     }
     private fun changed(userId: String) = events.publish(userId, "delivery", "{}")
 
@@ -226,20 +235,20 @@ class Channels(private val db: Database, private val clock: () -> Long, private 
         }
     }
     private class Outgoing(val userId: String, val channel: Stored?, val title: String, val detail: String, val ruleId: String, val at: Long,
-        val jobId: String?, val attempts: Int, val zone: String)
+        val jobId: String?, val attempts: Int, val zone: String, val noticeId: String)
     private fun deliverOne(id: String) {
         val out = db.tx {
-            single("""SELECT d.user_id, d.channel_id, n.title, n.detail, n.rule_id, n.at, n.job_id, d.attempts, u.time_zone FROM deliveries d
+            single("""SELECT d.user_id, d.channel_id, n.title, n.detail, n.rule_id, n.at, n.job_id, d.attempts, u.time_zone, n.id FROM deliveries d
                 JOIN notices n ON n.id = d.notice_id JOIN users u ON u.id = d.user_id WHERE d.id = ? AND d.state = 'PENDING'""", id) {
                 val userId = it.getString(1); val channelId = it.getString(2)
                 Outgoing(userId, channelId?.let { channel -> stored(userId, channel) }, it.getString(3), it.getString(4), it.getString(5), it.getLong(6),
-                    it.getString(7), it.getInt(8), it.getString(9))
+                    it.getString(7), it.getInt(8), it.getString(9), it.getString(10))
             }
         } ?: return
         val failure = when {
             out.channel == null -> "渠道已删除"
             !out.channel.enabled -> "渠道已停用"
-            else -> try { send(out.channel, out.title, out.detail, out.ruleId, out.at, out.jobId, out.zone, id); null }
+            else -> try { send(out.channel, out.title, out.detail, out.ruleId, out.at, out.jobId, out.zone, id, out.noticeId); null }
                 catch (error: ChannelFailure) { error.message } catch (error: MailUnavailable) { error.message } catch (error: Exception) { "发送出错：${error.javaClass.simpleName}" }
         }
         val now = clock(); val attempts = out.attempts + 1
@@ -272,7 +281,7 @@ class Channels(private val db: Database, private val clock: () -> Long, private 
             Stored(test.id ?: "", userId, test.save.kind, test.save.name.trim(), true, emptyList(), config, secrets) to
                 (single("SELECT time_zone FROM users WHERE id = ?", userId) { it.getString(1) } ?: "Asia/Shanghai")
         }
-        val failure = try { send(draft, "测试消息", "收到这条，说明“${draft.name}”可以用了。", "test", clock(), null, zone, null); null }
+        val failure = try { send(draft, "测试消息", "收到这条，说明“${draft.name}”可以用了。", "test", clock(), null, zone, null, "test:${UUID.randomUUID()}"); null }
             catch (error: ChannelFailure) { error.message } catch (error: MailUnavailable) { error.message } catch (error: Exception) { "发送出错：${error.javaClass.simpleName}" }
         val now = clock()
         db.tx {
@@ -293,7 +302,7 @@ class Channels(private val db: Database, private val clock: () -> Long, private 
      * so a webhook gets [deliveryId] to tell a repeat. Errors never quote what the other side answered, except the
      * official DingTalk and WeCom services' own explanation.
      */
-    private fun send(channel: Stored, title: String, detail: String, ruleId: String, at: Long, jobId: String?, zone: String, deliveryId: String?) {
+    private fun send(channel: Stored, title: String, detail: String, ruleId: String, at: Long, jobId: String?, zone: String, deliveryId: String?, noticeId: String) {
         val time = DateTimeFormatter.ofPattern("M月d日 HH:mm").withZone(runCatching { ZoneId.of(zone) }.getOrDefault(ZoneId.of("Asia/Shanghai"))).format(Instant.ofEpochMilli(at))
         val subject = "【护肝宝】$title"
         val text = listOf(subject, detail, time).filter { it.isNotBlank() }.joinToString("\n")
@@ -326,6 +335,8 @@ class Channels(private val db: Database, private val clock: () -> Long, private 
                 val to = db.tx { verifiedEmail(channel.userId) } ?: throw ChannelFailure("账号没有已验证的邮箱")
                 mailer.send(to, subject, text)
             }
+            // Shown by the app; a device that is not connected is tried again like any other channel.
+            ChannelKind.LOCAL -> if (!push(channel.config.getValue("device"), DeviceNotice(noticeId, title, detail, at))) throw ChannelFailure("设备不在线")
         }
     }
     /** These services answer 200 even when they refuse; the reply's own code says whether it was accepted. */

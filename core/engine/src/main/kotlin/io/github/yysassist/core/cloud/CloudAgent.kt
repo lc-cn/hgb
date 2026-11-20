@@ -47,7 +47,9 @@ data class CloudApp(val key: String, val gameId: String, val name: String, val s
 /** The account tasks of a game: identify reads the signed-in account, switch signs in to the one with a nickname. */
 enum class AccountTask { IDENTIFY, SWITCH }
 @Serializable data class CloudCredentials(val serverUrl: String, val userId: String, val email: String?, val accessToken: String, val refreshToken: String,
-    val accessExpiresAt: Long, val installId: String, val deviceId: String? = null, val activeJob: ActiveCloudJob? = null) {
+    val accessExpiresAt: Long, val installId: String, val deviceId: String? = null, val activeJob: ActiveCloudJob? = null,
+    /** What the device noticed and has not yet reported; kept across restarts and while offline. */
+    val pendingNotices: List<DeviceEvent> = emptyList()) {
     override fun toString() = "CloudCredentials(<redacted>)"
 }
 interface CloudCredentialStore {
@@ -90,6 +92,10 @@ interface CloudExecutorPort {
         CloudEnqueueResult.Rejected("这个游戏不支持识别和切换账号")
     /** Actions recorded for [runId] after trace [after], oldest first. */
     suspend fun traces(runId: Long, after: Long): List<CloudTrace> = emptyList()
+    /** Why the device cannot start the next step right now (no accessibility, no screen, game not in front), or null. */
+    fun blocked(): String? = null
+    /** Shows a notice named [key] on the device as a system notification; false when nothing was shown (turned off, not allowed). */
+    fun notify(key: String, title: String, text: String): Boolean = false
 }
 sealed interface CloudState {
     data object Loading : CloudState
@@ -116,7 +122,8 @@ fun cloudOutcome(state: ExecutorSnapshot, runId: Long): Pair<JobState, String>? 
 class CloudAgent(private val http: OkHttpClient, private val store: CloudCredentialStore, private val executor: CloudExecutorPort,
     private val deviceName: String, private val platform: String, private val appVersion: String, private val scope: CoroutineScope,
     private val clock: () -> Long = System::currentTimeMillis, private val heartbeatMillis: Long = 15_000, private val retryMillis: Long = 5_000,
-    private val progressMillis: Long = 1_500, private val statusMillis: Long = 1_000, private val dataStore: CloudDataStore? = null) {
+    private val progressMillis: Long = 1_500, private val statusMillis: Long = 1_000, private val dataStore: CloudDataStore? = null,
+    private val watchMillis: Long = 5_000, private val conditionGraceMillis: Long = 60_000) {
     private val json = Json { ignoreUnknownKeys = true; explicitNulls = false; encodeDefaults = true }
     /** A socket stays open for hours; pings keep it alive through NAT and let both ends notice a dead link. */
     private val sockets = http.newBuilder().readTimeout(0, java.util.concurrent.TimeUnit.MILLISECONDS).callTimeout(0, java.util.concurrent.TimeUnit.MILLISECONDS)
@@ -210,6 +217,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         worker = scope.launch { supervisorScope {
             launch { connections() }
             launch { jobs() }
+            launch { watch() }
         } }
     }
     private fun publish(online: Boolean, message: String? = null) {
@@ -327,6 +335,11 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
             }
             is ServerMessage.Job -> leases.trySend(message.lease)
             is ServerMessage.Data -> { mutableData.value = message.data; runCatching { dataStore?.write(message.data) } }
+            // Pushed at least once: a resend of a notice already shown is not shown again.
+            is ServerMessage.Notify -> if (shownNotices.add(message.notice.id)) {
+                while (shownNotices.size > 100) shownNotices.remove(shownNotices.first())
+                executor.notify(message.notice.id, "【护肝宝】${message.notice.title}", message.notice.detail)
+            }
             // The server repeats the wanted state with every status reply, so only a change is acted on, and a pause or
             // resume on the phone itself is not undone. A pause that comes before the run has started is kept with the
             // job and applied by the job loop once it has; the lock makes one of the two act, never both or neither.
@@ -347,6 +360,47 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
             json.encodeToString(JobReport(job.leaseNo, state, detail.take(400), restoreIssue?.take(300))), saved.accessToken)
     }
     private suspend fun remember(job: ActiveCloudJob?) = mutex.withLock { credentials?.let { save(it.copy(activeJob = job)) } }
+    private val shownNotices = LinkedHashSet<String>()
+    private val deviceWatch by lazy { DeviceWatch(deviceName, conditionGraceMillis) }
+    /**
+     * Judges the device rules the server sent, shows at once what a local-notification channel here subscribes to (so
+     * it appears even offline), and reports everything noticed; what cannot be reported yet is kept and sent later.
+     */
+    private suspend fun watch() {
+        var failures = 0; var nextSend = 0L
+        while (currentCoroutineContext().isActive) {
+            try {
+                val rules = mutableData.value?.rules.orEmpty()
+                val noticed = if (rules.isEmpty()) emptyList() else deviceWatch.observe(executor.state.value, executor.blocked(), rules, clock()).map { event ->
+                    // Marked shown only when it really appeared, so the server still pushes it if it did not.
+                    if (rules.firstOrNull { it.ruleId == event.ruleId }?.local == true) event.copy(shown = executor.notify(event.key, "【护肝宝】${event.title}", event.detail))
+                    else event
+                }
+                val pending = mutex.withLock {
+                    val saved = credentials ?: return@withLock emptyList()
+                    if (noticed.isNotEmpty()) save(saved.copy(pendingNotices = (saved.pendingNotices + noticed).takeLast(MAX_PENDING_NOTICES)))
+                    credentials?.pendingNotices.orEmpty()
+                }
+                if (pending.isNotEmpty() && clock() >= nextSend) {
+                    val sent = try {
+                        authorized { send<Unit>(it.serverUrl, "/api/device/notices", json.encodeToString(DeviceEvents(pending)), it.accessToken) }; true
+                    } catch (cancelled: CancellationException) { throw cancelled }
+                    // Refused for what it is: sending it again would be refused again.
+                    catch (refused: CloudRequestException) { refused.status in 400..499 && refused.status != 401 }
+                    catch (_: IOException) { false } // offline: kept for next time
+                    if (sent) {
+                        failures = 0
+                        mutex.withLock { credentials?.let { saved -> save(saved.copy(pendingNotices = saved.pendingNotices.filterNot { event -> pending.any { it.key == event.key } })) } }
+                    } else {
+                        // Waits longer after each failure, up to five minutes, so a server in trouble is not hammered.
+                        failures++; nextSend = clock() + minOf(watchMillis shl minOf(failures, 6), 5 * 60_000L)
+                    }
+                }
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: Exception) { /* one bad round never stops the watch; the next round tries again */ }
+            delay(watchMillis)
+        }
+    }
     private suspend fun jobs() {
         while (currentCoroutineContext().isActive) {
             try {
@@ -476,5 +530,6 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         const val TRACE_SETTLE_MILLIS = 600L
         val JSON_TYPE = "application/json".toMediaType()
         const val RENEW_MARGIN = 60_000L
+        const val MAX_PENDING_NOTICES = 50
     }
 }

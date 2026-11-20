@@ -143,7 +143,7 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
                                     else if (runtimeStatus is RuntimeStatus.Failure) EmptyContent("运行记录暂不可用", (runtimeStatus as RuntimeStatus.Failure).message)
                                     else RunHistoryPage(executor)
                                 "运行与数据" -> DataUsagePage(executor)
-                                "云端控制" -> CloudPage(application.accounts, application::identifyAccount)
+                                "云端控制" -> CloudPage(application.accounts, application::identifyAccount, application.localNotices)
                                 "新建计划", "编辑计划" -> if (planTarget == null || planAccount == null) EmptyContent("先选好当前登录的游戏账号", "计划属于游戏账号，在 设置 → 云端控制 里选择。")
                                     else if (detail == "编辑计划" && plans?.none { it.id == editPlanId } != false) EmptyContent("这个计划已在别处删除", "返回计划列表查看。")
                                     else PlanEditorPage(plans?.firstOrNull { it.id == editPlanId }.takeIf { detail == "编辑计划" }, planTarget, planTask, activeBundle, online, { name, schedule: PlanSchedule, taskIds ->

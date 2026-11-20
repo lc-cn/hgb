@@ -7,11 +7,12 @@ import java.util.UUID
 
 /** The rules the server can judge by itself, from jobs, plans and device connections. All are off until turned on. */
 internal object RuleCatalog {
-    data class Rule(val id: String, val name: String, val kind: RuleKind, val description: String, val suggested: Long? = null)
+    /** [byDevice]: only a device can see it, so the device judges it and reports what it noticed. */
+    data class Rule(val id: String, val name: String, val kind: RuleKind, val description: String, val suggested: Long? = null, val byDevice: Boolean = false)
     const val TASK_STARTED = "task-started"; const val TASK_SUCCEEDED = "task-succeeded"; const val PLAN_STARTED = "plan-started"
     const val PLAN_COMPLETED = "plan-completed"; const val EXECUTION_FAILED = "execution-failed"; const val UNKNOWN_RESULT = "unknown-result"
     const val QUEUE_WAIT = "queue-wait"; const val DEVICE_OFFLINE = "device-offline"; const val PLAN_MISSED = "plan-missed"
-    const val ACCOUNT_NOT_RESTORED = "account-not-restored"
+    const val ACCOUNT_NOT_RESTORED = "account-not-restored"; const val NO_PROGRESS = "no-progress"; const val CONDITION_LOST = "condition-lost"
     val all = listOf(
         Rule(TASK_STARTED, "任务开始", RuleKind.INSTANT, "作业在设备上真正开始运行时"),
         Rule(TASK_SUCCEEDED, "任务成功", RuleKind.INSTANT, "作业运行完成时"),
@@ -23,6 +24,8 @@ internal object RuleCatalog {
         Rule(DEVICE_OFFLINE, "设备掉线", RuleKind.DURATION, "设备断开连接达到这么久", 10),
         Rule(PLAN_MISSED, "计划没执行", RuleKind.INSTANT, "计划到了最晚开始时间仍没有可用的应用"),
         Rule(ACCOUNT_NOT_RESTORED, "账号没切回", RuleKind.INSTANT, "切号运行后没能切回应用的默认账号"),
+        Rule(NO_PROGRESS, "执行无进展", RuleKind.DURATION, "正在运行，但同一步停留了这么久；暂停时不算", 5, byDevice = true),
+        Rule(CONDITION_LOST, "运行条件中断", RuleKind.INSTANT, "有任务在运行或排队，设备却没法看画面或点按钮（无障碍断开、屏幕不可用、游戏不在前台）超过一分钟", byDevice = true),
     )
     val byId = all.associateBy { it.id }
 }
@@ -48,7 +51,7 @@ class Notices(private val db: Database, private val clock: () -> Long, private v
         return RuleCatalog.all.map { rule ->
             val setting = saved[rule.id]
             EventRuleView(rule.id, rule.name, rule.kind, rule.description, setting?.enabled == true, setting?.threshold, rule.suggested,
-                setting?.results ?: if (rule.kind == RuleKind.RESULT) PlanOutcome.entries else emptyList())
+                setting?.results ?: if (rule.kind == RuleKind.RESULT) PlanOutcome.entries else emptyList(), rule.byDevice)
         }
     }
     private fun Database.settings(userId: String): Map<String, Setting> =
@@ -78,6 +81,42 @@ class Notices(private val db: Database, private val clock: () -> Long, private v
         }
         events.publish(userId, "rules", json.encodeToString(ListSerializer(EventRuleView.serializer()), views))
         return views
+    }
+
+    /**
+     * The device rules that are on, for a device to judge; [local] marks those a local-notification channel for
+     * [deviceId] subscribes to, so the device shows them itself.
+     */
+    fun Database.deviceRules(userId: String, deviceId: String): List<DeviceRule> {
+        val local = query("""SELECT DISTINCT r.value FROM channels c, json_each(c.rules_json) r WHERE c.user_id = ? AND c.kind = 'LOCAL' AND c.enabled = 1
+            AND json_extract(c.config_json, '$.device') = ?""", userId, deviceId) { it.getString(1) }.toSet()
+        return settings(userId).filter { (id, setting) -> setting.enabled && RuleCatalog.byId[id]?.byDevice == true }
+            .map { (id, setting) -> DeviceRule(id, setting.threshold, id in local) }.sortedBy { it.ruleId }
+    }
+    /**
+     * Records what a device noticed, once per occurrence, while its rule is on and only for what happened after it was
+     * turned on. A notice the device already showed is not pushed back to that device.
+     */
+    fun recordDevice(userId: String, deviceId: String, batch: DeviceEvents) {
+        val now = clock()
+        val recorded = db.tx {
+            val rules = settings(userId)
+            batch.events.take(50).mapNotNull { event ->
+                val rule = RuleCatalog.byId[event.ruleId]?.takeIf { it.byDevice } ?: return@mapNotNull null
+                val setting = rules[rule.id]?.takeIf { it.enabled } ?: return@mapNotNull null
+                // The device only judges rules the server sent it after they were on, so its clock is not compared with
+                // the server's; a time from the future is taken as now.
+                val at = event.at.coerceAtMost(now)
+                if (now < setting.enabledAt) return@mapNotNull null
+                val notice = record(userId, rule.id, "device:$deviceId:${event.key.take(120)}", at, event.title.take(200), event.detail.take(500),
+                    null, deviceId, null, null) ?: return@mapNotNull null
+                if (event.shown) update("""UPDATE deliveries SET state = 'SENT', attempts = 1, next_at = NULL, error = '已在设备上弹出', updated_at = ?
+                    WHERE notice_id = ? AND channel_id IN (SELECT id FROM channels WHERE kind = 'LOCAL' AND json_extract(config_json, '$.device') = ?)""",
+                    now, notice.id, deviceId)
+                notice
+            }
+        }
+        recorded.forEach { events.publish(userId, "notice", json.encodeToString(NoticeView.serializer(), it)) }
     }
 
     /**

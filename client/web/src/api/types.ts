@@ -50,7 +50,7 @@ export type PlanOutcome = "COMPLETED" | "PARTIAL_FAILED" | "FAILED" | "CANCELLED
 export interface EventRule { ruleId: string; name: string; kind: RuleKind; description: string; enabled: boolean; threshold?: number | null; suggested?: number | null; results: PlanOutcome[] }
 /** Something a rule noticed. */
 export interface Notice { id: string; ruleId: string; ruleName: string; at: number; title: string; detail: string; jobId?: string | null; deviceId?: string | null; accountId?: string | null; planId?: string | null; deliveries: Delivery[] }
-export type ChannelKind = "DINGTALK" | "WECOM" | "BARK" | "EMAIL" | "WEBHOOK";
+export type ChannelKind = "DINGTALK" | "WECOM" | "BARK" | "EMAIL" | "WEBHOOK" | "LOCAL";
 /** A channel; [filled] names its secret fields that are set (their values never come back), [fields] its plain ones. */
 export interface Channel { id: string; kind: ChannelKind; name: string; enabled: boolean; rules: string[]; target: string; filled: string[]; fields: Record<string, string>; last?: Delivery | null }
 export interface ChannelSave { kind: ChannelKind; name: string; enabled: boolean; rules: string[]; fields: Record<string, string>; clear?: string[] }

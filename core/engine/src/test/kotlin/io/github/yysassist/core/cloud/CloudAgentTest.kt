@@ -49,6 +49,9 @@ class CloudAgentTest {
     @Volatile private var switchesTo: String? = null
     private val resumed = CopyOnWriteArrayList<Long>()
     private val events = CopyOnWriteArrayList<JobEvent>()
+    @Volatile private var blockedReason: String? = null
+    private val notified = CopyOnWriteArrayList<String>()
+    private val noticeBatches = CopyOnWriteArrayList<DeviceEvents>()
     /** When set, an accepted submission immediately shows this run as finished with a few facts. */
     @Volatile private var finishedRun: Long? = null
 
@@ -92,13 +95,16 @@ class CloudAgentTest {
             return CloudEnqueueResult.Accepted(run)
         }
         override fun resume(runId: Long) { resumed += runId }
+        override fun blocked() = blockedReason
+        override fun notify(key: String, title: String, text: String): Boolean { notified += title; return true }
     }
     private val dataStore = object : CloudDataStore {
         @Volatile var value: DeviceData? = null
         override suspend fun read() = value
         override suspend fun write(value: DeviceData?) { this.value = value }
     }
-    private fun agent() = CloudAgent(OkHttpClient(), store, port, "手机", "android", "1", scope, heartbeatMillis = 50, retryMillis = 50, dataStore = dataStore)
+    private fun agent() = CloudAgent(OkHttpClient(), store, port, "手机", "android", "1", scope, heartbeatMillis = 50, retryMillis = 50, dataStore = dataStore,
+        watchMillis = 30, conditionGraceMillis = 0)
     private val base get() = server.url("/").toString().trimEnd('/')
 
     @Before fun start() {
@@ -123,6 +129,7 @@ class CloudAgentTest {
                     }).build()
                     path == "/api/device/catalog" -> { uploads += json.decodeFromString(CatalogUpload.serializer(), request.body!!.utf8()); needCatalog = false; ok("{}") }
                     path.endsWith("/events") -> { events += json.decodeFromString(JobEvents.serializer(), request.body!!.utf8()).events; ok("{}") }
+                    path == "/api/device/notices" -> { noticeBatches += json.decodeFromString(DeviceEvents.serializer(), request.body!!.utf8()); ok("{}") }
                     path.endsWith("/report") -> { reports += json.decodeFromString(JobReport.serializer(), request.body!!.utf8()); ok("{}") }
                     else -> ok("{}")
                 }
@@ -290,5 +297,31 @@ class CloudAgentTest {
         server.close()
         agent.signOut()
         assertNull(store.value); assertTrue(agent.state.value is CloudState.SignedOut)
+    }
+
+    private fun data(rules: List<DeviceRule>) = json.encodeToString(ServerMessage.serializer(),
+        ServerMessage.Data(DeviceData(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), "Asia/Shanghai", rules)))
+    @Test fun whatTheDeviceNoticesIsShownHereWhenSubscribedAndReported() = runBlocking<Unit> {
+        signedIn(); eventually { socket != null }
+        // A run waits on a lost condition.
+        executorState.value = executorState.value.copy(phase = io.github.yysassist.core.execution.ExecutorPhase.RUNNING,
+            waiting = listOf(io.github.yysassist.core.execution.RunProgress(3, 1, io.github.yysassist.core.execution.ExecutionRequest(
+                io.github.yysassist.core.execution.SubmissionRef(io.github.yysassist.core.execution.SubmissionKind.TASK, "gift"),
+                ExecutionContext("game", Principal.Anonymous), "v1", listOf(io.github.yysassist.core.execution.TaskSnapshot("gift", "每日礼包", 1, listOf("a")))), 1)))
+        blockedReason = "等待无障碍连接"
+        socket!!.send(data(listOf(DeviceRule("condition-lost", local = true))))
+        eventually { noticeBatches.isNotEmpty() }
+        val event = noticeBatches.first().events.single()
+        assertEquals("condition-lost", event.ruleId); assertTrue(event.shown)
+        assertEquals(1, notified.size); assertTrue(notified.single().contains("运行条件中断"))
+        eventually { store.value?.pendingNotices?.isEmpty() == true }
+    }
+    @Test fun aPushedNoticeIsShownOnceEvenWhenSentAgain() = runBlocking<Unit> {
+        signedIn(); eventually { socket != null }
+        val push = json.encodeToString(ServerMessage.serializer(), ServerMessage.Notify(DeviceNotice("n1", "任务成功：主号 · 返回庭院", "", 1)))
+        socket!!.send(push); socket!!.send(push)
+        eventually { notified.isNotEmpty() }
+        delay(200)
+        assertEquals(listOf("【护肝宝】任务成功：主号 · 返回庭院"), notified.toList())
     }
 }

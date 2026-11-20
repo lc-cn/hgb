@@ -64,6 +64,8 @@ import kotlinx.serialization.json.JsonObject
     @Serializable @SerialName("resume") data class Resume(val jobId: String) : ServerMessage
     /** Everything the app shows about accounts, settings and plans, sent whole on connect and after each change. */
     @Serializable @SerialName("data") data class Data(val data: DeviceData) : ServerMessage
+    /** Show this notice on the device: a local-notification channel for this device is subscribed to its rule. */
+    @Serializable @SerialName("notify") data class Notify(val notice: DeviceNotice) : ServerMessage
 }
 /** Close codes the server uses when it refuses a device socket. */
 object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DEVICE: Short = 4403; const val REPLACED: Short = 4409 }
@@ -145,7 +147,21 @@ object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DE
  * this device's, with the accounts the user assigned to them.
  */
 @Serializable data class DeviceData(val accounts: List<GameAccountView>, val apps: List<AppView>, val plans: List<PlanView>,
-    val configs: List<AccountConfig>, val lastRuns: List<PlanRun>, val timeZone: String)
+    val configs: List<AccountConfig>, val lastRuns: List<PlanRun>, val timeZone: String, val rules: List<DeviceRule> = emptyList())
+/**
+ * A rule the device judges itself, because only it can see the condition; it is on. [threshold] is in minutes for a
+ * lasting condition. [local] says a local-notification channel for this device subscribes to it, so the device shows
+ * what it notices at once, even offline.
+ */
+@Serializable data class DeviceRule(val ruleId: String, val threshold: Long? = null, val local: Boolean = false)
+/**
+ * Something the device noticed by a [DeviceRule]. [key] names the occurrence on this device, so a resend is recorded
+ * once; [shown] says the device already showed it, so the server does not push it back.
+ */
+@Serializable data class DeviceEvent(val key: String, val ruleId: String, val at: Long, val title: String, val detail: String = "", val shown: Boolean = false)
+@Serializable data class DeviceEvents(val events: List<DeviceEvent>)
+/** A notice pushed to a device to show; [id] lets the device show a resend once. */
+@Serializable data class DeviceNotice(val id: String, val title: String, val detail: String = "", val at: Long)
 /** First message of the console's event stream (`/api/events`), and what it falls back to after a gap. */
 @Serializable data class ConsoleSnapshot(val devices: List<DeviceView>, val jobs: List<JobView>, val accounts: List<GameAccountView> = emptyList(),
     val plans: List<PlanView> = emptyList(), val games: List<GameView> = emptyList(), val timeZone: String = "Asia/Shanghai")
@@ -170,7 +186,7 @@ object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DE
  * set by the user, [suggested] only fills the editor.
  */
 @Serializable data class EventRuleView(val ruleId: String, val name: String, val kind: RuleKind, val description: String, val enabled: Boolean,
-    val threshold: Long? = null, val suggested: Long? = null, val results: List<PlanOutcome> = emptyList())
+    val threshold: Long? = null, val suggested: Long? = null, val results: List<PlanOutcome> = emptyList(), val byDevice: Boolean = false)
 @Serializable data class EventRuleSave(val enabled: Boolean, val threshold: Long? = null, val results: List<PlanOutcome> = emptyList())
 /** Something a rule noticed. Kept whether or not any channel is subscribed to it. */
 @Serializable data class NoticeView(val id: String, val ruleId: String, val ruleName: String, val at: Long, val title: String, val detail: String = "",
@@ -178,7 +194,7 @@ object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DE
     val deliveries: List<DeliveryView> = emptyList())
 
 /** Where notices are sent. The server sends them all, so they arrive even when every device is offline. */
-@Serializable enum class ChannelKind { DINGTALK, WECOM, BARK, EMAIL, WEBHOOK }
+@Serializable enum class ChannelKind { DINGTALK, WECOM, BARK, EMAIL, WEBHOOK, LOCAL }
 /**
  * A channel as the console sees it: [target] says where it sends without giving away a secret, and [filled] names
  * the secret fields that are set; their values never leave the server.

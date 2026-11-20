@@ -14,14 +14,15 @@ import java.util.concurrent.atomic.AtomicInteger
 internal class LocalNotifier(context: Context) {
     private val app = context.applicationContext
     private val manager = app.getSystemService(NotificationManager::class.java)
-    private val nextId = AtomicInteger(1)
+    // Started at a time-based value so ids from before a restart are not reused for different messages.
+    private val nextId = AtomicInteger((System.currentTimeMillis() / 1000 % 1_000_000_000).toInt())
     /** False when the user has not allowed notifications; that is not a task failure. */
-    fun post(title: String, text: String): Boolean {
+    fun post(title: String, text: String, key: String? = null): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             app.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false
         if (!manager.areNotificationsEnabled()) return false
         manager.createNotificationChannel(NotificationChannel(CHANNEL, "任务消息", NotificationManager.IMPORTANCE_DEFAULT))
-        manager.notify(nextId.getAndIncrement(), Notification.Builder(app, CHANNEL).setSmallIcon(R.drawable.ic_launcher_foreground)
+        manager.notify(key?.let { "notice:$it".hashCode() } ?: nextId.getAndIncrement(), Notification.Builder(app, CHANNEL).setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title).setContentText(text).setStyle(Notification.BigTextStyle().bigText(text)).setAutoCancel(true).build())
         return true
     }

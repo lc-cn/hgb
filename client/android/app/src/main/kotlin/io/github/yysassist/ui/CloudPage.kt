@@ -14,6 +14,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import io.github.yysassist.BuildConfig
 import io.github.yysassist.cloud.CloudAccounts
+import io.github.yysassist.cloud.LocalNotices
 import io.github.yysassist.core.cloud.CloudAgent
 import io.github.yysassist.core.cloud.CloudRequestException
 import io.github.yysassist.core.cloud.CloudState
@@ -29,20 +30,20 @@ internal fun cloudServerIssue(server: String, debug: Boolean = BuildConfig.DEBUG
 }
 
 @Composable
-internal fun CloudPage(accounts: CloudAccounts, identify: (String) -> Unit) {
+internal fun CloudPage(accounts: CloudAccounts, identify: (String) -> Unit, notices: LocalNotices? = null) {
     val agent = accounts.agent
     val state by agent.state.collectAsState()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(start = UiSpace.medium, end = UiSpace.medium, bottom = UiSpace.medium)) {
         when (val current = state) {
             CloudState.Loading -> CircularProgressIndicator(Modifier.padding(UiSpace.page))
             is CloudState.SignedOut -> CloudSignIn(agent, current.message)
-            is CloudState.SignedIn -> { CloudAccount(agent, current); GameAccounts(accounts, current.online, identify) }
+            is CloudState.SignedIn -> { CloudAccount(agent, current, notices); GameAccounts(accounts, current.online, identify) }
         }
     }
 }
 
 @Composable
-private fun CloudAccount(agent: CloudAgent, state: CloudState.SignedIn) {
+private fun CloudAccount(agent: CloudAgent, state: CloudState.SignedIn, notices: LocalNotices?) {
     val scope = rememberCoroutineScope()
     val p = LocalAssistPalette.current
     var busy by remember { mutableStateOf(false) }
@@ -52,6 +53,14 @@ private fun CloudAccount(agent: CloudAgent, state: CloudState.SignedIn) {
         RowDivider()
         SettingRow(AssistIcons.Cloud, p.blue, "连接状态", state.message ?: if (state.online) "可以在 Web 控制台下发任务" else "正在连接") {
             SettingValue(if (state.online) "在线" else "离线", if (state.online) p.success else p.warning)
+        }
+        if (notices != null) {
+            val shown by notices.enabled.collectAsState()
+            RowDivider()
+            // Which events reach this phone is set on the web (a 本机通知 channel); this only turns showing them here on or off.
+            SettingRow(AssistIcons.Bell, p.violet, "在这台手机上弹出通知", "网页“通知 · 渠道”里添加“本机通知”并选这台设备") {
+                AssistSwitch(shown, label = "在这台手机上弹出通知", change = notices::setEnabled)
+            }
         }
     }
     Spacer(Modifier.height(UiSpace.medium))

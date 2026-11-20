@@ -106,7 +106,9 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
             get("/rules") { call.respond(service.notices.rules(call.caller(service).userId)) }
             put("/rules/{ruleId}") {
                 val caller = call.caller(service)
-                call.respond(service.notices.save(caller.userId, call.parameters.getOrFail("ruleId"), call.receive()))
+                val rules = service.notices.save(caller.userId, call.parameters.getOrFail("ruleId"), call.receive())
+                service.rulesChanged(caller.userId)
+                call.respond(rules)
             }
             get("/channels") { call.respond(service.channels.list(call.caller(service).userId)) }
             post("/channels") { call.respond(HttpStatusCode.Created, service.channels.create(call.caller(service).userId, call.receive())) }
@@ -165,6 +167,7 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
             post("/catalog") { service.uploadCatalog(call.caller(service), call.receive()); call.respond(mapOf("ok" to true)) }
             post("/jobs/{id}/events") { service.appendEvents(call.caller(service), call.parameters.getOrFail("id"), call.receive()); call.respond(mapOf("ok" to true)) }
             post("/jobs/{id}/report") { service.report(call.caller(service), call.parameters.getOrFail("id"), call.receive()); call.respond(mapOf("ok" to true)) }
+            post("/notices") { service.deviceNotices(call.caller(service), call.receive()); call.respond(mapOf("ok" to true)) }
         }
     }
 }

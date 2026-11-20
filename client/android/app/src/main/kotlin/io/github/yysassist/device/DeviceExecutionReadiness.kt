@@ -29,10 +29,16 @@ internal class DeviceExecutionReadiness(
             contracts.single { it.id == first.capability && it.version == first.contractVersion }.startsTarget } == true
         return when (availability(target.androidPackages.toSet())) {
             DeviceAvailability.READY -> StepStartCondition.Ready
-            DeviceAvailability.WRONG_FOREGROUND -> if (opensTarget) StepStartCondition.Ready else StepStartCondition.Waiting("等待目标应用回到前台")
-            DeviceAvailability.DISCONNECTED -> StepStartCondition.Waiting("等待无障碍连接，请在设置的运行环境中授权")
-            DeviceAvailability.DISPLAY_UNAVAILABLE -> StepStartCondition.Waiting("等待屏幕可用")
+            DeviceAvailability.WRONG_FOREGROUND -> if (opensTarget) StepStartCondition.Ready else StepStartCondition.Waiting(WAIT_FOREGROUND)
+            DeviceAvailability.DISCONNECTED -> StepStartCondition.Waiting(WAIT_ACCESSIBILITY)
+            DeviceAvailability.DISPLAY_UNAVAILABLE -> StepStartCondition.Waiting(WAIT_DISPLAY)
             DeviceAvailability.UNCONFIRMED -> StepStartCondition.Unconfirmed("前台应用暂无法确认，请检查目标应用与授权")
         }
     }
 }
+
+/** The waits that mean the device cannot see the screen or press buttons; the 运行条件中断 rule watches only these. */
+internal const val WAIT_FOREGROUND = "等待目标应用回到前台"
+internal const val WAIT_ACCESSIBILITY = "等待无障碍连接，请在设置的运行环境中授权"
+internal const val WAIT_DISPLAY = "等待屏幕可用"
+internal val CAPABILITY_WAITS = setOf(WAIT_FOREGROUND, WAIT_ACCESSIBILITY, WAIT_DISPLAY)

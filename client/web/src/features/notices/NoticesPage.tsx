@@ -14,9 +14,10 @@ const GROUPS: [string, string, string[]][] = [
   ["任务", "每个作业", ["task-started", "task-succeeded", "execution-failed", "unknown-result", "queue-wait"]],
   ["计划", "一次计划的所有任务", ["plan-started", "plan-completed", "plan-missed"]],
   ["设备和账号", "服务端判断，设备离线也能发现", ["device-offline", "account-not-restored"]],
+  ["设备上报", "设备自己看到才知道，断网时也会先在设备上弹出（需添加本机通知渠道）", ["no-progress", "condition-lost"]],
 ];
 const TONES: Record<string, Tone> = { "execution-failed": "bad", "unknown-result": "warn", "account-not-restored": "warn", "plan-missed": "warn",
-  "device-offline": "", "queue-wait": "warn", "plan-completed": "info", "plan-started": "info", "task-started": "info", "task-succeeded": "ok" };
+  "device-offline": "", "queue-wait": "warn", "no-progress": "warn", "condition-lost": "bad", "plan-completed": "info", "plan-started": "info", "task-started": "info", "task-succeeded": "ok" };
 const PAGE = 50;
 const OUTCOMES: [PlanOutcome, string][] = [["COMPLETED", "全部完成"], ["PARTIAL_FAILED", "部分失败"], ["FAILED", "失败"], ["CANCELLED", "已取消"]];
 

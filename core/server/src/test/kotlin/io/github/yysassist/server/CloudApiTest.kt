@@ -825,4 +825,40 @@ class CloudApiTest {
                 "http://100.64.0.1/", "http://198.18.0.1/", "http://[fd00::1]/", "http://[::7f00:1]/", "http://[64:ff9b::7f00:1]/", "http://0.0.0.0/"))
             assertThrows(ChannelFailure::class.java) { Channels.publicAddress(address, allowPrivate = false) }
     }
+
+    @Test fun aDeviceJudgesTheDeviceRulesAndWhatItAlreadyShowedIsNotPushedBack() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        call(HttpMethod.Put, "/api/notifications/rules/condition-lost", """{"enabled":true}""", token)
+        call(HttpMethod.Put, "/api/notifications/rules/no-progress", """{"enabled":true,"threshold":5}""", token)
+        assertEquals(HttpStatusCode.Created, channel(token, """{"kind":"LOCAL","name":"手机","rules":["condition-lost"],"fields":{"device":"${device.deviceId}"}}""").status)
+        val data = socket(token) { send(Frame.Text(status())); replies() }.filterIsInstance<ServerMessage.Data>().last().data
+        assertEquals(listOf(DeviceRule("condition-lost", null, true), DeviceRule("no-progress", 5, false)), data.rules)
+        now += 1_000
+        val shown = """{"events":[{"key":"condition-lost:1","ruleId":"condition-lost","at":$now,"title":"运行条件中断：手机","detail":"等待无障碍连接","shown":true},
+            {"key":"x","ruleId":"task-succeeded","at":$now,"title":"冒充"}]}"""
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Post, "/api/device/notices", shown, token).status)
+        // Sent twice: recorded once. A server-judged rule cannot be reported by a device.
+        call(HttpMethod.Post, "/api/device/notices", shown, token)
+        val notice = notices(token).single()
+        assertEquals("condition-lost", notice.ruleId); assertEquals(device.deviceId, notice.deviceId)
+        assertEquals(DeliveryState.SENT, notice.deliveries.single().state)
+        service.channels.deliverDue(); assertTrue(posts.isEmpty())
+    }
+    @Test fun aLocalChannelPushesToItsDeviceWhileConnectedAndRetriesWhileNot() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        call(HttpMethod.Put, "/api/notifications/rules/task-succeeded", """{"enabled":true}""", token)
+        channel(token, """{"kind":"LOCAL","name":"手机","rules":["task-succeeded"],"fields":{"device":"${device.deviceId}"}}""")
+        now += 1_000
+        job(token, device.deviceId); val lease = lease(token); report(token, lease, JobState.RUNNING); report(token, lease, JobState.COMPLETED)
+        // Not connected: it waits for a retry.
+        service.channels.deliverDue()
+        assertEquals(DeliveryState.PENDING to "设备不在线", notices(token).single().deliveries.single().let { it.state to it.error })
+        now += CloudService.MINUTE
+        val pushed = socket(token) { send(Frame.Text(status())); replies(); service.channels.deliverDue(); replies() }
+        assertTrue(pushed.filterIsInstance<ServerMessage.Notify>().single().notice.title.contains("任务成功"))
+        assertEquals(DeliveryState.SENT, notices(token).single().deliveries.single().state)
+        // Another user's device cannot be chosen.
+        val other = signUp("b@example.com").accessToken!!
+        assertEquals(HttpStatusCode.BadRequest, channel(other, """{"kind":"LOCAL","name":"别人的","fields":{"device":"${device.deviceId}"}}""").status)
+    }
 }

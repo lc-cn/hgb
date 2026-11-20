@@ -33,7 +33,8 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
     private val badCode get() = ApiException(401, "invalid_code", "验证码不正确或已过期")
     /** Event rules and the notices they record. */
     /** Where notices are sent, and their sending. */
-    val channels = Channels(db, clock, events, mailer, secret, channelHttp)
+    val channels = Channels(db, clock, events, mailer, secret, channelHttp) { deviceId, notice -> sockets.send(deviceId, encode(ServerMessage.Notify(notice))) }
+        .also { it.changedChannels = { userId -> pushDeviceData(userId) } }
     val notices = Notices(db, clock, events, channels) { sockets.isOnline(it) }
 
     private fun email(value: String): String = value.trim().lowercase().takeIf { it.length in 3..254 && EMAIL.matches(it) }
@@ -453,11 +454,15 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         }
         // What the apps are doing changes all the time and the device knows it already; only their accounts are sent.
         val apps = deviceRows(userId, deviceId).singleOrNull()?.apps.orEmpty().map { it.copy(phase = "", currentTask = null, queued = 0) }
-        return DeviceData(accountRows(userId), apps, plans, configs, runs, zoneOf(userId))
+        return DeviceData(accountRows(userId), apps, plans, configs, runs, zoneOf(userId), with(notices) { deviceRules(userId, deviceId) })
     }
     /** The last data each device was sent, so an unchanged copy is not sent again. */
     private val lastDeviceData = java.util.concurrent.ConcurrentHashMap<String, String>()
     /** Sends each of the user's connected devices its data when it changed. */
+    /** Rules changed: devices judge the device rules, so each gets them again. */
+    fun rulesChanged(userId: String) = pushDeviceData(userId)
+    /** What a device noticed by the rules it judges. */
+    fun deviceNotices(caller: Caller, batch: DeviceEvents) = notices.recordDevice(caller.userId, device(caller), batch)
     private fun pushDeviceData(userId: String, only: String? = null) {
         val devices = db.tx { query("SELECT id FROM devices WHERE user_id = ? AND revoked = 0", userId) { it.getString(1) } }
             .filter { (only == null || it == only) && sockets.isOnline(it) }

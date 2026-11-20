@@ -4,6 +4,7 @@ import type { Channel, ChannelKind, ChannelSave, Delivery, EventRule } from "../
 import { Button, Card, Empty, Message, Muted, Pill, Switch } from "../../components/ui";
 import { orAlert, useAction } from "../../components/useAction";
 import { shortTime, type Tone } from "../../format";
+import { useConsole } from "../../state/context";
 import s from "./Notices.module.css";
 
 interface FieldSpec { id: string; label: string; hint: string; note: string; secret: boolean }
@@ -17,6 +18,7 @@ const KINDS: [ChannelKind, string, FieldSpec[]][] = [
     { id: "server", label: "服务器（可不填）", hint: "https://api.day.app", note: "自建服务器填自己的地址", secret: false },
     { id: "key", label: "设备密钥", hint: "在 Bark App 里复制", note: "保存后不再显示", secret: true }]],
   ["EMAIL", "邮件", []],
+  ["LOCAL", "本机通知", [{ id: "device", label: "设备", hint: "", note: "设备在线时由服务端推给护肝宝 App 弹出；设备自己发现的事件断网也会先弹出", secret: false }]],
   ["WEBHOOK", "Webhook", [
     { id: "url", label: "地址", hint: "https://", note: "以 JSON 发送事件：source、rule、title、detail、at、jobId", secret: true },
     { id: "header", label: "认证头（可不填）", hint: "Authorization: Bearer …", note: "保存后不再显示", secret: true }]],
@@ -77,6 +79,7 @@ export function Channels({ channels, rules }: { channels: Channel[]; rules: Even
 }
 
 function ChannelForm({ channel, rules, done }: { channel: Channel | null; rules: EventRule[]; done: () => void }) {
+  const { data } = useConsole();
   const [kind, setKind] = useState<ChannelKind>(channel?.kind ?? "DINGTALK");
   const [name, setName] = useState(channel?.name ?? "");
   const [values, setValues] = useState<Record<string, string>>(channel?.fields ?? {});
@@ -120,8 +123,15 @@ function ChannelForm({ channel, rules, done }: { channel: Channel | null; rules:
               {saved(field) && field.label.includes("可不填") && <Button variant="link" onClick={() => setCleared((now) => [...now, field.id])}>清除</Button>}
               {cleared.includes(field.id) && <Muted as="span">保存后清除</Muted>}
             </span>
-            <input type={field.secret ? "password" : "text"} autoComplete="off" value={values[field.id] ?? ""} placeholder={saved(field) ? "已填写，留空不改" : field.hint}
-              onChange={(e) => setValues((now) => ({ ...now, [field.id]: e.target.value }))} />
+            {kind === "LOCAL" && field.id === "device" ? (
+              <select value={values.device ?? ""} onChange={(e) => setValues((now) => ({ ...now, device: e.target.value }))}>
+                <option value="">选一台设备</option>
+                {data.devices.map((device) => <option key={device.id} value={device.id}>{device.name}</option>)}
+              </select>
+            ) : (
+              <input type={field.secret ? "password" : "text"} autoComplete="off" value={values[field.id] ?? ""} placeholder={saved(field) ? "已填写，留空不改" : field.hint}
+                onChange={(e) => setValues((now) => ({ ...now, [field.id]: e.target.value }))} />
+            )}
             <Muted as="span">{field.note}</Muted>
           </label>
         ))}

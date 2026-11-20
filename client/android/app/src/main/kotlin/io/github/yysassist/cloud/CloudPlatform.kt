@@ -63,7 +63,12 @@ internal class EncryptedCloudStore(private val file: File, private val keyAlias:
 internal class RuntimeCloudExecutor(private val runtime: ExecutionRuntime, private val updates: TaskUpdates,
     private val library: io.github.yysassist.storage.TaskVersionLibrary, private val database: io.github.yysassist.storage.AssistDatabase,
     private val observed: kotlinx.coroutines.flow.StateFlow<Map<String, ObservedAccount>>,
+    private val notices: LocalNotices? = null,
     private val installed: (String) -> Boolean) : CloudExecutorPort {
+    /** The executor waits before a step for a reason only the phone sees: no accessibility, no screen, game not in front. */
+    override fun blocked(): String? = (runtime.status.value as? io.github.yysassist.RuntimeStatus.Waiting)?.message
+        ?.takeIf { it in io.github.yysassist.device.CAPABILITY_WAITS }
+    override fun notify(key: String, title: String, text: String): Boolean = notices?.show(key, title, text) == true
     private fun bundle() = ((updates.catalog.value as? VersionCatalogState.Ready)?.catalog?.activeContent as? ActiveTaskContent.Available)?.bundle
     override fun observedAccount(targetId: String): ObservedAccount? = observed.value[targetId]
     /** The game's own account tasks, with the nickname as the switch task's only setting. */

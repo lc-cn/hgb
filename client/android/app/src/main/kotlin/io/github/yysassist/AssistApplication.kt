@@ -75,6 +75,10 @@ class AssistApplication : Application() {
         private set
     /** The account each game last showed on screen, by target; read by an identify task or any task that reports it. */
     val observedAccounts = MutableStateFlow<Map<String, io.github.yysassist.protocol.ObservedAccount>>(emptyMap())
+    /** Notices shown on this phone, and the switch that turns them off here. */
+    /** One notifier for tasks and notices, so their notification ids never collide. */
+    private val notifier by lazy { LocalNotifier(this) }
+    internal val localNotices by lazy { io.github.yysassist.cloud.LocalNotices(this, notifier) }
     /** The server sent new accounts or settings; tasks that may start can differ now. */
     private val settingsChanged = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     override fun onCreate() {
@@ -87,7 +91,7 @@ class AssistApplication : Application() {
         val database = AssistDatabase.open(this)
         actionTraces = ActionTraceLog(database, scope)
         val workers = BuiltInStepWorkFactory(ScreenActions({ textObserver }, { executor.permitsInput(it) },
-            journal = { command -> executor.submit(command).await() }, notifier = LocalNotifier(this)::post,
+            journal = { command -> executor.submit(command).await() }, notifier = { title, text -> notifier.post(title, text) },
             textObserved = { context, texts -> reactions.observed(context, texts) },
             accountObserved = { context, uid, nickname -> observedAccounts.update { it + (context.targetId to
                 io.github.yysassist.protocol.ObservedAccount(uid, nickname, System.currentTimeMillis())) } }), actionTraces)
@@ -106,7 +110,7 @@ class AssistApplication : Application() {
             GitHubDeviceAuthorization(BuildConfig.GITHUB_CLIENT_ID, client), GitHubUserApi(client), scope)
         val source = GitHubTaskSource(TaskRepository("lc-cn", "yys-helper"), "https://api.github.com/".toHttpUrl(), client, github)
         taskUpdates = TaskUpdates(library, source, scope)
-        val cloudExecutor = io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library, database, observedAccounts) { packageManager.getLaunchIntentForPackage(it) != null }
+        val cloudExecutor = io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library, database, observedAccounts, localNotices) { packageManager.getLaunchIntentForPackage(it) != null }
         cloud = io.github.yysassist.core.cloud.CloudAgent(client, io.github.yysassist.cloud.EncryptedCloudStore(File(noBackupFilesDir, "cloud-session.bin"), "io.github.yysassist.cloud.v1"),
             cloudExecutor, "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}", "android", BuildConfig.VERSION_NAME, scope,
             dataStore = io.github.yysassist.cloud.CloudDataFile(File(noBackupFilesDir, "cloud-data.json")))
