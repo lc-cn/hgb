@@ -1,0 +1,25 @@
+vercel.json
+  s_fae32e7f0efe76::t_7a5f54d21eab82 3-9,12-13,17-25,28-29,32-41,43,45-47
+scripts/build-sites.sh
+  s_fae32e7f0efe76::t_7a5f54d21eab82 2-3,18
+client/web/vite.config.ts
+  s_fae32e7f0efe76::t_7a5f54d21eab82 14-15
+docs/development/deploy.md
+  s_fae32e7f0efe76::t_4f2b94e5da2f7a 14-22,24-25,29-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0dddfb818c65f04b80ab00c9d71a7ed17fbc3b11",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
