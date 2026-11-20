@@ -1,0 +1,50 @@
+core/server/src/main/kotlin/io/github/yysassist/server/Routes.kt
+  s_fae32e7f0efe76::t_79c5646288e448 102-110,113-114
+  s_fae32e7f0efe76::t_c44f4852fc8611 85-86
+  s_fae32e7f0efe76::t_39077d8cedcb7f 111-112
+core/server/src/main/kotlin/io/github/yysassist/server/CloudService.kt
+  s_fae32e7f0efe76::t_6eddefa5261dca 33-34,433-434,438,709-711
+  s_fae32e7f0efe76::t_39077d8cedcb7f 200,435-437
+core/server/src/main/kotlin/io/github/yysassist/server/Notices.kt
+  s_fae32e7f0efe76::t_6eddefa5261dca 210
+  s_fae32e7f0efe76::t_1e88c1e2a7a8c2 82-90,98-103,113-114,117,143-146,160-164
+  s_fae32e7f0efe76::t_39077d8cedcb7f 213-215,225-226
+  s_fae32e7f0efe76::t_996e02260011ab 1-81,91-97,104-112,115-116,118-142,147-159,165-209,211-212,216-224,227-254
+core/engine/src/main/kotlin/io/github/yysassist/core/cloud/CloudAgent.kt
+  s_fae32e7f0efe76::t_0099fc2d349650 345-347
+  s_fae32e7f0efe76::t_e54d795510b065 417-418
+core/protocol/src/main/kotlin/io/github/yysassist/protocol/CloudProtocol.kt
+  s_fae32e7f0efe76::t_3da0945338bd0a 87-88,160-177
+core/server/src/main/kotlin/io/github/yysassist/server/Database.kt
+  s_fae32e7f0efe76::t_2f5d06f0c57c9d 80-86,91-98
+  s_fae32e7f0efe76::t_39077d8cedcb7f 87-90
+docs/design/cloud-executor.md
+  s_fae32e7f0efe76::t_b402d6b3d91bf1 361-363
+  s_fae32e7f0efe76::t_cc0d657c54aa28 305-313
+  s_fae32e7f0efe76::t_6a2226edbfc7a2 364-367
+  s_fae32e7f0efe76::t_0fd4081d25e0ea 281-282,357-360
+core/server/src/test/kotlin/io/github/yysassist/server/CloudApiTest.kt
+  s_fae32e7f0efe76::t_bf34f78c22561c 324,352,358-359
+  s_fae32e7f0efe76::t_708c533aaf7a87 314-315,317-320,327,329-333
+  s_fae32e7f0efe76::t_1ef0abe139475d 342-351,353-357,360-362
+  s_fae32e7f0efe76::t_729943f29a3828 680-697,699-702,704-707,709-739
+  s_fae32e7f0efe76::t_f5c87ee3ef1779 708
+  s_fae32e7f0efe76::t_cd6fd914780039 698,703
+  s_fae32e7f0efe76::t_c1c520cdd49ae2 313,316,321-323,325-326,328
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "123caa0e879cb146c08d89a7d064545086e043f7",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
