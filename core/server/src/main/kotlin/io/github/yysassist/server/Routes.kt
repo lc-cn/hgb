@@ -65,6 +65,11 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
     install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true; explicitNulls = false; encodeDefaults = true }) }
     install(StatusPages) {
         exception<ApiException> { call, error -> call.respond(HttpStatusCode.fromValue(error.status), ApiError(error.code, error.message)) }
+        exception<MailFailed> { call, error ->
+            // The provider's words go to the log; the user only needs to know to try again.
+            call.application.environment.log.warn("Mail not sent: ${error.message}")
+            call.respond(HttpStatusCode.ServiceUnavailable, ApiError("mail_failed", "邮件发送失败，请稍后再试"))
+        }
         exception<MailUnavailable> { call, error -> call.respond(HttpStatusCode.ServiceUnavailable, ApiError("mail_unavailable", error.message ?: "发信服务未配置")) }
         exception<io.ktor.server.plugins.BadRequestException> { call, _ -> call.respond(HttpStatusCode.BadRequest, ApiError("bad_request", "请求内容无效")) }
     }

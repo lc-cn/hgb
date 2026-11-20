@@ -61,6 +61,12 @@ YYS_CONSOLE_URL=https://hgb.l2cl.link/console/
 YYS_ALLOWED_ORIGINS=https://hgb.l2cl.link
 GITHUB_CLIENT_ID=<GitHub App 的 Client ID>
 GITHUB_CLIENT_SECRET=<GitHub App 的 Client secret>
+# 发信：阿里云邮件推送的 SMTP（设计文档 C4）。不设 YYS_SMTP_HOST 就没有邮箱登录和邮件通知
+YYS_SMTP_HOST=smtpdm.aliyun.com
+YYS_SMTP_PORT=465
+YYS_SMTP_USER=noreply@mail.l2cl.link
+YYS_SMTP_PASSWORD=<阿里云给这个发信地址设的 SMTP 密码>
+YYS_MAIL_FROM_NAME=护肝宝
 ```
 
 - `YYS_SECRET` 用来给验证码做摘要，也用来派生通知渠道密钥的加密密钥；换掉它，已保存的渠道密钥就解不开了，需要重新填写。
@@ -180,6 +186,7 @@ App 和以后的 Windows 版里，服务器地址在登录时可以改成任何�
 
 ## 还没解决的
 
-- **发信服务**：首次上线不接（设计文档 C45），只用 GitHub 登录。服务端没有发信服务时，`/api/auth/options` 返回 `email: false`，网页和 App 的登录页只显示 GitHub 登录，通知渠道里也没有“邮件”。以后接发信时走 SMTP。`YYS_MAIL_MODE=console` 只是把验证码打印到服务端日志，仅限本地开发，线上不要用。
+- **发信服务**：用阿里云邮件推送（设计文档 C4），发信域名 `mail.l2cl.link`，发信地址 `noreply@mail.l2cl.link`，服务端经 `smtpdm.aliyun.com:465`（SSL）发送。主机所在的 Oracle 云封了出站 25 端口、IP 没有反向解析，不能自己直接投递。服务端没配 `YYS_SMTP_HOST` 时，`/api/auth/options` 返回 `email: false`，登录页只显示 GitHub 登录，通知渠道里也没有“邮件”。发送失败时用户看到“邮件发送失败，请稍后再试”，服务商的原因记在 `journalctl -u hgb` 里。`YYS_MAIL_MODE=console` 只是把验证码打印到服务端日志，仅限本地开发，线上不要用。
+- **国内访问 GitHub**：国内网络常连不上 `github.com`，GitHub 登录（网页跳转授权、App 设备码授权）在不开代理时用不了；下载任务走的 `api.github.com` 和 `*.githubusercontent.com` 能连上。国内用户主要用邮箱登录。
 - **备份**：数据都在 `YYS_DB` 这一个 SQLite 文件里，需要自己定时备份，比如在服务停止或用 `sqlite3 hgb.db ".backup /backup/hgb-$(date +%F).db"` 做在线备份。
 - **访问速度**：Vercel 在中国大陆没有节点，大陆访问首页和控制台可能偏慢；`.link` 域名不能做 ICP 备案，用不了国内 CDN。

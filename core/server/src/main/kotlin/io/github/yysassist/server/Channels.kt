@@ -249,7 +249,7 @@ class Channels(private val db: Database, private val clock: () -> Long, private 
             out.channel == null -> "渠道已删除"
             !out.channel.enabled -> "渠道已停用"
             else -> try { send(out.channel, out.title, out.detail, out.ruleId, out.at, out.jobId, out.zone, id, out.noticeId); null }
-                catch (error: ChannelFailure) { error.message } catch (error: MailUnavailable) { error.message } catch (error: Exception) { "发送出错：${error.javaClass.simpleName}" }
+                catch (error: ChannelFailure) { error.message } catch (error: MailUnavailable) { error.message } catch (error: MailFailed) { error.message } catch (error: Exception) { "发送出错：${error.javaClass.simpleName}" }
         }
         val now = clock(); val attempts = out.attempts + 1
         // A channel that is gone or off is not retried; any other failure is, after 1, 5 and 15 minutes.
@@ -282,7 +282,7 @@ class Channels(private val db: Database, private val clock: () -> Long, private 
                 (single("SELECT time_zone FROM users WHERE id = ?", userId) { it.getString(1) } ?: "Asia/Shanghai")
         }
         val failure = try { send(draft, "测试消息", "收到这条，说明“${draft.name}”可以用了。", "test", clock(), null, zone, null, "test:${UUID.randomUUID()}"); null }
-            catch (error: ChannelFailure) { error.message } catch (error: MailUnavailable) { error.message } catch (error: Exception) { "发送出错：${error.javaClass.simpleName}" }
+            catch (error: ChannelFailure) { error.message } catch (error: MailUnavailable) { error.message } catch (error: MailFailed) { error.message } catch (error: Exception) { "发送出错：${error.javaClass.simpleName}" }
         val now = clock()
         db.tx {
             update("""INSERT INTO deliveries (id, user_id, notice_id, channel_id, channel_name, state, attempts, error, test, title, created_at, updated_at)

@@ -168,7 +168,11 @@ private fun SignIn(application: AssistApplication, develop: () -> Unit) {
                         if (githubError == null) { wantGitHub = true; application.github.signIn() }
                     }, modifier = Modifier.fillMaxWidth())
                 }
-                githubError?.let { io.github.yysassist.shared.ui.Message(it) }
+                // Why GitHub sign-in stopped (most often: github.com cannot be reached from this network).
+                val githubProblem = (github as? GitHubSessionState.SignedOut)?.message ?: (github as? GitHubSessionState.Failure)?.message
+                (githubError ?: githubProblem?.takeIf { wantGitHub || githubError == null })?.let {
+                    io.github.yysassist.shared.ui.Message("$it。连不上 GitHub 时请检查网络（国内可能需要代理），或改用邮箱登录。".replace("。。", "。"))
+                }
             }
         }),
         footer = { io.github.yysassist.shared.ui.LinkButton("开发 · 不登录也能在这台手机上调试任务", develop) })

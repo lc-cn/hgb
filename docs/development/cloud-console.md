@@ -34,8 +34,7 @@
 - 游戏登录态的加密托管、下发和回传（要先在专用 Root 设备上验证）。
 - 断网时本机运行的记录，联网后补报到服务端。
 - 阴阳师的“识别当前账号”“切换账号”任务随任务版本正式发布（现在只在本地调试任务包里）。
-- 正式发信服务：未配置时，需要发邮件的接口返回“发信服务未配置”。
-- 生产部署、HTTPS 证书、数据库备份。
+- 数据库定时备份（生产部署和发信服务见 [部署](deploy.md)）。
 
 ## 本地运行
 
@@ -67,6 +66,9 @@ pnpm --dir client/web dev
 | `YYS_PUBLIC_URL` | 否 | 对外地址，GitHub 回调要用 |
 | `YYS_SECURE_COOKIES` | 否 | 只有本地 http 调试时才设为 `false` |
 | `YYS_MAIL_MODE` | 否 | `console` 仅用于本地开发 |
+| `YYS_SMTP_HOST` / `YYS_SMTP_PORT` | 否 | 发信服务的 SMTP（SSL），如 `smtpdm.aliyun.com`、`465`；不设就没有邮箱登录和邮件通知 |
+| `YYS_SMTP_USER` / `YYS_SMTP_PASSWORD` | 设了 `YYS_SMTP_HOST` 时必填 | 发信地址和它的 SMTP 密码 |
+| `YYS_MAIL_FROM` / `YYS_MAIL_FROM_NAME` | 否 | 发件地址（默认同 `YYS_SMTP_USER`）和显示名（默认“护肝宝”） |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | 否 | 不配置时 GitHub 登录不可用 |
 | `YYS_CONSOLE_URL` | 否 | 控制台地址，GitHub 登录完成后跳回这里；默认 `/console/`（同域名） |
 | `YYS_ALLOWED_ORIGINS` | 否 | 控制台和接口不在同一个主机时，填控制台的来源（如 `https://hgb.l2cl.link`），逗号分隔；只有这些来源能带 cookie 跨域调用 |
