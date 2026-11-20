@@ -73,13 +73,23 @@ GITHUB_CLIENT_SECRET=<GitHub App 的 Client secret>
 
 ### 发布一个新版本
 
-推送到 master 且改到服务端（`core/`、Gradle 配置）时，GitHub Actions 的“Deploy server”工作流（`.github/workflows/deploy-server.yml`）会自动跑测试、打包并部署；也可以在 GitHub 的 Actions 页面手动运行。
+服务端和 App 都由 GitHub Actions 的“Build”工作流（`.github/workflows/build.yml`）构建：
 
-1. 工作流把服务端包上传为这次运行的构建产物（保留 1 天），向 GitHub 换一个约一分钟内有效的签名下载链接；再用仓库 Secret `HGB_DEPLOY_SSH_KEY`（专用部署密钥）和 `HGB_DEPLOY_KNOWN_HOSTS`（主机指纹）以 `hgb-deploy` 身份连到变量 `HGB_DEPLOY_HOST` 指的主机，发送 `fetch <提交号>-<运行编号>-<重试次数>`，标准输入里只有下载链接、包的 SHA-256 和大小。主机从 GitHub 拉包比构建机往主机推快得多（实测约每秒 6 MB 对每秒 75 KB）。
-2. 主机上 `hgb-deploy` 的密钥被限定只能执行 `/usr/local/libexec/hgb-receive`：`fetch` 只下载 GitHub 构建产物存储（`*.blob.core.windows.net`、`*.actions.githubusercontent.com`）上的 https 链接，上限 256 MB，核对 SHA-256 后才解包；包里只接受顶层是 `server/` 的普通文件，解到 `/opt/hgb/releases/<发布标识>/`，记下每个文件的摘要，再调用 `sudo /usr/local/sbin/hgb-activate`（sudoers 只允许这一个命令）。`deploy` 命令仍可从标准输入直接收包，留给手动部署。
+| 触发方式 | 服务端 | 安卓 App |
+| --- | --- | --- |
+| 推送到 master，且改到服务端（`core/`、Gradle 配置、`deploy/host/`、工作流本身） | 测试、打包，放进滚动预发布 `server-edge`（只留最近 5 个），部署到主机 | 不构建 |
+| 推送版本标签 `v1.2.3` | 打包放进发布 `v1.2.3`，部署这个版本 | 测试、签名打包，放进同一个发布 |
+| 在 Actions 页面手动运行 | 勾选“构建服务端并部署到主机” | 勾选“构建安卓 App”，必须填版本号；填了版本号就建发布 `v版本号` |
+
+部署由主机自己从 Releases 下载：
+
+1. 工作流用仓库 Secret `HGB_DEPLOY_SSH_KEY`（专用部署密钥）和 `HGB_DEPLOY_KNOWN_HOSTS`（主机指纹），以 `hgb-deploy` 身份连到变量 `HGB_DEPLOY_HOST` 指的主机，发送 `fetch <提交号>-<运行编号>-<重试次数>`，标准输入里只有服务端包在发布里的下载地址、SHA-256 和大小。主机经 GitHub 的 CDN 下载 Releases 约每秒 6 MB；构建机往主机推、或主机下载 Actions 构建产物，都只有每秒 70 KB 左右。
+2. 主机上 `hgb-deploy` 的密钥被限定只能执行 `/usr/local/libexec/hgb-receive`：`fetch` 只下载 `https://github.com/lc-cn/hgb/releases/download/<发布>/server-*.tgz`（跳转后必须落在 `*.githubusercontent.com`），上限 256 MB，核对 SHA-256 后才解包；包里只接受顶层是 `server/` 的普通文件，解到 `/opt/hgb/releases/<发布标识>/`，记下每个文件的摘要，再调用 `sudo /usr/local/sbin/hgb-activate`（sudoers 只允许这一个命令）。`deploy` 命令仍可从标准输入直接收包，留给手动部署。
 3. `hgb-activate` 停服务，把数据库快照到 `/var/backups/hgb/<发布标识>/`，切换 `/opt/hgb/server`，启动后检查 `/api/me` 返回未登录；不健康就恢复数据库快照、切回原来的版本并让工作流失败。
 
 主机上这两个脚本的源文件在仓库的 `deploy/host/`，改了以后要手动装到主机（`sudo install -o root -g root -m 755`），属主必须是 root。同一个发布标识不能重复部署；要重试就在 GitHub 上重新运行（重试次数会变）。主机和密钥的准备都已完成，换主机或换密钥时才需要重新设置这几个 Secret。
+
+数据库表结构由服务端启动时自己建好；发布前没有正式用户，不做迁移（改了表结构就清库重来）。
 
 ### systemd
 
@@ -131,20 +141,20 @@ App 的“云端控制”里，服务器地址填 `https://api-hgb.l2cl.link`。
 
 ### 发布安卓版
 
-推送形如 `v1.2.3` 的标签，GitHub Actions 的“Release App”工作流（`.github/workflows/release-app.yml`）会：
+推送形如 `v1.2.3` 的标签（或手动运行“Build”并填版本号），工作流的 App 部分会：
 
-1. 装好 SDK 37、构建工具 36、NDK 和 CMake，按 `client/android/vision/inputs.lock.json` 下载并核对 MaaFramework 原生库；
+1. 装好 SDK 37.0、构建工具 36、NDK 和 CMake，按 `client/android/vision/inputs.lock.json` 下载并核对 MaaFramework 原生库；
 2. 跑引擎、共用模块和 App 的单元测试；
 3. 用仓库 Secret `HGB_ANDROID_KEYSTORE`（base64 的 PKCS12）和 `HGB_ANDROID_KEYSTORE_PASSWORD` 签名打包，版本名取标签（`1.2.3`），版本号是 `1×10000 + 2×100 + 3`；
-4. 核对签名证书后，在本仓库建同名发布，附 `hgb-1.2.3.apk` 和它的 `.sha256`。
+4. 核对签名证书后，和同版本的服务端包 `server-1.2.3.tgz` 一起放进发布 `v1.2.3`，附各自的 `.sha256`。
 
 ```bash
-git tag v0.1.0 && git push origin v0.1.0
+git tag v0.1.1 && git push origin v0.1.1
 ```
 
 签名密钥：别名 `hgb`，证书 SHA-256 `B4:8C:9F:15:D0:9C:69:77:DB:0A:0B:2F:9D:DA:AF:7D:DA:6D:2A:D0:FE:54:A2:D3:96:41:AE:3B:D7:20:07:77`。密钥文件和密码由维护者离线保管，丢失后无法再发布能覆盖安装的更新。原生库在 APK 里压缩存放（约 67 MB），安装时由系统解压。
 
-本仓库的发布只放安装包；任务包发布在 `lc-cn/hgb-tasks`（设计文档 C46）。
+本仓库的发布只放安装包和服务端包；任务包发布在 `lc-cn/hgb-tasks`（设计文档 C46）。
 
 ## 还没解决的
 

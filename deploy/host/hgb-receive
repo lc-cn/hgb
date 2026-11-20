@@ -2,8 +2,9 @@
 """Forced SSH command: accept only an application distribution, never a shell.
 
 `deploy <id>` reads the gzipped distribution from stdin. `fetch <id>` reads a small JSON request
-({"url", "sha256", "bytes"}) from stdin and downloads the distribution itself from GitHub's artifact
-storage, which this host reaches far faster than a runner can push to it; the digest must match.
+({"url", "sha256", "bytes"}) from stdin and downloads the distribution itself from a release of
+lc-cn/hgb, which comes through GitHub's CDN far faster than a runner can push to this host (runner
+uploads and Actions artifacts both crawl at ~70 KB/s here); the digest must match.
 """
 import hashlib
 import json
@@ -17,43 +18,35 @@ import tarfile
 import tempfile
 import urllib.parse
 import urllib.request
-import zipfile
 
 RELEASES = Path('/opt/hgb/releases')
 COMMAND = re.compile(r'(deploy|fetch) ([a-f0-9]{40}-[0-9]+-[0-9]+)')
 MAX_BYTES = 256 * 1024 * 1024
-# Where GitHub serves Actions artifacts from (a signed, short-lived URL); nothing else is fetched.
-ARTIFACT_HOSTS = ('.blob.core.windows.net', '.actions.githubusercontent.com')
+# Only a server package of a lc-cn/hgb release; GitHub redirects the download to its asset CDN.
+SOURCE = re.compile(r'https://github\.com/lc-cn/hgb/releases/download/[A-Za-z0-9._-]+/server-[A-Za-z0-9._-]+\.tgz')
+ASSET_HOSTS = ('.githubusercontent.com',)
 
 
 def fetch(request, scratch):
     """Downloads the distribution named by [request] into [scratch] and returns it opened, after checking its digest."""
     order = json.loads(sys.stdin.buffer.read(16384) if request is None else request)
     url, digest = order['url'], order['sha256']
-    host = urllib.parse.urlsplit(url).hostname or ''
-    if urllib.parse.urlsplit(url).scheme != 'https' or not host.endswith(ARTIFACT_HOSTS):
-        raise ValueError('Only GitHub artifact storage over https is fetched')
+    if not SOURCE.fullmatch(url):
+        raise ValueError('Only a server package of a lc-cn/hgb release is fetched')
     if not re.fullmatch(r'[a-f0-9]{64}', digest):
         raise ValueError('Invalid digest')
-    download = scratch / 'download'
+    package = scratch / 'server.tgz'
     with urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'hgb-receive'}), timeout=60) as response, \
-            download.open('xb') as output:
+            package.open('xb') as output:
+        final = urllib.parse.urlsplit(response.geturl())
+        if final.scheme != 'https' or not (final.hostname == 'github.com' or (final.hostname or '').endswith(ASSET_HOSTS)):
+            raise ValueError('The release download went somewhere unexpected')
         total = 0
         while chunk := response.read(1 << 20):
             total += len(chunk)
             if total > MAX_BYTES:
                 raise ValueError('Download is too large')
             output.write(chunk)
-    package = download
-    # An artifact usually arrives zipped around the single file that was uploaded.
-    if zipfile.is_zipfile(download):
-        with zipfile.ZipFile(download) as archive:
-            names = [n for n in archive.namelist() if not n.endswith('/')]
-            if len(names) != 1:
-                raise ValueError('Artifact must hold exactly one file')
-            package = scratch / 'server.tgz'
-            with archive.open(names[0]) as source, package.open('xb') as output:
-                shutil.copyfileobj(source, output)
     sha = hashlib.sha256()
     with package.open('rb') as source:
         for block in iter(lambda: source.read(1 << 20), b''):

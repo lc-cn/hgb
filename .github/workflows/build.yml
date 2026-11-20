@@ -1,0 +1,224 @@
+# Builds what a change needs and ships it (docs/development/deploy.md).
+#
+# - A push to master that touches the server: test it, put its package in the rolling prerelease `server-edge`, and
+#   have the host deploy it.
+# - A version tag (v1.2.3): build the signed Android App and the server, publish both in the release v1.2.3, and have
+#   the host deploy that server.
+# - Run by hand: tick what to build. The App is built only with a version, which also creates that release.
+#
+# The host downloads the server package from the release itself (GitHub's CDN reaches it ~100x faster than a runner
+# can push to it) and checks its SHA-256; see deploy/host/hgb-receive and deploy/host/hgb-activate.
+name: Build
+
+on:
+  push:
+    branches: [master]
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      server:
+        description: 构建服务端并部署到主机
+        type: boolean
+        default: true
+      app:
+        description: 构建安卓 App（必须填版本号）
+        type: boolean
+        default: false
+      version:
+        description: 版本号，如 0.1.1；填了就建 v版本号 的发布，放入这次构建的内容
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      server: ${{ steps.plan.outputs.server }}
+      app: ${{ steps.plan.outputs.app }}
+      version: ${{ steps.plan.outputs.version }}
+      release: ${{ steps.plan.outputs.release }}
+      label: ${{ steps.plan.outputs.label }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          IN_SERVER: ${{ inputs.server }}
+          IN_APP: ${{ inputs.app }}
+          IN_VERSION: ${{ inputs.version }}
+        run: |
+          server=false; app=false; version=""
+          if [ "$EVENT" = workflow_dispatch ]; then
+            server=$IN_SERVER; app=$IN_APP; version=$IN_VERSION
+            if [ "$app" = true ] && [ -z "$version" ]; then echo "构建 App 必须填版本号"; exit 1; fi
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            server=true; app=true; version=${GITHUB_REF_NAME#v}
+          else
+            # A push to master deploys the server only when the server (or how it is shipped) changed.
+            if [ -z "$BEFORE" ] || [ "$BEFORE" = 0000000000000000000000000000000000000000 ] ||
+               git diff --name-only "$BEFORE" "$GITHUB_SHA" | grep -qE '^(core/|gradle/|build\.gradle\.kts|settings\.gradle\.kts|gradle\.properties|deploy/host/|\.github/workflows/build\.yml)'; then
+              server=true
+            fi
+          fi
+          if [ -n "$version" ]; then
+            [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "版本号要像 1.2.3，现在是 $version"; exit 1; }
+            release=v$version; label=$version
+          else
+            release=server-edge; label=$(git rev-parse --short=12 HEAD)
+          fi
+          { echo "server=$server"; echo "app=$app"; echo "version=$version"; echo "release=$release"; echo "label=$label"; } >> "$GITHUB_OUTPUT"
+          echo "服务端：$server，App：$app，发布：$release"
+
+  server:
+    needs: plan
+    if: needs.plan.outputs.server == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Test and package the server
+        run: ./gradlew --no-daemon :core:protocol:test :core:engine:test :core:server:test :core:server:distTar
+      - name: Compress the package
+        # hgb-receive reads a gzipped tar whose top directory is server/.
+        run: |
+          mkdir dist
+          gzip -c core/server/build/distributions/server.tar > "dist/server-${{ needs.plan.outputs.label }}.tgz"
+          (cd dist && sha256sum server-*.tgz > "server-${{ needs.plan.outputs.label }}.tgz.sha256")
+      - uses: actions/upload-artifact@v7
+        with:
+          name: server
+          path: dist/
+          retention-days: 1
+
+  app:
+    needs: plan
+    if: needs.plan.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - name: Work out the version code
+        id: version
+        run: |
+          IFS=. read -r major minor patch <<< "${{ needs.plan.outputs.version }}"
+          # 1.2.3 -> 10203; each part below 100.
+          echo "code=$(( major * 10000 + minor * 100 + patch ))" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install the SDK parts the App builds with
+        # The runner image ships the Android SDK and its sdkmanager; only the pieces this build pins are added.
+        run: |
+          sdkmanager="$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager | sort -V | tail -1)"
+          yes | "$sdkmanager" --licenses > /dev/null || true
+          "$sdkmanager" --install "platforms;android-37.0" "build-tools;36.0.0" "ndk;27.1.12297006" "cmake;3.22.1" > /dev/null
+      - name: Prepare the pinned Maa native libraries
+        # Downloads the MaaFramework release named in client/android/vision/inputs.lock.json and checks every file's SHA-256.
+        run: python3 tools/qa/prepare_maa_inputs.py --native-only
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Test and build the signed APK
+        env:
+          KEYSTORE: ${{ secrets.HGB_ANDROID_KEYSTORE }}
+          HGB_SIGNING_STORE_PASSWORD: ${{ secrets.HGB_ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          export HGB_SIGNING_STORE_FILE="$RUNNER_TEMP/hgb-release.p12"
+          printf '%s' "$KEYSTORE" | base64 -d > "$HGB_SIGNING_STORE_FILE"
+          ./gradlew --no-daemon :core:engine:test :client:shared:desktopTest :client:android:app:testDebugUnitTest \
+            :client:android:app:assembleRelease \
+            -PappVersionName=${{ needs.plan.outputs.version }} -PappVersionCode=${{ steps.version.outputs.code }}
+          rm -f "$HGB_SIGNING_STORE_FILE"
+      - name: Check the signature
+        run: |
+          apk=client/android/app/build/outputs/apk/release/app-release.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$apk" | grep -q "CN=HuGanBao"
+          name="hgb-${{ needs.plan.outputs.version }}.apk"
+          mkdir dist && cp "$apk" "dist/$name"
+          (cd dist && sha256sum "$name" > "$name.sha256")
+      - uses: actions/upload-artifact@v7
+        with:
+          name: app
+          path: dist/
+          retention-days: 1
+
+  publish:
+    needs: [plan, server, app]
+    # Runs when at least one build ran and none failed.
+    if: always() && !cancelled() && !contains(needs.*.result, 'failure') && (needs.server.result == 'success' || needs.app.result == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE: ${{ needs.plan.outputs.release }}
+      VERSION: ${{ needs.plan.outputs.version }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Put the files in the release
+        run: |
+          if [ -n "$VERSION" ]; then
+            if ! gh release view "$RELEASE" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+              gh release create "$RELEASE" -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "护肝宝 $VERSION" --generate-notes \
+                --notes "安卓 App：下载 hgb-$VERSION.apk 安装（需要 Android 11 及以上）。server-$VERSION.tgz 是同一版本的服务端，供自己部署。.sha256 文件用来核对下载是否完整。"
+            fi
+            gh release upload "$RELEASE" dist/* -R "$GITHUB_REPOSITORY" --clobber
+          else
+            # The rolling prerelease of the latest server builds; it never becomes this repository's "latest" release.
+            gh release view server-edge -R "$GITHUB_REPOSITORY" > /dev/null 2>&1 ||
+              gh release create server-edge -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "服务端最新构建" \
+                --notes "推送到 master 时自动构建的服务端，部署到 api-hgb.l2cl.link。不是正式版本，只保留最近 5 个。"
+            gh release upload server-edge dist/* -R "$GITHUB_REPOSITORY" --clobber
+            gh release view server-edge -R "$GITHUB_REPOSITORY" --json assets \
+              --jq '[.assets[] | select(.name | endswith(".tgz"))] | sort_by(.createdAt) | reverse | .[5:][] | .name' |
+              while read -r old; do
+                gh release delete-asset server-edge "$old" -R "$GITHUB_REPOSITORY" -y
+                gh release delete-asset server-edge "$old.sha256" -R "$GITHUB_REPOSITORY" -y || true
+              done
+          fi
+
+  deploy:
+    needs: [plan, publish]
+    if: needs.plan.outputs.server == 'true' && needs.publish.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: server
+          path: dist
+      - name: Have the host fetch and activate it
+        env:
+          SSH_KEY: ${{ secrets.HGB_DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.HGB_DEPLOY_KNOWN_HOSTS }}
+          HOST: ${{ vars.HGB_DEPLOY_HOST }}
+          RELEASE: ${{ needs.plan.outputs.release }}
+          LABEL: ${{ needs.plan.outputs.label }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          package="server-$LABEL.tgz"
+          jq -n --arg url "https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE/$package" \
+            --arg sha "$(sha256sum "dist/$package" | cut -d' ' -f1)" --argjson bytes "$(stat -c%s "dist/$package")" \
+            '{url: $url, sha256: $sha, bytes: $bytes}' |
+            ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
+              "hgb-deploy@$HOST" "fetch ${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          rm -f ~/.ssh/deploy
