@@ -196,7 +196,8 @@ jobs:
 
   deploy:
     needs: [plan, publish]
-    if: needs.plan.outputs.server == 'true' && needs.publish.result == 'success'
+    # always(): a skipped App build upstream must not skip the deploy (GitHub's default for an `if` without one).
+    if: always() && needs.plan.outputs.server == 'true' && needs.publish.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
