@@ -1,0 +1,44 @@
+client/android/app/src/main/AndroidManifest.xml
+  s_fae32e7f0efe76::t_f56f0f654be57b 5-6,23
+client/android/app/src/main/kotlin/io/github/yysassist/ui/CloudPage.kt
+  s_fae32e7f0efe76::t_0d8e337ce37078 145
+client/android/app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt
+  s_fae32e7f0efe76::t_f8b0928dbf95c6 79
+client/android/app/src/main/kotlin/io/github/yysassist/ui/SettingsPage.kt
+  s_fae32e7f0efe76::t_757d04300cd0f8 292,303-304
+  s_fae32e7f0efe76::t_f8b0928dbf95c6 268-269,273,281-291,293-302,305-307
+  s_fae32e7f0efe76::t_7a898c4b05e6e1 308-309
+client/android/app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_f56f0f654be57b 69-70,121-125
+  s_fae32e7f0efe76::t_757d04300cd0f8 126
+core/engine/src/main/kotlin/io/github/yysassist/core/update/AppReleases.kt
+  s_fae32e7f0efe76::t_4613bc37bbc22e 43-45,102,106
+  s_fae32e7f0efe76::t_a19e80cfba1b56 1-42,46-101,103-105,107-111
+tools/tasks/build_release.py
+  s_fae32e7f0efe76::t_6656125b88b899 1-111
+client/android/app/src/main/kotlin/io/github/yysassist/update/AppUpdater.kt
+  s_fae32e7f0efe76::t_54cfd9f3063814 173-174
+  s_fae32e7f0efe76::t_36266827373797 1-3,5-9,11-13,15-16,18-22,24,26-35,40-49,51-53,62-67,69,71-76,78-89,91-99,106,127-130,140,159-165,172,176-178
+  s_fae32e7f0efe76::t_038db9eed9613b 4,10,14,17,23,25,36-39,50,54-61,68,70,77,90,100-105,107-126,131-139,141-158,166-171,175
+core/engine/src/test/kotlin/io/github/yysassist/core/update/AppReleasesTest.kt
+  s_fae32e7f0efe76::t_36af68b7d35032 1-51,53-54,65-81,83-84
+  s_fae32e7f0efe76::t_4613bc37bbc22e 52,55-64,82
+client/shared/src/commonMain/kotlin/io/github/yysassist/shared/pages/DevicePage.kt
+  s_fae32e7f0efe76::t_0d8e337ce37078 157-158
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e1a1fe512ce48b537112afa560d5861cc58b485a",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
