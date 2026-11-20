@@ -265,14 +265,45 @@ internal fun DataUsagePage(state: io.github.yysassist.core.execution.ExecutorSna
 
 /** This device's own switches, in 我的 → 本机: what it needs to run games, and the floating ball. */
 @Composable
-internal fun LocalDeviceSettings(floating: FloatingPreferencesState, setVisible: (Boolean) -> Unit, setAutoDock: (Boolean) -> Unit, reload: () -> Unit, openFavorites: () -> Unit) {
+internal fun LocalDeviceSettings(floating: FloatingPreferencesState, setVisible: (Boolean) -> Unit, setAutoDock: (Boolean) -> Unit, reload: () -> Unit, openFavorites: () -> Unit,
+    updates: io.github.yysassist.update.AppUpdater) {
     val service by GameAccessibilityService.connection.collectAsState()
     val notifications = rememberNotificationAccess()
     Column {
+        VersionRow(updates); RowDivider()
         AccessibilityRow(service != null); RowDivider()
         NotificationAccessContent(notifications.access, notifications.request, notifications.openSettings); RowDivider()
         ScreenshotRow(); RowDivider()
         FloatingRows(floating, setVisible, setAutoDock, reload, openFavorites)
+    }
+}
+
+/** This App's version, and updating it from the code repository's releases without leaving the App. */
+@Composable
+private fun VersionRow(updates: io.github.yysassist.update.AppUpdater) {
+    val p = LocalAssistPalette.current
+    val state by updates.state.collectAsState()
+    val current = io.github.yysassist.BuildConfig.VERSION_NAME
+    fun mb(bytes: Long) = "%.1f".format(bytes / 1_048_576.0)
+    val description = when (val s = state) {
+        is io.github.yysassist.update.AppUpdateState.Available -> "新版本 ${s.release.version}，约 ${mb(s.release.bytes)} MB"
+        is io.github.yysassist.update.AppUpdateState.Downloading -> "正在下载 ${s.release.version}：${mb(s.bytes)} / ${mb(s.release.bytes)} MB"
+        is io.github.yysassist.update.AppUpdateState.Ready -> "${s.release.version} 已下载并校验，安装时系统会再确认一次"
+        is io.github.yysassist.update.AppUpdateState.Installing -> "正在交给系统安装 ${s.release.version}…"
+        is io.github.yysassist.update.AppUpdateState.Failed -> s.message
+        else -> null
+    }
+    SettingRow(AssistIcons.Info, p.blue, "版本 $current", description) {
+        when (val s = state) {
+            io.github.yysassist.update.AppUpdateState.Checking -> SettingValue("正在检查…")
+            io.github.yysassist.update.AppUpdateState.UpToDate -> SettingValue("已是最新", p.success)
+            is io.github.yysassist.update.AppUpdateState.Available -> SmallAction("下载", onClick = updates::download)
+            is io.github.yysassist.update.AppUpdateState.Downloading -> SettingValue("${(s.bytes * 100 / s.release.bytes.coerceAtLeast(1))}%")
+            is io.github.yysassist.update.AppUpdateState.Ready -> SmallAction("安装", onClick = updates::install)
+            is io.github.yysassist.update.AppUpdateState.Installing -> SettingValue("请稍候")
+            is io.github.yysassist.update.AppUpdateState.Failed -> if (s.retry) SmallAction("重试") { if (s.release != null) updates.download() else updates.check() }
+            io.github.yysassist.update.AppUpdateState.Idle -> SmallAction("检查更新", onClick = updates::check)
+        }
     }
 }
 

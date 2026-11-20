@@ -66,6 +66,8 @@ class AssistApplication : Application() {
         private set
     /** Which repository task versions are pulled from. */
     lateinit var taskSource: TaskSourceSetting
+    /** Updating the App itself from the code repository's releases (我的 → 本机 → 版本). */
+    lateinit var updates: io.github.yysassist.update.AppUpdater
         private set
     lateinit var cloud: io.github.yysassist.core.cloud.CloudAgent
         private set
@@ -116,6 +118,12 @@ class AssistApplication : Application() {
         taskSource = TaskSourceSetting(this, BuildConfig.TASK_REPO)
         val source = GitHubTaskSource({ taskSource.current.value }, "https://api.github.com/".toHttpUrl(), client, github)
         taskUpdates = TaskUpdates(library, source, scope)
+        // The APK is tens of megabytes on a slow link: no overall limit, but a stalled read still fails.
+        val downloads = client.newBuilder().callTimeout(0, TimeUnit.SECONDS).readTimeout(60, TimeUnit.SECONDS).build()
+        updates = io.github.yysassist.update.AppUpdater(this,
+            io.github.yysassist.core.update.AppReleases({ BuildConfig.CODE_REPO }, "https://api.github.com/".toHttpUrl(), downloads),
+            BuildConfig.VERSION_NAME, scope)
+        updates.checkIfDue()
         val cloudExecutor = io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library, database, observedAccounts, localNotices) { packageManager.getLaunchIntentForPackage(it) != null }
         cloud = io.github.yysassist.core.cloud.CloudAgent(client, io.github.yysassist.cloud.EncryptedCloudStore(File(noBackupFilesDir, "cloud-session.bin"), "io.github.yysassist.cloud.v1"),
             cloudExecutor, "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}", "android", BuildConfig.VERSION_NAME, scope,

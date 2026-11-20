@@ -142,7 +142,7 @@ private fun CloudSignIn(agent: CloudAgent, notice: String?) {
         if (issue != null) { error = issue; return }
         busy = true; error = null
         scope.launch {
-            try { action() } catch (failure: IOException) { error = failure.message ?: "无法连接服务器" }
+            try { action() } catch (failure: IOException) { error = io.github.yysassist.shared.failureText(failure) }
             busy = false
         }
     }

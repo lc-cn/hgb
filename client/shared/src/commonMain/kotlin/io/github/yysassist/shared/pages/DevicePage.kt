@@ -154,7 +154,8 @@ internal fun rememberRunNow(): Triple<Map<String, Pair<String, Boolean>>, Boolea
     return Triple(notes, busy) { task, request, done ->
         busy = true
         console.act({ notes = notes + (task.taskId to (done to true)) }) {
-            try { console.api.run(request) } catch (failure: Exception) { notes = notes + (task.taskId to ((failure.message ?: "没有提交成功") to false)); throw failure }
+            try { console.api.run(request) } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (failure: Exception) { notes = notes + (task.taskId to (io.github.yysassist.shared.failureText(failure) to false)); throw failure }
             finally { busy = false }
         }
     }
