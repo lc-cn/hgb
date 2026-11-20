@@ -19,6 +19,11 @@ class ApiException(val status: Int, val code: String, override val message: Stri
 enum class SessionKind { WEB, DEVICE }
 data class Caller(val userId: String, val sessionId: String, val kind: SessionKind, val deviceId: String?)
 data class IssuedSession(val userId: String, val email: String?, val accessToken: String, val refreshToken: String?, val accessExpiresAt: Long)
+/** How a GitHub sign-in in the browser ended: signed in, or the GitHub account belongs to another of the user's accounts. */
+sealed interface GitHubOutcome {
+    data class SignedIn(val session: IssuedSession) : GitHubOutcome
+    data class Merge(val token: String) : GitHubOutcome
+}
 
 /** All business rules. Every query that reads user data is scoped by the caller's user id. */
 class CloudService(private val db: Database, private val mailer: Mailer, val github: GitHubIdentity, private val secret: ByteArray,
@@ -138,14 +143,18 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         db.tx { update("DELETE FROM oauth_states WHERE expires_at < ?", clock())
             update("INSERT INTO oauth_states (state, verifier, link_user, expires_at) VALUES (?, ?, ?, ?)", state, verifier, linkUser, clock() + CODE_LIFETIME) }
         fun e(v: String) = java.net.URLEncoder.encode(v, Charsets.UTF_8)
-        return "https://github.com/login/oauth/authorize?client_id=${e(clientId)}&redirect_uri=${e(redirectUri)}&state=${e(state)}&code_challenge=${e(Secrets.challenge(verifier))}&code_challenge_method=S256" to state
+        return "https://github.com/login/oauth/authorize?client_id=${e(clientId)}&redirect_uri=${e(redirectUri)}&state=${e(state)}&code_challenge=${e(Secrets.challenge(verifier))}&code_challenge_method=S256&prompt=select_account" to state
     }
-    fun githubCallback(code: String, state: String, redirectUri: String): IssuedSession? {
+    fun githubCallback(code: String, state: String, redirectUri: String): GitHubOutcome? {
         val saved = db.tx { val row = single("SELECT verifier, link_user, expires_at FROM oauth_states WHERE state = ?", state) { Triple(it.getString(1), it.getString(2), it.getLong(3)) }
             update("DELETE FROM oauth_states WHERE state = ?", state); row } ?: return null
         if (saved.third < clock()) return null
         val user = github.exchange(code, saved.first, redirectUri)?.let(github::user) ?: return null
-        return signInWithGitHub(user, saved.second, SessionKind.WEB)
+        val link = saved.second
+        // Linking a GitHub account that already has an account of its own: signing in to GitHub proved it is the user's.
+        val owner = link?.let { db.tx { single("SELECT user_id FROM identities WHERE provider = 'github' AND subject = ?", user.id) { it.getString(1) } } }
+        if (owner != null && owner != link) return GitHubOutcome.Merge(offerMerge(link, owner))
+        return GitHubOutcome.SignedIn(signInWithGitHub(user, link, SessionKind.WEB))
     }
     fun loginWithGitHubToken(request: GitHubTokenRequest): IssuedSession {
         val user = github.user(request.accessToken) ?: throw ApiException(401, "invalid_credentials", "GitHub 登录未通过")
@@ -163,6 +172,75 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         }
         return issue(id, db.tx { single("SELECT email FROM users WHERE id = ?", id) { it.getString(1) } }, kind)
     }
+    /** A code to the address, to prove it is the caller's; an address on another account leads to a merge offer. */
+    fun requestEmailBind(caller: Caller, request: CodeRequest) {
+        val address = email(request.email); limited(mailLimit, "bind:${caller.userId}"); limited(mailLimit, "bind-to:$address")
+        if (db.tx { single("SELECT 1 FROM users WHERE id = ? AND email IS NOT NULL AND email_verified = 1", caller.userId) { true } } == true)
+            throw ApiException(409, "email_bound", "这个账号已经绑定了邮箱")
+        sendCode(address, bindPurpose(caller.userId), "绑定邮箱")
+    }
+    fun verifyEmailBind(caller: Caller, request: VerifyEmailRequest): EmailBindResult {
+        val address = email(request.email); limited(loginLimit, "bind-verify:${caller.userId}"); consumeCode(address, bindPurpose(caller.userId), request.code)
+        val owner = db.tx { single("SELECT id, email_verified FROM users WHERE email = ?", address) { it.getString(1) to (it.getInt(2) == 1) } }
+        if (owner != null && owner.second && owner.first != caller.userId) return EmailBindResult(merge = mergeOffer(caller, offerMerge(caller.userId, owner.first)))
+        db.tx {
+            if (single("SELECT 1 FROM users WHERE id = ? AND email IS NOT NULL AND email_verified = 1", caller.userId) { true } == true)
+                throw ApiException(409, "email_bound", "这个账号已经绑定了邮箱")
+            // A sign-up never confirmed holds the address but nothing else: it gives the address up.
+            if (owner != null && !owner.second) update("DELETE FROM users WHERE id = ? AND email_verified = 0 AND id NOT IN (SELECT user_id FROM identities)", owner.first)
+            update("UPDATE users SET email = NULL WHERE email = ? AND id <> ?", address, caller.userId)
+            update("UPDATE users SET email = ?, email_verified = 1 WHERE id = ?", address, caller.userId)
+        }
+        return EmailBindResult(account = account(caller))
+    }
+    private fun offerMerge(target: String, source: String): String {
+        val token = Secrets.token()
+        db.tx { update("DELETE FROM merge_offers WHERE expires_at < ? OR target_id = ?", clock(), target)
+            update("INSERT INTO merge_offers (token_hash, target_id, source_id, expires_at) VALUES (?, ?, ?, ?)", Secrets.sha256(token), target, source, clock() + CODE_LIFETIME) }
+        return token
+    }
+    private fun Database.offerSource(caller: Caller, token: String): String =
+        single("SELECT source_id FROM merge_offers WHERE token_hash = ? AND target_id = ? AND expires_at >= ?", Secrets.sha256(token), caller.userId, clock()) { it.getString(1) }
+            ?: throw ApiException(410, "merge_expired", "合并已过期，请重新绑定")
+    fun mergeOffer(caller: Caller, token: String): MergeOffer = db.tx { MergeOffer(token, mergeSummary(offerSource(caller, token))) }
+    fun declineMerge(caller: Caller, token: String) = db.tx { update("DELETE FROM merge_offers WHERE token_hash = ? AND target_id = ?", Secrets.sha256(token), caller.userId); Unit }
+    /**
+     * Moves the other account into the caller's and deletes it (see [mergeUser]). Returns the other account's devices,
+     * whose sockets the caller closes so they come back as this account; its consoles notice on their next session check.
+     */
+    fun merge(caller: Caller, token: String): List<String> {
+        val devices = db.tx {
+            val source = offerSource(caller, token)
+            update("DELETE FROM merge_offers WHERE token_hash = ?", Secrets.sha256(token))
+            mergeUser(source, caller.userId)
+        }
+        // The caller's consoles start over from the merged data, as after a reconnect.
+        db.tx { val (snapshot, _) = consoleSnapshotUpTo(caller.userId); events.publish(caller.userId, "snapshot", encode(snapshot)) }
+        pushDeviceData(caller.userId)
+        return devices
+    }
+
+    /** Deleting an account with an email needs a code sent to it, so a borrowed browser cannot delete it alone. */
+    fun requestDeletionCode(caller: Caller) {
+        val address = verifiedEmail(caller.userId) ?: return
+        limited(mailLimit, "delete:${caller.userId}"); sendCode(address, PURPOSE_DELETE, "注销账号")
+    }
+    /** Deletes the account and everything it holds. Returns its devices, whose sockets the caller closes. */
+    fun deleteAccount(caller: Caller, request: AccountDeletion): List<String> {
+        if (request.confirm.trim() != "注销") throw ApiException(400, "unconfirmed", "请输入“注销”确认")
+        verifiedEmail(caller.userId)?.let { address ->
+            limited(loginLimit, "delete-confirm:${caller.userId}"); consumeCode(address, PURPOSE_DELETE, request.code ?: throw badCode) }
+        return db.tx {
+            val devices = query("SELECT id FROM devices WHERE user_id = ?", caller.userId) { it.getString(1) }
+            single("SELECT email FROM users WHERE id = ?", caller.userId) { it.getString(1) }?.let { update("DELETE FROM email_codes WHERE email = ?", it) }
+            update("DELETE FROM oauth_states WHERE link_user = ?", caller.userId)
+            update("DELETE FROM users WHERE id = ?", caller.userId)
+            devices
+        }
+    }
+    private fun verifiedEmail(userId: String) = db.tx { single("SELECT email FROM users WHERE id = ? AND email IS NOT NULL AND email_verified = 1", userId) { it.getString(1) } }
+    private fun bindPurpose(userId: String) = "bind:$userId"
+
     /** At least one way to sign in must remain. */
     fun unlinkGitHub(caller: Caller) = db.tx {
         if (single("SELECT 1 FROM users WHERE id = ? AND email IS NOT NULL AND email_verified = 1", caller.userId) { true } != true)
@@ -886,6 +964,7 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         private val gameList = ListSerializer(GameView.serializer())
         private val idList = ListSerializer(kotlinx.serialization.serializer<String>())
         private const val PURPOSE_VERIFY = "verify"; private const val PURPOSE_LOGIN = "login"; private const val PURPOSE_RESET = "reset"
+        private const val PURPOSE_DELETE = "delete"
         private val EMAIL = Regex("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")
         private const val MAX_CATALOG_CHARS = 4_000_000
         private const val MAX_EVENTS_PER_BATCH = 500; private const val MAX_EVENTS_PER_JOB = 3_000

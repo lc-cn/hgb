@@ -34,3 +34,4 @@
   .narrowBrand { display: block; }
   .main { align-items: flex-start; padding: var(--space-8) var(--space-4); }
 }
+.agree { margin: 0; font-size: var(--text-sm); color: var(--color-muted); text-align: center; }

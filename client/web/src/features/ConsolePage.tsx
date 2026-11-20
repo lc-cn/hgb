@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import type { Account } from "../api/types";
 import { ButtonLink, Card, Empty, Message, ui } from "../components/ui";
+import { MergeCard } from "./me/AccountActions";
 import { match, paths, usePath } from "../router";
 import { Shell, type Section } from "../shell/Shell";
 import { useConsoleStream } from "../state/console";
@@ -26,10 +27,17 @@ export function ConsolePage({ account, signedOut }: { account: Account; signedOu
     if (failed) history.replaceState(null, "", location.pathname);
     return failed;
   });
+  // Binding a GitHub that has an account of its own comes back with an offer to merge that account into this one.
+  const [merge, setMerge] = useState(() => {
+    const token = new URLSearchParams(location.search).get("merge");
+    if (token) history.replaceState(null, "", location.pathname);
+    return token;
+  });
   return (
     <ConsoleContext.Provider value={{ data, account, signedOut }}>
       <Shell section={section} connection={connection}>
         {linkFailed && <Message text="绑定 GitHub 没有完成，请在“我的”里重试" />}
+        {merge && <MergeCard token={merge} settled={(merged) => { setMerge(null); if (merged) location.reload(); }} />}
         {loaded ? page : <Empty>正在加载…</Empty>}
       </Shell>
     </ConsoleContext.Provider>

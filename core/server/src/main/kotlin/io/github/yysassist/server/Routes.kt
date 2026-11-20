@@ -124,15 +124,35 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
                 val code = call.request.queryParameters["code"]; val state = call.request.queryParameters["state"]
                 val ours = call.request.cookies[OAUTH_COOKIE]
                 call.response.cookies.append(Cookie(OAUTH_COOKIE, "", maxAge = 0, path = "/api/auth/github"))
-                val session = if (code != null && state != null && ours != null && Secrets.same(ours, state))
+                val outcome = if (code != null && state != null && ours != null && Secrets.same(ours, state))
                     runCatching { service.githubCallback(code, state, callback) }.getOrNull() else null
-                if (session == null) call.respondRedirect(withQuery(config.consoleUrl, "error=github"))
-                else { call.setSessionCookie(config, session.accessToken, CloudService.WEB_LIFETIME / 1000); call.respondRedirect(config.consoleUrl) }
+                when (outcome) {
+                    null -> call.respondRedirect(withQuery(config.consoleUrl, "error=github"))
+                    // Still signed in as before; the console shows the other account and asks to merge it.
+                    is GitHubOutcome.Merge -> call.respondRedirect(withQuery(config.consoleUrl, "merge=${outcome.token}"))
+                    is GitHubOutcome.SignedIn -> { call.setSessionCookie(config, outcome.session.accessToken, CloudService.WEB_LIFETIME / 1000); call.respondRedirect(config.consoleUrl) }
+                }
             }
             post("/logout") { service.logout(call.caller(service, config)); call.response.cookies.append(Cookie(COOKIE, "", maxAge = 0, path = "/")); call.respond(mapOf("ok" to true)) }
             delete("/github") { service.unlinkGitHub(call.caller(service, config)); call.respond(mapOf("ok" to true)) }
         }
         get("/api/me") { call.respond(service.account(call.caller(service, config))) }
+        route("/api/me") {
+            post("/email/request") { service.requestEmailBind(call.caller(service, config), call.receive()); call.respond(HttpStatusCode.Accepted, mapOf("ok" to true)) }
+            post("/email/verify") { call.respond(service.verifyEmailBind(call.caller(service, config), call.receive())) }
+            get("/merge/{token}") { call.respond(service.mergeOffer(call.caller(service, config), call.parameters.getOrFail("token"))) }
+            post("/merge/{token}") {
+                val caller = call.caller(service, config)
+                service.merge(caller, call.parameters.getOrFail("token")).forEach { service.sockets.close(it) }
+                call.respond(service.account(caller))
+            }
+            delete("/merge/{token}") { service.declineMerge(call.caller(service, config), call.parameters.getOrFail("token")); call.respond(mapOf("ok" to true)) }
+            post("/delete/request") { service.requestDeletionCode(call.caller(service, config)); call.respond(HttpStatusCode.Accepted, mapOf("ok" to true)) }
+            post("/delete") {
+                service.deleteAccount(call.caller(service, config), call.receive()).forEach { service.sockets.close(it) }
+                call.response.cookies.append(Cookie(COOKIE, "", maxAge = 0, path = "/")); call.respond(mapOf("ok" to true))
+            }
+        }
         get("/api/devices") { call.respond(service.devices(call.caller(service, config))) }
         delete("/api/devices/{id}") {
             val id = call.parameters.getOrFail("id")

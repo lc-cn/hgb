@@ -58,6 +58,18 @@ def point_to(release):
     os.replace(temporary, link)
 
 
+KEEP_DAYS = 14
+
+
+def prune_backups(current=None):
+    """Deletes database snapshots older than KEEP_DAYS, as the privacy policy promises. Runs after each deploy and daily
+    (hgb-prune-backups.timer), so a quiet month without deploys keeps nothing older either."""
+    cutoff = time.time() - KEEP_DAYS * 86400
+    for path in BACKUPS.iterdir():
+        if path.is_dir() and not path.is_symlink() and DEPLOYMENT.fullmatch(path.name) and path.name != current and path.stat().st_mtime < cutoff:
+            shutil.rmtree(path)
+
+
 def activate(deployment):
     if not DEPLOYMENT.fullmatch(deployment):
         raise ValueError('Invalid deployment identifier')
@@ -132,13 +144,17 @@ def activate(deployment):
         raise
     metadata['outcome'] = 'healthy'
     (backup / 'activation.json').write_text(json.dumps(metadata, indent=2) + '\n')
+    prune_backups(deployment)
     return {'deployment': deployment, 'healthy': True, 'backup': str(backup)}
 
 
 if __name__ == '__main__':
     if os.geteuid() != 0 or len(sys.argv) != 2:
-        raise SystemExit('Run the root-owned activator with one deployment identifier')
+        raise SystemExit('Run the root-owned activator with one deployment identifier, or --prune')
     os.umask(0o077)
     with open('/run/lock/hgb-deploy.lock', 'a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        print(json.dumps(activate(sys.argv[1])), flush=True)
+        if sys.argv[1] == '--prune':
+            prune_backups()
+        else:
+            print(json.dumps(activate(sys.argv[1])), flush=True)

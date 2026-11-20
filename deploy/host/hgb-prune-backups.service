@@ -1,0 +1,7 @@
+# Deletes database snapshots older than 14 days (see hgb-activate and the privacy policy).
+[Unit]
+Description=Delete HGB database snapshots older than 14 days
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/hgb-activate --prune

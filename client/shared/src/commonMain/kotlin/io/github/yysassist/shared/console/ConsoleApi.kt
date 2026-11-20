@@ -17,6 +17,13 @@ class ConsoleApi(private val transport: ConsoleTransport) {
     suspend fun me(): AccountView = get("/api/me")
     suspend fun setTimeZone(zone: String) = send("PUT", "/api/me/time-zone", TimeZoneSave(zone))
     suspend fun unlinkGitHub() { transport.request("DELETE", "/api/auth/github") }
+    suspend fun requestEmailBind(email: String) = send("POST", "/api/me/email/request", CodeRequest(email))
+    suspend fun verifyEmailBind(email: String, code: String): EmailBindResult =
+        consoleJson.decodeFromString(checkNotNull(transport.request("POST", "/api/me/email/verify", consoleJson.encodeToString(VerifyEmailRequest(email, code)))))
+    suspend fun merge(token: String): AccountView = consoleJson.decodeFromString(checkNotNull(transport.request("POST", "/api/me/merge/${enc(token)}", "{}")))
+    suspend fun declineMerge(token: String) { transport.request("DELETE", "/api/me/merge/${enc(token)}") }
+    suspend fun requestDeletionCode() = post("/api/me/delete/request")
+    suspend fun deleteAccount(confirm: String, code: String?) = send("POST", "/api/me/delete", AccountDeletion(confirm, code))
     suspend fun removeDevice(id: String) { transport.request("DELETE", "/api/devices/${enc(id)}") }
     /** Which account the app is signed in to, and which one it returns to after a job. */
     suspend fun setAppAccounts(deviceId: String, appKey: String, accounts: AppAccounts) =

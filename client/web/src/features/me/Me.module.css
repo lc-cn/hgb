@@ -21,3 +21,10 @@
 .linkRow:last-child { border-bottom: 0; }
 .linkRow:hover { background: var(--color-bg); color: var(--color-ink); }
 @media (max-width: 599px) { .counts { width: 100%; justify-content: space-around; } }
+.inlineFlow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); flex: 1 1 100%; }
+.inlineFlow input { min-height: var(--control-height); flex: 1 1 180px; max-width: 280px; color: var(--color-ink); font-size: var(--text-md); }
+.inlineFlow > p { flex: 1 1 100%; }
+.notice { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4); }
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+.dangerLink, .dangerLink:hover { color: var(--color-danger); }
+.footer { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }

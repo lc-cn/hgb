@@ -22,6 +22,14 @@ import kotlinx.serialization.json.JsonObject
     val refreshToken: String? = null, val accessExpiresAt: Long? = null)
 @Serializable data class ApiError(val code: String, val message: String)
 @Serializable data class AccountView(val userId: String, val email: String?, val hasPassword: Boolean, val githubLogin: String?, val timeZone: String = "Asia/Shanghai")
+/** The other account a sign-in method already belongs to, shown before the two are merged into the signed-in one. */
+@Serializable data class MergeSummary(val email: String?, val githubLogin: String?, val devices: Int, val gameAccounts: Int, val plans: Int)
+/** Proof that the signed-in user also owns another account; [token] merges it within ten minutes. */
+@Serializable data class MergeOffer(val token: String, val other: MergeSummary)
+/** Binding an email either succeeds ([account]) or finds the address on another account of the user's ([merge]). */
+@Serializable data class EmailBindResult(val account: AccountView? = null, val merge: MergeOffer? = null)
+/** [confirm] must be the word 注销; [code] is the emailed code when the account has an email. */
+@Serializable data class AccountDeletion(val confirm: String, val code: String? = null)
 
 @Serializable data class DeviceRegistration(val installId: String, val name: String, val platform: String)
 @Serializable data class DeviceRegistered(val deviceId: String, val userId: String)

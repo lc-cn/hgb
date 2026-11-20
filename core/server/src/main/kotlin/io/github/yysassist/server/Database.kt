@@ -42,6 +42,9 @@ class Database(path: String) : AutoCloseable {
             """CREATE TABLE IF NOT EXISTS email_codes (email TEXT NOT NULL, purpose TEXT NOT NULL, code_hash TEXT NOT NULL, expires_at INTEGER NOT NULL,
                 attempts INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (email, purpose))""",
             """CREATE TABLE IF NOT EXISTS oauth_states (state TEXT PRIMARY KEY, verifier TEXT NOT NULL, link_user TEXT, expires_at INTEGER NOT NULL)""",
+            // The signed-in user proved they also own source (its email code or its GitHub); merging it is offered once, briefly.
+            """CREATE TABLE IF NOT EXISTS merge_offers (token_hash TEXT PRIMARY KEY, target_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                source_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, expires_at INTEGER NOT NULL)""",
             """CREATE TABLE IF NOT EXISTS devices (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, install_id TEXT NOT NULL,
                 name TEXT NOT NULL, platform TEXT NOT NULL, revoked INTEGER NOT NULL DEFAULT 0, last_seen_at INTEGER, phase TEXT, current_task TEXT,
                 queued INTEGER NOT NULL DEFAULT 0, tasks_json TEXT NOT NULL DEFAULT '[]', catalog_version TEXT, catalog_digest TEXT,

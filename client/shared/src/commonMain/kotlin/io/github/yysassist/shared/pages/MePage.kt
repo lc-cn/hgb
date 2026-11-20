@@ -35,6 +35,9 @@ fun MePage(local: LocalParts) = Page {
     var unlinking by remember { mutableStateOf(false) }
     var unbinding by remember { mutableStateOf<Pair<String, String>?>(null) }
     var leaving by remember { mutableStateOf(false) }
+    var binding by remember { mutableStateOf(false) }
+    var offer by remember { mutableStateOf<io.github.yysassist.protocol.MergeOffer?>(null) }
+    var deleting by remember { mutableStateOf(false) }
     val who = account?.email ?: account?.githubLogin ?: ""
     if (unlinking) Confirm("解绑 GitHub？之后只能用邮箱登录。", "解绑", { console.act { console.api.unlinkGitHub(); account = console.api.me() } }, { unlinking = false })
     unbinding?.let { (id, name) -> Confirm("解绑“$name”？这台设备会下线，正在运行的作业结果将标记为未知。", "解绑", { console.act { console.api.removeDevice(id) } }, { unbinding = null }) }
@@ -58,7 +61,9 @@ fun MePage(local: LocalParts) = Page {
                     Text("邮箱", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
                     Muted(account?.email?.let { "$it · ${if (account?.hasPassword == true) "已设置密码" else "没有设置密码，用验证码登录"}" } ?: "未绑定")
                 }
+                if (account != null && account?.email == null && !binding) HgbButton("绑定邮箱", { binding = true }, small = true)
             }
+            if (binding && offer == null) BindEmail({ account = it; binding = false }, { offer = it })
             ListRow(last = true) {
                 Column(Modifier.weight(1f)) {
                     Text("GitHub", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
@@ -68,6 +73,7 @@ fun MePage(local: LocalParts) = Page {
             }
         }
     }
+    offer?.let { current -> MergeCard(current) { merged -> offer = null; binding = false; if (merged != null) account = merged } }
     Block("偏好") {
         Card {
             local.appearance?.let { (look, choose) ->
@@ -112,12 +118,18 @@ fun MePage(local: LocalParts) = Page {
     Block("帮助") {
         Card {
             ListRow({ uri.openUri(instance.docsUrl) }) { Text("使用文档", Modifier.weight(1f), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium); Muted("→") }
-            ListRow({ uri.openUri(instance.issuesUrl) }, last = true) {
+            ListRow({ uri.openUri(instance.issuesUrl) }) {
                 Text("反馈问题", Modifier.weight(1f), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium); Muted("GitHub Issues →")
             }
+            ListRow({ uri.openUri(instance.privacyUrl) }) { Text("隐私政策", Modifier.weight(1f), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium); Muted("→") }
+            ListRow({ uri.openUri(instance.termsUrl) }, last = true) { Text("服务条款", Modifier.weight(1f), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium); Muted("→") }
         }
     }
-    HgbButton("退出登录", { leaving = true }, ButtonKind.DANGER)
+    if (deleting) account?.let { DeleteAccount(it, local.signOut) { deleting = false } }
+    Row(horizontalArrangement = Arrangement.spacedBy(Space.s4), verticalAlignment = Alignment.CenterVertically) {
+        HgbButton("退出登录", { leaving = true }, ButtonKind.DANGER)
+        if (!deleting && account != null) LinkButton("注销账号", { deleting = true })
+    }
 }
 
 @Composable

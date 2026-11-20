@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { api, apiUrl, enc } from "../../api/client";
-import type { Account } from "../../api/types";
+import type { Account, MergeOffer } from "../../api/types";
 import { Button, Card, Grow, MoreMenu, Muted, Row, TextSelect } from "../../components/ui";
 import { applyAppearance, readAppearance, type Appearance } from "../../theme/appearance";
 import { orAlert } from "../../components/useAction";
 import { platformName, shortTime } from "../../format";
 import { useConsole } from "../../state/context";
+import { BindEmail, DeleteAccount, MergeCard } from "./AccountActions";
 import s from "./Me.module.css";
 
 /**
@@ -16,6 +17,8 @@ export function MePage() {
   const { data, account: initial, signedOut } = useConsole();
   const [account, setAccount] = useState(initial);
   const [look, setLook] = useState<Appearance>(readAppearance);
+  const [binding, setBinding] = useState(false);
+  const [offer, setOffer] = useState<MergeOffer | null>(null);
   const unlink = () => {
     if (!confirm("解绑 GitHub？之后只能用邮箱登录。")) return;
     orAlert(async () => { await api("/api/auth/github", { method: "DELETE" }); setAccount(await api<Account>("/api/me")); });
@@ -42,13 +45,18 @@ export function MePage() {
       <section aria-labelledby="login" className={s.section}>
         <h2 id="login">登录方式</h2>
         <Card flush>
-          <Row><Grow><b className={s.semi}>邮箱</b><br /><Muted as="span">{account.email ? `${account.email} · ${account.hasPassword ? "已设置密码" : "没有设置密码，用验证码登录"}` : "未绑定"}</Muted></Grow></Row>
+          <Row>
+            <Grow><b className={s.semi}>邮箱</b><br /><Muted as="span">{account.email ? `${account.email} · ${account.hasPassword ? "已设置密码" : "没有设置密码，用验证码登录"}` : "未绑定"}</Muted></Grow>
+            {!account.email && !binding && <Button onClick={() => setBinding(true)}>绑定邮箱</Button>}
+            {binding && !offer && <BindEmail done={(next) => { setAccount(next); setBinding(false); }} merge={setOffer} />}
+          </Row>
           <Row>
             <Grow><b className={s.semi}>GitHub</b><br /><Muted as="span">{account.githubLogin ? `已绑定 ${account.githubLogin}` : "未绑定"}</Muted></Grow>
             {account.githubLogin ? <Button onClick={unlink} disabled={!account.email}>解除绑定</Button> : <a className={s.button} href={apiUrl("/api/auth/github/start?link=1")}>绑定 GitHub</a>}
           </Row>
         </Card>
       </section>
+      {offer && <MergeCard token={offer.token} offer={offer} settled={(merged) => { setOffer(null); setBinding(false); if (merged) location.reload(); }} />}
       <section aria-labelledby="prefs" className={s.section}>
         <h2 id="prefs">偏好</h2>
         <Card flush>
@@ -76,9 +84,11 @@ export function MePage() {
         <Card flush>
           <a className={s.linkRow} href="/docs/"><b className={s.semi}>使用文档</b><Muted as="span">→</Muted></a>
           <a className={s.linkRow} href={`https://github.com/${import.meta.env.VITE_CODE_REPO}/issues`} target="_blank" rel="noreferrer"><b className={s.semi}>反馈问题</b><Muted as="span">GitHub Issues →</Muted></a>
+          <a className={s.linkRow} href="/privacy/"><b className={s.semi}>隐私政策</b><Muted as="span">→</Muted></a>
+          <a className={s.linkRow} href="/terms/"><b className={s.semi}>服务条款</b><Muted as="span">→</Muted></a>
         </Card>
       </section>
-      <div><Button onClick={logout}>退出登录</Button></div>
+      <div className={s.footer}><Button onClick={logout}>退出登录</Button><DeleteAccount account={account} deleted={signedOut} /></div>
     </div>
   );
 }

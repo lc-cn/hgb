@@ -3,6 +3,10 @@
 /** How this server lets people sign in; email needs a mail service. */
 export interface AuthOptions { email: boolean; github: boolean }
 export interface Account { userId: string; email: string | null; hasPassword: boolean; githubLogin: string | null; timeZone: string }
+/** Another account the signed-in user proved is theirs; merging it moves its data here. */
+export interface MergeSummary { email: string | null; githubLogin: string | null; devices: number; gameAccounts: number; plans: number }
+export interface MergeOffer { token: string; other: MergeSummary }
+export interface EmailBindResult { account?: Account | null; merge?: MergeOffer | null }
 export interface CloudTask { targetId: string; taskId: string; name: string }
 /** The account the app last read on screen. */
 export interface ObservedAccount { uid: string; nickname: string; at: number }

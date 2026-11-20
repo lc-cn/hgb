@@ -674,6 +674,102 @@ class CloudApiTest {
         assertEquals(HttpStatusCode.Unauthorized, call(HttpMethod.Post, "/api/auth/github/token", """{"accessToken":"bad"}""").status)
         assertEquals(HttpStatusCode.Conflict, call(HttpMethod.Delete, "/api/auth/github", token = gitHub.accessToken).status)
     }
+    private suspend fun Api.me(token: String) = json.decodeFromString(AccountView.serializer(), call(HttpMethod.Get, "/api/me", token = token).bodyAsText())
+    private suspend fun Api.gitHubUser(code: String) = json.decodeFromString(AuthResult.serializer(), call(HttpMethod.Post, "/api/auth/github/token", """{"accessToken":"$code"}""").bodyAsText())
+    private suspend fun Api.accounts(token: String) = json.decodeFromString(ListSerializer(GameAccountView.serializer()), call(HttpMethod.Get, "/api/accounts", token = token).bodyAsText())
+
+    @Test fun aGitHubAccountBindsAFreeEmailAndCanThenSignInWithIt() = api {
+        val gitHub = gitHubUser("gh1").accessToken!!
+        assertEquals(HttpStatusCode.Accepted, call(HttpMethod.Post, "/api/me/email/request", """{"email":"new@example.com"}""", gitHub).status)
+        assertEquals(HttpStatusCode.Unauthorized, call(HttpMethod.Post, "/api/me/email/verify", """{"email":"new@example.com","code":"000000"}""", gitHub).status)
+        call(HttpMethod.Post, "/api/me/email/request", """{"email":"new@example.com"}""", gitHub)
+        val bound = json.decodeFromString(EmailBindResult.serializer(),
+            call(HttpMethod.Post, "/api/me/email/verify", """{"email":"New@Example.com","code":"${lastCode("new@example.com")}"}""", gitHub).bodyAsText())
+        assertEquals("new@example.com", bound.account?.email); assertNull(bound.merge)
+        // Signing in by code reaches the same account, and GitHub may now be unlinked.
+        call(HttpMethod.Post, "/api/auth/code/request", """{"email":"new@example.com"}""")
+        val byCode = json.decodeFromString(AuthResult.serializer(), call(HttpMethod.Post, "/api/auth/code/login", """{"email":"new@example.com","code":"${lastCode("new@example.com")}"}""").bodyAsText())
+        assertEquals(me(gitHub).userId, byCode.userId)
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Delete, "/api/auth/github", token = gitHub).status)
+        assertEquals(HttpStatusCode.Conflict, call(HttpMethod.Post, "/api/me/email/request", """{"email":"other@example.com"}""", gitHub).status)
+    }
+    @Test fun anUnconfirmedSignUpGivesItsAddressToTheAccountThatProvesIt() = api {
+        call(HttpMethod.Post, "/api/auth/register", """{"email":"a@example.com","password":"someone else"}""")
+        val gitHub = gitHubUser("gh1").accessToken!!
+        call(HttpMethod.Post, "/api/me/email/request", """{"email":"a@example.com"}""", gitHub)
+        val bound = json.decodeFromString(EmailBindResult.serializer(),
+            call(HttpMethod.Post, "/api/me/email/verify", """{"email":"a@example.com","code":"${lastCode("a@example.com")}"}""", gitHub).bodyAsText())
+        assertEquals("a@example.com", bound.account?.email)
+        // The abandoned sign-up's password does not open the account.
+        assertEquals(HttpStatusCode.Unauthorized, call(HttpMethod.Post, "/api/auth/login", """{"email":"a@example.com","password":"someone else"}""").status)
+    }
+    @Test fun bindingAnEmailOfAnotherAccountMergesItIntoTheSignedInOne() = api {
+        // The email account: a phone, a game account with a plan, and a second game account.
+        val email = signUp("a@example.com").accessToken!!
+        val phone = enroll(email, "phone").deviceId
+        val shared = main(email)
+        assertEquals(HttpStatusCode.Created, call(HttpMethod.Post, "/api/accounts/$shared/plans", plan("邮箱的计划"), email).status)
+        assertEquals(HttpStatusCode.Created, createAccount(email, "小号").status)
+        // The GitHub account: the same phone, a tablet, and a game account of the same name.
+        val gitHub = gitHubUser("gh1").accessToken!!
+        assertNotEquals(phone, enroll(gitHub, "phone").deviceId)
+        enroll(gitHub, "tablet")
+        val kept = main(gitHub)
+
+        call(HttpMethod.Post, "/api/me/email/request", """{"email":"a@example.com"}""", gitHub)
+        val offer = json.decodeFromString(EmailBindResult.serializer(),
+            call(HttpMethod.Post, "/api/me/email/verify", """{"email":"a@example.com","code":"${lastCode("a@example.com")}"}""", gitHub).bodyAsText()).merge!!
+        assertEquals(MergeSummary("a@example.com", null, 1, 2, 1), offer.other)
+        // The offer is the GitHub account's alone.
+        assertEquals(HttpStatusCode.Gone, call(HttpMethod.Get, "/api/me/merge/${offer.token}", token = email).status)
+        assertEquals(offer, json.decodeFromString(MergeOffer.serializer(), call(HttpMethod.Get, "/api/me/merge/${offer.token}", token = gitHub).bodyAsText()))
+
+        val merged = json.decodeFromString(AccountView.serializer(), call(HttpMethod.Post, "/api/me/merge/${offer.token}", token = gitHub).bodyAsText())
+        assertEquals("a@example.com", merged.email); assertTrue(merged.hasPassword); assertEquals("logingh1", merged.githubLogin)
+        assertEquals(HttpStatusCode.Gone, call(HttpMethod.Post, "/api/me/merge/${offer.token}", token = gitHub).status)
+        // One phone, one tablet; 主号 is the GitHub account's and now holds the plan; 小号 came over.
+        assertEquals(2, devices(gitHub).size)
+        assertEquals(listOf("主号" to kept, "小号" to null), accounts(gitHub).sortedBy { it.name != "主号" }.map { it.name to it.id.takeIf { id -> id == kept } })
+        assertEquals(listOf("邮箱的计划"), json.decodeFromString(ListSerializer(PlanView.serializer()), call(HttpMethod.Get, "/api/plans", token = gitHub).bodyAsText()).map { it.name })
+        // The email account's sessions are the merged account's now, and its password signs in to it.
+        assertEquals(merged.userId, me(email).userId)
+        val byPassword = json.decodeFromString(AuthResult.serializer(), call(HttpMethod.Post, "/api/auth/login", """{"email":"a@example.com","password":"correct horse"}""").bodyAsText())
+        assertEquals(merged.userId, byPassword.userId)
+    }
+    @Test fun linkingTheGitHubOfAnotherAccountOffersToMergeIt() = api {
+        val gitHubSide = gitHubUser("gh7").accessToken!!
+        enroll(gitHubSide); main(gitHubSide)
+        val email = signUp("a@example.com").accessToken!!
+        val plain = app.createClient { followRedirects = false }
+        val start = plain.get("/api/auth/github/start?link=1") { header(HttpHeaders.Cookie, "yys_session=$email") }
+        val state = Regex("[?&]state=([^&]+)").find(start.headers[HttpHeaders.Location]!!)!!.groupValues[1].decodeURLQueryComponent()
+        val back = plain.get("/api/auth/github/callback?code=gh7&state=${state.encodeURLQueryComponent()}") { header(HttpHeaders.Cookie, "yys_oauth=$state") }
+        val token = Regex("merge=([^&]+)").find(back.headers[HttpHeaders.Location]!!)!!.groupValues[1].decodeURLQueryComponent()
+        assertTrue(back.setCookie().none { it.name == "yys_session" })
+        assertEquals(MergeSummary(null, "logingh7", 1, 1, 0), json.decodeFromString(MergeOffer.serializer(), call(HttpMethod.Get, "/api/me/merge/$token", token = email).bodyAsText()).other)
+        // Declined: nothing changes, and the offer is gone.
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Delete, "/api/me/merge/$token", token = email).status)
+        assertEquals(HttpStatusCode.Gone, call(HttpMethod.Post, "/api/me/merge/$token", token = email).status)
+        assertNull(me(email).githubLogin)
+        assertEquals(1, accounts(gitHubSide).size)
+    }
+    @Test fun deletingAnAccountNeedsTheWordAndItsEmailCodeAndRemovesEverything() = api {
+        val token = signUp("a@example.com").accessToken!!
+        enroll(token); main(token)
+        assertEquals(HttpStatusCode.BadRequest, call(HttpMethod.Post, "/api/me/delete", """{"confirm":"删除"}""", token).status)
+        assertEquals(HttpStatusCode.Unauthorized, call(HttpMethod.Post, "/api/me/delete", """{"confirm":"注销"}""", token).status)
+        assertEquals(HttpStatusCode.Accepted, call(HttpMethod.Post, "/api/me/delete/request", token = token).status)
+        assertEquals("注销账号", mail.last().second)
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Post, "/api/me/delete", """{"confirm":"注销","code":"${lastCode("a@example.com")}"}""", token).status)
+        assertEquals(HttpStatusCode.Unauthorized, call(HttpMethod.Get, "/api/me", token = token).status)
+        assertEquals(HttpStatusCode.Unauthorized, call(HttpMethod.Post, "/api/auth/login", """{"email":"a@example.com","password":"correct horse"}""").status)
+        // The address is free for a new sign-up.
+        signUp("a@example.com")
+        // An account without email is deleted with the word alone.
+        val gitHub = gitHubUser("gh1").accessToken!!
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Post, "/api/me/delete", """{"confirm":"注销"}""", gitHub).status)
+        assertNull(me(gitHubUser("gh1").accessToken!!).email)
+    }
     @Test fun storedSecretsAreNeverPlainText() = api {
         val session = signUp("a@example.com", "correct horse")
         assertTrue(Passwords.hash("correct horse").startsWith("argon2id$"))

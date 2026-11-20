@@ -11,5 +11,7 @@ data class Instance(val apiUrl: String, val siteUrl: String, val codeRepo: Strin
     val docsUrl get() = "$siteUrl/docs/"
     val downloadUrl get() = "$siteUrl/#download"
     val issuesUrl get() = "https://github.com/$codeRepo/issues"
+    val privacyUrl get() = "$siteUrl/privacy/"
+    val termsUrl get() = "$siteUrl/terms/"
 }
 val LocalInstance = staticCompositionLocalOf<Instance> { error("no Instance provided") }

@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import io.github.yysassist.shared.failureText
 import io.github.yysassist.shared.theme.DesignTokens.Space
@@ -74,6 +75,7 @@ fun SignInPage(actions: SignInActions, notice: String? = null, server: Pair<Stri
                             }
                             github()
                         }
+                        Agreement()
                         footer?.invoke()
                     }
                 }
@@ -170,4 +172,19 @@ private fun SignInForm(actions: SignInActions, notice: String?, server: Pair<Str
         message?.let { (text, ok) -> Message(text, ok) }
         if (step != FormStep.Start) LinkButton("返回", { step = FormStep.Start; message = null; code = "" })
     }
+}
+
+/** Signing in or up accepts the deployment's terms and privacy policy, both a tap away. */
+@Composable
+private fun Agreement() {
+    val instance = io.github.yysassist.shared.LocalInstance.current
+    val tokens = LocalTokens.current
+    val link = androidx.compose.ui.text.TextLinkStyles(androidx.compose.ui.text.SpanStyle(color = tokens.primary))
+    val text = androidx.compose.ui.text.buildAnnotatedString {
+        append("登录或注册即表示同意")
+        withLink(androidx.compose.ui.text.LinkAnnotation.Url(instance.termsUrl, link)) { append("《服务条款》") }
+        append("和")
+        withLink(androidx.compose.ui.text.LinkAnnotation.Url(instance.privacyUrl, link)) { append("《隐私政策》") }
+    }
+    Text(text, Modifier.fillMaxWidth(), color = tokens.muted, style = MaterialTheme.typography.bodySmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
 }
