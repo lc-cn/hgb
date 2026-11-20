@@ -5,7 +5,9 @@
     "appId": 5794664,
     "name": "yys-helper",
     "installedRepository": "lc-cn/hgb",
-    "configuredRepositoryPermissions": { "contents": "write" }
+    "configuredRepositoryPermissions": {
+      "contents": "write"
+    }
   },
   "registration": {
     "owner": "lc-cn",
@@ -33,11 +35,18 @@
   "installation": {
     "account": "lc-cn",
     "repositorySelection": "selected",
-    "repositories": ["lc-cn/hgb"]
+    "repositories": [
+      "lc-cn/hgb-tasks"
+    ]
   },
   "client": {
     "authorizationFlow": "device-flow",
     "clientId": "Iv23liVW7AdPVQ5Ue4iz",
-    "developerRepository": "lc-cn/hgb"
+    "developerRepository": "lc-cn/hgb-tasks"
+  },
+  "taskRepository": {
+    "repository": "lc-cn/hgb-tasks",
+    "since": "2026-11-20",
+    "note": "Task bundles moved out of lc-cn/hgb so App releases there do not shadow them and task publishers need no write access to the code. yys-helper must be installed on lc-cn/hgb-tasks (installation.repositories); userReportedApp records the earlier install on lc-cn/hgb."
   }
 }

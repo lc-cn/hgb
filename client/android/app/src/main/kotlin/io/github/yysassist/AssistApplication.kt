@@ -110,7 +110,7 @@ class AssistApplication : Application() {
         github = GitHubSession(BuildConfig.GITHUB_CLIENT_ID,
             EncryptedGitHubSessionStore(File(noBackupFilesDir, "github-session.bin"), "io.github.yysassist.github.v1"),
             GitHubDeviceAuthorization(BuildConfig.GITHUB_CLIENT_ID, client), GitHubUserApi(client), scope)
-        val source = GitHubTaskSource(TaskRepository("lc-cn", "hgb"), "https://api.github.com/".toHttpUrl(), client, github)
+        val source = GitHubTaskSource(TaskRepository("lc-cn", "hgb-tasks"), "https://api.github.com/".toHttpUrl(), client, github)
         taskUpdates = TaskUpdates(library, source, scope)
         val cloudExecutor = io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library, database, observedAccounts, localNotices) { packageManager.getLaunchIntentForPackage(it) != null }
         cloud = io.github.yysassist.core.cloud.CloudAgent(client, io.github.yysassist.cloud.EncryptedCloudStore(File(noBackupFilesDir, "cloud-session.bin"), "io.github.yysassist.cloud.v1"),

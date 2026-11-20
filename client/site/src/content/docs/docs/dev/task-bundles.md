@@ -13,4 +13,4 @@ sidebar: { order: 1 }
 
 每个观察类的步骤都要以“核对”结束：确认画面到了预期状态，才算这一步完成。认不出就停下，不会盲目往下点。
 
-护肝宝的代码在 [GitHub](https://github.com/lc-cn/hgb) 开源；任务包随任务版本发布后也会放在那里，谁都能看它会点哪里。
+护肝宝的代码在 [GitHub](https://github.com/lc-cn/hgb) 开源；任务包随任务版本发布在单独的仓库 [lc-cn/hgb-tasks](https://github.com/lc-cn/hgb-tasks)，谁都能看它会点哪里。

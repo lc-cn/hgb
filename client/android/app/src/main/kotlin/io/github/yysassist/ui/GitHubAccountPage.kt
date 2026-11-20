@@ -33,7 +33,7 @@ internal fun GitHubAccountPage(state: GitHubSessionState, wide: Boolean, signIn:
         Column(verticalArrangement = Arrangement.spacedBy(UiSpace.medium)) {
             Icon(AssistIcons.Cloud, null, Modifier.size(UiSpace.tile), tint = LocalAssistPalette.current.blue.copy(alpha = .82f))
             Text("连接 GitHub", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
-            Text("读取 lc-cn/hgb 的任务。", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("读取 lc-cn/hgb-tasks 的任务。", color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (state is GitHubSessionState.Connected) Text(state.login?.let { "@$it" } ?: "已登录 GitHub",
                 style = MaterialTheme.typography.titleMedium, color = LocalAssistPalette.current.teal)
         }
