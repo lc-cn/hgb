@@ -1,0 +1,122 @@
+#!/usr/bin/python3
+"""Forced SSH command: accept only an application distribution, never a shell.
+
+`deploy <id>` reads the gzipped distribution from stdin. `fetch <id>` reads a small JSON request
+({"url", "sha256", "bytes"}) from stdin and downloads the distribution itself from GitHub's artifact
+storage, which this host reaches far faster than a runner can push to it; the digest must match.
+"""
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import re
+import shutil
+import subprocess
+import sys
+import tarfile
+import tempfile
+import urllib.parse
+import urllib.request
+import zipfile
+
+RELEASES = Path('/opt/hgb/releases')
+COMMAND = re.compile(r'(deploy|fetch) ([a-f0-9]{40}-[0-9]+-[0-9]+)')
+MAX_BYTES = 256 * 1024 * 1024
+# Where GitHub serves Actions artifacts from (a signed, short-lived URL); nothing else is fetched.
+ARTIFACT_HOSTS = ('.blob.core.windows.net', '.actions.githubusercontent.com')
+
+
+def fetch(request, scratch):
+    """Downloads the distribution named by [request] into [scratch] and returns it opened, after checking its digest."""
+    order = json.loads(sys.stdin.buffer.read(16384) if request is None else request)
+    url, digest = order['url'], order['sha256']
+    host = urllib.parse.urlsplit(url).hostname or ''
+    if urllib.parse.urlsplit(url).scheme != 'https' or not host.endswith(ARTIFACT_HOSTS):
+        raise ValueError('Only GitHub artifact storage over https is fetched')
+    if not re.fullmatch(r'[a-f0-9]{64}', digest):
+        raise ValueError('Invalid digest')
+    download = scratch / 'download'
+    with urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'hgb-receive'}), timeout=60) as response, \
+            download.open('xb') as output:
+        total = 0
+        while chunk := response.read(1 << 20):
+            total += len(chunk)
+            if total > MAX_BYTES:
+                raise ValueError('Download is too large')
+            output.write(chunk)
+    package = download
+    # An artifact usually arrives zipped around the single file that was uploaded.
+    if zipfile.is_zipfile(download):
+        with zipfile.ZipFile(download) as archive:
+            names = [n for n in archive.namelist() if not n.endswith('/')]
+            if len(names) != 1:
+                raise ValueError('Artifact must hold exactly one file')
+            package = scratch / 'server.tgz'
+            with archive.open(names[0]) as source, package.open('xb') as output:
+                shutil.copyfileobj(source, output)
+    sha = hashlib.sha256()
+    with package.open('rb') as source:
+        for block in iter(lambda: source.read(1 << 20), b''):
+            sha.update(block)
+    if sha.hexdigest() != digest:
+        raise ValueError('Downloaded distribution does not match its digest')
+    return package.open('rb')
+
+
+def unpack(stream, destination):
+    """Allow regular files/directories under server/, rejecting links and path escapes."""
+    seen = set()
+    with tarfile.open(fileobj=stream, mode='r|gz') as archive:
+        for member in archive:
+            name = PurePosixPath(member.name)
+            if (name.is_absolute() or '..' in name.parts or not name.parts
+                    or name.parts[0] != 'server' or not (member.isdir() or member.isfile())):
+                raise ValueError('Archive contains an unsafe member')
+            if name in seen:
+                raise ValueError('Archive contains duplicate members')
+            seen.add(name)
+            target = destination.joinpath(*name.parts)
+            if member.isdir():
+                target.mkdir(mode=0o755, parents=True, exist_ok=True)
+            else:
+                target.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
+                with archive.extractfile(member) as source, target.open('xb') as output:
+                    shutil.copyfileobj(source, output)
+                target.chmod(0o755 if name.parts[:2] == ('server', 'bin') else 0o644)
+    server = destination / 'server'
+    if not (server / 'bin/server').is_file() or not list((server / 'lib').glob('*.jar')):
+        raise ValueError('Archive is not a Gradle server distribution')
+    return server
+
+
+def receive(command, stream):
+    match = COMMAND.fullmatch(command)
+    if not match:
+        raise ValueError('Only deploy|fetch <commit>-<run>-<attempt> is permitted')
+    mode, deployment = match.group(1), match.group(2)
+    release = RELEASES / deployment
+    if release.exists():
+        raise RuntimeError('Release already exists; use a new workflow attempt')
+    staging = Path(tempfile.mkdtemp(prefix='.incoming-', dir=RELEASES))
+    try:
+        if mode == 'fetch':
+            scratch = staging / '.fetch'
+            scratch.mkdir(mode=0o700)
+            with fetch(None, scratch) as package:
+                server = unpack(package, staging)
+        else:
+            server = unpack(stream, staging)
+        manifest = {str(p.relative_to(server)): hashlib.sha256(p.read_bytes()).hexdigest()
+                    for p in sorted(server.rglob('*')) if p.is_file()}
+        (server / 'release.json').write_text(json.dumps({'deployment': deployment, 'files': manifest}, indent=2) + '\n')
+        (server / 'release.json').chmod(0o644)
+        server.chmod(0o755)
+        os.rename(server, release)
+    finally:
+        shutil.rmtree(staging)
+    subprocess.run(['/usr/bin/sudo', '-n', '/usr/local/sbin/hgb-activate', deployment], check=True)
+
+
+if __name__ == '__main__':
+    os.umask(0o022)
+    receive(os.environ.get('SSH_ORIGINAL_COMMAND', ''), sys.stdin.buffer)

@@ -1,6 +1,8 @@
-# Builds the server and ships it to the host (docs/development/deploy.md). The host accepts only
-# `deploy <commit>-<run>-<attempt>` with a gzipped Gradle distribution on stdin (/usr/local/libexec/hgb-receive),
-# then /usr/local/sbin/hgb-activate snapshots the database, switches the release and rolls back if it is not healthy.
+# Builds the server and ships it to the host (docs/development/deploy.md). The package is uploaded as this run's
+# artifact; over SSH the host only gets `fetch <commit>-<run>-<attempt>` and a short-lived download link with the
+# package's SHA-256, downloads it itself (it reaches GitHub ~80x faster than a runner can push to it) and checks the
+# digest (deploy/host/hgb-receive). deploy/host/hgb-activate then snapshots the database, switches the release and
+# rolls back if it is not healthy.
 name: Deploy server
 
 on:
@@ -13,6 +15,7 @@ on:
       - settings.gradle.kts
       - gradle.properties
       - .github/workflows/deploy-server.yml
+      - deploy/host/**
   workflow_dispatch:
 
 # One deployment at a time; a newer push waits rather than cancelling one half done.
@@ -22,6 +25,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read # to hand the host a download link for this run's artifact
 
 jobs:
   deploy:
@@ -44,15 +48,31 @@ jobs:
         # hgb-receive reads a gzipped tar whose top directory is server/.
         run: gzip -c core/server/build/distributions/server.tar > server.tgz
 
-      - name: Ship and activate
+      - name: Upload the package
+        id: artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: server-${{ github.run_id }}-${{ github.run_attempt }}
+          path: server.tgz
+          retention-days: 1
+          compression-level: 0 # already gzipped
+
+      - name: Have the host fetch and activate it
         env:
           SSH_KEY: ${{ secrets.HGB_DEPLOY_SSH_KEY }}
           KNOWN_HOSTS: ${{ secrets.HGB_DEPLOY_KNOWN_HOSTS }}
           HOST: ${{ vars.HGB_DEPLOY_HOST }}
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.artifact.outputs.artifact-id }}
         run: |
           install -m 700 -d ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
-          ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
-            "hgb-deploy@$HOST" "deploy ${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" < server.tgz
+          # GitHub answers with a signed link to the artifact that works for about a minute, without a token.
+          url=$(curl -fsS -o /dev/null -w '%{redirect_url}' -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$ARTIFACT_ID/zip")
+          jq -n --arg url "$url" --arg sha "$(sha256sum server.tgz | cut -d' ' -f1)" --argjson bytes "$(stat -c%s server.tgz)" \
+            '{url: $url, sha256: $sha, bytes: $bytes}' |
+            ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
+              "hgb-deploy@$HOST" "fetch ${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           rm -f ~/.ssh/deploy

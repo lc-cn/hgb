@@ -75,11 +75,11 @@ GITHUB_CLIENT_SECRET=<GitHub App 的 Client secret>
 
 推送到 master 且改到服务端（`core/`、Gradle 配置）时，GitHub Actions 的“Deploy server”工作流（`.github/workflows/deploy-server.yml`）会自动跑测试、打包并部署；也可以在 GitHub 的 Actions 页面手动运行。
 
-1. 工作流用仓库 Secret `HGB_DEPLOY_SSH_KEY`（专用部署密钥）和 `HGB_DEPLOY_KNOWN_HOSTS`（主机指纹），以 `hgb-deploy` 身份连到变量 `HGB_DEPLOY_HOST` 指的主机，发送 `deploy <提交号>-<运行编号>-<重试次数>`，把 gzip 压缩的打包文件从标准输入传过去。
-2. 主机上 `hgb-deploy` 的密钥被限定只能执行 `/usr/local/libexec/hgb-receive`：它只接受顶层是 `server/` 的普通文件，解到 `/opt/hgb/releases/<发布标识>/`，记下每个文件的摘要，再调用 `sudo /usr/local/sbin/hgb-activate`（sudoers 只允许这一个命令）。
+1. 工作流把服务端包上传为这次运行的构建产物（保留 1 天），向 GitHub 换一个约一分钟内有效的签名下载链接；再用仓库 Secret `HGB_DEPLOY_SSH_KEY`（专用部署密钥）和 `HGB_DEPLOY_KNOWN_HOSTS`（主机指纹）以 `hgb-deploy` 身份连到变量 `HGB_DEPLOY_HOST` 指的主机，发送 `fetch <提交号>-<运行编号>-<重试次数>`，标准输入里只有下载链接、包的 SHA-256 和大小。主机从 GitHub 拉包比构建机往主机推快得多（实测约每秒 6 MB 对每秒 75 KB）。
+2. 主机上 `hgb-deploy` 的密钥被限定只能执行 `/usr/local/libexec/hgb-receive`：`fetch` 只下载 GitHub 构建产物存储（`*.blob.core.windows.net`、`*.actions.githubusercontent.com`）上的 https 链接，上限 256 MB，核对 SHA-256 后才解包；包里只接受顶层是 `server/` 的普通文件，解到 `/opt/hgb/releases/<发布标识>/`，记下每个文件的摘要，再调用 `sudo /usr/local/sbin/hgb-activate`（sudoers 只允许这一个命令）。`deploy` 命令仍可从标准输入直接收包，留给手动部署。
 3. `hgb-activate` 停服务，把数据库快照到 `/var/backups/hgb/<发布标识>/`，切换 `/opt/hgb/server`，启动后检查 `/api/me` 返回未登录；不健康就恢复数据库快照、切回原来的版本并让工作流失败。
 
-同一个发布标识不能重复部署；要重试就在 GitHub 上重新运行（重试次数会变）。主机和密钥的准备都已完成，换主机或换密钥时才需要重新设置这几个 Secret。
+主机上这两个脚本的源文件在仓库的 `deploy/host/`，改了以后要手动装到主机（`sudo install -o root -g root -m 755`），属主必须是 root。同一个发布标识不能重复部署；要重试就在 GitHub 上重新运行（重试次数会变）。主机和密钥的准备都已完成，换主机或换密钥时才需要重新设置这几个 Secret。
 
 ### systemd
 
