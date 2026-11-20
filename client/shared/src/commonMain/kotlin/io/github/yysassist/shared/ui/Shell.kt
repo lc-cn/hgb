@@ -81,7 +81,9 @@ fun ConsoleShell(
                     Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).background(tokens.surface).padding(horizontal = DesignTokens.Space.s4),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         HgbMark(28.dp)
-                        Text("护肝宝", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                        // Narrow: the bar names the place, so its page does not repeat the title (see PageHeader).
+                        Text(section?.label ?: local.firstOrNull { it.id == localSelected }?.label ?: "护肝宝", Modifier.weight(1f),
+                            style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         connection?.let { LiveDot(it); Text(LIVE_SHORT.getValue(it), style = MaterialTheme.typography.labelSmall, color = tokens.muted) }
                     }
                     HorizontalDivider(color = tokens.line)

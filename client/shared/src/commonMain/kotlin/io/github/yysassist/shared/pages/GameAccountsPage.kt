@@ -35,7 +35,7 @@ fun GameAccountsPage() = Page {
     var adding by remember { mutableStateOf(false) }
     var chosen by remember { mutableStateOf(data.games.firstOrNull()?.id) }
     val gameId = chosen?.takeIf { id -> data.games.any { it.id == id } } ?: data.games.firstOrNull()?.id
-    PageHeader("游戏账号", aside = { HgbButton(if (adding) "收起" else "添加", { adding = !adding }, small = true) })
+    PageHeader("游戏账号", "${data.accounts.size} 个账号", aside = { HgbButton(if (adding) "收起" else "添加", { adding = !adding }, small = true) })
     if (adding) AddAccount(data.games, gameId)
     if (gameId == null) Card { Empty("设备上线并上传任务包后，就能为它的游戏添加账号。") }
     else {

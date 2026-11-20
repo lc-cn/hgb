@@ -280,7 +280,7 @@ internal fun LocalNoticeSwitch(notices: io.github.yysassist.cloud.LocalNotices) 
     val shown by notices.enabled.collectAsState()
     val p = LocalAssistPalette.current
     AssistCard {
-        SettingRow(AssistIcons.Bell, p.violet, "在这台手机上弹出通知", "网页“通知 · 渠道”里添加“本机通知”并选这台设备") {
+        SettingRow(AssistIcons.Bell, p.violet, "在这台手机上弹出通知", "要在网页添加“本机通知”渠道") {
             AssistSwitch(shown, label = "在这台手机上弹出通知", change = notices::setEnabled)
         }
     }

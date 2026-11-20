@@ -150,6 +150,14 @@ fun PageHeader(title: String, subtitle: String? = null, crumbs: String? = null, 
     /** Sits right after the title, as the app page's account button. */
     titleExtra: (@Composable () -> Unit)? = null) {
     val tokens = LocalTokens.current
+    // A place's own page, when narrow: the top bar already shows its name, so only the line under it and the actions stay.
+    if (LocalTier.current == Tier.NARROW && back == null && titleExtra == null) {
+        if (subtitle != null || aside != null) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(subtitle.orEmpty(), Modifier.weight(1f), color = tokens.muted, style = MaterialTheme.typography.bodyMedium)
+            aside?.invoke(this)
+        }
+        return
+    }
     Column(verticalArrangement = Arrangement.spacedBy(Space.s1)) {
         if (crumbs != null && LocalTier.current != Tier.NARROW) Text(crumbs, color = tokens.muted, style = MaterialTheme.typography.bodySmall)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Space.s2)) {
