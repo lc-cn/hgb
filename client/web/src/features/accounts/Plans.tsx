@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api, enc } from "../../api/client";
 import type { Device, Game, GameAccount, Job, Plan, PlanSave } from "../../api/types";
-import { Button, Card, Check, Choices, Facts, Field, Form, Message, Muted, Row, Switch } from "../../components/ui";
+import { Button, Card, Check, Choices, Field, Form, Message, MoreMenu, Muted, Row, Switch } from "../../components/ui";
 import { orAlert, useAction } from "../../components/useAction";
 import { clockText, JOB_STATES, planRule, shortTime, WEEK } from "../../format";
 import s from "./Accounts.module.css";
@@ -23,27 +23,22 @@ export function PlanList({ account, game, plans, devices, jobs }: { account: Gam
   };
   return (
     <Card as="section" flush aria-label="计划">
-      <Row>
-        <Muted as="span" className={s.grow}>计划由服务端计时，到点按顺序找应用：登录着{account.name}的应用 → 空闲、没设默认账号、能切号的应用 → 等待。</Muted>
-        <Button onClick={() => setEditing("new")} disabled={editing === "new"}>新建计划</Button>
-      </Row>
+      <div className={s.listHead}><span>计划</span><Button small onClick={() => setEditing("new")} disabled={editing === "new"}>新建</Button></div>
       {editing === "new" && <div className={s.editorWrap}><PlanEditor account={account} game={game} devices={devices} plan={null} close={() => setEditing(null)} /></div>}
       {mine.map((plan) => (
         <div key={plan.id}>
           <Row top>
             <span className={s.planMain}>
               <b className={s.semi}>{plan.name}</b><br />
-              <Muted as="span">{planRule(plan)} · {plan.tasks.map((task) => task.name).join("、") || "没有任务"}</Muted><br />
-              <span className={s.days} aria-label={`运行日：${planRule(plan)}`}>
-                {WEEK.map((label, i) => <span key={label} aria-hidden="true" className={plan.days.includes(i + 1) ? `${s.day} ${s.dayOn}` : s.day}>{label}</span>)}
-              </span>
+              <Muted as="span">{[planRule(plan), plan.tasks.map((task) => task.name).join("、") || "没有任务", plan.deviceIds.length ? deviceNames(plan) : null].filter(Boolean).join(" · ")}</Muted><br />
+              <Muted as="span">上次：{lastRun(plan)}</Muted>
             </span>
-            <Facts className={s.planFacts} items={[["可运行设备", deviceNames(plan)], ["最晚开始", `到点后 ${plan.latestStartMinutes} 分钟`], ["上次", lastRun(plan)]]} />
             <span className={s.planOps}>
               <Switch label={`启用计划：${plan.name}`} checked={plan.enabled}
                 onChange={(on) => orAlert(() => api(`/api/plans/${enc(plan.id)}`, { method: "PUT", body: saveOf(plan, { enabled: on }) }))} />
-              <Button small onClick={() => orAlert(() => api(`/api/plans/${enc(plan.id)}/run`, { method: "POST", body: {} }))}>立即运行</Button>
-              <Button small onClick={() => setEditing(editing === plan.id ? null : plan.id)} aria-expanded={editing === plan.id}>编辑</Button>
+              <MoreMenu label={`${plan.name} 的操作`} actions={[
+                ["立即运行", () => orAlert(() => api(`/api/plans/${enc(plan.id)}/run`, { method: "POST", body: {} }))],
+                [editing === plan.id ? "收起编辑" : "编辑", () => setEditing(editing === plan.id ? null : plan.id)]]} />
             </span>
           </Row>
           {editing === plan.id && <div className={s.editorWrap}><PlanEditor key={plan.id} account={account} game={game} devices={devices} plan={plan} close={() => setEditing(null)} /></div>}
@@ -64,12 +59,14 @@ function PlanEditor({ account, game, devices, plan, close }: { account: GameAcco
   const [tasks, setTasks] = useState(new Set((plan?.tasks ?? []).map((task) => task.taskId)));
   const [where, setWhere] = useState(new Set(plan?.deviceIds ?? []));
   const { busy, message, run } = useAction();
+  // The revision the edit started from; a newer one arriving over the stream must not be what this save claims.
+  const [base] = useState(plan?.revision ?? 0);
   const flip = <T,>(set: Set<T>, item: T, on: boolean) => { const next = new Set(set); if (on) next.add(item); else next.delete(item); return next; };
   const submit = () => run(async () => {
     const [hour, minute] = at.split(":").map(Number);
     // The revision the edit started from: a save over a newer one is refused instead of overwriting it.
     const body: PlanSave = { name, days: [...days].sort(), minuteOfDay: hour * 60 + minute, tasks: (game?.tasks ?? []).filter((task) => tasks.has(task.taskId)),
-      deviceIds: devices.filter((device) => where.has(device.id)).map((device) => device.id), latestStartMinutes: Number(late), enabled, revision: plan?.revision ?? 0 };
+      deviceIds: devices.filter((device) => where.has(device.id)).map((device) => device.id), latestStartMinutes: Number(late), enabled, revision: base };
     if (plan) await api(`/api/plans/${enc(plan.id)}`, { method: "PUT", body });
     else await api(`/api/accounts/${enc(account.id)}/plans`, { method: "POST", body });
     close();

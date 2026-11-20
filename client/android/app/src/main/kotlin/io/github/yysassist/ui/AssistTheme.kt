@@ -19,6 +19,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.yysassist.ThemeMode
+import io.github.yysassist.shared.theme.DesignTokens
+import io.github.yysassist.shared.theme.HgbTheme
+import io.github.yysassist.shared.theme.TokenColors
 
 data class AssistPalette(
     val dark: Boolean,
@@ -26,14 +29,12 @@ data class AssistPalette(
     val teal: Color, val rose: Color, val gold: Color,
     val success: Color, val warning: Color, val error: Color,
 )
-private val LightPalette = AssistPalette(false,
-    Color(0xFF2868B2), Color(0xFF7950BA), Color(0xFFAA5319),
-    Color(0xFF167474), Color(0xFFB13E70), Color(0xFF946611),
-    Color(0xFF276547), Color(0xFF7D5315), Color(0xFFA1333A))
-private val DarkPalette = AssistPalette(true,
-    Color(0xFFA8CFF9), Color(0xFFCFB1FC), Color(0xFFF8BF89),
-    Color(0xFF8BD9CD), Color(0xFFF5ABC9), Color(0xFFF5D079),
-    Color(0xFFA4D5B4), Color(0xFFF1CE8E), Color(0xFFFFB4B8))
+/** The older colour names, now taken from the design tokens; new pages use [LocalTokens]. */
+private fun TokenColors.palette(dark: Boolean) = AssistPalette(dark,
+    blue = run, violet = primary, orange = warn, teal = ok, rose = danger, gold = warn,
+    success = ok, warning = warn, error = danger)
+private val LightPalette = DesignTokens.light.palette(false)
+private val DarkPalette = DesignTokens.dark.palette(true)
 val LocalAssistPalette = staticCompositionLocalOf { LightPalette }
 @Composable
 fun paletteOnStrong(): AssistPalette = if (LocalAssistPalette.current.dark) LightPalette else DarkPalette
@@ -47,16 +48,6 @@ object UiSpace {
     val calendarMaxHeight = 480.dp
 }
 
-private val AssistTypography = Typography().run { copy(
-    titleLarge = titleLarge.copy(fontSize = 22.sp, lineHeight = 30.sp, fontWeight = FontWeight.SemiBold),
-    titleMedium = titleMedium.copy(fontSize = 17.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold),
-    bodyLarge = bodyLarge.copy(fontSize = 15.sp, lineHeight = 21.sp, letterSpacing = 0.sp),
-    bodyMedium = bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.sp),
-    bodySmall = bodySmall.copy(fontSize = 12.sp, lineHeight = 17.sp, letterSpacing = 0.sp),
-    labelLarge = labelLarge.copy(fontSize = 13.sp, lineHeight = 18.sp, letterSpacing = 0.sp),
-    labelSmall = labelSmall.copy(fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.sp),
-) }
-
 @Composable
 fun AssistTheme(mode: ThemeMode, content: @Composable () -> Unit) {
     val dark = when (mode) { ThemeMode.SYSTEM -> isSystemInDarkTheme(); ThemeMode.LIGHT -> false; ThemeMode.DARK -> true }
@@ -65,23 +56,9 @@ fun AssistTheme(mode: ThemeMode, content: @Composable () -> Unit) {
         val mask = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
         activity?.window?.insetsController?.setSystemBarsAppearance(if (dark) 0 else mask, mask)
     }
-    val scheme = if (dark) darkColorScheme(
-        primary = Color(0xFFEEEEEE), onPrimary = Color(0xFF171717),
-        background = Color(0xFF161616), surface = Color(0xFF161616),
-        surfaceContainer = Color(0xFF222222), surfaceContainerHigh = Color(0xFF2B2B2B),
-        onBackground = Color(0xFFF2F2F2), onSurface = Color(0xFFF2F2F2),
-        onSurfaceVariant = Color(0xFFBCBCBC), outlineVariant = Color(0xFF414141),
-        error = DarkPalette.error,
-    ) else lightColorScheme(
-        primary = Color(0xFF202020), onPrimary = Color.White,
-        background = Color(0xFFF6F6F6), surface = Color(0xFFF6F6F6),
-        surfaceContainer = Color(0xFFEDEDED), surfaceContainerHigh = Color.White,
-        onBackground = Color(0xFF181818), onSurface = Color(0xFF181818),
-        onSurfaceVariant = Color(0xFF555555), outlineVariant = Color(0xFFD3D3D3),
-        error = LightPalette.error,
-    )
     CompositionLocalProvider(LocalAssistPalette provides if (dark) DarkPalette else LightPalette) {
-        MaterialTheme(colorScheme = scheme, typography = AssistTypography, content = content)
+        // The shared theme (client/shared) sets the colours and type every page uses, the console's and this App's own.
+        HgbTheme(dark, content)
     }
 }
 

@@ -17,6 +17,8 @@ import mockwebserver3.RecordedRequest
 import okhttp3.OkHttpClient
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -38,6 +40,8 @@ class CloudAgentTest {
         """{"jobId":"j1","leaseNo":3,"userId":"$user","deviceId":"$device","targetId":"game","taskId":"gift","expiresAt":1,"version":"v1","digest":"$digest","configuration":{"box":"currency"}}"""
     private val configurations = CopyOnWriteArrayList<kotlinx.serialization.json.JsonObject>()
     private val uploads = CopyOnWriteArrayList<CatalogUpload>()
+    private val streamResumes = CopyOnWriteArrayList<String>()
+    @Volatile private var quietStream = false
     private val statuses = CopyOnWriteArrayList<DeviceStatus>()
     @Volatile private var needCatalog = false
     @Volatile private var socket: WebSocket? = null
@@ -127,6 +131,17 @@ class CloudAgentTest {
                             lease?.also { lease = null }?.let { webSocket.send("""{"type":"job","lease":$it}""") }
                         }
                     }).build()
+                    path == "/api/events" && quietStream -> MockResponse.Builder().code(200).setHeader("Content-Type", "text/event-stream")
+                        // One event, then nothing for a long while, as a quiet account's stream is between keep-alives.
+                        .body("id: 1\nevent: snapshot\ndata: {}\n\n" + ": keep-alive\n\n".repeat(50)).throttleBody(16, 1, java.util.concurrent.TimeUnit.SECONDS).build()
+                    path == "/api/events" -> {
+                        streamResumes += request.headers["Last-Event-ID"] ?: "-"
+                        assertEquals("Bearer a1", request.headers["Authorization"])
+                        // The stream ends after two events, as one cut by a proxy would.
+                        MockResponse.Builder().code(200).setHeader("Content-Type", "text/event-stream")
+                            .body("id: 7\nevent: snapshot\ndata: {\"devices\":[]}\n\n: keep-alive\n\nid: 8\nevent: jobs\ndata: [\ndata: ]\n\n").build()
+                    }
+                    path == "/api/me" -> ok("""{"userId":"me"}""")
                     path == "/api/device/catalog" -> { uploads += json.decodeFromString(CatalogUpload.serializer(), request.body!!.utf8()); needCatalog = false; ok("{}") }
                     path.endsWith("/events") -> { events += json.decodeFromString(JobEvents.serializer(), request.body!!.utf8()).events; ok("{}") }
                     path == "/api/device/notices" -> { noticeBatches += json.decodeFromString(DeviceEvents.serializer(), request.body!!.utf8()); ok("{}") }
@@ -146,6 +161,26 @@ class CloudAgentTest {
         withTimeout(5_000) { agent.state.first { it is CloudState.SignedIn && it.online } }
         assertEquals("d1", store.value?.deviceId)
         assertFalse(store.value.toString().contains("a1"))
+    }
+    @Test fun theConsoleStreamReadsEventsAndResumesFromTheLastOneAfterADrop() = runBlocking<Unit> {
+        val agent = signedIn()
+        assertEquals("""{"userId":"me"}""", agent.request("GET", "/api/me"))
+        val seen = withTimeout(10_000) { agent.consoleEvents().take(6).toList() }
+        assertEquals(listOf(ConsoleStreamEvent.Opened, ConsoleStreamEvent.Message("snapshot", """{"devices":[]}"""),
+            ConsoleStreamEvent.Message("jobs", "[\n]")), seen.take(3))
+        assertTrue(seen[3] is ConsoleStreamEvent.Lost)
+        assertEquals(ConsoleStreamEvent.Opened, seen[4])
+        assertEquals(listOf("-", "8"), streamResumes.take(2))
+    }
+    @Test fun aQuietStreamEndsAsSoonAsItsCollectorIsCancelled() = runBlocking<Unit> {
+        quietStream = true
+        val agent = signedIn()
+        val seen = CopyOnWriteArrayList<ConsoleStreamEvent>()
+        val collector = launch(Dispatchers.Default) { agent.consoleEvents().collect { seen += it } }
+        eventually { seen.any { it is ConsoleStreamEvent.Message } }
+        val started = System.currentTimeMillis()
+        collector.cancelAndJoin()
+        assertTrue("cancel took ${System.currentTimeMillis() - started} ms", System.currentTimeMillis() - started < 2_000)
     }
     @Test fun aRejectedTaskIsReportedAsFailedAfterStarting() = runBlocking<Unit> {
         lease = leaseJson(); signedIn()

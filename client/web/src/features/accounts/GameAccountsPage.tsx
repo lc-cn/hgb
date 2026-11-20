@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api, enc } from "../../api/client";
 import type { Game, GameAccount } from "../../api/types";
-import { Button, Card, Empty, Field, Form, Message, Muted, PageHeader, Segments } from "../../components/ui";
+import { Button, Card, Empty, Field, Form, Message, MoreMenu, Muted, PageHeader, Segments } from "../../components/ui";
 import { orAlert, useAction } from "../../components/useAction";
 import { shortTime, type Tone } from "../../format";
 import { Link, paths } from "../../router";
@@ -27,18 +27,17 @@ export function GameAccountsPage() {
   const accounts = data.accounts.filter((account) => account.gameId === gameId);
   return (
     <>
-      <PageHeader title="游戏账号" subtitle="游戏账号属于你的护肝宝账号，任何一台设备都能用。任务设置、计划和运行记录都跟着账号走。"
-        aside={<Button aria-expanded={adding} onClick={() => setAdding(!adding)}>添加游戏账号</Button>} />
+      <PageHeader title="游戏账号" aside={<Button aria-expanded={adding} onClick={() => setAdding(!adding)}>{adding ? "收起" : "添加"}</Button>} />
       {adding && <AddAccount games={data.games} gameId={gameId} />}
       {data.games.length === 0 ? <Card><Empty>设备上线并上传任务包后，就能为它的游戏添加账号。</Empty></Card> : (
         <>
-          <Segments label="游戏" value={gameId} onChange={setChosen}
-            items={data.games.map((game) => [game.id, `${game.name} · ${data.accounts.filter((item) => item.gameId === game.id).length} 个`])} />
+          {data.games.length > 1 && <Segments label="游戏" value={gameId} onChange={setChosen}
+            items={data.games.map((game) => [game.id, `${game.name} · ${data.accounts.filter((item) => item.gameId === game.id).length} 个`])} />}
           <Card flush>
             {accounts.length === 0 ? <Empty>这个游戏还没有账号。</Empty> : (
               <div className={s.tableBox}>
                 <table className={s.table}>
-                  <thead><tr><th>名称</th><th>编号 · 游戏昵称</th><th>现在</th><th>最近使用</th><th><span className="visually-hidden">操作</span></th></tr></thead>
+                  <thead><tr><th>名称</th><th>现在</th><th>最近使用</th><th><span className="visually-hidden">操作</span></th></tr></thead>
                   <tbody>{accounts.map((account) => <AccountRow key={account.id} account={account} />)}</tbody>
                 </table>
               </div>
@@ -46,15 +45,6 @@ export function GameAccountsPage() {
           </Card>
         </>
       )}
-      <Card as="section" aria-labelledby="rules" className={s.rules}>
-        <h2 id="rules" className={s.rulesTitle}>运行时怎么选账号</h2>
-        <ul>
-          <li><b>内容跟着账号走</b>：点进账号管理它的任务设置、计划和运行记录，与在哪台设备、哪个应用运行无关。</li>
-          <li><b>计划由服务端计时</b>：到点先找登录着这个号的应用，推进它的队列；没有就找空闲、没设默认账号、能切号的应用切号运行；都没有就等，超过最晚开始时间就不执行。</li>
-          <li><b>默认账号按应用设</b>：设了默认账号的应用不会被计划拿去切号；在它上面切号运行完会切回默认账号。</li>
-          <li>同一个账号同时只能在一个应用上运行，跨设备也一样。</li>
-        </ul>
-      </Card>
     </>
   );
 }
@@ -68,14 +58,13 @@ function AccountRow({ account }: { account: GameAccount }) {
     if (!confirm(`移除“${account.name}”？它的任务设置和计划也会删除，过去的运行记录保留。`)) return;
     orAlert(() => api(`/api/accounts/${enc(account.id)}`, { method: "DELETE" }));
   };
-  if (editing) return <tr><td colSpan={5}><EditAccount account={account} done={() => setEditing(false)} /></td></tr>;
+  if (editing) return <tr><td colSpan={4}><EditAccount account={account} done={() => setEditing(false)} /></td></tr>;
   return (
     <tr>
-      <td><Link to={paths.account(account.id)} className={s.name}>{account.name}</Link><br /><Muted as="span">设置 · 计划 · 运行记录</Muted></td>
-      <td className={s.mutedCell}>{[account.uid ? `编号 ${account.uid}` : "未填编号", account.nickname].filter(Boolean).join(" · ")}</td>
+      <td><Link to={paths.account(account.id)} className={s.name}>{account.name}</Link><br /><Muted as="span">{[account.uid ? `编号 ${account.uid}` : null, account.nickname].filter(Boolean).join(" · ") || "未填编号"}</Muted></td>
       <td className={tone === "info" ? s.runCell : undefined}>{now}</td>
       <td className={s.mutedCell}>{last ? `${shortTime(last.updatedAt)}${last.deviceName ? ` · ${last.deviceName}` : ""}` : "从未使用"}</td>
-      <td className={s.ops}><Button small onClick={() => setEditing(true)}>重命名</Button> <Button small variant="danger" onClick={remove}>移除</Button></td>
+      <td className={s.ops}><MoreMenu label={`${account.name} 的操作`} actions={[["重命名", () => setEditing(true)], ["移除", remove, true]]} /></td>
     </tr>
   );
 }
@@ -105,15 +94,9 @@ function AddAccount({ games, gameId }: { games: Game[]; gameId: string }) {
   const target = games.some((item) => item.id === game) ? game : games[0]?.id ?? "";
   return (
     <Card as="section" aria-label="如何添加" className={s.how}>
-      <b className={s.semi}>在设备上添加</b>
-      <ol>
-        <li>在手机上打开游戏，手动登录要添加的账号。</li>
-        <li>打开护肝宝，它会读出游戏里的编号和昵称。</li>
-        <li>在设备页点“保存为游戏账号”。护肝宝只记下账号是谁，不会问你游戏密码。</li>
-      </ol>
+      <Muted>也可以在设备页把游戏里读到的账号直接保存下来。护肝宝不会问你游戏密码。</Muted>
       {games.length > 0 && (
         <>
-          <b className={s.semi}>或者手动添加</b>
           <Form inline onSubmit={() => run(async () => {
             await api<GameAccount>("/api/accounts", { method: "POST", body: { gameId: target, name, uid: uid || null, nickname: nickname || null } });
             setName(""); setUid(""); setNickname(""); return "已添加";

@@ -60,3 +60,10 @@
 .editorRow { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-3); }
 .plainSet { margin: 0; padding: 0; border: 0; min-width: 0; }
 .switchLine { display: inline-flex; align-items: center; gap: 10px; }
+.listHead { display: flex; align-items: center; gap: var(--space-3); padding: 10px var(--space-4); border-bottom: 1px solid var(--color-line-soft); font-weight: 600; }
+.listHead > :first-child { flex: 1; }
+.where { display: inline-flex; align-items: center; gap: var(--space-2); font-weight: 400; font-size: var(--text-sm); color: var(--color-muted); }
+.where select { min-height: 32px; color: var(--color-ink); }
+.listNote { padding: var(--space-2) var(--space-4) 0; }
+.statusNote { color: var(--color-muted); font-size: var(--text-sm); }
+.choiceLine { display: flex; align-items: center; gap: var(--space-1); padding: 10px var(--space-4) 2px; color: var(--color-muted); }

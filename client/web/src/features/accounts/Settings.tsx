@@ -35,14 +35,13 @@ export function SettingsForm({ account, task }: { account: GameAccount; task: Cl
     setView(saved); setFresh(new Set()); setDirty(false);
   });
   const change = (id: string, value: unknown) => { setValues((now) => ({ ...now, [id]: value })); setDirty(true); };
-  const status = message && !message.ok ? message.text : dirty ? (fresh.size ? "已填入推荐值，保存后生效" : "有未保存的修改") : "已保存在服务端 · 之后的运行都用这一套";
-  const statusClass = message && !message.ok ? s.statusBad : dirty ? s.statusWarn : s.statusOk;
+  // The button says the state (已保存 or 保存); only a failure, or values filled in for the user, gets a line beside it.
+  const note = message && !message.ok ? message.text : dirty && fresh.size ? "已填入推荐值" : "";
   return (
     <Card as="section" aria-labelledby="settings-title" className={s.settings}>
       <h2 id="settings-title" className={s.settingsTitle}>{task.name} · 设置</h2>
       {loadError ? <Muted>{loadError}</Muted> : !view ? <Muted>正在读取设置…</Muted> : view.fields.length === 0 ? <Muted>这个任务不需要设置。</Muted> : (
         <>
-          <Muted>任务版本 {view.version}</Muted>
           {view.fields.map((def) => (
             <fieldset key={def.id} className={s.setting}>
               <legend className={s.legend}>{def.label}{def.required ? "（必填）" : ""}</legend>
@@ -51,8 +50,8 @@ export function SettingsForm({ account, task }: { account: GameAccount; task: Cl
             </fieldset>
           ))}
           <div className={s.saveBar}>
-            <span role="status" className={statusClass}>{status}</span>
-            <Button variant="primary" onClick={save} disabled={busy}>保存</Button>
+            <span role="status" className={message && !message.ok ? s.statusBad : s.statusNote}>{note}</span>
+            <Button variant="primary" onClick={save} disabled={busy || !dirty}>{dirty ? "保存" : "已保存"}</Button>
           </div>
         </>
       )}

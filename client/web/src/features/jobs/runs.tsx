@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api, enc } from "../../api/client";
 import type { App, Device, GameAccount, Job } from "../../api/types";
-import { Button, Muted, Result, RowLink } from "../../components/ui";
+import { Button, Result, RowLink } from "../../components/ui";
 import { orAlert } from "../../components/useAction";
 import { ACTIVE, jobSource, jobStatus, shortTime } from "../../format";
 import { paths } from "../../router";
@@ -49,7 +49,7 @@ export function RunRows({ jobs, devices, columns, limit }: { jobs: Job[]; device
           <RowLink key={job.id} to={paths.job(job.id)}>
             <span className={s.task}>{job.taskName}{!columns.includes("account") && job.accountName ? ` · ${job.accountName}` : ""}</span>
             {columns.includes("account") && <span className={`${s.cell} ${s.narrow}`}>{job.accountName ?? "—"}</span>}
-            {columns.includes("place") && <span className={`${s.cell} ${s.wide}`}>{jobPlace(job, devices)}</span>}
+            {columns.includes("place") && devices.length > 1 && <span className={`${s.cell} ${s.wide}`}>{jobPlace(job, devices)}</span>}
             {columns.includes("source") && <span className={s.cell}>{jobSource(job)}</span>}
             <span className={`${s.cell} ${s.time}`}>{shortTime(job.updatedAt)}</span>
             <span className={s.state}><Result tone={tone}>{label}</Result></span>
@@ -84,13 +84,11 @@ export function Note({ note }: { note?: { text: string; ok: boolean } }) {
 }
 
 const nameOf = (accounts: GameAccount[], id: string | null) => accounts.find((item) => item.id === id)?.name ?? null;
-/** What will happen when [accountId] runs on [app], following the server's switching rules. */
-export function placeHint(app: App, accountId: string, accounts: GameAccount[]): string {
+/** Only when running [accountId] on [app] switches accounts (or cannot): what will happen, in one short line. */
+export function switchNote(app: App, accountId: string, accounts: GameAccount[]): string | null {
+  if (app.accountId === accountId) return null;
   const name = nameOf(accounts, accountId) ?? "这个账号";
-  if (app.accountId === accountId) return `${app.name}登录着${name}，用${name}的设置，不切号。`;
-  if (app.switchable === false) return `${app.name}不能切号，只有它登录着${name}时才能运行，否则作业会失败。`;
+  if (app.switchable === false) return `${app.name}不能切号，只在它登录着${name}时运行`;
   const back = nameOf(accounts, app.defaultAccountId);
-  return `会在${app.name}先切到${name}${back ? `，运行完切回${back}` : "，运行完不切回"}；用${name}的设置。`;
+  return `会先切到${name}${back ? `，完成后切回${back}` : ""}`;
 }
-export const AUTO_HINT = "自动分配：优先交给登录着这个账号的应用；没有就找空闲、没设默认账号、能切号的应用；都没有就等，超过最晚开始时间不执行。";
-export function Hint({ children }: { children: string }) { return <Muted as="span" className={s.hint}>{children}</Muted>; }

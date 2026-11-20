@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Card, Empty, Muted, PageHeader, Row, Segments } from "../../components/ui";
-import { dateTime, platformName } from "../../format";
 import { useConsole } from "../../state/context";
 import s from "./Library.module.css";
 
@@ -12,15 +11,15 @@ export function LibraryPage() {
   const devices = game ? data.devices.filter((device) => device.apps.some((app) => app.gameId === game.id) || device.tasks.some((task) => task.targetId === game.id)) : [];
   return (
     <>
-      <PageHeader title="任务库" subtitle="每个游戏有自己的任务。任务列表和设置项来自设备最近上传的任务包。" />
+      <PageHeader title="任务库" />
       {!game ? <Card><Empty>还没有任务。设备上线并上传任务包后会出现在这里。</Empty></Card> : (
         <>
-          <Segments label="游戏" value={game.id} onChange={setChosen} items={data.games.map((item) => [item.id, item.name])} />
+          {data.games.length > 1 && <Segments label="游戏" value={game.id} onChange={setChosen} items={data.games.map((item) => [item.id, item.name])} />}
           <section aria-labelledby="tasks" className={s.section}>
             <div className={s.head}><h2 id="tasks">任务</h2><Muted as="span">{game.tasks.length} 个</Muted></div>
             <Card flush>
               {game.tasks.length ? game.tasks.map((task) => (
-                <Row key={task.taskId}><span className={s.name}>{task.name}</span><Muted as="span">{task.taskId}</Muted></Row>
+                <Row key={task.taskId}><span className={s.name}>{task.name}</span></Row>
               )) : <Empty>这个游戏还没有任务</Empty>}
             </Card>
           </section>
@@ -31,8 +30,8 @@ export function LibraryPage() {
                 const count = device.tasks.filter((task) => task.targetId === game.id).length;
                 return (
                   <Row key={device.id}>
-                    <span className={s.name}>{device.name}<Muted as="span" className={s.sub}>{platformName(device.platform)}</Muted></span>
-                    <span className={device.online ? s.ok : s.off}>{device.online ? `在线 · 上报了 ${count} 个任务` : `离线 · 最后在线 ${dateTime(device.lastSeenAt)}`}</span>
+                    <span className={s.name}>{device.name}</span>
+                    <span className={device.online ? s.ok : s.off}>{device.online ? `${count} 个任务` : "离线"}</span>
                   </Row>
                 );
               }) : <Empty>还没有设备装了这个游戏</Empty>}

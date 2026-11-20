@@ -84,3 +84,26 @@
 .formGrid { display: grid; gap: var(--space-3); }
 .inlineForm { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-3); align-items: end; }
 .center { display: flex; justify-content: center; padding-bottom: var(--space-6); }
+
+.popover { position: relative; display: inline-flex; }
+.iconButton { display: inline-grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: var(--radius-md); background: none; color: var(--color-muted); padding: 0; }
+.iconButton:hover, .iconButton[aria-expanded="true"] { background: var(--color-bg); color: var(--color-ink); }
+.panel {
+  position: absolute; z-index: 5; top: calc(100% + 4px); left: 0; min-width: 220px; max-width: min(340px, 90vw); padding: var(--space-1) 0;
+  background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-lg); box-shadow: 0 8px 24px rgb(0 0 0 / .12);
+  display: flex; flex-direction: column; font-size: var(--text-md); font-weight: 400;
+}
+.panelEnd { left: auto; right: 0; }
+.menuItem { display: flex; align-items: center; gap: var(--space-2); min-height: 40px; padding: 0 var(--space-4); border: 0; background: none; color: var(--color-ink); text-align: left; white-space: nowrap; text-decoration: none; }
+.menuItem:hover:not(:disabled) { background: var(--color-bg); }
+.menuItem:disabled { cursor: default; }
+.menuDanger { color: var(--color-danger); }
+.menuLabel { padding: var(--space-1) var(--space-4); font-size: var(--text-xs); color: var(--color-muted); }
+.menuRule { height: 1px; margin: var(--space-1) 0; background: var(--color-line-soft); }
+.plainTrigger { display: inline-flex; border: 0; background: none; padding: 0; color: inherit; font: inherit; }
+.textSelect { display: inline-flex; align-items: center; gap: 3px; min-height: 32px; padding: 0 var(--space-1); color: var(--color-primary); font-weight: 600; white-space: nowrap; }
+.textSelect:hover { color: var(--color-primary-hover); }
+.options { display: flex; flex-direction: column; min-width: 180px; max-height: 360px; overflow-y: auto; }
+.option { min-height: 40px; padding: 0 var(--space-4); border: 0; background: none; color: var(--color-ink); text-align: left; white-space: nowrap; }
+.option:hover { background: var(--color-bg); }
+.optionOn, .optionOn:hover { background: var(--color-nav-current-bg); color: var(--color-nav-current); font-weight: 600; }

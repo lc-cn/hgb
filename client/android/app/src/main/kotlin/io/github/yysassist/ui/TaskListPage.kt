@@ -243,7 +243,7 @@ private fun TaskRow(task: TaskDefinition, executor: ExecutorSnapshot, status: Ru
             else RunActionButton(task.name, false, false, status != RuntimeStatus.Loading && status !is RuntimeStatus.Failure, { enqueue(address) }, {}, {})
         }
         if (menuOpen) Row(Modifier.padding(start = 48.dp, end = UiSpace.medium, bottom = UiSpace.medium), horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
-            listOfNotNull("配置" to { edit(address) }, ("加入计划" to { addToPlan(address) }).takeIf { task.trigger == null }, "运行记录" to openHistory).forEach { (label, action) ->
+            listOf("配置" to { edit(address) }, "运行记录" to openHistory).forEach { (label, action) ->
                 Box(Modifier.heightIn(min = 40.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.surfaceContainer)
                     .clickable(onClick = action).padding(horizontal = UiSpace.medium), Alignment.Center) {
                     Text(label, style = MaterialTheme.typography.bodyMedium)

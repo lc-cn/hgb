@@ -4,7 +4,10 @@ import io.github.yysassist.protocol.*
 
 import io.github.yysassist.core.execution.ExecutorSnapshot
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -103,6 +106,12 @@ sealed interface CloudState {
     data class SignedIn(val email: String?, val serverUrl: String, val online: Boolean, val message: String? = null) : CloudState
 }
 class CloudRequestException(val status: Int, val code: String, override val message: String) : IOException(message)
+/** What the console's event stream says: it opened (a snapshot follows), an event, or it dropped and will reopen. */
+sealed interface ConsoleStreamEvent {
+    data object Opened : ConsoleStreamEvent
+    data class Message(val name: String, val data: String) : ConsoleStreamEvent
+    data class Lost(val message: String) : ConsoleStreamEvent
+}
 
 /** What a finished run means for its job; null while the executor is still working on it. */
 fun cloudOutcome(state: ExecutorSnapshot, runId: Long): Pair<JobState, String>? {
@@ -128,6 +137,8 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
     /** A socket stays open for hours; pings keep it alive through NAT and let both ends notice a dead link. */
     private val sockets = http.newBuilder().readTimeout(0, java.util.concurrent.TimeUnit.MILLISECONDS).callTimeout(0, java.util.concurrent.TimeUnit.MILLISECONDS)
         .pingInterval(20, java.util.concurrent.TimeUnit.SECONDS).build()
+    /** The console stream sends a keep-alive every 15 s, so a minute of silence means the link is gone. */
+    private val streams = http.newBuilder().readTimeout(60, java.util.concurrent.TimeUnit.SECONDS).callTimeout(0, java.util.concurrent.TimeUnit.MILLISECONDS).build()
     private val mutex = Mutex()
     private val mutableState = MutableStateFlow<CloudState>(CloudState.Loading)
     val state = mutableState.asStateFlow()
@@ -151,16 +162,76 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
     }
 
     private fun url(server: String, path: String): HttpUrl = (server.trimEnd('/') + path).toHttpUrlOrNull() ?: throw CloudRequestException(0, "invalid_server", "服务器地址无效")
-    private suspend inline fun <reified R> send(server: String, path: String, body: String?, token: String? = null, method: String = "POST"): R? = withContext(Dispatchers.IO) {
+    private suspend inline fun <reified R> send(server: String, path: String, body: String?, token: String? = null, method: String = "POST"): R? =
+        sendText(server, path, body, token, method)?.let { json.decodeFromString<R>(it) }
+    private suspend fun sendText(server: String, path: String, body: String?, token: String?, method: String): String? = withContext(Dispatchers.IO) {
         val request = Request.Builder().url(url(server, path)).header("X-YYS-Client", "device").apply { token?.let { header("Authorization", "Bearer $it") } }
             .method(method, body?.toRequestBody(JSON_TYPE) ?: if (method == "POST") ByteArray(0).toRequestBody(JSON_TYPE) else null).build()
         http.newCall(request).execute().use { reply ->
             val text = reply.body.string()
-            if (!reply.isSuccessful) throw runCatching { json.decodeFromString<ApiError>(text) }.getOrNull()?.let { CloudRequestException(reply.code, it.code, it.message) }
-                ?: CloudRequestException(reply.code, "http", "服务器暂时不可用")
-            if (reply.code == 204 || text.isBlank()) null else json.decodeFromString<R>(text)
+            if (!reply.isSuccessful) throw failure(reply.code, text)
+            if (reply.code == 204 || text.isBlank()) null else text
         }
     }
+    private fun failure(status: Int, text: String) = runCatching { json.decodeFromString<ApiError>(text) }.getOrNull()?.let { CloudRequestException(status, it.code, it.message) }
+        ?: CloudRequestException(status, "http", "服务器暂时不可用")
+
+    /**
+     * A request for the user to the same API the web console uses ([path] starts with /api/); the reply's JSON, or null
+     * when it has none. Fails with [CloudRequestException] when refused and [IOException] when the server cannot be reached.
+     */
+    suspend fun request(method: String, path: String, body: String? = null): String? =
+        authorized { sendText(it.serverUrl, path, body, it.accessToken, method) }
+
+    /**
+     * The console's event stream (/api/events) while collected: [ConsoleStreamEvent.Opened] and a snapshot, then changes.
+     * A dropped stream is reopened, a little later each time, from the last event it saw. Ends when the user signs out.
+     */
+    fun consoleEvents(): Flow<ConsoleStreamEvent> = flow {
+        var lastId: String? = null
+        var wait = STREAM_RETRY_MILLIS
+        while (true) {
+            val current = mutex.withLock { credentials } ?: return@flow
+            try {
+                val usable = if (current.accessExpiresAt - clock() < RENEW_MARGIN) renew(current) else current
+                val request = Request.Builder().url(url(usable.serverUrl, "/api/events")).header("X-YYS-Client", "device")
+                    .header("Authorization", "Bearer ${usable.accessToken}").header("Accept", "text/event-stream")
+                    .apply { lastId?.let { header("Last-Event-ID", it) } }.build()
+                val call = streams.newCall(request)
+                // A read blocked on a quiet stream does not see cancellation, so a watcher cancels the call when the
+                // collector is cancelled; the blocked read then fails and the flow ends.
+                coroutineScope {
+                    val watcher = launch { try { awaitCancellation() } finally { call.cancel() } }
+                    try { call.execute().use { reply ->
+                        if (reply.code == 401) { renew(usable); return@use }
+                        if (!reply.isSuccessful) throw failure(reply.code, reply.body.string())
+                        emit(ConsoleStreamEvent.Opened)
+                        wait = STREAM_RETRY_MILLIS
+                        val source = reply.body.source()
+                        var name = "message"; val data = StringBuilder()
+                        while (true) {
+                            val line = source.readUtf8Line() ?: break
+                            currentCoroutineContext().ensureActive()
+                            when {
+                                line.isEmpty() -> { if (data.isNotEmpty()) emit(ConsoleStreamEvent.Message(name, data.toString())); name = "message"; data.clear() }
+                                line.startsWith(":") -> Unit
+                                line.startsWith("id:") -> lastId = line.removePrefix("id:").trim()
+                                line.startsWith("event:") -> name = line.removePrefix("event:").trim()
+                                line.startsWith("data:") -> { if (data.isNotEmpty()) data.append('\n'); data.append(line.removePrefix("data:").removePrefix(" ")) }
+                            }
+                        }
+                        emit(ConsoleStreamEvent.Lost("与服务器的连接已断开，正在重连"))
+                    } } finally { watcher.cancel() }
+                }
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: IOException) {
+                if (error is CloudRequestException && error.status == 401) return@flow
+                emit(ConsoleStreamEvent.Lost(error.message ?: "无法连接服务器"))
+            }
+            delay(wait)
+            wait = (wait * 2).coerceAtMost(STREAM_RETRY_MAX_MILLIS)
+        }
+    }.flowOn(Dispatchers.IO)
     private suspend fun save(next: CloudCredentials?) { store.write(next); credentials = next }
     private suspend fun adopt(server: String, result: AuthResult) {
         val access = result.accessToken; val refresh = result.refreshToken; val expires = result.accessExpiresAt
@@ -194,6 +265,8 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
     /** Requests the app makes for the user. They fail with [IOException] when the server cannot be reached. */
     private suspend inline fun <reified R> call(method: String, path: String, body: String?): R? =
         authorized { send<R>(it.serverUrl, path, body, it.accessToken, method) }
+    /** This device's id on the server, once it has registered; the console marks its own card with it. */
+    suspend fun registeredDevice(): String? = mutex.withLock { credentials?.deviceId }
     private suspend fun deviceId(): String = mutex.withLock { credentials?.deviceId } ?: throw CloudRequestException(0, "not_registered", "设备还没有连上服务器")
     suspend fun saveConfig(accountId: String, targetId: String, taskId: String, values: JsonObject, revision: Long): ConfigView =
         checkNotNull(call<ConfigView>("PUT", "/api/accounts/$accountId/configs/$targetId/$taskId", json.encodeToString(ConfigSave(values, revision))))
@@ -530,6 +603,8 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         const val TRACE_SETTLE_MILLIS = 600L
         val JSON_TYPE = "application/json".toMediaType()
         const val RENEW_MARGIN = 60_000L
+        const val STREAM_RETRY_MILLIS = 2_000L
+        const val STREAM_RETRY_MAX_MILLIS = 60_000L
         const val MAX_PENDING_NOTICES = 50
     }
 }

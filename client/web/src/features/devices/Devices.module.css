@@ -50,3 +50,21 @@
 .appCardBusy { border-color: var(--color-primary-line); }
 .appName { flex: 1; font-size: var(--text-xl); font-weight: 700; color: var(--color-ink); text-decoration: none; }
 .alignFacts { align-items: center; }
+.cardHeadRow { display: flex; align-items: center; gap: var(--space-3); padding-right: var(--space-4); }
+.cardHeadRow > :first-child { flex: 1; }
+.cardHeadRow select { min-height: 32px; }
+.accountTrigger { display: inline-flex; align-items: center; gap: var(--space-2); }
+.accountTrigger { color: var(--color-primary); min-height: 32px; padding: 0 var(--space-1); }
+.accountName { font-weight: 600; font-size: var(--text-lg); }
+.accountTrigger:hover { color: var(--color-primary-hover); }
+.accountPanel { display: flex; flex-direction: column; min-width: 240px; }
+.accountItem { display: flex; align-items: center; padding-right: var(--space-2); }
+.accountItem:hover { background: var(--color-bg); }
+.accountSelected, .accountSelected:hover { background: var(--color-nav-current-bg); }
+.accountChoice { flex: 1; min-height: 40px; padding: 0 var(--space-4); border: 0; background: none; color: var(--color-ink); text-align: left; }
+.accountChoice:disabled { cursor: default; }
+.accountSelected .accountChoice { color: var(--color-nav-current); font-weight: 600; }
+.setDefault, .unsetDefault { border: 0; background: none; font-size: var(--text-sm); padding: 4px; white-space: nowrap; }
+.setDefault { color: var(--color-primary); }
+.unsetDefault { color: var(--color-muted); }
+.choiceLine { display: flex; align-items: center; gap: var(--space-1); padding: 10px var(--space-4) 2px; color: var(--color-muted); }

@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, FormEvent, HTMLAttributes, ReactNode } from "react";
+import { useEffect, useRef, useState, type ButtonHTMLAttributes, type FormEvent, type HTMLAttributes, type ReactNode } from "react";
 import type { Tone } from "../format";
 import { Link } from "../router";
 import s from "./ui.module.css";
@@ -130,3 +130,54 @@ export function Form({ inline, onSubmit, children, className }: { inline?: boole
 }
 
 export const ui = s;
+
+/**
+ * A button that opens a small panel under it (an app's accounts, a row's ⋯ actions). Clicking outside or pressing
+ * Escape closes it; [children] gets a function that closes it after an action.
+ */
+export function Popover({ label, trigger, children, align = "start", plain }: { label: string; trigger: ReactNode; children: (close: () => void) => ReactNode; align?: "start" | "end"; plain?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const away = (event: MouseEvent) => { if (!box.current?.contains(event.target as Node)) setOpen(false); };
+    const key = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", away); document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("mousedown", away); document.removeEventListener("keydown", key); };
+  }, [open]);
+  return (
+    <span ref={box} className={s.popover}>
+      <button type="button" className={plain ? s.plainTrigger : s.iconButton} aria-label={label} aria-expanded={open} onClick={() => setOpen(!open)}>{trigger}</button>
+      {open && <div className={join(s.panel, align === "end" && s.panelEnd)} role="menu">{children(() => setOpen(false))}</div>}
+    </span>
+  );
+}
+/** A row's less used actions behind ⋯. */
+export function MoreMenu({ label, actions }: { label: string; actions: [string, () => void, boolean?][] }) {
+  return (
+    <Popover label={label} align="end" trigger={<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>}>
+      {(close) => actions.map(([text, run, danger]) => (
+        <button key={text} type="button" role="menuitem" className={join(s.menuItem, danger && s.menuDanger)} onClick={() => { close(); run(); }}>{text}</button>
+      ))}
+    </Popover>
+  );
+}
+/**
+ * A choice shown as its value in the accent colour with a small arrow; it opens the options one per row, as a select
+ * does, the chosen one highlighted. Used wherever a page picks one of a few (an account, a place, a filter).
+ */
+export function TextSelect<T extends string>({ value, options, onChange, label }: { value: T; options: [T, string][]; onChange: (value: T) => void; label: string }) {
+  const text = options.find(([id]) => id === value)?.[1] ?? "—";
+  return (
+    <Popover label={label} plain trigger={<span className={s.textSelect}>{text}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg></span>}>
+      {(close) => (
+        <div role="listbox" aria-label={label} className={s.options}>
+          {options.map(([id, name]) => (
+            <button key={id} type="button" role="option" aria-selected={id === value} className={join(s.option, id === value && s.optionOn)}
+              onClick={() => { close(); if (id !== value) onChange(id); }}>{name}</button>
+          ))}
+        </div>
+      )}
+    </Popover>
+  );
+}

@@ -58,6 +58,7 @@ if (providers.gradleProperty("includeOcrIntegrationModels").orNull == "true") {
 }
 dependencies {
     implementation(project(":core:engine"))
+    implementation(project(":client:shared"))
     implementation(project(":client:android:vision"))
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { api, enc } from "../../api/client";
 import type { Job, JobEvent } from "../../api/types";
-import { Breadcrumb, Button, ButtonLink, Card, Empty, Muted, Pill } from "../../components/ui";
+import { Breadcrumb, Button, Card, Empty, Muted, Pill } from "../../components/ui";
 import { useAction } from "../../components/useAction";
-import { ACTIVE, clock, dateTime, eventDetail, eventKind, jobSource, jobStatus, seconds, shortDuration } from "../../format";
-import { paths } from "../../router";
+import { ACTIVE, clock, eventDetail, eventKind, jobSource, jobStatus, seconds, shortDuration, shortTime } from "../../format";
+import { Link, paths } from "../../router";
 import { useConsole } from "../../state/context";
 import { NotFound } from "../ConsolePage";
 import { jobPlace, JobControls } from "./runs";
@@ -81,17 +81,19 @@ export function JobPage({ id }: { id: string }) {
       <Breadcrumb items={crumbs} />
       <header className={s.jobHeader}>
         <div className={s.jobTitle}>
-          <div className={s.titleLine}><h1>{job.taskName}</h1><Pill tone={tone}>{label}</Pill></div>
-          <Muted>{[jobSource(job), job.accountName ? `游戏账号：${job.accountName}` : null, jobPlace(job, data.devices),
-            started ? `${dateTime(started)} 开始` : `${dateTime(job.createdAt)} 创建`, started && ended && !ACTIVE.has(job.state) ? `用时 ${seconds(ended - started)}` : null].filter(Boolean).join(" · ")}</Muted>
+          {/* The account is a link to its settings; the line under the title says only where, when and how long. */}
+          <div className={s.titleLine}><h1>{job.taskName}</h1>
+            {job.accountName && (job.accountId && accountExists ? <Link to={paths.account(job.accountId)} className={s.accountLink}>{job.accountName}</Link> : <Muted as="span">{job.accountName}</Muted>)}
+            <Pill tone={tone}>{label}</Pill></div>
+          <Muted>{[data.devices.length > 1 || !job.deviceName ? jobPlace(job, data.devices) : null,
+            started ? `${shortTime(started)} 开始` : `${shortTime(job.createdAt)} 创建`, started && ended && !ACTIVE.has(job.state) ? `用时 ${seconds(ended - started)}` : null, jobSource(job)].filter(Boolean).join(" · ")}</Muted>
         </div>
         <div className={s.jobActions}>
-          {job.accountId && accountExists && <ButtonLink to={paths.account(job.accountId)}>修改设置</ButtonLink>}
           <JobControls job={job} />
           {!ACTIVE.has(job.state) && job.accountId && accountExists && (
             <Button variant="primary" className={s.big} disabled={again.busy} onClick={() => again.run(async () => {
               await api("/api/jobs", { method: "POST", body: { targetId: job.targetId, taskId: job.taskId, accountId: job.accountId, deviceId: null, appKey: null } });
-              return "已提交，服务端会按账号分配应用";
+              return "已提交，服务端会分配应用";
             })}>再运行一次</Button>
           )}
         </div>

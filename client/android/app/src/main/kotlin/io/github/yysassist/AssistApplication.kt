@@ -66,6 +66,8 @@ class AssistApplication : Application() {
         private set
     lateinit var cloud: io.github.yysassist.core.cloud.CloudAgent
         private set
+    /** The signed-in console's data and where the user is in it, kept while the activity is recreated. */
+    val console by lazy { io.github.yysassist.shared.ConsoleSession(io.github.yysassist.cloud.AgentTransport(cloud)) }
     /** Which game account each game here is signed in to, with its settings and plans as the server last sent them. */
     lateinit var accounts: io.github.yysassist.cloud.CloudAccounts
         private set

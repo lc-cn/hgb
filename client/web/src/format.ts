@@ -55,8 +55,8 @@ export const seconds = (ms: number) => ms < 60000 ? `${Math.max(1, Math.round(ms
 const PLATFORMS: Record<string, string> = { android: "Android", windows: "Windows 桌面端", ios: "iOS" };
 export const platformName = (platform: string) => PLATFORMS[platform.toLowerCase()] ?? platform;
 
-/** Where a job came from, as far as the server records it: a plan, or a run started by hand. */
-export const jobSource = (job: Job) => job.planName ? `计划 · ${job.planName}` : "立即运行";
+/** The plan a job came from; empty for a run started by hand, which needs no saying. */
+export const jobSource = (job: Job) => job.planName ? `计划 · ${job.planName}` : "";
 /** The job's state as the user should read it, taking pending pause and cancel requests into account. */
 export function jobStatus(job: Job): [string, Tone] {
   const [label, tone] = JOB_STATES[job.state];

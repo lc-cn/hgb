@@ -1,10 +1,10 @@
 import { useState } from "react";
 import type { CloudTask, GameAccount } from "../../api/types";
-import { Breadcrumb, Button, Card, Empty, Field, Grow, Muted, PageTabs, Pill } from "../../components/ui";
+import { Breadcrumb, Button, Card, Empty, Muted, PageTabs, Pill, TextSelect } from "../../components/ui";
 import { paths } from "../../router";
 import { useConsole } from "../../state/context";
 import { NotFound } from "../ConsolePage";
-import { AUTO_HINT, Note, placeHint, RunRows, useRunNow } from "../jobs/runs";
+import { Note, RunRows, switchNote, useRunNow } from "../jobs/runs";
 import { accountNow } from "./GameAccountsPage";
 import { PlanList } from "./Plans";
 import { SettingsForm } from "./Settings";
@@ -28,7 +28,6 @@ export function AccountDetailPage({ id, tab }: { id: string; tab: Tab }) {
         <Muted as="span">{[game?.name ?? account.gameId, account.uid ? `编号 ${account.uid}` : null, account.nickname].filter(Boolean).join(" · ")}</Muted>
         <Pill tone={tone} className={s.headPill}>{now}</Pill>
       </header>
-      <Muted className={s.under}>任务设置、计划和运行记录都属于这个账号，不管它在哪台设备、哪个应用运行。</Muted>
       <PageTabs label="账号内容" value={tab} tabs={[["tasks", "任务与设置", paths.account(account.id)], ["plans", "计划", paths.account(account.id, "plans")], ["runs", "运行记录", paths.account(account.id, "runs")]]} />
       {tab === "tasks" && <TasksTab account={account} tasks={game?.tasks ?? []} />}
       {tab === "plans" && <PlanList account={account} game={game} plans={data.plans} devices={data.devices} jobs={data.jobs} />}
@@ -51,28 +50,25 @@ function TasksTab({ account, tasks }: { account: GameAccount; tasks: CloudTask[]
     <>
       <div className={s.split}>
         <Card as="section" flush aria-label="任务" className={s.taskList}>
+          <div className={s.choiceLine}>在
+            <TextSelect label="运行的位置" value={place ? where : ""} onChange={(next) => { setWhere(next); clear(); }}
+              options={[["", "自动分配"], ...places.map((item): [string, string] => [item.value, item.label])]} />运行
+          </div>
+          {place && switchNote(place.app, account.id, data.accounts.filter((item) => item.gameId === account.gameId)) &&
+            <Muted className={s.listNote}>{switchNote(place.app, account.id, data.accounts.filter((item) => item.gameId === account.gameId))}</Muted>}
           {tasks.map((task) => (
             <div key={task.taskId} className={task.taskId === taskId ? `${s.taskRow} ${s.taskOn}` : s.taskRow}>
               <button type="button" className={s.taskPick} aria-pressed={task.taskId === taskId} onClick={() => setChosen(task.taskId)}>
-                <b>{task.name}</b><span>{task.taskId === taskId ? "正在查看设置" : "查看设置"}</span>
+                <b>{task.name}</b>
               </button>
               <Note note={notes[task.taskId]} />
-              <Button variant="primary" small disabled={busy !== null} onClick={() => run(task, account.id, place ? { deviceId: place.device.id, appKey: place.app.key } : null,
-                place ? `已提交，排在${place.label}的队列` : "已提交，服务端会按账号分配应用")}>立即运行</Button>
+              <Button small disabled={busy !== null} onClick={() => run(task, account.id, place ? { deviceId: place.device.id, appKey: place.app.key } : null,
+                place ? `已排进${place.label}的队列` : "已提交，服务端会分配应用")}>运行</Button>
             </div>
           ))}
         </Card>
         <SettingsForm key={taskId} account={account} task={tasks.find((task) => task.taskId === taskId)!} />
       </div>
-      <Card className={s.whereCard}>
-        <Field inline label="立即运行时在哪跑">
-          <select aria-label="立即运行的位置" value={place ? where : ""} onChange={(e) => { setWhere(e.target.value); clear(); }}>
-            <option value="">自动分配</option>
-            {places.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-          </select>
-          <Grow>{place ? placeHint(place.app, account.id, data.accounts.filter((item) => item.gameId === account.gameId)) : AUTO_HINT}</Grow>
-        </Field>
-      </Card>
     </>
   );
 }

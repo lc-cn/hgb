@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, enc } from "../../api/client";
 import type { Channel, EventRule, Notice, PlanOutcome } from "../../api/types";
-import { Button, Card, Empty, Grow, Muted, PageHeader, PageTabs, Pill, Row, Switch } from "../../components/ui";
+import { Button, Card, Empty, Grow, Muted, PageHeader, PageTabs, Pill, Row, Switch, TextSelect } from "../../components/ui";
 import { orAlert } from "../../components/useAction";
 import { shortTime, type Tone } from "../../format";
 import { Link, paths, useQuery } from "../../router";
@@ -26,7 +26,7 @@ export function NoticesPage() {
   const tab = useQuery().get("tab") ?? "log";
   return (
     <>
-      <PageHeader title="通知" subtitle="规则决定什么时候记下一条事件，渠道决定把事件发到哪里。规则默认都关着；没有渠道订阅的事件也会记在这里。" />
+      <PageHeader title="通知" />
       <PageTabs label="通知内容" value={tab} tabs={[["log", "事件记录", paths.notices], ["rules", "规则", `${paths.notices}?tab=rules`], ["channels", "渠道", `${paths.notices}?tab=channels`]]} />
       {tab === "rules" ? <Rules /> : tab === "channels" ? <Channels /> : <Log />}
     </>
@@ -72,13 +72,7 @@ function Log() {
   return (
     <>
       <div className={s.filter}>
-        <label className={s.label}>规则
-          <select value={rule} onChange={(e) => setRule(e.target.value)}>
-            <option value="">全部</option>
-            {(rules ?? []).map((item) => <option key={item.ruleId} value={item.ruleId}>{item.name}</option>)}
-          </select>
-        </label>
-        <Muted as="span" className={s.keep}>保留最近 500 条</Muted>
+        <TextSelect label="按规则筛选" value={rule} onChange={setRule} options={[["", "全部规则"], ...(rules ?? []).map((item): [string, string] => [item.ruleId, item.name])]} />
       </div>
       <Card flush as="section" aria-label="事件记录">
         {notices.length ? notices.map((item) => (

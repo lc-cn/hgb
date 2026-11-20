@@ -47,3 +47,4 @@
 .factLine .resultText { color: var(--color-muted); }
 .resultWarn { color: var(--color-warn); overflow-wrap: anywhere; min-width: 0; }
 @media (max-width: 560px) { .actionsList { padding-left: var(--space-4); } }
+.accountLink { font-weight: 600; text-decoration: none; }

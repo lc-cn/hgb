@@ -260,3 +260,28 @@ internal fun DataUsagePage(state: io.github.yysassist.core.execution.ExecutorSna
         }
     }
 }
+
+/** This device's own switches, in 我的 → 本机: what it needs to run games, and the floating ball. */
+@Composable
+internal fun LocalDeviceSettings(floating: FloatingPreferencesState, setVisible: (Boolean) -> Unit, setAutoDock: (Boolean) -> Unit, reload: () -> Unit, openFavorites: () -> Unit) {
+    val service by GameAccessibilityService.connection.collectAsState()
+    val notifications = rememberNotificationAccess()
+    Column {
+        AccessibilityRow(service != null); RowDivider()
+        NotificationAccessContent(notifications.access, notifications.request, notifications.openSettings); RowDivider()
+        ScreenshotRow(); RowDivider()
+        FloatingRows(floating, setVisible, setAutoDock, reload, openFavorites)
+    }
+}
+
+/** Whether notices the server pushes to this phone pop up here; which events come is set on the web (a 本机通知 channel). */
+@Composable
+internal fun LocalNoticeSwitch(notices: io.github.yysassist.cloud.LocalNotices) {
+    val shown by notices.enabled.collectAsState()
+    val p = LocalAssistPalette.current
+    AssistCard {
+        SettingRow(AssistIcons.Bell, p.violet, "在这台手机上弹出通知", "网页“通知 · 渠道”里添加“本机通知”并选这台设备") {
+            AssistSwitch(shown, label = "在这台手机上弹出通知", change = notices::setEnabled)
+        }
+    }
+}
