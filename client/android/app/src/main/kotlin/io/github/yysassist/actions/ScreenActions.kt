@@ -35,7 +35,7 @@ internal class ScreenActions(
         const val AWAIT_SCREEN = "screen.awaitScreen"; const val LOCATE_IMAGE_IN = "screen.locateImageIn"; const val LOCATE_TEXT_IN = "screen.locateTextIn"
         const val MATCH_COLOR_IN = "screen.matchColorIn"
         const val LONG_PRESS = "screen.longPress"; const val SWIPE = "screen.swipe"; const val BACK = "screen.back"
-        const val TAP_REGION = "screen.tapRegion"; const val LOCATE_IMAGE = "screen.locateImage"
+        const val TAP_REGION = "screen.tapRegion"; const val DRAG_REGION = "screen.dragRegion"; const val LOCATE_IMAGE = "screen.locateImage"
         const val READ_NUMBER = "screen.readNumber"; const val READ_FRACTION = "screen.readFraction"
         const val SELECT_TEXT = "screen.selectText"; const val SELECT_IMAGE = "screen.selectImage"
         const val MATCH_COLOR = "screen.matchColor"; const val COMPARE = "screen.compareFrames"
@@ -45,7 +45,7 @@ internal class ScreenActions(
         /** The platform refuses accessibility screenshots taken closer together than about a third of a second. */
         private const val MIN_POLL_MS = 350
         /** Pixels of surroundings recognized with a blank-area check. */
-        private const val BLANK_CONTEXT = 80
+        private const val BLANK_CONTEXT = 80; private const val DRAG_POINTS = 16
         private val ORDERS = setOf("top", "bottom", "left", "right")
         /** Handle kinds. Region-derived observations keep REGION in their lineage. */
         const val OBSERVATION = "screen.observation"; const val TARGET = "screen.target"; const val REGION = "screen.region"
@@ -279,6 +279,22 @@ internal class ScreenActions(
             validateDefinition = { _, _, _, action -> if ("requireNoText" in action.bindings) "空白检查必须由任务版本明确指定" else null }) { inputs ->
             if (inputs.keys != setOf("region", "durationMs", "requireNoText") || inputs.text("region").isNullOrBlank() || duration(inputs) == null ||
                 (inputs["requireNoText"] as? JsonPrimitive)?.takeUnless { it.isString }?.booleanOrNull == null) "请指定区域、手势时长及是否要求区域无文字" else null
+        },
+        // Drags from the centre of a derived region by a fixed offset, in a straight line: picking up a card that has no
+        // stable text or icon of its own (a shikigami in a list) by its place relative to a label on the same page.
+        CapabilityContract(DRAG_REGION, 1, inputTypes = mapOf("region" to ActionValueType.STRING, "durationMs" to ActionValueType.NUMBER) +
+            swipeKeys.associateWith { ActionValueType.NUMBER }, outputTypes = mapOf("delivered" to ActionValueType.BOOLEAN), sendsDeviceInput = true,
+            inputHandles = mapOf("region" to HandleRequirement(setOf(REGION), forbiddenAncestors = setOf(REGION))),
+            validateKnownInputs = { inputs -> when {
+                "durationMs" in inputs && duration(inputs) == null -> ContentIssue("durationMs", "拖动时长需为平台允许的正整数毫秒")
+                else -> swipeKeys.firstOrNull { key -> key in inputs && integer(inputs[key]).let { value ->
+                    value == null || (if (key.startsWith("d")) value !in -MAX_OFFSET..MAX_OFFSET else value !in 1..MAX_OFFSET) } }
+                    ?.let { ContentIssue(it, "拖动位移需为整数，参考尺寸需为正整数") }
+                    ?: if (integer(inputs["dx"]) == 0 && integer(inputs["dy"]) == 0) ContentIssue("dx", "拖动位移不能为零") else null
+            } },
+            validateDefinition = { _, _, _, action -> if (swipeKeys.any { it in action.bindings }) "拖动位移必须由任务版本明确指定" else null }) { inputs ->
+            if (inputs.keys != setOf("region", "durationMs") + swipeKeys || inputs.text("region").isNullOrBlank() || duration(inputs) == null ||
+                swipeKeys.any { integer(inputs[it]) == null }) "请指定区域、位移、参考尺寸及拖动时长" else null
         },
         // A clickable target found by a unique template match in the whole frame (icons without text).
         // Inputs re-run the same match on a fresh frame; a region-derived observation is not accepted.
@@ -788,7 +804,7 @@ internal class ScreenActions(
                 }
                 TAP, LONG_PRESS, SWIPE -> gesture(action, inputs)
                 BACK -> back(action, inputs)
-                TAP_REGION -> tapRegion(action, inputs)
+                TAP_REGION, DRAG_REGION -> tapRegion(action, inputs)
                 DERIVE -> derive(inputs)
                 READ_REGION -> {
                     val region = regions[inputs.text("region")] ?: return ActionResult.Unavailable("本步骤的区域不可用")
@@ -984,9 +1000,9 @@ internal class ScreenActions(
             val windows = states.flatMap { it.text + it.absentText }.map { checkNotNull(it.within) }.distinct()
             val images = states.flatMap { it.present + it.absent }.map { it.template to checkNotNull(it.within) }.distinct()
             val started = android.os.SystemClock.elapsedRealtime()
-            var held: String? = null; var heldSince = 0L; var polls = 0; var lastScores = emptyList<Double>()
+            var held: String? = null; var heldSince = 0L; var polls = 0; var lastScores = emptyList<Double>(); var why = ""; var whyLocal = ""
             fun trace(matched: String?) = buildJsonObject { put("kind", AWAIT_SCREEN); put("polls", polls); put("waitedMs", android.os.SystemClock.elapsedRealtime() - started)
-                matched?.let { put("state", it) }; put("scores", buildJsonArray { lastScores.forEach { add(it) } }) }
+                matched?.let { put("state", it) }; put("scores", buildJsonArray { lastScores.forEach { add(it) } }); if (matched == null && whyLocal.isNotEmpty()) put("why", whyLocal) }
             while (true) {
                 if (!permitted(attempt.ticket)) return ActionResult.Interrupted
                 val observation = when (val acquired = snapshot(attempt, bundle, bridge, profile.packageName, models)) {
@@ -1021,6 +1037,20 @@ internal class ScreenActions(
                     possible = possible.filter { state -> state.text.none { it.within in texts && !seen(it) } && state.absentText.none { it.within in texts && seen(it) } }
                 }
                 val matched = possible.map { it.id }.distinct()
+                // Why no single state held on this frame. The reason, which may leave the phone, names only what was missed and how
+                // much text a window held; what that text said (other players' names, perhaps) stays in the local trace.
+                fun score(c: ImageCondition) = String.format(java.util.Locale.ROOT, "%.2f", scores.getValue(c.template to checkNotNull(c.within)))
+                fun misses(state: RegionState, said: Boolean) = state.present.filterNot(::reached).map { "图${it.template} ${score(it)}<${it.minimum}" } +
+                    state.absent.filter(::reached).map { "图${it.template} ${score(it)}≥${it.minimum}" } +
+                    state.text.filter { it.within in texts && !seen(it) }.map { c -> val list = texts.getValue(checkNotNull(c.within))
+                        "缺「${c.text}」" + if (said && list.isNotEmpty()) list.take(3).joinToString("、", "读到「", "」") { it.text.take(16) } else "（读到${list.size}处文字）" } +
+                    state.absentText.filter { it.within in texts && seen(it) }.map { "有「${it.text}」" }
+                fun explain(said: Boolean) = when {
+                    matched.size > 1 -> "多个状态同时成立：${matched.joinToString("、")}"
+                    matched.size == 1 -> "「${matched.single()}」成立但还没稳定 ${stable}ms"
+                    else -> states.joinToString("；") { state -> "${state.id}：" + misses(state, said).joinToString("，") }
+                }
+                why = explain(false).take(600); whyLocal = explain(true).take(1200)
                 val now = android.os.SystemClock.elapsedRealtime()
                 val current = matched.singleOrNull()
                 if (current != held) { held = current; heldSince = now }
@@ -1030,7 +1060,7 @@ internal class ScreenActions(
                     if (terminalAction == action.id) businessEvidence = StepOutcome.Completed(evidence)
                     return ActionResult.Verified(buildJsonObject { put("state", current); put("observation", token) }, evidence, trace(current))
                 }
-                if (now - started >= timeout) return ActionResult.Unavailable("等待 ${timeout}ms 后仍未确认任何声明的页面状态", trace(null))
+                if (now - started >= timeout) return ActionResult.Unavailable("等待 ${timeout}ms 后仍未确认任何声明的页面状态" + why.takeIf { it.isNotEmpty() }?.let { "（$it）" }.orEmpty(), trace(null))
                 delay(interval)
             }
         }
@@ -1136,6 +1166,20 @@ internal class ScreenActions(
             }
             val match = when (val value = resolve(anchor, fresh)) { is ActionResult -> return value; else -> value as RecognizedText }
             val bounds = regionBounds(match, fresh.result.stamp.geometry, region.derivation) ?: return ActionResult.Unavailable("输入前推出的区域超出画面")
+            val point = ScreenPoint(bounds.left + bounds.width / 2f, bounds.top + bounds.height / 2f)
+            if (action.capability == DRAG_REGION) {
+                val geometry = fresh.result.stamp.geometry
+                val sx = geometry.width.toFloat() / checkNotNull(integer(inputs["referenceWidth"]))
+                val sy = geometry.height.toFloat() / checkNotNull(integer(inputs["referenceHeight"]))
+                if (kotlin.math.abs(sx / sy - 1f) > 0.01f) return ActionResult.Unavailable("当前画面比例与拖动参考尺寸不同")
+                val end = ScreenPoint(point.x + checkNotNull(integer(inputs["dx"])) * sx, point.y + checkNotNull(integer(inputs["dy"])) * sy)
+                if (end.x < 0 || end.y < 0 || end.x >= geometry.width || end.y >= geometry.height) return ActionResult.Unavailable("拖动终点超出画面")
+                val path = (0 until DRAG_POINTS).map { index -> val t = index.toFloat() / (DRAG_POINTS - 1)
+                    ScreenPoint(point.x + (end.x - point.x) * t, point.y + (end.y - point.y) * t) }
+                val trace = buildJsonObject { put("kind", DRAG_REGION); region(bounds)
+                    put("end", buildJsonArray { add(end.x); add(end.y) }); put("durationMs", checkNotNull(duration(inputs))) }
+                return deliver(action, bridge, trace, null) { it.gestureCall(fresh.result.stamp, path, checkNotNull(duration(inputs))) }
+            }
             var trace = buildJsonObject { put("kind", TAP_REGION); region(bounds) }
             if ((inputs["requireNoText"] as JsonPrimitive).boolean) {
                 // Recognize with surrounding context: a tight crop of plain background makes the model invent characters.
@@ -1157,7 +1201,6 @@ internal class ScreenActions(
                     "目标区域（${bounds.left},${bounds.top},${bounds.width}×${bounds.height}）内识别到 ${found.size} 处文字，不点击：" +
                         found.joinToString("、") { "「${it.text}」%.2f".format(it.confidence) }, trace)
             }
-            val point = ScreenPoint(bounds.left + bounds.width / 2f, bounds.top + bounds.height / 2f)
             return deliver(action, bridge, trace, null) { it.gestureCall(fresh.result.stamp, listOf(point), checkNotNull(duration(inputs))) }
         }
         private suspend fun launch(action: ActionDefinition, inputs: JsonObject): ActionResult {

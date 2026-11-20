@@ -40,6 +40,7 @@
 | `screen.back` v1 | `observation`（句柄） | 系统返回键。先重新截图，确认观察所属应用仍在前台，再在同一输入所有权、画面与前台检查下调用 `GLOBAL_ACTION_BACK`。系统接受返回键只说明按键已送出，业务效果仍须之后重新观察核对。**实测：在阴阳师弹窗上按返回键会弹出游戏的退出确认，不会关闭弹窗**，见 [back-key](build-evidence/back-key/README.md) |
 
 | `screen.tapRegion` v1 | `region`（句柄，来源链不得含区域）、`durationMs`、`requireNoText`（布尔，明确给出） | 点击由锚点推出的区域中心，用于点击弹窗外空白处关闭弹窗。输入前重新截图、重新唯一定位同一锚点并按相同偏移重新推出区域；`requireNoText` 为 true 时先识别区域内文字，只要识别出任何非空文字（不论置信度）就不点击，拒绝原因会写出区域坐标和识别内容。识别器返回的空文字检测框不算文字，只计入 trace |
+| `screen.dragRegion` v1 | `region`（句柄，来源链不得含区域）、`durationMs`、`dx`、`dy`、`referenceWidth`、`referenceHeight`（位移和参考尺寸都须由任务版本写死） | 从推出区域的中心沿直线拖到按参考尺寸缩放的位移处，用于拿起列表里没有固定文字或图标的卡片（如寄养时拖式神到好友的空灯笼）。输入前与 `tapRegion` 一样重新截图、重新唯一定位锚点并重新推出区域；画面比例与参考尺寸不同或终点超出画面时不拖 |
 
 | `screen.locateImage` v1 | `observation`（整图观察，来源链不得含区域）、`template`（已声明资源）、`minimumScore` | `target`：整图中恰好一处模板匹配达到得分时成立，零处或多处都判为无法确认。用于没有文字的图标。点击、按住、滑动和 `tapRegion` 的锚点在输入前都会用同一模板重新匹配，而不是复用旧坐标 |
 

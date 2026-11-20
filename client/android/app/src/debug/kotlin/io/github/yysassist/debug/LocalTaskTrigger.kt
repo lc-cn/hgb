@@ -105,7 +105,7 @@ class LocalTaskTrigger : BroadcastReceiver() {
                 withTimeout(10_000) { runtime.status.first { it == RuntimeStatus.Ready } }
                 result.writeText(report.put("phase", "running").toString(2))
                 runtime.enqueueTask(TaskAddress(target, task)).await()
-                val state = withTimeout(180_000) { runtime.state.first { value ->
+                val state = withTimeout(600_000) { runtime.state.first { value ->
                     value.facts.any { it.type == "task-completed" || it.type == "task-failed" } || value.unresolved.isNotEmpty() } }
                 report.put("phase", "finished")
                     .put("facts", JSONArray(state.facts.map { JSONObject().put("type", it.type).put("detail", it.detail) }))

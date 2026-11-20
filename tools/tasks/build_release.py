@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / ".local/task-release"
 # What a public version holds unless the command names tasks. v1.0.0 was ["daily-gift"].
 # 喂猫喂狗 and 每日抽签 are left out: 庭院事务一键完成 does both (and more) in one press.
-TASKS = ["daily-tour", "daily-gift", "flower-chore", "courtyard-affairs", "mail-claim", "friendship-points", "guild-funds"]
+TASKS = ["daily-tour", "daily-gift", "flower-chore", "courtyard-affairs", "mail-claim", "friendship-points", "guild-funds", "shikigami-foster"]
 
 
 def draft_module():
@@ -83,6 +83,14 @@ def build(version, changelog, wanted=TASKS):
     tour["steps"] = [step for step in tour["steps"] if step["id"] != "pets"] + \
         [chore_steps[key] for key in ("oneclick", "mail", "friendship", "guild")]
     for name, data in chores.icons(draft.crop).items():
+        bundle["resources"].append(draft.resource(name.removesuffix(".png"), name, data)); files[name] = data
+    # 寄养, sampled the same evening on another account.
+    spec = util.spec_from_file_location("foster", Path(__file__).with_name("foster_1120.py"))
+    foster = util.module_from_spec(spec); spec.loader.exec_module(foster)
+    foster_tasks, _ = foster.build(draft)
+    bundle["tasks"] += foster_tasks
+    for name, (source, rect) in foster.ICONS.items():
+        data = draft.crop(chores.SAMPLES / source, rect)
         bundle["resources"].append(draft.resource(name.removesuffix(".png"), name, data)); files[name] = data
 
     tasks = [task for task in bundle["tasks"] if task["id"] in wanted]
