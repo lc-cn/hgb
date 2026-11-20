@@ -158,7 +158,7 @@ private fun Chevron() = Icon(AssistIcons.Chevron, null, Modifier.size(18.dp), ti
 private fun AccessibilityRow(connected: Boolean) {
     val context = LocalContext.current
     val p = LocalAssistPalette.current
-    SettingRow(AssistIcons.Shield, p.blue, "无障碍服务", "用于读取画面和执行操作") {
+    SettingRow(AssistIcons.Shield, p.blue, "无障碍服务", if (connected) null else "运行任务需要它") {
         if (connected) SettingValue("已开启", p.success)
         else SmallAction("开启") { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
     }
@@ -184,7 +184,7 @@ private fun ScreenshotRow() {
         else -> null
     }
     val success = result as? ScreenshotCheck.Success
-    SettingRow(AssistIcons.Phone, p.teal, "屏幕截图", failure ?: success?.let { "已取得可读取画面 · ${it.width} × ${it.height}" } ?: "检查能否读取当前画面") {
+    SettingRow(AssistIcons.Phone, p.teal, "屏幕截图", failure ?: success?.let { "能读取画面 · ${it.width} × ${it.height}" }) {
         if (service == null) SettingValue("未就绪")
         else SmallAction(if (checking) "检查中" else "检查", !checking) {
             val owner = service ?: return@SmallAction
@@ -215,16 +215,16 @@ private fun ColumnScope.FloatingRows(state: FloatingPreferencesState, setVisible
             SmallAction("重新读取", onClick = reload)
         }
         is FloatingPreferencesState.Ready -> {
-            SettingRow(AssistIcons.Circle, p.violet, "显示悬浮球", failure ?: if (service == null) "无障碍服务未连接" else "在游戏中快速控制运行") {
+            SettingRow(AssistIcons.Circle, p.violet, "显示悬浮球", failure ?: if (service == null) "无障碍服务未连接" else null) {
                 if (failure != null) SmallAction("重新显示") { service?.floating?.retry() }
                 else AssistSwitch(state.settings.visible, label = "显示悬浮球", change = setVisible)
             }
             RowDivider()
-            SettingRow(AssistIcons.Phone, p.blue, "自动吸边", "3 秒不操作后收到屏幕边缘，点一下唤醒") {
+            SettingRow(AssistIcons.Phone, p.blue, "悬浮球自动吸边") {
                 AssistSwitch(state.settings.autoDock, label = "自动吸边", change = setAutoDock)
             }
             RowDivider()
-            SettingRow(AssistIcons.Star, p.gold, "快捷与常用", "选择悬浮球里显示的任务", openFavorites) { SettingValue("${state.settings.favorites.size} 个"); Chevron() }
+            SettingRow(AssistIcons.Star, p.gold, "悬浮球里的常用任务", null, openFavorites) { SettingValue("${state.settings.favorites.size} 个"); Chevron() }
         }
     }
 }

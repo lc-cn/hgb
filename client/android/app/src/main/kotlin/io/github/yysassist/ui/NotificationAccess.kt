@@ -34,10 +34,10 @@ internal fun notificationAccess(sdk: Int, permissionGranted: Boolean, notificati
 @Composable
 internal fun NotificationAccessContent(access: NotificationAccess, request: () -> Unit, openSettings: () -> Unit) {
     val palette = LocalAssistPalette.current
-    SettingRow(AssistIcons.Bell, palette.orange, "通知", when (access) {
-        NotificationAccess.ALLOWED -> "任务可发送纯文字提醒，不含截图"
-        NotificationAccess.REQUESTABLE -> "未开启。任务可发送纯文字提醒，不含截图；不开启也不影响任务运行"
-        NotificationAccess.SYSTEM_SETTINGS -> "已关闭，请在系统设置中开启。不开启也不影响任务运行"
+    SettingRow(AssistIcons.Bell, palette.orange, "通知权限", when (access) {
+        NotificationAccess.ALLOWED -> null
+        NotificationAccess.REQUESTABLE -> "用于任务提醒，不开也能运行"
+        NotificationAccess.SYSTEM_SETTINGS -> "已在系统设置里关闭"
     }) {
         when (access) {
             NotificationAccess.ALLOWED -> SettingValue("已开启", palette.success)
