@@ -109,9 +109,19 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
 
     /** [body] with its resources placed, a throwaway version, checked as the App reads it. */
     private fun finish(userId: String, target: String, body: JsonObject, tasks: JsonArray, snippets: JsonArray): String {
-        val (placed, _) = workbench.publisher.place(userId, target, body, workbench.publisher.releases())
         // A trial carries only the task it runs; the game's account tasks are left out, and so is the need for them.
         val targets = (body["targets"] as? JsonArray).orEmpty().map { JsonObject(it.jsonObject - "accounts" - "accountTasks") }
+        // Only the resources this run names (its templates, the models of the vision profiles), so a template not yet
+        // cut or published elsewhere in the draft does not stop it.
+        val named = mutableSetOf<String>()
+        fun scan(e: JsonElement) { when (e) {
+            is JsonObject -> e.values.forEach(::scan); is JsonArray -> e.forEach(::scan)
+            is JsonPrimitive -> if (e.isString) e.content.split('@').firstOrNull()?.let(named::add)
+            else -> Unit } }
+        listOf(tasks, snippets, JsonArray(targets), body["visionProfiles"] ?: JsonArray(emptyList())).forEach(::scan)
+        val used = JsonObject(body + ("resources" to JsonArray((body["resources"] as? JsonArray).orEmpty().filter {
+            it.jsonObject["id"]?.jsonPrimitive?.contentOrNull in named })))
+        val (placed, _) = workbench.publisher.place(userId, target, used, workbench.publisher.releases())
         val bundle = JsonObject(body + mapOf("targets" to JsonArray(targets),"version" to JsonPrimitive("dev-${clock()}"), "updatedAt" to JsonPrimitive(java.time.Instant.ofEpochMilli(clock()).toString()),
             "changelog" to JsonPrimitive("调试"), "tasks" to tasks, "snippets" to snippets,
             "resources" to json.encodeToJsonElement(kotlinx.serialization.builtins.ListSerializer(io.github.yysassist.core.content.TaskResource.serializer()), placed)))
