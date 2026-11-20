@@ -246,6 +246,18 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
     suspend fun requestCode(server: String, email: String) { send<Unit>(server, "/api/auth/code/request", json.encodeToString(CodeRequest(email))) }
     suspend fun signInWithCode(server: String, email: String, code: String) =
         adopt(server, checkNotNull(send<AuthResult>(server, "/api/auth/code/login", json.encodeToString(CodeLoginRequest(email, code)))))
+    /** Starts an account; the server mails a code, and [verifyEmail] with it signs this device in. */
+    suspend fun register(server: String, email: String, password: String) { send<Unit>(server, "/api/auth/register", json.encodeToString(RegisterRequest(email, password))) }
+    suspend fun verifyEmail(server: String, email: String, code: String) =
+        adopt(server, checkNotNull(send<AuthResult>(server, "/api/auth/verify-email", json.encodeToString(VerifyEmailRequest(email, code)))))
+    suspend fun requestPasswordReset(server: String, email: String) { send<Unit>(server, "/api/auth/password/request", json.encodeToString(CodeRequest(email))) }
+    /** Sets a new password with the mailed code; the user then signs in with it. */
+    suspend fun resetPassword(server: String, email: String, code: String, password: String) {
+        send<Unit>(server, "/api/auth/password/reset", json.encodeToString(PasswordResetRequest(email, code, password)))
+    }
+    /** Signs in with a GitHub user token this App already holds; the server checks it with GitHub. */
+    suspend fun signInWithGitHub(server: String, accessToken: String) =
+        adopt(server, checkNotNull(send<AuthResult>(server, "/api/auth/github/token", json.encodeToString(GitHubTokenRequest(accessToken)))))
 
     /** Local work is stopped and credentials are erased even when the server cannot be reached. */
     suspend fun signOut(message: String? = null) {

@@ -103,14 +103,64 @@ private fun SignedOut(application: AssistApplication, navigation: AppNavigation?
     if (developing) Column(Modifier.fillMaxSize()) {
         AppHeader("开发", true, { developing = false }) {}
         Box(Modifier.weight(1f)) { LocalWorkbench(application, navigation, navigationHandled) }
-    } else Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = UiSpace.page, vertical = UiSpace.medium), verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            HgbMark(32.dp); Text("护肝宝", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
-            TextButton({ developing = true }) { Text("开发") }
-        }
-        Box(Modifier.weight(1f)) { CloudPage(application.accounts, application::identifyAccount, application.localNotices) }
+    } else SignIn(application) { developing = true }
+}
+
+/**
+ * The shared sign-in page against the server the user types. GitHub uses the App's own GitHub sign-in (the device flow
+ * that also downloads task versions): once it holds a token, the server checks it and signs this device in.
+ */
+@Composable
+private fun SignIn(application: AssistApplication, develop: () -> Unit) {
+    val cloud by application.cloud.state.collectAsState()
+    val github by application.github.state.collectAsState()
+    var server by rememberSaveable { mutableStateOf("") }
+    var wantGitHub by rememberSaveable { mutableStateOf(false) }
+    var githubError by remember { mutableStateOf<String?>(null) }
+    val agent = application.cloud
+    fun address(): String = server.trim().also { cloudServerIssue(it)?.let { issue -> throw io.github.yysassist.core.cloud.CloudRequestException(0, "invalid_server", issue) } }
+    val actions = remember(application) { object : io.github.yysassist.shared.pages.SignInActions {
+        override suspend fun password(email: String, password: String) = agent.signIn(address(), email, password)
+        override suspend fun requestCode(email: String) = agent.requestCode(address(), email)
+        override suspend fun codeLogin(email: String, code: String) = agent.signInWithCode(address(), email, code)
+        override suspend fun register(email: String, password: String) = agent.register(address(), email, password)
+        override suspend fun verify(email: String, code: String) = agent.verifyEmail(address(), email, code)
+        override suspend fun requestReset(email: String) = agent.requestPasswordReset(address(), email)
+        override suspend fun reset(email: String, code: String, password: String) = agent.resetPassword(address(), email, code, password)
+    } }
+    // Once GitHub has signed in at the user's request, sign in to the server with its token.
+    LaunchedEffect(wantGitHub, github is GitHubSessionState.Connected) {
+        if (!wantGitHub || github !is GitHubSessionState.Connected) return@LaunchedEffect
+        wantGitHub = false
+        githubError = try {
+            val token = application.github.token() ?: throw java.io.IOException("GitHub 授权已失效，请重新授权")
+            agent.signInWithGitHub(address(), token.value); null
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled } catch (problem: Exception) { io.github.yysassist.shared.failureText(problem) }
     }
+    val uri = androidx.compose.ui.platform.LocalUriHandler.current
+    io.github.yysassist.shared.pages.SignInPage(actions, (cloud as? CloudState.SignedOut)?.message, server to { next: String -> server = next },
+        github = {
+            Column(verticalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+                when (val state = github) {
+                    is GitHubSessionState.SigningIn -> state.prompt?.let { prompt ->
+                        io.github.yysassist.shared.ui.Muted("在 GitHub 页面输入这个授权码")
+                        Text(prompt.userCode, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        Row(horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+                            io.github.yysassist.shared.ui.HgbButton("打开 GitHub", { uri.openUri(prompt.verificationUri.toString()) }, io.github.yysassist.shared.ui.ButtonKind.PRIMARY)
+                            io.github.yysassist.shared.ui.HgbButton("取消", { wantGitHub = false; application.github.cancelSignIn() })
+                        }
+                    } ?: io.github.yysassist.shared.ui.Muted("正在连接 GitHub…")
+                    is GitHubSessionState.Connected -> io.github.yysassist.shared.ui.HgbButton("用 GitHub${state.login?.let { " @$it" } ?: ""} 登录",
+                        { githubError = null; wantGitHub = true }, modifier = Modifier.fillMaxWidth())
+                    else -> io.github.yysassist.shared.ui.HgbButton("使用 GitHub 登录", {
+                        githubError = cloudServerIssue(server.trim())
+                        if (githubError == null) { wantGitHub = true; application.github.signIn() }
+                    }, modifier = Modifier.fillMaxWidth())
+                }
+                githubError?.let { io.github.yysassist.shared.ui.Message(it) }
+            }
+        },
+        footer = { io.github.yysassist.shared.ui.LinkButton("开发 · 不登录也能在这台手机上调试任务", develop) })
 }
 
 private enum class Tool(val title: String) { TASKS("任务"), SETTINGS("设置") }

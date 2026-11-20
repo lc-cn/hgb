@@ -102,7 +102,7 @@ fun MePage(local: LocalParts) = Page {
                         Text(device.name + if (device.id == console.thisDevice) "（这台）" else "", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
                         Muted(listOf(Format.platformName(device.platform), if (device.online) "在线" else "最后在线 ${Format.shortTime(device.lastSeenAt)}").joinToString(" · "))
                     }
-                    if (device.id != console.thisDevice) HgbButton("解绑", { unbinding = device.id to device.name }, ButtonKind.DANGER, small = true)
+                    if (device.id != console.thisDevice) MoreMenu("${device.name} 的操作", listOf(MenuAction("解绑", danger = true) { unbinding = device.id to device.name }))
                 }
             }
             ListRow(last = true) {
