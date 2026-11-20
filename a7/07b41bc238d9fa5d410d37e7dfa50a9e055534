@@ -1,0 +1,21 @@
+core/server/src/main/kotlin/io/github/yysassist/server/DevRuns.kt
+  s_fae32e7f0efe76::t_e4af84881b1f3c 114-124
+client/android/app/src/debug/kotlin/io/github/yysassist/debug/DevCommandTrigger.kt
+  s_fae32e7f0efe76::t_49e989ca92dd93 13,22,32-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a707b41bc238d9fa5d410d37e7dfa50a9e055534",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
