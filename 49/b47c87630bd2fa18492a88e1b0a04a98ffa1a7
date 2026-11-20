@@ -1,0 +1,29 @@
+client/android/app/src/main/kotlin/io/github/yysassist/ui/GitHubAccountPage.kt
+  s_fae32e7f0efe76::t_03f87abbe920d9 36
+config/github-app-registration.json
+  s_fae32e7f0efe76::t_03f87abbe920d9 8-10,38-40,45-50
+client/site/src/content/docs/docs/dev/task-bundles.md
+  s_fae32e7f0efe76::t_03f87abbe920d9 16
+client/android/app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_03f87abbe920d9 113
+docs/design/cloud-executor.md
+  s_fae32e7f0efe76::t_03f87abbe920d9 116,386,389
+docs/development/task-distribution.md
+  s_fae32e7f0efe76::t_26230d3a85b865 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "49b47c87630bd2fa18492a88e1b0a04a98ffa1a7",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
