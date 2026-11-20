@@ -1,8 +1,9 @@
 [Unit]
-Description=Daily deletion of old HGB database snapshots
+Description=Daily HGB database backup
 
 [Timer]
 OnCalendar=daily
+RandomizedDelaySec=30min
 Persistent=true
 
 [Install]

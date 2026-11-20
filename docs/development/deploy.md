@@ -91,7 +91,7 @@ YYS_MAIL_FROM_NAME=护肝宝
 
 1. 工作流用仓库 Secret `HGB_DEPLOY_SSH_KEY`（专用部署密钥）和 `HGB_DEPLOY_KNOWN_HOSTS`（主机指纹），以 `hgb-deploy` 身份连到变量 `HGB_DEPLOY_HOST` 指的主机，发送 `fetch <提交号>-<运行编号>-<重试次数>`，标准输入里只有服务端包在发布里的下载地址、SHA-256 和大小。主机经 GitHub 的 CDN 下载 Releases 约每秒 6 MB；构建机往主机推、或主机下载 Actions 构建产物，都只有每秒 70 KB 左右。
 2. 主机上 `hgb-deploy` 的密钥被限定只能执行 `/usr/local/libexec/hgb-receive`：`fetch` 只下载 `https://github.com/lc-cn/hgb/releases/download/<发布>/server-*.tgz`（跳转后必须落在 `*.githubusercontent.com`），上限 256 MB，核对 SHA-256 后才解包；包里只接受顶层是 `server/` 的普通文件，解到 `/opt/hgb/releases/<发布标识>/`，记下每个文件的摘要，再调用 `sudo /usr/local/sbin/hgb-activate`（sudoers 只允许这一个命令）。`deploy` 命令仍可从标准输入直接收包，留给手动部署。
-3. `hgb-activate` 停服务，把数据库快照到 `/var/backups/hgb/<发布标识>/`，切换 `/opt/hgb/server`，启动后检查 `/api/me` 返回未登录；不健康就恢复数据库快照、切回原来的版本并让工作流失败。快照保留 14 天：每次部署后和每天一次（`hgb-prune-backups.timer`，运行 `hgb-activate --prune`）删除更早的，隐私政策里也这样写。
+3. `hgb-activate` 停服务，把数据库快照到 `/var/backups/hgb/<发布标识>/`，切换 `/opt/hgb/server`，启动后检查 `/api/me` 返回未登录；不健康就恢复数据库快照、切回原来的版本并让工作流失败。另外每天备份一次（`hgb-backup.timer` 运行 `hgb-activate --daily`）：服务不停，用 SQLite 在线备份复制到 `/var/backups/hgb/daily-YYYYMMDD/`，核对完整性。两种快照都只留 14 天，每次部署后和每天备份后删除更早的，隐私政策里也这样写。备份和数据库在同一台主机上，防误删和坏版本，不防主机丢失。
 
 主机上这两个脚本的源文件在仓库的 `deploy/host/`，改了以后要手动装到主机（`sudo install -o root -g root -m 755`），属主必须是 root。同一个发布标识不能重复部署；要重试就在 GitHub 上重新运行（重试次数会变）。主机和密钥的准备都已完成，换主机或换密钥时才需要重新设置这几个 Secret。
 
@@ -177,7 +177,7 @@ git tag v0.1.1 && git push origin v0.1.1
 还要准备：
 
 1. **自己的 GitHub App**：开启设备授权（Device Flow），回调地址填 `<你的 API 地址>/api/auth/github/callback`，装到你的任务仓库（Contents 读写）。Client ID 填进 `HGB_GITHUB_CLIENT_ID`，Client ID 和 Client secret 填进主机的 `/etc/hgb/server.env`。
-2. **主机**：照上面“主机：服务端”一节准备目录、`server.env`、systemd、nginx 和证书；把 `deploy/host/` 下的两个脚本装到 `/usr/local/libexec/hgb-receive`、`/usr/local/sbin/hgb-activate`，两个 `hgb-prune-backups.*` 装到 `/etc/systemd/system/` 并 `systemctl enable --now hgb-prune-backups.timer`；建 `hgb-deploy` 用户，`authorized_keys` 里限定部署密钥只能执行 `hgb-receive`，sudoers 只允许它执行 `hgb-activate`；写 `/etc/hgb-receive.json`（root，644）：`{"repository": "<你的用户名>/<仓库名>"}`。
+2. **主机**：照上面“主机：服务端”一节准备目录、`server.env`、systemd、nginx 和证书；把 `deploy/host/` 下的两个脚本装到 `/usr/local/libexec/hgb-receive`、`/usr/local/sbin/hgb-activate`，两个 `hgb-backup.*` 装到 `/etc/systemd/system/` 并 `systemctl enable --now hgb-backup.timer`；建 `hgb-deploy` 用户，`authorized_keys` 里限定部署密钥只能执行 `hgb-receive`，sudoers 只允许它执行 `hgb-activate`；写 `/etc/hgb-receive.json`（root，644）：`{"repository": "<你的用户名>/<仓库名>"}`。
 3. **仓库 Secret 和变量**：`HGB_DEPLOY_SSH_KEY`、`HGB_DEPLOY_KNOWN_HOSTS`、变量 `HGB_DEPLOY_HOST`；要发 App 还要 `HGB_ANDROID_KEYSTORE`、`HGB_ANDROID_KEYSTORE_PASSWORD`（自己生成的签名密钥，别名 `hgb`）。
 4. **Vercel**：导入 fork 的仓库，设 `VITE_API_ORIGIN`，绑定自己的域名。
 5. **服务端**的 `YYS_PUBLIC_URL`、`YYS_CONSOLE_URL`、`YYS_ALLOWED_ORIGINS` 写自己的地址。

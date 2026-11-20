@@ -59,15 +59,43 @@ def point_to(release):
 
 
 KEEP_DAYS = 14
+DAILY = re.compile(r'daily-[0-9]{8}')
 
 
 def prune_backups(current=None):
-    """Deletes database snapshots older than KEEP_DAYS, as the privacy policy promises. Runs after each deploy and daily
-    (hgb-prune-backups.timer), so a quiet month without deploys keeps nothing older either."""
+    """Deletes database snapshots (before each deploy, and daily) older than KEEP_DAYS, as the privacy policy promises.
+    Runs after each deploy and daily (hgb-backup.timer), so a quiet month without deploys keeps nothing older either."""
     cutoff = time.time() - KEEP_DAYS * 86400
     for path in BACKUPS.iterdir():
-        if path.is_dir() and not path.is_symlink() and DEPLOYMENT.fullmatch(path.name) and path.name != current and path.stat().st_mtime < cutoff:
+        if (path.is_dir() and not path.is_symlink() and (DEPLOYMENT.fullmatch(path.name) or DAILY.fullmatch(path.name))
+                and path.name != current and path.stat().st_mtime < cutoff):
             shutil.rmtree(path)
+
+
+def daily_backup():
+    """Copies the live database into BACKUPS/daily-YYYYMMDD while the server runs (SQLite's online backup gives a
+    consistent copy), checks the copy, then prunes. A day that already has its copy is left alone."""
+    database = DATA / 'hgb.db'
+    if not database.exists():
+        return {'backup': None}
+    target = BACKUPS / time.strftime('daily-%Y%m%d', time.gmtime())
+    if target.exists():
+        prune_backups(target.name)
+        return {'backup': str(target), 'already_done': True}
+    partial = BACKUPS / f'.{target.name}-{os.getpid()}'
+    partial.mkdir(mode=0o700)
+    try:
+        with closing(sqlite3.connect(f'file:{database}?mode=ro', uri=True)) as source, closing(sqlite3.connect(partial / 'hgb.db')) as copy:
+            source.backup(copy)
+            if copy.execute('PRAGMA integrity_check').fetchone()[0] != 'ok':
+                raise RuntimeError('The backup copy failed its integrity check')
+        (partial / 'hgb.db').chmod(0o600)
+        os.rename(partial, target)
+    except Exception:
+        shutil.rmtree(partial, ignore_errors=True)
+        raise
+    prune_backups(target.name)
+    return {'backup': str(target)}
 
 
 def activate(deployment):
@@ -150,11 +178,11 @@ def activate(deployment):
 
 if __name__ == '__main__':
     if os.geteuid() != 0 or len(sys.argv) != 2:
-        raise SystemExit('Run the root-owned activator with one deployment identifier, or --prune')
+        raise SystemExit('Run the root-owned activator with one deployment identifier, or --daily')
     os.umask(0o077)
     with open('/run/lock/hgb-deploy.lock', 'a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        if sys.argv[1] == '--prune':
-            prune_backups()
+        if sys.argv[1] == '--daily':
+            print(json.dumps(daily_backup()), flush=True)
         else:
             print(json.dumps(activate(sys.argv[1])), flush=True)

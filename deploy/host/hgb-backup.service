@@ -1,0 +1,7 @@
+# Copies the database once a day and deletes copies older than 14 days (see hgb-activate and the privacy policy).
+[Unit]
+Description=Daily HGB database backup and removal of copies older than 14 days
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/hgb-activate --daily
