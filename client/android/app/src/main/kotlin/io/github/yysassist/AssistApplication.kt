@@ -147,9 +147,15 @@ class AssistApplication : Application() {
             dataStore = io.github.yysassist.cloud.CloudDataFile(File(noBackupFilesDir, "cloud-data.json")), trace = connectionLog::add)
         accounts = io.github.yysassist.cloud.CloudAccounts(cloud, cloudExecutor::apps)
         // Asked again on every connect: linking or unlinking GitHub, or a changed repository permission, shows up then.
+        scope.launch { cloud.state.collect { if (it is io.github.yysassist.core.cloud.CloudState.SignedOut) devWorkbench.forget() } }
         scope.launch {
             cloud.state.map { (it as? io.github.yysassist.core.cloud.CloudState.SignedIn)?.online == true }.distinctUntilChanged()
-                .collect { online -> if (online) devWorkbench.refresh() }
+                .collect { online ->
+                    if (!online) return@collect
+                    try { devWorkbench.refresh() }
+                    catch (cancelled: kotlinx.coroutines.CancellationException) { if (!kotlinx.coroutines.currentCoroutineContext()[kotlinx.coroutines.Job]!!.isActive) throw cancelled }
+                    catch (_: Exception) { }
+                }
         }
         configurations = TaskConfigurationRepository(library, accounts)
         taskEditor = TaskConfigurationEditor(configurations, scope)

@@ -178,6 +178,7 @@ data class CapabilityContract(
 class BundleCodec(private val capabilities: List<CapabilityContract>) {
     init {
         capabilities.forEach { contract ->
+            require(contract.optionalInputs.all { it in contract.inputTypes }) { "可省略的输入必须是已声明的输入" }
             require(contract.outputHandles.all { (field, kind) -> kind.isNotBlank() && contract.outputTypes[field] == ActionValueType.STRING }) { "句柄输出必须是字符串" }
             require(contract.inputHandles.all { (field, need) -> need.kinds.isNotEmpty() && contract.inputTypes[field] == ActionValueType.STRING }) { "句柄参数必须是字符串" }
         }

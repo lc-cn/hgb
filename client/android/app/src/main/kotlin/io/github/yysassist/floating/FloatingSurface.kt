@@ -123,6 +123,9 @@ internal fun FloatingSurface(layer: FloatingLayer, state: ExecutorSnapshot, stat
             developer = dev != null)
         return
     }
+    if ((layer == FloatingLayer.DEV_SAMPLE || layer == FloatingLayer.DEV_PROBE) && dev == null) {
+        StatusBall(state, status, Modifier.clickable { changeLayer(FloatingLayer.BALL) }); return
+    }
     if (layer == FloatingLayer.DEV_SAMPLE && dev != null) { DevSampleSheet(dev) { changeLayer(FloatingLayer.BALL) }; return }
     if (layer == FloatingLayer.DEV_PROBE && dev != null) {
         DevProbePanel(dev, maxHeight, { changeLayer(FloatingLayer.BALL) }) { dev.takeSample(); changeLayer(FloatingLayer.DEV_SAMPLE) }

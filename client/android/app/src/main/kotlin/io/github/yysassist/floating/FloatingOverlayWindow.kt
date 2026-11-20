@@ -109,6 +109,8 @@ internal class FloatingOverlayWindow(
         // Touching the game outside an open menu closes it; the touch itself still reaches the game.
         view.setOnTouchListener { _, event ->
             if (event.actionMasked == MotionEvent.ACTION_OUTSIDE && layer.value in setOf(FloatingLayer.QUICK, FloatingLayer.COMMON)) changeLayer(FloatingLayer.BALL)
+            // Touching the game gives it the keyboard focus back.
+            if (event.actionMasked == MotionEvent.ACTION_OUTSIDE) dev.typing = false
             false
         }
         scope.launch {
@@ -121,7 +123,10 @@ internal class FloatingOverlayWindow(
         markers.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         markers.setContent { AssistTheme(ThemeMode.DARK) { dev.probe?.takeIf { layer.value == FloatingLayer.DEV_PROBE }?.let { ProbeMarkers(it) } } }
         scope.launch { snapshotFlow { layer.value == FloatingLayer.DEV_PROBE && dev.probe != null }.collect { updateVisibility() } }
-        scope.launch { app.devWorkbench.developer.collect { place() } }
+        scope.launch { app.devWorkbench.developer.collect {
+            if (it != true && layer.value in setOf(FloatingLayer.DEV_SAMPLE, FloatingLayer.DEV_PROBE)) changeLayer(FloatingLayer.BALL) else place()
+        } }
+        scope.launch { snapshotFlow { dev.typing && layer.value == FloatingLayer.DEV_SAMPLE }.collect(::focusable) }
         scope.launch {
             combine(preferences.state, app.mainVisible) { pref, main -> pref to main }.collect { (pref, _) ->
                 settings = (pref as? FloatingPreferencesState.Ready)?.settings
@@ -158,7 +163,7 @@ internal class FloatingOverlayWindow(
         return Viewport(safe, edge, metrics.bounds.width() > metrics.bounds.height(), density)
     }
     private fun updateVisibility() {
-        if (closed || mutableFailure.value != null) return
+        if (closed || mutableFailure.value != null) { if (markersAttached) markers.visibility = View.GONE; return }
         val show = settings?.visible == true && !app.mainVisible.value && exclusions == 0
         if (show && !attached) {
             place()
@@ -218,16 +223,19 @@ internal class FloatingOverlayWindow(
     private fun windowFailed(error: Exception) {
         android.util.Log.e("FloatingWindow", "Unable to attach or update floating window", error)
         mutableFailure.value = "悬浮窗口暂不可用，请重新检查授权"
+        if (markersAttached) { try { manager.removeViewImmediate(markers) } catch (_: IllegalArgumentException) { }; markersAttached = false }
         if (view.isAttachedToWindow) try { manager.removeViewImmediate(view) } catch (_: IllegalArgumentException) { }
         attached = false
     }
     private fun changeLayer(next: FloatingLayer) {
         feedback.value = null; layer.value = next; down = null
-        // Only the sample sheet takes typing; elsewhere the game keeps the keyboard focus.
-        val typing = next == FloatingLayer.DEV_SAMPLE
+        if (next != FloatingLayer.DEV_SAMPLE) dev.typing = false
+        place(); armIdle(); updateVisibility()
+    }
+    /** Only while the sample's name is being typed; otherwise the game keeps the keyboard focus. */
+    private fun focusable(typing: Boolean) {
         val flags = if (typing) params.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv() else params.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
         if (flags != params.flags) { params.flags = flags; if (attached) updateLayout() }
-        place(); armIdle(); updateVisibility()
     }
     private fun openDevRun() {
         val intent = MainActivity.devRunIntent(service).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)

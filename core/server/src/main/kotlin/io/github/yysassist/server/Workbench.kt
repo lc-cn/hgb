@@ -48,6 +48,8 @@ class GitHubRepoPermissions(private val repository: String, private val token: S
 data class CapabilityView(
     val id: String, val version: Int, val inputs: Map<String, String>, val outputs: Map<String, String>, val role: String,
     val sendsInput: Boolean, val inputHandles: Map<String, List<String>>, val outputHandles: Map<String, String>,
+    /** Inputs an action may leave out. */
+    val optional: List<String> = emptyList(),
 )
 @Serializable
 data class CheckIssue(val location: String, val reason: String)
@@ -91,7 +93,7 @@ class Workbench(internal val db: Database, private val permissions: RepoPermissi
 
     fun catalog(): List<CapabilityView> = contracts.map { c ->
         CapabilityView(c.id, c.version, c.inputTypes.mapValues { it.value.name }, c.outputTypes.mapValues { it.value.name }, c.role.name,
-            c.sendsDeviceInput, c.inputHandles.mapValues { it.value.kinds.toList().sorted() }, c.outputHandles)
+            c.sendsDeviceInput, c.inputHandles.mapValues { it.value.kinds.toList().sorted() }, c.outputHandles, c.optionalInputs.sorted())
     }
 
     /** Reads [text] (a task bundle in its compact, published form) exactly as the App would. */

@@ -573,7 +573,7 @@ internal class ScreenActions(
             var conditions = JsonArray(emptyList())
             fun trace(matched: String?) = buildJsonObject { put("kind", AWAIT_SCREEN); put("polls", polls); put("waitedMs", android.os.SystemClock.elapsedRealtime() - started)
                 matched?.let { put("state", it) }; put("scores", buildJsonArray { lastScores.forEach { add(it) } }); if (matched == null && whyLocal.isNotEmpty()) put("why", whyLocal)
-                put("conditions", conditions) }
+                put("conditions", conditions); put("referenceWidth", referenceWidth); put("referenceHeight", referenceHeight) }
             while (true) {
                 if (!permitted(attempt.ticket)) return ActionResult.Interrupted
                 val observation = when (val acquired = snapshot(attempt, bundle, bridge, profile.packageName, models)) {

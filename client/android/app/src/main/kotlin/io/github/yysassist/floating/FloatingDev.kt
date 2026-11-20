@@ -6,6 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -49,6 +52,8 @@ internal class FloatingDev(private val app: AssistApplication, private val scope
         ?.bundle?.targets?.firstOrNull()?.id
 
     var sample by mutableStateOf<SampleUi?>(null); private set
+    /** The name field has the keyboard: only then may the floating window take focus from the game. */
+    var typing by mutableStateOf(false)
     var sampleName by mutableStateOf(""); private set
     var suggestions by mutableStateOf(emptyList<String>()); private set
     var takenCount by mutableIntStateOf(0); private set
@@ -65,6 +70,8 @@ internal class FloatingDev(private val app: AssistApplication, private val scope
     fun takeSample() {
         val game = target ?: run { sample = SampleUi.Failed("手机还没有任务包"); return }
         if (sample == SampleUi.Taking) return
+        // The game keeps focus (and the keyboard is gone) while its screen is captured.
+        typing = false
         sample = SampleUi.Taking
         scope.launch {
             sample = try {
@@ -78,10 +85,13 @@ internal class FloatingDev(private val app: AssistApplication, private val scope
     fun name(value: String) { sampleName = value.take(64) }
     /** Saves the name typed or picked for the sample just taken. */
     fun saveName() {
+        typing = false
         val done = sample as? SampleUi.Done ?: return
         val name = sampleName.trim().takeIf { it.isNotEmpty() } ?: return
         scope.launch { runCatching { workbench.rename(done.id, name) } }
     }
+    /** The next sample starts unnamed, so it is not filed under the last one's name. */
+    fun again() { saveName(); sampleName = ""; takeSample() }
 
     fun openProbe() {
         val game = target ?: run { probeError = "手机还没有任务包"; return }
@@ -95,19 +105,23 @@ internal class FloatingDev(private val app: AssistApplication, private val scope
             } catch (error: Exception) { probeError = message(error) }
         }
     }
-    fun pick(index: Int) { if (index != selected) { selected = index; runProbe() } }
+    fun pick(index: Int) { if (index != selected && !probing) { selected = index; probe = null; runProbe() } }
+    /** Each probe is numbered; a result for an earlier one (another wait, or a closed panel) is dropped. */
+    private var probeTicket = 0
     fun runProbe() {
         val game = target ?: return
         val wait = waits.getOrNull(selected) ?: return
         if (probing) return
         probing = true; probeError = null
+        val ticket = ++probeTicket
         scope.launch {
-            try { probe = workbench.probe(game, wait.states); probeCount++ }
-            catch (error: Exception) { probeError = message(error) }
-            finally { probing = false }
+            try { workbench.probe(game, wait.states).let { if (ticket == probeTicket) { probe = it; probeCount++ } } }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (error: Exception) { if (ticket == probeTicket) probeError = message(error) }
+            finally { if (ticket == probeTicket) probing = false }
         }
     }
-    fun closeProbe() { probe = null; probeError = null }
+    fun closeProbe() { probeTicket++; probing = false; probe = null; probeError = null }
 }
 
 private val Sheet = Color(0xF5181818)
@@ -149,8 +163,14 @@ internal fun DevSampleSheet(dev: FloatingDev, close: () -> Unit) {
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("名称", style = MaterialTheme.typography.labelMedium, color = Muted)
-            OutlinedTextField(dev.sampleName, dev::name, Modifier.weight(1f), singleLine = true, placeholder = { Text("样本") },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { dev.saveName() }))
+            // The window takes focus only once the field is tapped, never while the game is being captured.
+            val focus = remember { androidx.compose.ui.focus.FocusRequester() }
+            LaunchedEffect(dev.typing) { if (dev.typing) { kotlinx.coroutines.delay(100); runCatching { focus.requestFocus() } } }
+            Box(Modifier.weight(1f)) {
+                OutlinedTextField(dev.sampleName, dev::name, Modifier.fillMaxWidth().focusRequester(focus), singleLine = true, placeholder = { Text("样本") },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { dev.saveName() }))
+                if (!dev.typing) Box(Modifier.matchParentSize().clickable(onClickLabel = "输入名称") { dev.typing = true })
+            }
         }
         if (dev.suggestions.isNotEmpty()) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("按草稿推荐", style = MaterialTheme.typography.labelSmall, color = Muted)
@@ -159,7 +179,7 @@ internal fun DevSampleSheet(dev: FloatingDev, close: () -> Unit) {
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
-            DevButton("再采一张", false, enabled = dev.sample != SampleUi.Taking) { dev.saveName(); dev.takeSample() }
+            DevButton("再采一张", false, enabled = dev.sample != SampleUi.Taking) { dev.again() }
             DevButton("好了", true) { dev.saveName(); close() }
         }
     }
@@ -182,8 +202,9 @@ internal fun DevProbePanel(dev: FloatingDev, maxHeight: androidx.compose.ui.unit
             Text("探测 · ${dev.target.orEmpty()}", Modifier.weight(1f).semantics { heading() }, style = MaterialTheme.typography.titleSmall, color = Color.White)
             DevButton("收起", false) { dev.closeProbe(); close() }
         }
-        if (dev.waits.isNotEmpty()) Row(Modifier.fillMaxWidth().semantics { contentDescription = "判定哪个等页面" }, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            dev.waits.take(4).forEachIndexed { i, wait -> DevChip(wait.label.trim(' ', '·').ifEmpty { "等页面 ${i + 1}" }.take(10), i == dev.selected) { dev.pick(i) } }
+        if (dev.waits.isNotEmpty()) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).semantics { contentDescription = "判定哪个等页面" },
+            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            dev.waits.forEachIndexed { i, wait -> DevChip(wait.label, i == dev.selected) { dev.pick(i) } }
         }
         val result = dev.probe
         val verdict = when {
@@ -223,7 +244,8 @@ internal fun DevProbePanel(dev: FloatingDev, maxHeight: androidx.compose.ui.unit
  * are on the reference frame and scaled to the screen.
  */
 @Composable
-internal fun ProbeMarkers(result: ProbeResult, referenceWidth: Int = 2400, referenceHeight: Int = 1080) {
+internal fun ProbeMarkers(result: ProbeResult) {
+    val referenceWidth = result.referenceWidth; val referenceHeight = result.referenceHeight
     val labels = result.conditions.filter { it.within.size == 4 && it.pass != null }
     Canvas(Modifier.fillMaxSize()) {
         val sx = size.width / referenceWidth; val sy = size.height / referenceHeight

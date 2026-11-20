@@ -43,10 +43,9 @@ internal fun DevRunPage(application: AssistApplication) {
         problem = null
         try {
             val game = target ?: run { problem = "手机还没有任务包"; return }
-            val draft = application.cloud.request("GET", "/api/dev/drafts/$game")?.let { kotlinx.serialization.json.Json.parseToJsonElement(it) as? kotlinx.serialization.json.JsonObject }
-            if (draft == null) { problem = "工作台还没有这个游戏的草稿"; return }
-            revision = (draft["revision"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toLongOrNull()
-            tasks = (draft["body"] as? kotlinx.serialization.json.JsonObject)?.let(workbench::tasks).orEmpty()
+            val draft = workbench.draftView(game) ?: run { problem = "工作台还没有这个游戏的草稿"; return }
+            revision = draft.revision
+            tasks = workbench.tasks(draft.body)
             if (task == null || tasks?.none { it.id == task } == true) { task = tasks?.firstOrNull()?.id; step = null }
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (error: Exception) { problem = io.github.yysassist.shared.failureText(error) }
@@ -65,7 +64,7 @@ internal fun DevRunPage(application: AssistApplication) {
                 Card(list.map { it.id to it.name.ifEmpty { it.id } }, task) { task = it; step = null }
                 val steps = list.firstOrNull { it.id == task }?.steps.orEmpty()
                 if (steps.size > 1) {
-                    Text("从哪跑", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("跑哪些", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Card(listOf<Pair<String?, String>>(null to "整个任务") + steps.map { it.first to "只跑「${it.second.ifEmpty { it.first }}」" }, step) { step = it }
                 }
             }
@@ -99,10 +98,10 @@ internal fun DevRunPage(application: AssistApplication) {
                 val game = target ?: return@Button; val id = task ?: return@Button
                 running = true; report = null
                 scope.launch {
-                    report = try { workbench.trial(game, id, step) }
-                        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
-                        catch (error: Exception) { DevReport(DevState.FAILED, io.github.yysassist.shared.failureText(error)) }
-                    running = false
+                    try { report = workbench.trial(game, id, step) }
+                    catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                    catch (error: Exception) { report = DevReport(DevState.FAILED, io.github.yysassist.shared.failureText(error)) }
+                    finally { running = false }
                 }
             }, Modifier.weight(1f).heightIn(min = 48.dp), enabled = !running && task != null) { Text(if (running) "试跑中…" else "试跑") }
         }
