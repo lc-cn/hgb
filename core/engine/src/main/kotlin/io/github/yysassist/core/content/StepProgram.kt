@@ -10,43 +10,73 @@ import java.math.BigDecimal
 sealed interface ProgramNode {
     @Serializable @SerialName("action")
     data class Action(val action: ActionDefinition) : ProgramNode
+    /** [id]: a stable name the editor addresses this node by (patches, breakpoints); no effect on running. */
     @Serializable @SerialName("branch")
-    data class Branch(val value: ActionInputBinding, val cases: List<ProgramCase>) : ProgramNode
+    data class Branch(val value: ActionInputBinding, val cases: List<ProgramCase>, val id: String? = null) : ProgramNode
+    /** [id] names the loop for [Exit]; optional when nothing exits it. */
     @Serializable @SerialName("repeat")
-    data class Repeat(val count: JsonElement, val program: List<ProgramNode>) : ProgramNode
+    data class Repeat(val count: JsonElement, val program: List<ProgramNode>, val id: String? = null) : ProgramNode
     /**
      * Runs [program] until [value] (an output of one of its own top-level actions) equals [equals], at
      * most [maximum] times. Reaching the maximum is never success: the step becomes unknown.
      */
     @Serializable @SerialName("until")
-    data class Until(val value: ActionInputBinding, val equals: JsonPrimitive, val maximum: JsonElement, val program: List<ProgramNode>) : ProgramNode
+    data class Until(val value: ActionInputBinding, val equals: JsonPrimitive, val maximum: JsonElement, val program: List<ProgramNode>,
+        val id: String? = null) : ProgramNode
+    /**
+     * Runs a [Snippet] here, with [with] for its parameters. Only in published text: expanded when read, so the
+     * engine never sees one.
+     */
+    @Serializable @SerialName("snippet")
+    data class UseSnippet(val id: String, val use: String, val with: JsonObject = JsonObject(emptyMap())) : ProgramNode
+    /**
+     * One copy of [program] per entry of [items], in order, each entry's fields read as `{"$item": field}`. Only in
+     * published text: expanded when read into a [Block] named [id], so an [Exit] can end it early.
+     */
+    @Serializable @SerialName("forEach")
+    data class ForEach(val id: String, val items: List<JsonObject>, val program: List<ProgramNode>) : ProgramNode
+    /**
+     * A sequence that an [Exit] naming [id] can end early. After it, its loop outputs are available under [id]:
+     * `exited` (whether an exit ended it) and `exitIndex` (the copy it exited from, -1 if none).
+     */
+    @Serializable @SerialName("block")
+    data class Block(val id: String, val program: List<ProgramNode>) : ProgramNode
+    /** Ends the enclosing block or loop named [loop], as a normal end. [index]: the copy it sits in, set when read. */
+    @Serializable @SerialName("exit")
+    data class Exit(val loop: String, val index: Int? = null) : ProgramNode
 }
 @Serializable
-data class ProgramCase(val equals: JsonPrimitive, val program: List<ProgramNode>)
+data class ProgramCase(val equals: JsonPrimitive, val program: List<ProgramNode>, val id: String? = null)
 
 /** Definitely available definitions and outputs newer than every possible preceding input. */
 data class ActionFlowContext(val previous: Map<String, ActionDefinition>, val freshOutputs: Set<String>)
 
 fun StepDefinition.nodes(): List<ProgramNode> = program ?: actions.map(ProgramNode::Action)
 fun StepDefinition.actionDefinitions(): List<ActionDefinition> = nodes().allActions()
-private fun List<ProgramNode>.allActions(): List<ActionDefinition> = flatMap { node -> when (node) {
-    is ProgramNode.Action -> listOf(node.action)
-    is ProgramNode.Branch -> node.cases.flatMap { it.program.allActions() }
-    is ProgramNode.Repeat -> node.program.allActions()
-    is ProgramNode.Until -> node.program.allActions()
-} }
-internal fun List<ProgramNode>.repeats(): List<ProgramNode.Repeat> = flatMap { node -> when (node) {
-    is ProgramNode.Action -> emptyList()
-    is ProgramNode.Branch -> node.cases.flatMap { it.program.repeats() }
-    is ProgramNode.Repeat -> listOf(node) + node.program.repeats()
-    is ProgramNode.Until -> node.program.repeats()
-} }
-internal fun List<ProgramNode>.untils(): List<ProgramNode.Until> = flatMap { node -> when (node) {
-    is ProgramNode.Action -> emptyList()
-    is ProgramNode.Branch -> node.cases.flatMap { it.program.untils() }
-    is ProgramNode.Repeat -> node.program.untils()
-    is ProgramNode.Until -> listOf(node) + node.program.untils()
-} }
+/** Nested programs of a node, in order. Snippets and forEach are gone once read. */
+internal fun ProgramNode.children(): List<List<ProgramNode>> = when (this) {
+    is ProgramNode.Action, is ProgramNode.Exit, is ProgramNode.UseSnippet -> emptyList()
+    is ProgramNode.Branch -> cases.map { it.program }
+    is ProgramNode.Repeat -> listOf(program)
+    is ProgramNode.Until -> listOf(program)
+    is ProgramNode.ForEach -> listOf(program)
+    is ProgramNode.Block -> listOf(program)
+}
+internal fun List<ProgramNode>.walk(): List<ProgramNode> = flatMap { node -> listOf(node) + node.children().flatMap { it.walk() } }
+private fun List<ProgramNode>.allActions(): List<ActionDefinition> = walk().filterIsInstance<ProgramNode.Action>().map { it.action }
+internal fun List<ProgramNode>.repeats(): List<ProgramNode.Repeat> = walk().filterIsInstance<ProgramNode.Repeat>()
+internal fun List<ProgramNode>.untils(): List<ProgramNode.Until> = walk().filterIsInstance<ProgramNode.Until>()
+/** Ids an [ProgramNode.Exit] may name, and the outputs of a [ProgramNode.Block] after it ends. */
+internal fun ProgramNode.loopId(): String? = when (this) {
+    is ProgramNode.Block -> id
+    is ProgramNode.Until -> id
+    is ProgramNode.Repeat -> id
+    else -> null
+}
+const val LOOP_CAPABILITY = "flow.loop"
+/** Outputs of a block after it ends, typed like an action's so later actions and branches can read them. */
+val LOOP_OUTPUTS = CapabilityContract(LOOP_CAPABILITY, 1, outputTypes = mapOf("exited" to ActionValueType.BOOLEAN, "exitIndex" to ActionValueType.NUMBER)) { null }
+internal fun loopDefinition(id: String) = ActionDefinition(id, LOOP_CAPABILITY, 1, JsonObject(emptyMap()))
 /** Loop bound: a literal or required numeric configuration, at least one. */
 fun untilMaximum(value: JsonElement, configuration: JsonObject): Long = repeatCount(value, configuration).also { require(it in 1..10_000) }
 
@@ -113,7 +143,14 @@ internal fun handleIssues(action: ActionDefinition, definition: CapabilityContra
 
 /** A bounded abstract state, not a list of all branch paths or an unrolling of repeat counts. */
 private enum class Proof { NONE, VERIFIED, UNVERIFIED }
-private data class Flow(val context: ActionFlowContext, val proofs: Set<Proof>)
+private data class Flow(val context: ActionFlowContext, val proofs: Set<Proof>, val dead: Boolean = false)
+/** Where the paths in [ends] meet: fresh outputs all of them have, proofs any of them may carry. Exited paths are not ends. */
+private fun meet(base: Flow, ends: List<Flow>): Flow {
+    val live = ends.filterNot { it.dead }
+    if (live.isEmpty()) return base.copy(dead = true)
+    return Flow(base.context.copy(freshOutputs = live.fold(base.context.freshOutputs) { fresh, end -> fresh.intersect(end.context.freshOutputs) }),
+        live.flatMap { it.proofs }.toSet())
+}
 
 internal fun programIssues(bundle: TaskBundle, task: TaskDefinition, step: StepDefinition,
     contracts: List<CapabilityContract>): List<ContentIssue> = buildList {
@@ -121,12 +158,24 @@ internal fun programIssues(bundle: TaskBundle, task: TaskDefinition, step: StepD
     if (step.program != null && step.actions.isNotEmpty()) issue("program", "program与actions不能同时指定")
     if (step.nodes().isEmpty()) issue("program", "步骤程序不能为空")
     val actions = step.actionDefinitions()
-    if (actions.map { it.id }.distinct().size != actions.size) issue("program", "动作身份重复")
-    fun contract(action: ActionDefinition) = contracts.singleOrNull { it.id == action.capability && it.version == action.contractVersion }
-    fun block(nodes: List<ProgramNode>, initial: Flow, path: String): Flow {
+    val loops = step.nodes().walk().mapNotNull { it.loopId() }
+    if ((actions.map { it.id } + loops).let { it.distinct().size != it.size }) issue("program", "动作或循环身份重复")
+    if (step.nodes().walk().any { it is ProgramNode.UseSnippet || it is ProgramNode.ForEach }) issue("program", "片段或逐项未展开")
+    fun contract(action: ActionDefinition) = if (action.capability == LOOP_CAPABILITY && action.contractVersion == 1) LOOP_OUTPUTS
+        else contracts.singleOrNull { it.id == action.capability && it.version == action.contractVersion }
+    // Flows at each exit, by the loop it ends.
+    val exits = mutableMapOf<String, MutableList<Flow>>()
+    /** A loop's end: its normal end and every exit to it; afterwards its outputs are readable. */
+    fun after(id: String?, outer: Flow, ends: List<Flow>): Flow {
+        val met = meet(outer, ends + (id?.let { exits.remove(it) }.orEmpty()))
+        return if (id == null) met else met.copy(context = met.context.copy(previous = met.context.previous + (id to loopDefinition(id)),
+            freshOutputs = met.context.freshOutputs + id))
+    }
+    fun block(nodes: List<ProgramNode>, initial: Flow, path: String, enclosing: Set<String>): Flow {
         var flow = initial
         nodes.forEachIndexed { index, node ->
             val location = "$path/$index"
+            if (flow.dead) { issue(location, "退出循环之后的内容不会执行"); return flow }
             when (node) {
                 is ProgramNode.Action -> {
                     val action = node.action
@@ -170,10 +219,8 @@ internal fun programIssues(bundle: TaskBundle, task: TaskDefinition, step: StepD
                         if (primitiveType(case.equals) != type || primitiveType(case.equals) == null) issue(location, "分支值类型不匹配")
                         if (node.cases.take(caseIndex).any { sameProgramValue(it.equals, case.equals) }) issue(location, "分支值重复")
                     }
-                    val ends = node.cases.mapIndexed { i, case -> block(case.program, flow, "$location/case/$i") }
-                    if (ends.isNotEmpty()) flow = Flow(flow.context.copy(freshOutputs =
-                        ends.fold(flow.context.freshOutputs) { fresh, end -> fresh.intersect(end.context.freshOutputs) }),
-                        ends.flatMap { it.proofs }.toSet())
+                    val ends = node.cases.mapIndexed { i, case -> block(case.program, flow, "$location/case/$i", enclosing) }
+                    if (ends.isNotEmpty()) flow = meet(flow, ends)
                 }
                 is ProgramNode.Until -> {
                     val fieldId = repeatConfiguration(node.maximum)
@@ -191,13 +238,13 @@ internal fun programIssues(bundle: TaskBundle, task: TaskDefinition, step: StepD
                     else if (producer.let(::contract)?.outputHandles?.containsKey(source.field) == true) issue(location, "循环条件不能比较观察、目标或区域句柄")
                     if (type != null && primitiveType(node.equals) != type) issue(location, "循环条件值类型不匹配")
                     // Every iteration starts from the outer flow with earlier-iteration locals discarded.
-                    val first = block(node.program, flow, "$location/until")
-                    val reentry = Flow(flow.context.copy(freshOutputs = flow.context.freshOutputs.intersect(first.context.freshOutputs)), first.proofs)
+                    val inner = enclosing + listOfNotNull(node.id)
+                    val first = block(node.program, flow, "$location/until", inner)
+                    val reentry = if (first.dead) flow else Flow(flow.context.copy(freshOutputs = flow.context.freshOutputs.intersect(first.context.freshOutputs)), first.proofs)
                     val mayRepeat = literal?.let { it > 1 } ?: true
-                    val next = if (mayRepeat && reentry != flow) block(node.program, reentry, "$location/until") else first
+                    val next = if (mayRepeat && reentry != flow) block(node.program, reentry, "$location/until", inner) else first
                     val possible = if (mayRepeat) listOf(first, next) else listOf(first)
-                    flow = Flow(flow.context.copy(freshOutputs = possible.fold(flow.context.freshOutputs) { fresh, end -> fresh.intersect(end.context.freshOutputs) }),
-                        possible.flatMap { it.proofs }.toSet())
+                    flow = after(node.id, flow, possible)
                 }
                 is ProgramNode.Repeat -> {
                     val fieldId = repeatConfiguration(node.count)
@@ -210,18 +257,28 @@ internal fun programIssues(bundle: TaskBundle, task: TaskDefinition, step: StepD
                     val mayRepeat = literal?.let { it > 1 } ?: (field?.maximum?.decimalOrNull()?.let { it >= BigDecimal(2) } != false)
                     // Check even a zero-count body. A second iteration starts with no previous
                     // iteration's local outputs, and with any outer observation invalidated by input.
-                    val first = block(node.program, flow, "$location/repeat")
-                    val reentry = Flow(flow.context.copy(freshOutputs = flow.context.freshOutputs.intersect(first.context.freshOutputs)), first.proofs)
-                    val next = if (mayRepeat && reentry != flow) block(node.program, reentry, "$location/repeat") else first
+                    val inner = enclosing + listOfNotNull(node.id)
+                    val first = block(node.program, flow, "$location/repeat", inner)
+                    val reentry = if (first.dead) flow else Flow(flow.context.copy(freshOutputs = flow.context.freshOutputs.intersect(first.context.freshOutputs)), first.proofs)
+                    val next = if (mayRepeat && reentry != flow) block(node.program, reentry, "$location/repeat", inner) else first
                     val possible = buildList { if (mayZero) add(flow); if (mayRun) { add(first); if (mayRepeat) add(next) } }
-                    if (possible.isNotEmpty()) flow = Flow(flow.context.copy(freshOutputs =
-                        possible.fold(flow.context.freshOutputs) { fresh, end -> fresh.intersect(end.context.freshOutputs) }),
-                        possible.flatMap { it.proofs }.toSet())
+                    if (possible.isNotEmpty() || node.id != null) flow = after(node.id, flow, possible)
                 }
+                is ProgramNode.Block -> {
+                    if (node.program.isEmpty()) issue(location, "循环体不能为空")
+                    val end = block(node.program, flow, "$location/block", enclosing + node.id)
+                    flow = after(node.id, flow, listOf(end))
+                }
+                is ProgramNode.Exit -> {
+                    if (node.loop !in enclosing) issue(location, "退出的循环不在外层")
+                    else exits.getOrPut(node.loop) { mutableListOf() } += flow
+                    flow = flow.copy(dead = true)
+                }
+                is ProgramNode.UseSnippet, is ProgramNode.ForEach -> Unit
             }
         }
         return flow
     }
-    val end = block(step.nodes(), Flow(ActionFlowContext(emptyMap(), emptySet()), setOf(Proof.NONE)), "program")
+    val end = block(step.nodes(), Flow(ActionFlowContext(emptyMap(), emptySet()), setOf(Proof.NONE)), "program", emptySet())
     if (Proof.UNVERIFIED in end.proofs) issue("program", "观察步骤必须在每条执行路径以核对动作结束")
 }.distinct()

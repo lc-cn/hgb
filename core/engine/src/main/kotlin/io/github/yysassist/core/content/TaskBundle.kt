@@ -20,8 +20,8 @@ data class TaskBundle(
     val resources: List<TaskResource> = emptyList(),
     /** Declared once per target, referenced by screen actions instead of repeating package and models. */
     val visionProfiles: List<VisionProfile> = emptyList(),
-    /** Programs shared between tasks; only present in published text, expanded when read. */
-    val routines: List<Routine> = emptyList(),
+    /** Programs shared between steps and tasks; only present in published text, expanded when read. */
+    val snippets: List<Snippet> = emptyList(),
 )
 /**
  * Which package to capture and which recognizer resources to use for one target. The APK owns the
@@ -59,6 +59,8 @@ data class TargetProfile(
     val categories: List<TaskCategory>,
     /** Absent when the game's accounts cannot be told apart or switched; jobs then run on whatever account is signed in. */
     val accounts: AccountProcedures? = null,
+    /** Named regions, page states and defaults the game's tasks refer to; only in published text, resolved when read. */
+    val library: TargetLibrary? = null,
 ) {
     /** Tasks only the App runs, for accounts; not listed for users to start. */
     val accountTasks: Set<String> get() = setOfNotNull(accounts?.identify, accounts?.switchTo)
@@ -91,8 +93,9 @@ data class StepDefinition(
     val id: String, val name: String,
     val actions: List<ActionDefinition> = emptyList(),
     val program: List<ProgramNode>? = null,
-    /** Id of a [Routine] supplying this step's program. */
+    /** Id of a [Snippet] supplying this step's program, with [with] for its parameters. */
     val use: String? = null,
+    val with: JsonObject? = null,
 )
 @Serializable
 data class ActionDefinition(
@@ -175,7 +178,7 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
     private val json = Json { ignoreUnknownKeys = false; isLenient = false; coerceInputValues = false }
 
     fun read(text: String): BundleReadResult {
-        val (bundle, routineIssues) = try {
+        val (bundle, expansionIssues) = try {
             val element = json.parseToJsonElement(text)
             val value = json.decodeFromJsonElement<TaskBundle>(element)
             require(element.jsonObject.getValue("tasks").jsonArray.none { task ->
@@ -183,12 +186,14 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
                     "actions" in step.jsonObject && "program" in step.jsonObject
                 }
             }) { "program与actions不能同时指定" }
-            value.expandRoutines()
+            val (snippetsExpanded, snippetIssues) = value.expandSnippets()
+            val (resolved, libraryIssues) = snippetsExpanded.resolveLibrary(capabilities)
+            resolved to (snippetIssues + libraryIssues)
         }
         catch (_: IllegalArgumentException) {
             return BundleReadResult.Invalid(listOf(ContentIssue("bundle", "任务格式不可解析或包含未知字段")))
         }
-        val issues = routineIssues + validate(bundle)
+        val issues = expansionIssues + validate(bundle)
         return if (issues.isEmpty()) BundleReadResult.Valid(bundle) else BundleReadResult.Invalid(issues)
     }
 

@@ -104,7 +104,10 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                         // A result line only reports; the check before it still settles the step.
                         fun reportOnly(node: ProgramNode): Boolean = emptyRepeat(node) ||
                             node is ProgramNode.Action && node.action.capability == TASK_RESULT
-                        suspend fun executeBlock(nodes: List<ProgramNode>, outputs: MutableMap<String, JsonObject>, completesStep: Boolean): StepOutcome? {
+                        // How a block ended early: the step's outcome, or an exit to the loop named.
+                        class Halt(val outcome: StepOutcome?, val loop: String? = null, val index: Int? = null)
+                        fun loopOutputs(halt: Halt?) = buildJsonObject { put("exited", halt?.loop != null); put("exitIndex", halt?.index ?: -1) }
+                        suspend fun executeBlock(nodes: List<ProgramNode>, outputs: MutableMap<String, JsonObject>, completesStep: Boolean): Halt? {
                             // Only skip provably empty repetition tails. A future branch must still
                             // actually resolve; never predict its outcome to retain completion.
                             val terminalSuffix = BooleanArray(nodes.size + 1)
@@ -118,7 +121,7 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                                     is ProgramNode.Branch -> {
                                         val value = resolveProgramValue(node.value, configuration, outputs)
                                         val selected = node.cases.singleOrNull { sameProgramValue(it.equals, value) }
-                                            ?: return StepOutcome.Unknown("本次输出未能匹配唯一分支")
+                                            ?: return Halt(StepOutcome.Unknown("本次输出未能匹配唯一分支"))
                                         executeBlock(selected.program, outputs.toMutableMap(), atEnd)?.let { return it }
                                     }
                                     is ProgramNode.Until -> {
@@ -129,21 +132,36 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                                             yield()
                                             val local = outputs.toMutableMap()
                                             // The final iteration is unknown in advance; no iteration retains completion.
-                                            executeBlock(node.program, local, false)?.let { return it }
-                                            if (sameProgramValue(resolveProgramValue(node.value, configuration, local), node.equals)) { reached = true; break }
+                                            val halt = executeBlock(node.program, local, false)
+                                            if (halt != null && (halt.loop == null || halt.loop != node.id)) return halt
+                                            if (halt != null || sameProgramValue(resolveProgramValue(node.value, configuration, local), node.equals)) {
+                                                reached = true; node.id?.let { outputs[it] = loopOutputs(halt) }; break
+                                            }
                                             iteration++
                                         }
-                                        if (!reached) return StepOutcome.Unknown("循环达到上限 $maximum 次，条件仍未成立")
+                                        if (!reached) return Halt(StepOutcome.Unknown("循环达到上限 $maximum 次，条件仍未成立"))
                                     }
                                     is ProgramNode.Repeat -> {
                                         val count = repeatCount(node.count, configuration)
                                         var index = 0L
+                                        var ended: Halt? = null
                                         while (index < count) {
                                             yield()
-                                            executeBlock(node.program, outputs.toMutableMap(), atEnd && index == count - 1)?.let { return it }
+                                            val halt = executeBlock(node.program, outputs.toMutableMap(), atEnd && index == count - 1 && node.id == null)
+                                            if (halt != null && (halt.loop == null || halt.loop != node.id)) return halt
+                                            if (halt != null) { ended = halt; break }
                                             index++
                                         }
+                                        node.id?.let { outputs[it] = loopOutputs(ended) }
                                     }
+                                    is ProgramNode.Block -> {
+                                        // A block an exit can cut short never holds the step's last action: the check after it does.
+                                        val halt = executeBlock(node.program, outputs.toMutableMap(), false)
+                                        if (halt != null && halt.loop != node.id) return halt
+                                        outputs[node.id] = loopOutputs(halt)
+                                    }
+                                    is ProgramNode.Exit -> return Halt(null, node.loop, node.index)
+                                    is ProgramNode.UseSnippet, is ProgramNode.ForEach -> error("片段或逐项未展开")
                                     is ProgramNode.Action -> {
                                         val action = node.action
                                         val contract = contracts.single { it.id == action.capability && it.version == action.contractVersion }
@@ -175,8 +193,8 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                                         }
                                         currentCoroutineContext().ensureActive()
                                         val value = when (result) {
-                                            ActionResult.Interrupted -> return StepOutcome.Interrupted
-                                            is ActionResult.Unavailable -> return StepOutcome.Unknown(result.reason)
+                                            ActionResult.Interrupted -> return Halt(StepOutcome.Interrupted)
+                                            is ActionResult.Unavailable -> return Halt(StepOutcome.Unknown(result.reason))
                                             is ActionResult.Produced -> {
                                                 check(contract.role != ActionRole.VERIFICATION) { "核对动作未提供核对证据" }
                                                 // A result line only records; what was verified before it still stands.
@@ -196,7 +214,7 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                             }
                             return null
                         }
-                        executeBlock(step.nodes(), mutableMapOf(), true)?.let { return@coroutineScope it }
+                        executeBlock(step.nodes(), mutableMapOf(), true)?.let { halt -> return@coroutineScope checkNotNull(halt.outcome) { "退出了不存在的循环" } }
                         if (requiresVerification && verification == null) StepOutcome.Unknown("观察结果尚未核对")
                         else {
                             // The check stays in the evidence for the record; the result lines follow it, after the prefix.

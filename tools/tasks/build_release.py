@@ -102,8 +102,14 @@ def build(version, changelog, wanted=TASKS):
     for task in tasks:
         if task["steps"][0].get("use") != enter["use"]:
             task["steps"] = [enter] + task["steps"]
+    # Snippets used by kept snippets are kept too, until nothing new turns up.
     routines = used_routines(tasks, set())
-    kept_routines = [routine for routine in bundle["routines"] if routine["id"] in routines]
+    while True:
+        kept_routines = [routine for routine in bundle["snippets"] if routine["id"] in routines]
+        grown = used_routines(kept_routines, set(routines))
+        if grown == routines:
+            break
+        routines = grown
     templates = used_templates([tasks, kept_routines], set())
     models = set(bundle["visionProfiles"][0]["models"].values())
     resources = [r for r in bundle["resources"] if r["id"] in templates or r["assetName"] in models]
@@ -116,7 +122,7 @@ def build(version, changelog, wanted=TASKS):
         "updatedAt": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "changelog": changelog,
         "tasks": tasks,
-        "routines": kept_routines,
+        "snippets": kept_routines,
         "resources": resources,
     })
     keep = {r["assetName"] for r in resources}

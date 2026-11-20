@@ -23,24 +23,24 @@ class BundleCodecTest {
         val changed = original.copy(version = "release-b", tasks = original.tasks.map { it.copy(name = "云端更新名称") })
         assertEquals(BundleReadResult.Valid(changed), codec.read(codec.write(changed)))
     }
-    private val shared = Routine("home", listOf(ProgramNode.Action(ActionDefinition("screen", "observe", 1, JsonObject(emptyMap())))))
-    private fun using(vararg routines: Routine, step: StepDefinition = StepDefinition("back", "返回", use = "home")) =
-        valid().let { it.copy(routines = routines.toList(), tasks = it.tasks.map { task -> task.copy(steps = task.steps + step) }) }
-    @Test fun `a shared routine expands into each step that uses it`() {
+    private val shared = Snippet("home", program = listOf(ProgramNode.Action(ActionDefinition("screen", "observe", 1, JsonObject(emptyMap())))))
+    private fun using(vararg snippets: Snippet, step: StepDefinition = StepDefinition("back", "返回", use = "home")) =
+        valid().let { it.copy(snippets = snippets.toList(), tasks = it.tasks.map { task -> task.copy(steps = task.steps + step) }) }
+    @Test fun `a shared snippet expands into each step that uses it`() {
         val read = codec.read(codec.write(using(shared))) as BundleReadResult.Valid
         val step = read.bundle.tasks.single().steps.last()
         assertEquals("back", step.id)
         assertEquals(shared.program, step.program)
         assertNull(step.use)
-        assertTrue(read.bundle.routines.isEmpty())
+        assertTrue(read.bundle.snippets.isEmpty())
         assertEquals(BundleReadResult.Valid(read.bundle), codec.read(codec.write(read.bundle)))
     }
-    @Test fun `routine references must resolve and be unambiguous`() {
+    @Test fun `snippet references must resolve and be unambiguous`() {
         fun reasons(bundle: TaskBundle) = (codec.read(codec.write(bundle)) as BundleReadResult.Invalid).issues.map { it.reason }
-        assertTrue(reasons(using()).contains("引用了未声明的公共步骤"))
-        assertTrue(reasons(using(shared, shared)).contains("公共步骤身份为空或重复"))
-        assertTrue(reasons(using(shared, shared.copy(id = "unused"))).contains("公共步骤未被任何任务使用"))
-        assertTrue(reasons(using(shared.copy(program = emptyList()))).contains("公共步骤程序不能为空"))
+        assertTrue(reasons(using()).contains("引用了未声明的片段"))
+        assertTrue(reasons(using(shared, shared)).contains("片段身份为空或重复"))
+        assertTrue(reasons(using(shared, shared.copy(id = "unused"))).contains("片段未被任何任务使用"))
+        assertTrue(reasons(using(shared.copy(program = emptyList()))).contains("片段程序不能为空"))
         val mixed = StepDefinition("back", "返回", shared.program.map { (it as ProgramNode.Action).action }, use = "home")
         assertTrue(reasons(using(shared, step = mixed)).contains("use与actions、program不能同时指定"))
     }

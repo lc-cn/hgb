@@ -122,6 +122,25 @@ class StepProgramTest {
     private fun until(maximum: JsonElement, value: ActionInputBinding = ActionInputBinding.Output("probe", "ready"), body: List<ProgramNode> =
         listOf(ProgramNode.Action(probe), wait("pause", 1))) = ProgramNode.Until(value, JsonPrimitive(true), maximum, body)
 
+    @Test fun exitEndsAForEachEarlyAndTellsWhichCopyItLeftFrom() = runTest {
+        // Three rows; the counter is ready from its second call, so the loop exits in copy 1 and never runs copy 2.
+        val (provider, calls) = counter(stopAt = 2)
+        val factory = BuiltInStepWorkFactory(provider)
+        val codec = BundleCodec(factory.contracts)
+        val rows = ProgramNode.ForEach("rows", List(3) { buildJsonObject { put("row", it) } }, listOf(
+            ProgramNode.Action(probe),
+            ProgramNode.Branch(ActionInputBinding.Output("probe", "ready"), listOf(
+                ProgramCase(JsonPrimitive(true), listOf(ProgramNode.Exit("rows"))), ProgramCase(JsonPrimitive(false), emptyList())))))
+        val after = ProgramNode.Branch(ActionInputBinding.Output("rows", "exitIndex"), listOf(
+            ProgramCase(JsonPrimitive(1), listOf(result("said", "第二行"))), ProgramCase(JsonPrimitive(-1), listOf(result("none", "都不行")))))
+        val read = codec.read(codec.write(bundle(listOf(rows, after))))
+        assertTrue(read.toString(), read is BundleReadResult.Valid)
+        val expanded = (read as BundleReadResult.Valid).bundle
+        val outcome = factory.create(attempt(expanded), expanded).execute()
+        assertEquals(StepOutcome.Completed(RESULT_PREFIX + "第二行"), outcome)
+        assertEquals(2, calls())
+    }
+
     @Test fun untilStopsAsSoonAsTheConditionHoldsAndNeverTreatsTheLimitAsSuccess() = runTest {
         val (early, earlyCalls) = counter(stopAt = 2)
         val loop = bundle(listOf(until(JsonPrimitive(5))))

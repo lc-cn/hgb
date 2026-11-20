@@ -389,7 +389,7 @@ def daily_gift(jade):
                   task("open-daily-gift", "前往每日礼包", [MENU, GO_DAILY]),
                   task("enter-courtyard", "启动并进入庭院", [ENTER]),
                   task("return-courtyard", "返回庭院", [RETURN])],
-        "routines": routines(),
+        "snippets": routines(),
         "targets": [{"id": "onmyoji", "name": "阴阳师", "androidPackages": [GAME], "identityPolicy": "NONE",
                      "categories": [{"id": "daily", "name": "日常"}]}],
         "resources": resources,
