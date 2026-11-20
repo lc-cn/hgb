@@ -34,10 +34,13 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - uses: android-actions/setup-android@v3
-
       - name: Install the SDK parts the App builds with
-        run: sdkmanager --install "platforms;android-37" "build-tools;36.0.0" "ndk;27.1.12297006" "cmake;3.22.1" > /dev/null
+        # The runner image ships the Android SDK and its sdkmanager; only the pieces this build pins are added.
+        run: |
+          sdkmanager="$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager | sort -V | tail -1)"
+          yes | "$sdkmanager" --licenses > /dev/null
+          "$sdkmanager" --install "platforms;android-37" "build-tools;36.0.0" "ndk;27.1.12297006" "cmake;3.22.1" > /dev/null
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
 
       - name: Prepare the pinned Maa native libraries
         # Downloads the MaaFramework release named in client/android/vision/inputs.lock.json and checks every file's SHA-256.
