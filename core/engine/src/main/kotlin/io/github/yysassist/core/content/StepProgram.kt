@@ -139,6 +139,8 @@ internal fun programIssues(bundle: TaskBundle, task: TaskDefinition, step: StepD
                         handleIssues(action, definition, flow.context, ::contract).forEach { issue(location, it) }
                         definition.validateDefinition(bundle, task, flow.context, action)?.let { issue(location, it) }
                         val proofs = when {
+                            // A result line (task.result) only records what happened; it leaves the proof as it was.
+                            action.capability == "task.result" -> flow.proofs
                             definition.role == ActionRole.VERIFICATION -> flow.proofs.map {
                                 if (it == Proof.NONE && !definition.sendsDeviceInput) Proof.NONE else Proof.VERIFIED
                             }.toSet()

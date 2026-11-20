@@ -76,6 +76,37 @@ class StepProgramTest {
         assertTrue(failing.create(attempt(value), value).execute() is StepOutcome.Completed)
     }
 
+    private fun result(id: String, text: String) = ProgramNode.Action(ActionDefinition(id, TASK_RESULT, 1, buildJsonObject { put("text", text) }))
+
+    @Test fun aResultLineAfterTheCheckBecomesTheStepsEvidenceAndKeepsItVerified() = runTest {
+        // An observation step: it looks, checks a state, and says on each branch what that means.
+        val provider = object : ActionProvider {
+            override val contracts = listOf(
+                CapabilityContract("fixture.look", 1, outputTypes = mapOf("state" to ActionValueType.STRING), role = ActionRole.OBSERVATION, validateInputs = { null }),
+                CapabilityContract("fixture.check", 1, outputTypes = mapOf("ok" to ActionValueType.BOOLEAN), role = ActionRole.VERIFICATION, validateInputs = { null }))
+            override fun open(attempt: StepAttempt, bundle: TaskBundle) = ActionSession { action, _ ->
+                if (action.capability == "fixture.look") ActionResult.Produced(buildJsonObject { put("state", "done") })
+                else ActionResult.Verified(buildJsonObject { put("ok", true) }, "已核对")
+            }
+        }
+        val look = ProgramNode.Action(ActionDefinition("look", "fixture.look", 1, JsonObject(emptyMap())))
+        fun check(id: String) = ProgramNode.Action(ActionDefinition(id, "fixture.check", 1, JsonObject(emptyMap())))
+        val step = bundle(listOf(look, ProgramNode.Branch(ActionInputBinding.Output("look", "state"), listOf(
+            ProgramCase(JsonPrimitive("done"), listOf(check("checkDone"), result("said", "今天已领过"), result("again", "今天已领过"))),
+            ProgramCase(JsonPrimitive("new"), listOf(check("checkNew"), result("got", "已领取每日礼包")))))))
+        val factory = BuiltInStepWorkFactory(provider)
+        assertTrue(BundleCodec(factory.contracts).validate(step).toString(), BundleCodec(factory.contracts).validate(step).isEmpty())
+        assertEquals(StepOutcome.Completed("已核对；" + RESULT_PREFIX + "今天已领过"), factory.create(attempt(step), step).execute())
+        // Without a check, a result line does not make an observation step verified.
+        val unchecked = bundle(listOf(look, result("said", "今天已领过")))
+        assertTrue(BundleCodec(factory.contracts).validate(unchecked).any { it.reason.contains("核对") })
+        // The text is written in the version, never taken from the screen or settings.
+        val blank = bundle(listOf(result("empty", "")))
+        assertTrue(BundleCodec(factory.contracts).validate(blank).isNotEmpty())
+        // "；" separates result lines in the job's detail, so a line cannot hold one.
+        assertTrue(BundleCodec(factory.contracts).validate(bundle(listOf(result("split", "甲；乙")))).isNotEmpty())
+    }
+
     private fun counter(stopAt: Int): Pair<ActionProvider, () -> Int> {
         var calls = 0
         val provider = object : ActionProvider {

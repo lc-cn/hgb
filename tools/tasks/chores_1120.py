@@ -32,6 +32,7 @@ FRIENDS_TAB = [430, 130, 200, 90]
 FRIENDS_COLLECT = [300, 800, 320, 100]
 FRIENDS_LIST = [440, 280, 560, 580]
 HALL_INFO = [2040, 990, 280, 90]
+RECRUIT_TAB = [430, 110, 180, 90]
 INFO_TAB = [430, 110, 180, 90]
 FUNDS_BUTTON = [540, 890, 300, 100]
 FUNDS_BADGE = [780, 886, 44, 44]
@@ -49,6 +50,7 @@ def build(d):
     """d is the draft module (word, picture, await_screen, find_text, find_image, press, press_offset, outside, close,
     menu_nodes, walk_to_courtyard, out, act, REFERENCE, REWARD_TITLE, GUILD_LABEL, MENU_BAR, DOWNLOAD)."""
     word, picture, out, act = d.word, d.picture, d.out, d.act
+    said = d.said
 
     def pick(aid, template, score, order, source):
         """One match of an icon on the whole frame, by order. Unlike a located target it re-finds the nearest match
@@ -58,9 +60,13 @@ def build(d):
     reward = {"id": "reward", "text": [word("获得奖励", d.REWARD_TITLE)]}
 
     def close_reward(prefix, source):
-        """The reward banner is modal: a tap below it closes it and reaches nothing behind."""
+        """The reward banner is modal: a tap below its panel closes it and reaches nothing behind. The panel grows with
+        the rewards (a pile of mail can fill three rows), so the spot sits under the tallest one yet still on screen for
+        the shortest; it is refused if it holds any text."""
         return [d.find_text(f"{prefix}Banner", "获得奖励", d.REWARD_TITLE, source),
-                d.outside(f"{prefix}Below", f"{prefix}Banner", -60, 470), d.close(f"{prefix}Close", f"{prefix}Below")]
+                act(f"{prefix}Below", "screen.deriveRegion", 1, {"dx": -30, "dy": 595, "width": 60, "height": 60, **d.REFERENCE},
+                    {"target": out(f"{prefix}Banner", "target")}),
+                d.close(f"{prefix}Close", f"{prefix}Below")]
 
     # ---- 邮件领取 ----
     mailbox = {"id": "mailbox", "text": [word("邮箱", MAIL_TITLE)], "absentText": [word("获得奖励", d.REWARD_TITLE), word("全部领取", CONFIRM_TITLE)]}
@@ -76,14 +82,14 @@ def build(d):
                                     {**mailbox, "id": "joined", "text": mailbox["text"] + [word("一键领取", MAIL_CLAIM)]},
                                     {**mailbox, "id": "none", "absentText": mailbox["absentText"] + [word("领取", MAIL_CLAIM), word("一键领取", MAIL_CLAIM)]}], 6000, 700),
         {"type": "branch", "value": out("mailList", "state"), "cases": [
-            {"equals": "none", "program": []},
+            {"equals": "none", "program": [said("mailNone", "没有可领的邮件")]},
         ] + [{"equals": state, "program": [
                 d.find_text(f"claimAll{tag}", label, MAIL_CLAIM, "mailList"), d.press(f"pressClaimAll{tag}", f"claimAll{tag}"),
                 d.await_screen(f"mailConfirm{tag}", [{"id": "confirm", "text": [word("全部领取", CONFIRM_TITLE), word("确定", CONFIRM_BUTTONS)]}], 6000),
                 d.find_text(f"confirmOk{tag}", "确定", CONFIRM_BUTTONS, f"mailConfirm{tag}"), d.press(f"pressConfirm{tag}", f"confirmOk{tag}"),
                 d.await_screen(f"mailReward{tag}", [reward], 8000),
                 *close_reward(f"mail{tag}", f"mailReward{tag}"),
-                d.await_screen(f"mailAfter{tag}", [mailbox], 6000),
+                d.await_screen(f"mailAfter{tag}", [mailbox], 6000), said(f"mailGot{tag}", "已领取邮件附件"),
             ]} for state, label, tag in (("split", "领取", "A"), ("joined", "一键领取", "B"))]},
         d.await_screen("mailLeaving", [mailbox], 6000),
         d.find_text("mailTitleAgain", "邮箱", MAIL_TITLE, "mailLeaving"),
@@ -132,15 +138,17 @@ def build(d):
         # The page always opens on the plain list; 友情点 is the grey round button right of 好友 at the bottom left.
         # Their labels are too stylised to read, so it is placed from the 好友 tab at the top of the list.
         d.find_text("friendTab", "好友", FRIENDS_TAB, "friendPage"),
-        *d.press_offset("pointsMode", "friendTab", -72, 757),
+        # On the "情点" peeking out from behind the round 好友 button, below the 群组 row.
+        *d.press_offset("pointsMode", "friendTab", -40, 790),
         d.await_screen("collectState", [{**friends, "id": "collect", "text": friends["text"] + [word("一键收取", FRIENDS_COLLECT)]},
                                         {**friends, "id": "none", "absentText": friends["absentText"] + [word("一键收取", FRIENDS_COLLECT)]}], 4000, 700),
         {"type": "branch", "value": out("collectState", "state"), "cases": [
-            {"equals": "none", "program": []},
+            {"equals": "none", "program": [said("pointsNone", "没有可收的友情点")]},
             {"equals": "collect", "program": [
                 d.find_text("collectAll", "一键收取", FRIENDS_COLLECT, "collectState"), d.press("pressCollect", "collectAll"),
                 d.await_screen("collectReward", [reward], 8000),
                 *close_reward("collect", "collectReward"),
+                d.await_screen("collectDone", [friends], 6000), said("pointsGot", "已收取友情点"),
             ]},
         ]},
         # Sending one by one is left out: 一键收取 already sends back to everyone who gave, and once today's sending is
@@ -158,9 +166,16 @@ def build(d):
         d.find_text("guildLabel", "阴阳寮", d.GUILD_LABEL, "guildMenu"),
         *d.press_offset("guildEntry", "guildLabel", -30, -100),
         # Without the guild's extra download, the game asks for it first: that is left to the player.
-        d.await_screen("guildState", [hall, d.DOWNLOAD], 15000),
+        # Not in a guild yet, the entry opens the guild search instead; nothing there is pressed but the way back.
+        d.await_screen("guildState", [hall, d.DOWNLOAD, {"id": "search", "text": [word("招募中", RECRUIT_TAB)]}], 15000),
         {"type": "branch", "value": out("guildState", "state"), "cases": [
-            {"equals": "download", "program": [d.find_text("skipDownload", "取消", d.DIALOG_BUTTONS, "guildState"), d.press("pressSkip", "skipDownload")]},
+            {"equals": "download", "program": [d.find_text("skipDownload", "取消", d.DIALOG_BUTTONS, "guildState"), d.press("pressSkip", "skipDownload"),
+                                               said("guildNoPack", "没有下载阴阳寮扩展包，寮资金跳过")]},
+            {"equals": "search", "program": [
+                said("guildNone", "还没有加入阴阳寮，寮资金跳过"),
+                d.find_text("recruitTab", "招募中", RECRUIT_TAB, "guildState"),
+                *d.press_offset("leaveSearch", "recruitTab", -356, -162),
+            ]},
             {"equals": "hall", "program": [
                 d.find_text("infoLabel", "寮信息", HALL_INFO, "guildState"),
                 *d.press_offset("openInfo", "infoLabel", -30, -110),
@@ -168,13 +183,14 @@ def build(d):
                 act("fundsBadge", "screen.matchColorIn", 1, {"within": FUNDS_BADGE, "lower": [215, 0, 0], "upper": [255, 60, 60], "minimumRatio": 0.05, **d.REFERENCE},
                     {"observation": out("infoPage", "observation")}),
                 {"type": "branch", "value": out("fundsBadge", "matched"), "cases": [
-                    {"equals": False, "program": []},
+                    {"equals": False, "program": [said("fundsAlready", "没有可领的阴阳寮资金")]},
                     {"equals": True, "program": [
                         d.find_text("fundsButton", "资金领取", FUNDS_BUTTON, "infoPage"), d.press("pressFunds", "fundsButton"),
                         d.await_screen("fundsDialog", [{"id": "dialog", "text": [word("每日领取阴阳寮资金", FUNDS_DIALOG), word("领取", FUNDS_CLAIM)]}], 6000),
                         d.find_text("fundsClaim", "领取", FUNDS_CLAIM, "fundsDialog"), d.press("pressFundsClaim", "fundsClaim"),
                         d.await_screen("fundsReward", [reward], 8000),
                         *close_reward("funds", "fundsReward"),
+                        d.await_screen("fundsDone", [info], 6000), said("fundsGot", "已领取阴阳寮资金"),
                     ]},
                 ]},
                 d.await_screen("infoLeaving", [info], 6000),
@@ -197,7 +213,7 @@ def build(d):
     oneclick = d.walk_to_courtyard(5, 8000, [], []) + [
         d.await_screen("affairsStart", [{"id": "open", "present": [checklist], **plain}, {"id": "none", "absent": [checklist], **plain}], 8000, 1200),
         {"type": "branch", "value": out("affairsStart", "state"), "cases": [
-            {"equals": "none", "program": [d.await_screen("affairsNone", [{"id": "courtyard", **plain}], 4000, 0)]},
+            {"equals": "none", "program": [d.await_screen("affairsNone", [{"id": "courtyard", **plain}], 4000, 0), said("affairsNoneSaid", "没有待完成的庭院事务")]},
             {"equals": "open", "program": [
         pick("affairsIcon", "affairs-icon", 0.85, "top", "affairsStart"), d.press("openAffairs", "affairsIcon"),
         # The first visit shows a one-time tip over the page; a tap anywhere dismisses it.
@@ -215,7 +231,7 @@ def build(d):
         act("oneclickLit", "screen.matchColorIn", 1, {"within": ONECLICK_RIM, "lower": [230, 230, 230], "upper": [255, 255, 255], "minimumRatio": 0.25, **d.REFERENCE},
             {"observation": out("dailyPage", "observation")}),
         {"type": "branch", "value": out("oneclickLit", "matched"), "cases": [
-            {"equals": False, "program": []},
+            {"equals": False, "program": [said("oneclickAlready", "没有待完成的庭院事务")]},
             {"equals": True, "program": [
                 d.find_text("dailyAgain", "日常", DAILY_TAB, "dailyPage"),
                 *d.press_offset("pressOneclick", "dailyAgain", -48, 644),
@@ -233,7 +249,7 @@ def build(d):
                 d.await_screen("claimedList", [{"id": "list", "text": [word("领取成功", CLAIMED_TITLE), word("点击空白处关闭", CLOSE_HINT)],
                                                 "absentText": [word("累计奖励", LOT_TOTAL)]}], 6000),
                 d.find_text("closeHint", "点击空白处关闭", CLOSE_HINT, "claimedList"), d.press("closeClaimed", "closeHint"),
-                d.await_screen("affairsDone", [affairs], 8000, 800),
+                d.await_screen("affairsDone", [affairs], 8000, 800), said("oneclickDone", "已一键完成庭院事务"),
             ]},
         ]},
         d.await_screen("affairsLeaving", [affairs], 6000),

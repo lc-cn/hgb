@@ -120,7 +120,10 @@ fun cloudOutcome(state: ExecutorSnapshot, runId: Long): Pair<JobState, String>? 
     val facts = state.facts.filter { it.runId == runId }
     facts.lastOrNull { it.type == "cancelled" }?.let { return JobState.CANCELLED to "已停止" }
     facts.lastOrNull { it.type == "task-failed" }?.let { return JobState.FAILED to it.detail }
-    if (facts.any { it.type == "task-completed" }) return JobState.COMPLETED to ""
+    // The job's line in the console: what the task said happened, step by step, else nothing to add.
+    if (facts.any { it.type == "task-completed" }) return JobState.COMPLETED to facts.filter { it.type == "step-completed" }
+        .flatMap { it.detail.substringAfter(io.github.yysassist.core.execution.RESULT_PREFIX, "").split("；").filter(String::isNotEmpty) }
+        .fold("") { text, line -> if (text.length + line.length + 1 > 300) text else if (text.isEmpty()) line else "$text；$line" }
     return JobState.UNKNOWN to "运行记录不可用，结果未确认"
 }
 
@@ -591,7 +594,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         // the next job only then, so it never waits on a device still switching back. A failed return is left for the
         // user rather than retried, and said in the job's result.
         val returned = job.restore?.let { home -> ensureAccount(job.copy(runId = runId), home, "restore")?.let { "没能切回「${home.name}」：${it.second}" } }
-        authorized { report(it, job.copy(runId = runId), outcome.first, outcome.second + returned?.let { "；$it" }.orEmpty(), returned) }
+        authorized { report(it, job.copy(runId = runId), outcome.first, listOfNotNull(outcome.second.takeIf(String::isNotEmpty), returned).joinToString("；"), returned) }
         remember(null)
     }
 

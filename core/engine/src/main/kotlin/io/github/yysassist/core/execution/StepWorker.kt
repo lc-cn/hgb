@@ -25,6 +25,13 @@ interface StepWorkFactory {
 
 /** Whether the user chose this option, so a passive task can answer only what was selected. */
 const val SELECTION_CONTAINS = "control.selectionContains"
+/**
+ * What happened, in the player's words ("已领取每日礼包", "今天已领过"), written by the task on the branch it took. It
+ * changes nothing on screen and does not count as verifying anything; a completed step reports these lines.
+ */
+const val TASK_RESULT = "task.result"
+/** Marks a completed step's evidence that is the task's own result lines rather than how it was verified. */
+const val RESULT_PREFIX = "结果："
 
 /** One ordered interpreter for wait and explicitly registered APK-owned actions. */
 class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, private val traces: ActionTraceSink? = null) : StepWorkFactory {
@@ -41,6 +48,11 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
         inputTypes = mapOf("selection" to ActionValueType.ARRAY, "value" to ActionValueType.STRING),
         outputTypes = mapOf("selected" to ActionValueType.BOOLEAN)) { inputs ->
         if (inputs.keys != setOf("selection", "value") || inputs["selection"]?.jsonArray?.any { it !is JsonPrimitive || !it.isString } != false) "请提供多选结果和要判断的选项" else null
+    }, CapabilityContract(TASK_RESULT, 1, inputTypes = mapOf("text" to ActionValueType.STRING),
+        validateKnownInputs = { inputs -> if ("text" in inputs && (inputs["text"] as? JsonPrimitive)?.takeIf { it.isString }?.content.let { it.isNullOrBlank() || it.length > 60 || it.any { c -> c == '；' || c == '\n' || c == '\r' } })
+            ContentIssue("text", "结果说明需为 1–60 个字符，不含“；”和换行") else null },
+        validateDefinition = { _, _, _, action -> if ("text" in action.bindings) "结果说明必须由任务版本写明" else null }) { inputs ->
+        if (inputs.keys != setOf("text") || (inputs["text"] as? JsonPrimitive)?.takeIf { it.isString }?.content.isNullOrBlank()) "请写明结果说明" else null
     }) + actions?.contracts.orEmpty()
     init { require(contracts.distinctBy { it.id to it.version }.size == contracts.size) { "动作合同身份重复" } }
     private val codec = BundleCodec(contracts)
@@ -86,14 +98,18 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                         val activeSession = actions?.open(attempt, bundle).also { session = it }
                         var verification: String? = null
                         var requiresVerification = false
+                        val results = mutableListOf<String>()
                         fun emptyRepeat(node: ProgramNode): Boolean = node is ProgramNode.Repeat &&
                             (repeatCount(node.count, configuration) == 0L || node.program.all(::emptyRepeat))
+                        // A result line only reports; the check before it still settles the step.
+                        fun reportOnly(node: ProgramNode): Boolean = emptyRepeat(node) ||
+                            node is ProgramNode.Action && node.action.capability == TASK_RESULT
                         suspend fun executeBlock(nodes: List<ProgramNode>, outputs: MutableMap<String, JsonObject>, completesStep: Boolean): StepOutcome? {
                             // Only skip provably empty repetition tails. A future branch must still
                             // actually resolve; never predict its outcome to retain completion.
                             val terminalSuffix = BooleanArray(nodes.size + 1)
                             terminalSuffix[nodes.size] = completesStep
-                            for (index in nodes.indices.reversed()) terminalSuffix[index] = terminalSuffix[index + 1] && emptyRepeat(nodes[index])
+                            for (index in nodes.indices.reversed()) terminalSuffix[index] = terminalSuffix[index + 1] && reportOnly(nodes[index])
                             for ((position, node) in nodes.withIndex()) {
                                 // Even zero-duration actions and empty repeats must remain cancellable.
                                 yield()
@@ -138,6 +154,10 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                                         val result = if (action.capability == "control.wait") {
                                             val milliseconds = checkNotNull(duration(inputs)); delay(milliseconds)
                                             ActionResult.Produced(buildJsonObject { put("durationMs", milliseconds) })
+                                        } else if (action.capability == TASK_RESULT) {
+                                            val line = (inputs.getValue("text") as JsonPrimitive).content
+                                            if (line !in results) results += line
+                                            ActionResult.Produced(buildJsonObject { })
                                         } else if (action.capability == SELECTION_CONTAINS) {
                                             ActionResult.Produced(buildJsonObject { put("selected", inputs.getValue("value") in inputs.getValue("selection").jsonArray) })
                                         } else checkNotNull(activeSession).perform(action, inputs)
@@ -159,7 +179,9 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                                             is ActionResult.Unavailable -> return StepOutcome.Unknown(result.reason)
                                             is ActionResult.Produced -> {
                                                 check(contract.role != ActionRole.VERIFICATION) { "核对动作未提供核对证据" }
-                                                verification = null; result.outputs
+                                                // A result line only records; what was verified before it still stands.
+                                                if (action.capability != TASK_RESULT) verification = null
+                                                result.outputs
                                             }
                                             is ActionResult.Verified -> {
                                                 check(contract.role == ActionRole.VERIFICATION && result.evidence.isNotBlank())
@@ -177,8 +199,11 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                         executeBlock(step.nodes(), mutableMapOf(), true)?.let { return@coroutineScope it }
                         if (requiresVerification && verification == null) StepOutcome.Unknown("观察结果尚未核对")
                         else {
-                            verification?.let { activeSession?.verifiedStepCompleted(it) }
-                            StepOutcome.Completed(verification ?: "已完成等待步骤")
+                            // The check stays in the evidence for the record; the result lines follow it, after the prefix.
+                            val evidence = listOfNotNull(verification ?: "已完成等待步骤".takeIf { results.isEmpty() },
+                                results.takeIf { it.isNotEmpty() }?.joinToString("；", prefix = RESULT_PREFIX)).joinToString("；")
+                            verification?.let { activeSession?.verifiedStepCompleted(evidence) }
+                            StepOutcome.Completed(evidence)
                         }
                     }
                 } finally {

@@ -61,7 +61,8 @@ DAILY_LANTERN = [2060, 600, 220, 260]
 DAILY_LABEL = [440, 180, 320, 100]
 CLAIM_BUTTON = [470, 425, 280, 95]
 NEXT_LABEL = [440, 560, 320, 100]
-REWARD_TITLE = [900, 300, 600, 160]
+# The banner rises as the panel under it grows (a pile of mail fills three rows).
+REWARD_TITLE = [800, 150, 800, 320]
 DETAILS_TITLE = [500, 230, 500, 130]
 # Notification dot of the shop entry on the opened courtyard menu.
 SHOP_BADGE = [1307, 885, 44, 44]
@@ -96,8 +97,16 @@ COURTYARD_OPEN = {"id": "courtyard", "text": [word("阴阳寮", MENU_BAR), word(
 # A dimmed popup leaves icons matchable, so the shop also requires that no dialog buttons show.
 SHOP = {"id": "shop", "present": [picture("home-icon", 0.8, HOME)], "absentText": [word("取消", DIALOG_BUTTONS), word("确定", DIALOG_BUTTONS)]}
 DOWNLOAD = {"id": "download", "text": [word("下载", DIALOG_BUTTONS), word("取消", DIALOG_BUTTONS)]}
+# Left alone a while, the game hides the courtyard's interface; its round back button at the top left brings it back.
+IDLE_BACK = [140, 20, 160, 130]
+IDLE = {"id": "idle", "present": [picture("idle-back", 0.85, IDLE_BACK)], "absentText": [word("探索", LANTERN)]}
 TITLE = {"id": "title", "text": [word("进入游戏", TITLE_BUTTON)]}
 DAILY_LIST = {"id": "list", "text": [word("每日礼包", DAILY_LABEL)], "absentText": [word("获得奖励", REWARD_TITLE), word("御行达摩的赠礼", DETAILS_TITLE)]}
+
+
+def said(aid, text):
+    """A line for the run's record, on the branch that was taken (task.result)."""
+    return act(aid, "task.result", 1, {"text": text})
 
 
 def await_screen(aid, states, timeout=8000, stable=0):
@@ -155,7 +164,7 @@ def navigate():
 def walk_to_courtyard(maximum, wait_ms, states, cases):
     """Until the courtyard shows, handle the current page. Never the system back key: in the courtyard it
     opens the quit dialog. An undeclared page gets no input and stops the step when the wait runs out."""
-    known = [COURTYARD_CLOSED, COURTYARD_OPEN, SHOP, DOWNLOAD] + states
+    known = [COURTYARD_CLOSED, COURTYARD_OPEN, SHOP, DOWNLOAD, IDLE] + states
     return [
         {"type": "until", "value": out("place", "state"), "equals": "courtyard", "maximum": maximum, "program": [
             await_screen("place", known, wait_ms),
@@ -168,6 +177,10 @@ def walk_to_courtyard(maximum, wait_ms, states, cases):
                 {"equals": "download", "program": [
                     find_text("cancelTarget", "取消", DIALOG_BUTTONS, "place"), press("cancelPress", "cancelTarget"),
                     await_screen("leftDialog", [{"id": "left", "absentText": [word("下载", DIALOG_BUTTONS)]}], 5000, 0),
+                ]},
+                {"equals": "idle", "program": [
+                    find_image("idleBack", "idle-back", 0.85, IDLE_BACK, "place"), press("pressIdleBack", "idleBack"),
+                    await_screen("leftIdle", [{"id": "left", "absent": [picture("idle-back", 0.85, IDLE_BACK)]}], 5000, 0),
                 ]},
             ] + cases},
         ]},
@@ -186,15 +199,16 @@ def menu_nodes():
     ]
 
 
-def only_when_badged(badge, chore):
-    """Do a chore only if its courtyard entry shows a notification dot, and end back in the courtyard."""
+def only_when_badged(badge, chore, done=None, nothing=None):
+    """Do a chore only if its courtyard entry shows a notification dot, and end back in the courtyard. done / nothing:
+    the result line for each case."""
     return menu_nodes() + [
         await_screen("badgeFrame", [COURTYARD_OPEN], 5000),
         act("badge", "screen.matchColorIn", 1, {"within": badge, "lower": [215, 0, 0], "upper": [255, 60, 60], "minimumRatio": 0.05, **REFERENCE},
             {"observation": out("badgeFrame", "observation")}),
         {"type": "branch", "value": out("badge", "matched"), "cases": [
-            {"equals": True, "program": chore + walk_to_courtyard(5, 8000, [], [])},
-            {"equals": False, "program": []},
+            {"equals": True, "program": chore + walk_to_courtyard(5, 8000, [], []) + ([said("badgedDone", done)] if done else [])},
+            {"equals": False, "program": [said("badgedNothing", nothing)] if nothing else []},
         ]},
         await_screen("choreDone", [COURTYARD_CLOSED, COURTYARD_OPEN], 8000),
     ]
@@ -344,8 +358,8 @@ def daily_gift(jade):
             {"equals": "claimable", "program": [
                 find_text("claim", "领取", CLAIM_BUTTON, "listed"), press("tap", "claim"),
                 await_screen("after", [{"id": "reward", "text": [word("获得奖励", REWARD_TITLE)]}]),
-            ] + dismiss("after")},
-            {"equals": "paid", "program": [await_screen("paidList", [DAILY_LIST], 3000, 0)]},
+            ] + dismiss("after") + [said("claimedGift", "已领取免费每日礼包")]},
+            {"equals": "paid", "program": [await_screen("paidList", [DAILY_LIST], 3000, 0), said("giftAlready", "今天的免费每日礼包已领过")]},
         ]},
     ]
     models = {name: (MODELS / name).read_bytes() for name in ("det.onnx", "rec.onnx", "keys.txt")}
@@ -357,7 +371,7 @@ def daily_gift(jade):
     RETURN = {"id": "return", "name": "返回庭院", "use": "return-to-courtyard"}
     GO_DAILY = {"id": "navigate", "name": "前往礼包屋日常", "program": navigate()}
     CLAIM = {"id": "claim", "name": "领取免费每日礼包", "program": program}
-    FLOWER = {"id": "flower", "name": "花合战（有红点才去）", "program": only_when_badged(FLOWER_BADGE, flower_chore())}
+    FLOWER = {"id": "flower", "name": "花合战（有红点才去）", "program": only_when_badged(FLOWER_BADGE, flower_chore(), "已领取花合战奖励", "花合战没有可领的奖励")}
     PETS = {"id": "pets", "name": "喂猫喂狗", "program": pets_chore()}
 
     def task(task_id, name, steps):
@@ -367,7 +381,7 @@ def daily_gift(jade):
     bundle = {
         "formatVersion": 1, "version": "debug-daily-tour-7", "updatedAt": "2026-11-18T00:00:00Z",
         "changelog": "Local debug draft; not published.",
-        "tasks": [task("daily-tour", "日常巡游", [ENTER, {"id": "daily-gift", "name": "每日礼包（商店有红点才去）", "program": only_when_badged(SHOP_BADGE, navigate() + program)}, FLOWER, PETS]),
+        "tasks": [task("daily-tour", "日常巡游", [ENTER, {"id": "daily-gift", "name": "每日礼包（商店有红点才去）", "program": only_when_badged(SHOP_BADGE, navigate() + program, None, "商店没有红点，每日礼包跳过")}, FLOWER, PETS]),
                   task("flower-chore", "花合战领取", [FLOWER]),
                   task("pets-chore", "喂猫喂狗", [PETS]),
                   task("daily-gift", "领取每日礼包", [ENTER, MENU, GO_DAILY, CLAIM, RETURN]),
@@ -415,6 +429,7 @@ ICONS = {
     "kennel.png": (ROOT / ".local/game-validation/badge-sampling/31-back-from-activity-private.png", (1762, 650, 90, 60)),
     "pet-bowl.png": (ROOT / ".local/game-validation/badge-sampling/40-pet-private.png", (1392, 578, 62, 52)),
     "sushi-cost.png": (ROOT / ".local/game-validation/live-tour-1119-d/16-feed-panel-private.png", (1968, 528, 54, 48)),
+    "idle-back.png": (ROOT / ".local/game-validation/tasks-1120/idle/00-idle-private.png", (180, 58, 50, 50)),
 }
 
 
