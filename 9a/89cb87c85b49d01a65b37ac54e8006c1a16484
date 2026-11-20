@@ -1,0 +1,76 @@
+core/server/src/main/kotlin/io/github/yysassist/server/Routes.kt
+  s_fae32e7f0efe76::t_11fdd3bb933a59 109-111
+  s_fae32e7f0efe76::t_9da49065510e0b 170
+client/web/src/api/types.ts
+  s_fae32e7f0efe76::t_d2b21b0fece491 53
+core/server/src/main/kotlin/io/github/yysassist/server/CloudService.kt
+  s_fae32e7f0efe76::t_11fdd3bb933a59 36-37,457,462-465
+core/server/src/test/kotlin/io/github/yysassist/server/CloudApiTest.kt
+  s_fae32e7f0efe76::t_38e7ecfdeaaa90 828-863
+core/engine/src/test/kotlin/io/github/yysassist/core/cloud/DeviceWatchTest.kt
+  s_fae32e7f0efe76::t_70f0a12fecd1db 51-58
+  s_fae32e7f0efe76::t_37dbbb49222380 1-50,59
+client/android/app/src/main/kotlin/io/github/yysassist/cloud/LocalNotices.kt
+  s_fae32e7f0efe76::t_b4611144611029 1-12,14-18,24-26
+  s_fae32e7f0efe76::t_6f040f54055006 13,23
+  s_fae32e7f0efe76::t_98e79c2ca25e47 19-22
+client/android/app/src/main/kotlin/io/github/yysassist/cloud/CloudPlatform.kt
+  s_fae32e7f0efe76::t_3aa3b2db1e8673 66,68-69
+  s_fae32e7f0efe76::t_6f040f54055006 70-71
+core/engine/src/main/kotlin/io/github/yysassist/core/cloud/CloudAgent.kt
+  s_fae32e7f0efe76::t_930242ea745870 126,364
+  s_fae32e7f0efe76::t_bf73a701b49334 50-52,95-96,125,220,338-340,342,363,365-369,371,401-403
+  s_fae32e7f0efe76::t_6f040f54055006 97-98,341,370,372-400
+  s_fae32e7f0efe76::t_8bbbba95475b07 533
+client/web/src/features/notices/Channels.tsx
+  s_fae32e7f0efe76::t_d2b21b0fece491 7,21,82,126-134
+client/android/app/src/main/kotlin/io/github/yysassist/ui/CloudPage.kt
+  s_fae32e7f0efe76::t_ac094886351e25 17,33,40,46,57-60,62-63
+  s_fae32e7f0efe76::t_792ae3c675f54d 61
+  s_fae32e7f0efe76::t_5ffbe0f6df6472 64
+client/android/app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_3aa3b2db1e8673 113
+  s_fae32e7f0efe76::t_ac094886351e25 78
+  s_fae32e7f0efe76::t_6f040f54055006 79-81,94
+core/protocol/src/main/kotlin/io/github/yysassist/protocol/CloudProtocol.kt
+  s_fae32e7f0efe76::t_39462b778084e0 67-68,150-164,189,197
+client/android/app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt
+  s_fae32e7f0efe76::t_ac094886351e25 146
+core/engine/src/main/kotlin/io/github/yysassist/core/cloud/DeviceWatch.kt
+  s_fae32e7f0efe76::t_6f040f54055006 25-26,31-32,36-37,39,41
+  s_fae32e7f0efe76::t_418bcb36c28845 1-24,27-30,33-35,38,40,42-56
+core/server/src/main/kotlin/io/github/yysassist/server/Channels.kt
+  s_fae32e7f0efe76::t_11fdd3bb933a59 65-69,84,86,112-113,157-158,167,189,201,205,238,241,245,251,284,305,338-339
+client/android/app/src/main/kotlin/io/github/yysassist/actions/LocalNotifier.kt
+  s_fae32e7f0efe76::t_6f040f54055006 17-18,20,25
+client/android/app/src/main/kotlin/io/github/yysassist/device/DeviceExecutionReadiness.kt
+  s_fae32e7f0efe76::t_6f040f54055006 32-34,39-44
+client/web/src/features/notices/NoticesPage.tsx
+  s_fae32e7f0efe76::t_d2b21b0fece491 17,20
+core/engine/src/test/kotlin/io/github/yysassist/core/cloud/CloudAgentTest.kt
+  s_fae32e7f0efe76::t_930242ea745870 52-54,98,106-107,132,301-326
+  s_fae32e7f0efe76::t_6f040f54055006 99
+docs/design/cloud-executor.md
+  s_fae32e7f0efe76::t_70f0a12fecd1db 325,327
+  s_fae32e7f0efe76::t_bfaced58fe78f6 321-324,326,328-329
+core/server/src/main/kotlin/io/github/yysassist/server/Notices.kt
+  s_fae32e7f0efe76::t_cd0fe53ce8b747 10-11,15,27-28,54,86-106,109,111-120
+  s_fae32e7f0efe76::t_6f040f54055006 107-108,110
+  s_fae32e7f0efe76::t_c8811c6e0bc65a 121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9a89cb87c85b49d01a65b37ac54e8006c1a16484",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
