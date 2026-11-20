@@ -82,8 +82,8 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
             get("/github/callback") {
                 val code = call.request.queryParameters["code"]; val state = call.request.queryParameters["state"]
                 val session = if (code != null && state != null) runCatching { service.githubCallback(code, state, callback) }.getOrNull() else null
-                if (session == null) call.respondRedirect("/?error=github")
-                else { call.setSessionCookie(config, session.accessToken, CloudService.WEB_LIFETIME / 1000); call.respondRedirect("/") }
+                if (session == null) call.respondRedirect("/console/?error=github")
+                else { call.setSessionCookie(config, session.accessToken, CloudService.WEB_LIFETIME / 1000); call.respondRedirect("/console/") }
             }
             post("/logout") { service.logout(call.caller(service)); call.response.cookies.append(Cookie(COOKIE, "", maxAge = 0, path = "/")); call.respond(mapOf("ok" to true)) }
             delete("/github") { service.unlinkGitHub(call.caller(service)); call.respond(mapOf("ok" to true)) }
@@ -99,6 +99,19 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
         post("/api/jobs") { call.respond(HttpStatusCode.Created, service.createJob(call.caller(service), call.receive())) }
         put("/api/me/time-zone") { service.timeZone(call.caller(service), call.receive()); call.respond(mapOf("ok" to true)) }
         get("/api/games") { call.respond(service.games(call.caller(service))) }
+        // Event rules and what they noticed; both belong to the signed-in user, never to a device.
+        route("/api/notifications") {
+            get("/rules") { call.respond(service.notices.rules(call.caller(service).userId)) }
+            put("/rules/{ruleId}") {
+                val caller = call.caller(service)
+                call.respond(service.notices.save(caller.userId, call.parameters.getOrFail("ruleId"), call.receive()))
+            }
+            get("/events") {
+                val caller = call.caller(service)
+                val query = call.request.queryParameters
+                call.respond(service.notices.list(caller.userId, query["rule"]?.takeIf { it.isNotBlank() }, query["after"]))
+            }
+        }
         route("/api/accounts") {
             get { call.respond(service.gameAccounts(call.caller(service))) }
             post { call.respond(HttpStatusCode.Created, service.createGameAccount(call.caller(service), call.receive())) }

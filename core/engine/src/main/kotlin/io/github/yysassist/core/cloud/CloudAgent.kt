@@ -342,8 +342,9 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
             }
         }
     }
-    private suspend fun report(saved: CloudCredentials, job: ActiveCloudJob, state: JobState, detail: String) {
-        send<Unit>(saved.serverUrl, "/api/device/jobs/${job.jobId}/report", json.encodeToString(JobReport(job.leaseNo, state, detail.take(400))), saved.accessToken)
+    private suspend fun report(saved: CloudCredentials, job: ActiveCloudJob, state: JobState, detail: String, restoreIssue: String? = null) {
+        send<Unit>(saved.serverUrl, "/api/device/jobs/${job.jobId}/report",
+            json.encodeToString(JobReport(job.leaseNo, state, detail.take(400), restoreIssue?.take(300))), saved.accessToken)
     }
     private suspend fun remember(job: ActiveCloudJob?) = mutex.withLock { credentials?.let { save(it.copy(activeJob = job)) } }
     private suspend fun jobs() {
@@ -413,8 +414,8 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         // Back to the app's default account, whatever the job's outcome, before the job is reported: the server sends
         // the next job only then, so it never waits on a device still switching back. A failed return is left for the
         // user rather than retried, and said in the job's result.
-        val returned = job.restore?.let { home -> ensureAccount(job.copy(runId = runId), home, "restore")?.let { "；没能切回「${home.name}」：${it.second}" } }.orEmpty()
-        authorized { report(it, job.copy(runId = runId), outcome.first, outcome.second + returned) }
+        val returned = job.restore?.let { home -> ensureAccount(job.copy(runId = runId), home, "restore")?.let { "没能切回「${home.name}」：${it.second}" } }
+        authorized { report(it, job.copy(runId = runId), outcome.first, outcome.second + returned?.let { "；$it" }.orEmpty(), returned) }
         remember(null)
     }
 

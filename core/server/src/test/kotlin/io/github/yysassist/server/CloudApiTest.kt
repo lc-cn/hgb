@@ -310,6 +310,27 @@ class CloudApiTest {
         now += 30 * CloudService.MINUTE; service.tick()
         assertEquals(JobState.SKIPPED, jobs(token).single().state)
     }
+    @Test fun aPlanThatFindsNoAppIsNoticedAsMissed() = api {
+        now = justAfterPlan - 10 * CloudService.MINUTE
+        val token = signUp("a@example.com").accessToken!!; enroll(token); val main = main(token)
+        call(HttpMethod.Put, "/api/notifications/rules/plan-missed", """{"enabled":true}""", token)
+        call(HttpMethod.Post, "/api/accounts/$main/plans", plan(), token)
+        now = justAfterPlan; service.tick()
+        now += 30 * CloudService.MINUTE; service.tick()
+        assertEquals(listOf("plan-missed"), notices(token).map { it.ruleId })
+    }
+    @Test fun aPlanRunIsNoticedWhenItStartsAndWhenItEndsWithAChosenResult() = api {
+        now = justAfterPlan - 10 * CloudService.MINUTE
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token); val main = main(token)
+        call(HttpMethod.Put, "/api/notifications/rules/plan-started", """{"enabled":true}""", token)
+        call(HttpMethod.Put, "/api/notifications/rules/plan-completed", """{"enabled":true,"results":["COMPLETED"]}""", token)
+        signedIn(token, device.deviceId, main)
+        call(HttpMethod.Post, "/api/accounts/$main/plans", plan(), token)
+        now = justAfterPlan; service.tick()
+        val lease = lease(token); report(token, lease, JobState.RUNNING); report(token, lease, JobState.COMPLETED)
+        assertEquals(listOf("plan-completed", "plan-started"), notices(token).map { it.ruleId }.sorted())
+        assertTrue(notices(token).single { it.ruleId == "plan-completed" }.title.contains("全部完成"))
+    }
     @Test fun aPlanTimeMissedWhileTheServerWasDownIsRecordedAsSkipped() = api {
         now = justAfterPlan - 10 * CloudService.MINUTE
         val token = signUp("a@example.com").accessToken!!; enroll(token); val main = main(token)
@@ -317,6 +338,27 @@ class CloudApiTest {
         now = justAfterPlan + 35 * CloudService.MINUTE; service.tick()
         val job = jobs(token).single()
         assertEquals(JobState.SKIPPED, job.state); assertTrue(job.detail.contains("错过"))
+    }
+    @Test fun aPlanTimeMissedWhileTheServerWasDownIsNoticedAsNotRun() = api {
+        now = justAfterPlan - 10 * CloudService.MINUTE
+        val token = signUp("a@example.com").accessToken!!; enroll(token); val main = main(token)
+        call(HttpMethod.Put, "/api/notifications/rules/plan-missed", """{"enabled":true}""", token)
+        call(HttpMethod.Post, "/api/accounts/$main/plans", plan(), token)
+        now = justAfterPlan + 35 * CloudService.MINUTE; service.tick()
+        assertEquals(listOf("plan-missed"), notices(token).map { it.ruleId })
+    }
+    @Test fun aPlanRunThatPartlyRanIsNotNoticedAsNotRun() = api {
+        now = justAfterPlan - 10 * CloudService.MINUTE
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token); val main = main(token)
+        for (rule in listOf("plan-missed")) call(HttpMethod.Put, "/api/notifications/rules/$rule", """{"enabled":true}""", token)
+        call(HttpMethod.Put, "/api/notifications/rules/plan-completed", """{"enabled":true,"results":["PARTIAL_FAILED"]}""", token)
+        signedIn(token, device.deviceId, main)
+        call(HttpMethod.Post, "/api/accounts/$main/plans", plan(tasks = bothTasks), token)
+        now = justAfterPlan; service.tick()
+        // The first task runs and completes; the device has no second task, so that one waits until its latest start passes.
+        val lease = lease(token); report(token, lease, JobState.RUNNING); report(token, lease, JobState.COMPLETED)
+        now += 31 * CloudService.MINUTE; service.tick()
+        assertEquals(listOf("plan-completed"), notices(token).map { it.ruleId })
     }
     @Test fun renamingAPlanJustAfterItsTimeKeepsThatRunButMovingItsTimeDoesNot() = api {
         now = justAfterPlan - 10 * CloudService.MINUTE
@@ -634,5 +676,65 @@ class CloudApiTest {
         assertTrue(Passwords.verify("correct horse", Passwords.hash("correct horse")))
         assertFalse(Passwords.verify("correct horse", null))
         assertNotEquals(session.accessToken, Secrets.sha256(session.accessToken!!))
+    }
+
+    private suspend fun Api.notices(token: String) =
+        json.decodeFromString(ListSerializer(NoticeView.serializer()), call(HttpMethod.Get, "/api/notifications/events", token = token).bodyAsText())
+
+    @Test fun rulesAreOffUntilTurnedOnAndATurnedOnRuleNeedsItsThreshold() = api {
+        val token = signUp("a@example.com").accessToken!!
+        val rules = json.decodeFromString(ListSerializer(EventRuleView.serializer()), call(HttpMethod.Get, "/api/notifications/rules", token = token).bodyAsText())
+        assertTrue(rules.isNotEmpty()); assertTrue(rules.none { it.enabled })
+        assertEquals(10L, rules.single { it.ruleId == "queue-wait" }.suggested)
+        assertEquals(HttpStatusCode.BadRequest, call(HttpMethod.Put, "/api/notifications/rules/queue-wait", """{"enabled":true}""", token).status)
+        assertEquals(HttpStatusCode.BadRequest, call(HttpMethod.Put, "/api/notifications/rules/plan-completed", """{"enabled":true,"results":[]}""", token).status)
+        assertEquals(HttpStatusCode.NotFound, call(HttpMethod.Put, "/api/notifications/rules/nothing", """{"enabled":true}""", token).status)
+        val saved = json.decodeFromString(ListSerializer(EventRuleView.serializer()),
+            call(HttpMethod.Put, "/api/notifications/rules/queue-wait", """{"enabled":true,"threshold":15}""", token).bodyAsText())
+        assertEquals(15L, saved.single { it.ruleId == "queue-wait" }.threshold)
+    }
+    @Test fun aJobStartingAndSucceedingIsNoticedOnceAndOnlyAfterTheRuleIsOn() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        job(token, device.deviceId); val early = lease(token); report(token, early, JobState.RUNNING)
+        call(HttpMethod.Put, "/api/notifications/rules/task-started", """{"enabled":true}""", token)
+        call(HttpMethod.Put, "/api/notifications/rules/task-succeeded", """{"enabled":true}""", token)
+        now += 1_000
+        // Started before the rules were on: its start is not reported, its success after is.
+        report(token, early, JobState.COMPLETED)
+        assertEquals(listOf("task-succeeded"), notices(token).map { it.ruleId })
+        now += 1_000
+        job(token, device.deviceId); val second = lease(token)
+        report(token, second, JobState.RUNNING); report(token, second, JobState.RUNNING); report(token, second, JobState.COMPLETED)
+        assertEquals(listOf("task-started", "task-succeeded", "task-succeeded"), notices(token).map { it.ruleId }.sorted())
+        assertTrue(notices(token).first().title.contains("主号"))
+    }
+    @Test fun failuresInARowAreNoticedOnceTheyReachTheThreshold() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        call(HttpMethod.Put, "/api/notifications/rules/execution-failed", """{"enabled":true,"threshold":2}""", token)
+        suspend fun fail() { now += 1_000; job(token, device.deviceId); val lease = lease(token); report(token, lease, JobState.RUNNING); report(token, lease, JobState.FAILED) }
+        fail(); assertTrue(notices(token).isEmpty())
+        fail(); assertEquals(1, notices(token).size)
+        // The same streak goes on: no second notice.
+        fail(); assertEquals(1, notices(token).size)
+        assertTrue(notices(token).single().title.contains("2 次"))
+    }
+    @Test fun aJobWaitingTooLongAndADeviceGoneTooLongAreNoticed() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        call(HttpMethod.Put, "/api/notifications/rules/queue-wait", """{"enabled":true,"threshold":10}""", token)
+        call(HttpMethod.Put, "/api/notifications/rules/device-offline", """{"enabled":true,"threshold":10}""", token)
+        job(token, device.deviceId)
+        now += 5 * CloudService.MINUTE; service.tick()
+        assertTrue(notices(token).isEmpty())
+        now += 6 * CloudService.MINUTE; service.tick(); service.tick()
+        assertEquals(setOf("queue-wait", "device-offline"), notices(token).map { it.ruleId }.toSet())
+        assertEquals(2, notices(token).size)
+    }
+    @Test fun anAppLeftOnAnotherAccountIsNoticed() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        call(HttpMethod.Put, "/api/notifications/rules/account-not-restored", """{"enabled":true}""", token)
+        now += 1_000
+        job(token, device.deviceId); val lease = lease(token); report(token, lease, JobState.RUNNING)
+        call(HttpMethod.Post, "/api/device/jobs/${lease.jobId}/report", """{"leaseNo":${lease.leaseNo},"state":"COMPLETED","restoreIssue":"没能切回「主号」"}""", token)
+        assertEquals("没能切回「主号」", notices(token).single().detail)
     }
 }

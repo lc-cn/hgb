@@ -84,7 +84,8 @@ object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DE
     val account: AccountTarget? = null,
     /** The app's default account, to switch back to after this job; absent when the next job uses the same account. */
     val restore: AccountTarget? = null)
-@Serializable data class JobReport(val leaseNo: Long, val state: JobState, val detail: String = "")
+/** [restoreIssue] says why the app could not return to its default account after the job, when it could not. */
+@Serializable data class JobReport(val leaseNo: Long, val state: JobState, val detail: String = "", val restoreIssue: String? = null)
 
 /**
  * One line of a job's run log. [key] names the record on the device ("fact:12", "action:340") so a resend after a
@@ -156,3 +157,21 @@ object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DE
     val taskName: String, val state: JobState, val detail: String, val cancelRequested: Boolean, val createdAt: Long, val updatedAt: Long,
     val accountId: String? = null, val accountName: String? = null, val appKey: String? = null, val planId: String? = null, val planName: String? = null,
     val latestStartAt: Long? = null, val pauseRequested: Boolean = false)
+
+/**
+ * How an event rule decides: [INSTANT] on each occurrence; [COUNT] after a number of failures in a row; [DURATION] once a
+ * condition has lasted a number of minutes; [RESULT] on a plan's end with one of the chosen results.
+ */
+@Serializable enum class RuleKind { INSTANT, COUNT, DURATION, RESULT }
+/** How a plan's run ended, judged over all its jobs. */
+@Serializable enum class PlanOutcome { COMPLETED, PARTIAL_FAILED, FAILED, CANCELLED }
+/**
+ * One event rule of the user. All are off until the user turns them on; [threshold] (minutes or a count, by [kind]) is
+ * set by the user, [suggested] only fills the editor.
+ */
+@Serializable data class EventRuleView(val ruleId: String, val name: String, val kind: RuleKind, val description: String, val enabled: Boolean,
+    val threshold: Long? = null, val suggested: Long? = null, val results: List<PlanOutcome> = emptyList())
+@Serializable data class EventRuleSave(val enabled: Boolean, val threshold: Long? = null, val results: List<PlanOutcome> = emptyList())
+/** Something a rule noticed. Kept whether or not any channel is subscribed to it. */
+@Serializable data class NoticeView(val id: String, val ruleId: String, val ruleName: String, val at: Long, val title: String, val detail: String = "",
+    val jobId: String? = null, val deviceId: String? = null, val accountId: String? = null, val planId: String? = null)

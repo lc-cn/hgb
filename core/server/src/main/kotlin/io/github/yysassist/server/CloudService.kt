@@ -30,6 +30,8 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
     private val mailLimit = RateLimiter(5, 10 * MINUTE, clock)
     private val badCredentials get() = ApiException(401, "invalid_credentials", "邮箱或密码不正确")
     private val badCode get() = ApiException(401, "invalid_code", "验证码不正确或已过期")
+    /** Event rules and the notices they record. */
+    val notices = Notices(db, clock, events) { sockets.isOnline(it) }
 
     private fun email(value: String): String = value.trim().lowercase().takeIf { it.length in 3..254 && EMAIL.matches(it) }
         ?: throw ApiException(400, "invalid_email", "邮箱格式不正确")
@@ -195,6 +197,7 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         val touched = db.tx { firePlans(now) + sweep() + assignWaiting(now) }
         touched.forEach(::pushJobs)
         dispatchAll()
+        runCatching { notices.process(lasting = true) }.onFailure { System.err.println("notices: $it") }
     }
 
     /**
@@ -427,7 +430,12 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         events.publish(userId, "device", json.encodeToString(DeviceView.serializer(), view))
     }
     private fun pushDevice(userId: String, deviceId: String) = db.tx { deviceRows(userId, deviceId).singleOrNull()?.let { publishDevice(userId, it) } }
-    private fun pushJobs(userId: String) { db.tx { events.publish(userId, "jobs", json.encodeToString(jobList, jobRows(userId))) }; pushDeviceData(userId) }
+    private fun pushJobs(userId: String) {
+        db.tx { events.publish(userId, "jobs", json.encodeToString(jobList, jobRows(userId))) }; pushDeviceData(userId)
+        // Every change to jobs passes here, so their notices are judged right away rather than on the next tick. A failure
+        // there is the notices' own: the change that was asked for is already saved.
+        runCatching { notices.process() }.onFailure { System.err.println("notices: $it") }
+    }
 
     /** What [deviceId] shows of the user's accounts, settings and plans. */
     private fun Database.deviceData(userId: String, deviceId: String): DeviceData {
@@ -698,8 +706,9 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             }
             if (!allowed) throw ApiException(409, "invalid_transition", "作业状态不能这样变更")
             val active = report.state == JobState.RUNNING
-            update("UPDATE jobs SET state = ?, detail = ?, lease_expires_at = ?, pause_requested = CASE WHEN ? THEN pause_requested ELSE 0 END, updated_at = ? WHERE id = ?",
-                report.state.name, report.detail.take(500), if (active) now + LEASE_LIFETIME else null, active, now, jobId)
+            update("""UPDATE jobs SET state = ?, detail = ?, lease_expires_at = ?, pause_requested = CASE WHEN ? THEN pause_requested ELSE 0 END, updated_at = ?,
+                restore_issue = COALESCE(?, restore_issue) WHERE id = ?""",
+                report.state.name, report.detail.take(500), if (active) now + LEASE_LIFETIME else null, active, now, report.restoreIssue?.take(300), jobId)
         }
         pushJobs(caller.userId)
         // A finished job frees its account too, so a device waiting on that account may start now.

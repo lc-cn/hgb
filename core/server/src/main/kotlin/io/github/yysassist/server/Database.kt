@@ -77,7 +77,25 @@ class Database(path: String) : AutoCloseable {
                 version TEXT NOT NULL DEFAULT '', digest TEXT NOT NULL DEFAULT '', config_json TEXT NOT NULL,
                 account_id TEXT REFERENCES game_accounts(id) ON DELETE SET NULL, account_name TEXT,
                 plan_id TEXT REFERENCES plans(id) ON DELETE SET NULL, plan_name TEXT, allowed_devices_json TEXT NOT NULL DEFAULT '[]',
-                latest_start_at INTEGER, sequence INTEGER NOT NULL DEFAULT 0)""",
+                latest_start_at INTEGER, sequence INTEGER NOT NULL DEFAULT 0, started_at INTEGER, restore_issue TEXT)""",
+            // Every change of a job's state, in order, for the event rules to read once; rows are removed once read.
+            """CREATE TABLE IF NOT EXISTS job_changes (seq INTEGER PRIMARY KEY AUTOINCREMENT, job_id TEXT NOT NULL, state TEXT NOT NULL, at INTEGER NOT NULL)""",
+            """CREATE TRIGGER IF NOT EXISTS job_state_changed AFTER UPDATE OF state ON jobs WHEN NEW.state <> OLD.state BEGIN
+                INSERT INTO job_changes (job_id, state, at) VALUES (NEW.id, NEW.state, NEW.updated_at);
+                UPDATE jobs SET started_at = NEW.updated_at WHERE id = NEW.id AND NEW.state = 'RUNNING' AND started_at IS NULL;
+            END""",
+            // A job can be born settled: a plan time missed while the server was down is written as skipped at once.
+            """CREATE TRIGGER IF NOT EXISTS job_born_settled AFTER INSERT ON jobs WHEN NEW.state IN ('SKIPPED', 'FAILED', 'CANCELLED') BEGIN
+                INSERT INTO job_changes (job_id, state, at) VALUES (NEW.id, NEW.state, NEW.updated_at);
+            END""",
+            // The user's event rules; a rule with no row is off. enabled_at keeps a rule turned on from reporting what came before.
+            """CREATE TABLE IF NOT EXISTS event_rules (user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, rule_id TEXT NOT NULL,
+                enabled INTEGER NOT NULL, threshold INTEGER, results_json TEXT NOT NULL DEFAULT '[]', enabled_at INTEGER, PRIMARY KEY (user_id, rule_id))""",
+            // What the rules noticed. key names the occurrence (a job, a plan run, an offline spell), so it is recorded once.
+            """CREATE TABLE IF NOT EXISTS notices (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, rule_id TEXT NOT NULL,
+                key TEXT NOT NULL, at INTEGER NOT NULL, title TEXT NOT NULL, detail TEXT NOT NULL, job_id TEXT, device_id TEXT, account_id TEXT, plan_id TEXT,
+                UNIQUE (user_id, key))""",
+            "CREATE INDEX IF NOT EXISTS notices_by_user ON notices (user_id, at)",
             // A job's run log, sent by the device while it runs. key is the device's own record name, so resends are stored once.
             """CREATE TABLE IF NOT EXISTS job_events (job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE, key TEXT NOT NULL, at INTEGER NOT NULL,
                 kind TEXT NOT NULL, step TEXT NOT NULL, action TEXT NOT NULL, detail TEXT NOT NULL, elapsed_ms INTEGER NOT NULL, PRIMARY KEY (job_id, key))""",
