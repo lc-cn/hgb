@@ -174,4 +174,27 @@ object SocketClose { const val INVALID_SESSION: Short = 4401; const val NOT_A_DE
 @Serializable data class EventRuleSave(val enabled: Boolean, val threshold: Long? = null, val results: List<PlanOutcome> = emptyList())
 /** Something a rule noticed. Kept whether or not any channel is subscribed to it. */
 @Serializable data class NoticeView(val id: String, val ruleId: String, val ruleName: String, val at: Long, val title: String, val detail: String = "",
-    val jobId: String? = null, val deviceId: String? = null, val accountId: String? = null, val planId: String? = null)
+    val jobId: String? = null, val deviceId: String? = null, val accountId: String? = null, val planId: String? = null,
+    val deliveries: List<DeliveryView> = emptyList())
+
+/** Where notices are sent. The server sends them all, so they arrive even when every device is offline. */
+@Serializable enum class ChannelKind { DINGTALK, WECOM, BARK, EMAIL, WEBHOOK }
+/**
+ * A channel as the console sees it: [target] says where it sends without giving away a secret, and [filled] names
+ * the secret fields that are set; their values never leave the server.
+ */
+@Serializable data class ChannelView(val id: String, val kind: ChannelKind, val name: String, val enabled: Boolean, val rules: List<String>,
+    val target: String, val filled: List<String> = emptyList(), val fields: Map<String, String> = emptyMap(), val last: DeliveryView? = null)
+/**
+ * Creates or changes a channel. [fields] holds its settings by field id; a secret field left blank on a change keeps
+ * the value already saved, unless it is named in [clear] or the channel's address changed.
+ */
+@Serializable data class ChannelSave(val kind: ChannelKind, val name: String, val enabled: Boolean = true, val rules: List<String> = emptyList(),
+    val fields: Map<String, String> = emptyMap(), val clear: List<String> = emptyList())
+/** Sends a test message with the draft [save], filling blank secrets from channel [id] when it is an edit. */
+@Serializable data class ChannelTest(val id: String? = null, val save: ChannelSave)
+@Serializable data class ChannelTestResult(val ok: Boolean, val message: String)
+@Serializable enum class DeliveryState { PENDING, SENT, FAILED }
+/** One notice's sending to one channel, or a test. [attempts] counts sends tried; [nextAt] is when a pending one is tried. */
+@Serializable data class DeliveryView(val id: String, val channelId: String?, val channelName: String, val state: DeliveryState, val attempts: Int,
+    val at: Long, val nextAt: Long? = null, val error: String = "", val test: Boolean = false)

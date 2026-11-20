@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { api, enc } from "../../api/client";
-import type { EventRule, Notice, PlanOutcome } from "../../api/types";
+import type { Channel, EventRule, Notice, PlanOutcome } from "../../api/types";
 import { Button, Card, Empty, Grow, Muted, PageHeader, PageTabs, Pill, Row, Switch } from "../../components/ui";
 import { orAlert } from "../../components/useAction";
 import { shortTime, type Tone } from "../../format";
 import { Link, paths, useQuery } from "../../router";
 import { useConsole } from "../../state/context";
+import { Channels as ChannelList, DeliveryPill } from "./Channels";
 import s from "./Notices.module.css";
 
 /** Rules grouped as the design shows them; a rule the server adds later falls into 其他 until it is placed here. */
@@ -85,7 +86,13 @@ function Log() {
             <div className={s.body}>
               <div className={s.titleLine}><Pill tone={TONES[item.ruleId] ?? ""}>{item.ruleName}</Pill><b>{item.title}</b></div>
               {item.detail && <Muted as="span">{item.detail}</Muted>}
-              <Muted as="span" className={s.delivery}>没有渠道订阅这条规则</Muted>
+              <div className={s.deliveries}>
+                {item.deliveries.length ? item.deliveries.map((delivery) => (
+                  <span key={delivery.id} className={s.deliveryLine}><DeliveryPill delivery={delivery} />
+                    {delivery.state === "FAILED" && delivery.channelId && <Button small onClick={() => orAlert(() => api(`/api/notifications/deliveries/${enc(delivery.id)}/retry`, { method: "POST", body: {} }))}>重发</Button>}
+                  </span>
+                )) : <Muted as="span" className={s.delivery}>没有渠道订阅这条规则</Muted>}
+              </div>
             </div>
             {item.jobId && <Link to={paths.job(item.jobId)} className={s.open}>运行记录</Link>}
           </article>
@@ -169,11 +176,11 @@ function RuleRow({ rule }: { rule: EventRule }) {
   );
 }
 
-/** The channels arrive with the next step; until then every notice is kept here and nothing is sent. */
+/** The channels, with the rules they can subscribe to. */
 function Channels() {
-  return (
-    <Card>
-      <Empty>渠道在下一步接入：钉钉、企业微信、Bark、邮件、Webhook，以及推给 App 的本机通知。接入前事件只记在“事件记录”里，不会发出去。</Empty>
-    </Card>
-  );
+  const [channels, error] = useNotices<Channel[]>("/api/notifications/channels");
+  const [rules] = useNotices<EventRule[]>("/api/notifications/rules");
+  if (error) return <Card><Empty>{error}</Empty></Card>;
+  if (!channels || !rules) return null;
+  return <ChannelList channels={channels} rules={rules} />;
 }

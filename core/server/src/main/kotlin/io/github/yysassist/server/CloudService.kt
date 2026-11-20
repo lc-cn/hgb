@@ -22,7 +22,8 @@ data class IssuedSession(val userId: String, val email: String?, val accessToken
 
 /** All business rules. Every query that reads user data is scoped by the caller's user id. */
 class CloudService(private val db: Database, private val mailer: Mailer, val github: GitHubIdentity, private val secret: ByteArray,
-    private val clock: () -> Long = System::currentTimeMillis, val events: ConsoleEvents = ConsoleEvents(), val sockets: DeviceSockets = DeviceSockets()) {
+    private val clock: () -> Long = System::currentTimeMillis, val events: ConsoleEvents = ConsoleEvents(), val sockets: DeviceSockets = DeviceSockets(),
+    channelHttp: ChannelHttp = OkChannelHttp()) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val tasks = ListSerializer(CloudTask.serializer())
     private val apps = ListSerializer(AppStatus.serializer())
@@ -31,7 +32,9 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
     private val badCredentials get() = ApiException(401, "invalid_credentials", "邮箱或密码不正确")
     private val badCode get() = ApiException(401, "invalid_code", "验证码不正确或已过期")
     /** Event rules and the notices they record. */
-    val notices = Notices(db, clock, events) { sockets.isOnline(it) }
+    /** Where notices are sent, and their sending. */
+    val channels = Channels(db, clock, events, mailer, secret, channelHttp)
+    val notices = Notices(db, clock, events, channels) { sockets.isOnline(it) }
 
     private fun email(value: String): String = value.trim().lowercase().takeIf { it.length in 3..254 && EMAIL.matches(it) }
         ?: throw ApiException(400, "invalid_email", "邮箱格式不正确")

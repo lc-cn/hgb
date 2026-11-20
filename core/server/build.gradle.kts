@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.ktor.serialization.json)
     implementation(libs.sqlite.jdbc)
     implementation(libs.bouncycastle)
+    implementation(libs.okhttp)
     runtimeOnly(libs.slf4j.simple)
     testImplementation(libs.junit)
     testImplementation(libs.ktor.server.test.host)

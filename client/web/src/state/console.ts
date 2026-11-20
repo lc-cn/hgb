@@ -76,6 +76,7 @@ export function useConsoleStream(signedOut: () => void): { data: ConsoleData; co
       current.addEventListener("job-log", (event) => dispatch({ type: "job-log", id: json(event).id }));
       current.addEventListener("notice", () => dispatch({ type: "notices" }));
       current.addEventListener("rules", () => dispatch({ type: "notices" }));
+      current.addEventListener("delivery", () => dispatch({ type: "notices" }));
       current.onopen = () => setConnection("live");
       current.onerror = async () => {
         setConnection("lost");

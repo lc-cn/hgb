@@ -49,7 +49,7 @@ private suspend fun ApplicationCall.respondSession(config: ServerConfig, session
 
 @OptIn(ExperimentalSerializationApi::class)
 fun Application.cloudModule(service: CloudService, config: ServerConfig) {
-    install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true; explicitNulls = false }) }
+    install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true; explicitNulls = false; encodeDefaults = true }) }
     install(StatusPages) {
         exception<ApiException> { call, error -> call.respond(HttpStatusCode.fromValue(error.status), ApiError(error.code, error.message)) }
         exception<MailUnavailable> { call, error -> call.respond(HttpStatusCode.ServiceUnavailable, ApiError("mail_unavailable", error.message ?: "发信服务未配置")) }
@@ -58,6 +58,8 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
     install(WebSockets) { pingPeriod = 20.seconds; timeout = 45.seconds; maxFrameSize = MAX_DEVICE_FRAME }
     // Plans fire, waiting jobs find apps, and leases of silent devices settle on this beat, even when no request comes in.
     launch { while (isActive) { delay(TICK_MILLIS); runCatching { service.tick() } } }
+    // Notices go out on their own loop, off the request threads, so a slow channel never holds up a tick or a request.
+    launch(kotlinx.coroutines.Dispatchers.IO) { while (isActive) { delay(DELIVERY_MILLIS); runCatching { service.channels.deliverDue() } } }
     intercept(ApplicationCallPipeline.Plugins) {
         call.response.headers.append("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
         call.response.headers.append("X-Content-Type-Options", "nosniff")
@@ -106,6 +108,16 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
                 val caller = call.caller(service)
                 call.respond(service.notices.save(caller.userId, call.parameters.getOrFail("ruleId"), call.receive()))
             }
+            get("/channels") { call.respond(service.channels.list(call.caller(service).userId)) }
+            post("/channels") { call.respond(HttpStatusCode.Created, service.channels.create(call.caller(service).userId, call.receive())) }
+            // A test waits for the other side (up to 15 seconds), so it runs off the request threads.
+            post("/channels/test") {
+                val caller = call.caller(service); val test = call.receive<ChannelTest>()
+                call.respond(kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { service.channels.test(caller.userId, test) })
+            }
+            put("/channels/{id}") { call.respond(service.channels.change(call.caller(service).userId, call.parameters.getOrFail("id"), call.receive())) }
+            delete("/channels/{id}") { service.channels.delete(call.caller(service).userId, call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
+            post("/deliveries/{id}/retry") { service.channels.retry(call.caller(service).userId, call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
             get("/events") {
                 val caller = call.caller(service)
                 val query = call.request.queryParameters
@@ -254,6 +266,7 @@ private suspend fun consoleStream(call: ApplicationCall, service: CloudService) 
 
 /** Plans fire and waiting jobs are assigned on this beat. */
 private const val TICK_MILLIS = 5_000L
+private const val DELIVERY_MILLIS = 2_000L
 private const val KEEPALIVE_MILLIS = 15_000L
 private const val SESSION_RECHECK_MILLIS = 60_000L
 private const val MAX_FRAMES_PER_SECOND = 5

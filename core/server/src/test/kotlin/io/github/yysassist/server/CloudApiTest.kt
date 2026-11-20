@@ -21,6 +21,9 @@ class CloudApiTest {
     private val json = Json { ignoreUnknownKeys = true; explicitNulls = false }
     private var now = 1_000_000L
     private val mail = mutableListOf<Triple<String, String, String>>()
+    /** What channels posted, and what the network answers them. */
+    private val posts = mutableListOf<Triple<String, Map<String, String>, String>>()
+    private var answer: (String) -> Pair<Int, String> = { 200 to """{"errcode":0,"code":200}""" }
     private fun lastCode(to: String) = Regex("\\d{6}").find(mail.last { it.first == to }.third)!!.value
     private val github = object : GitHubIdentity {
         override val clientId = "client"
@@ -37,7 +40,8 @@ class CloudApiTest {
     private fun api(block: suspend Api.() -> Unit) {
         val file = File.createTempFile("cloud", ".db")
         val db = Database(file.path)
-        val service = CloudService(db, { to, subject, body -> mail += Triple(to, subject, body) }, github, ByteArray(32) { 7 }, { now })
+        val service = CloudService(db, { to, subject, body -> mail += Triple(to, subject, body) }, github, ByteArray(32) { 7 }, { now },
+            channelHttp = { url, headers, body -> posts += Triple(url, headers, body); answer(url) })
         try { testApplication { application { cloudModule(service, ServerConfig("http://localhost", false)) }; Api(this, service).block() } }
         finally { db.close(); file.delete() }
     }
@@ -736,5 +740,89 @@ class CloudApiTest {
         job(token, device.deviceId); val lease = lease(token); report(token, lease, JobState.RUNNING)
         call(HttpMethod.Post, "/api/device/jobs/${lease.jobId}/report", """{"leaseNo":${lease.leaseNo},"state":"COMPLETED","restoreIssue":"没能切回「主号」"}""", token)
         assertEquals("没能切回「主号」", notices(token).single().detail)
+    }
+
+    private suspend fun Api.channel(token: String, body: String) = call(HttpMethod.Post, "/api/notifications/channels", body, token)
+    private suspend fun Api.channels(token: String) =
+        json.decodeFromString(ListSerializer(ChannelView.serializer()), call(HttpMethod.Get, "/api/notifications/channels", token = token).bodyAsText())
+    private val hook = """{"kind":"WEBHOOK","name":"家里","rules":["task-succeeded"],"fields":{"url":"https://hooks.example.test/in?token=abc123","header":"Authorization: Bearer s3cret"}}"""
+
+    @Test fun aChannelsSecretsAreNeverSentBack() = api {
+        val token = signUp("a@example.com").accessToken!!
+        assertEquals(HttpStatusCode.Created, channel(token, hook).status)
+        val listed = call(HttpMethod.Get, "/api/notifications/channels", token = token).bodyAsText()
+        assertFalse(listed.contains("abc123")); assertFalse(listed.contains("s3cret"))
+        val saved = channels(token).single()
+        assertEquals(listOf("header", "url"), saved.filled); assertEquals("hooks.example.test · 带认证头", saved.target)
+        assertEquals(HttpStatusCode.BadRequest, channel(token, """{"kind":"DINGTALK","name":"群","fields":{"url":"https://evil.example.test/robot"}}""").status)
+        assertEquals(HttpStatusCode.BadRequest, channel(token, """{"kind":"WEBHOOK","name":"坏","fields":{"url":"https://a.test","header":"Host: x"}}""").status)
+    }
+    @Test fun aNoticeGoesToSubscribedChannelsIsRetriedAndThenLeftFailedUntilSentAgain() = api {
+        val token = signUp("a@example.com").accessToken!!; val device = enroll(token)
+        call(HttpMethod.Put, "/api/notifications/rules/task-succeeded", """{"enabled":true}""", token)
+        channel(token, hook)
+        channel(token, """{"kind":"WEBHOOK","name":"没订阅","rules":["task-started"],"fields":{"url":"https://other.example.test/"}}""")
+        channel(token, """{"kind":"WEBHOOK","name":"停用","enabled":false,"rules":["task-succeeded"],"fields":{"url":"https://off.example.test/"}}""")
+        answer = { 500 to "busy" }
+        now += 1_000
+        job(token, device.deviceId); val lease = lease(token); report(token, lease, JobState.RUNNING); report(token, lease, JobState.COMPLETED)
+        for (wait in listOf(0L, 1L, 5L, 15L)) { now += wait * CloudService.MINUTE; service.channels.deliverDue() }
+        assertEquals(4, posts.size); assertTrue(posts.all { it.first.startsWith("https://hooks.example.test/") })
+        assertEquals("Bearer s3cret", posts.first().second["Authorization"]); assertTrue(posts.first().third.contains("\"rule\":\"task-succeeded\""))
+        val failed = notices(token).single().deliveries.single()
+        assertEquals(DeliveryState.FAILED to 4, failed.state to failed.attempts); assertTrue(failed.error.contains("500"))
+        // Nothing more is tried on its own.
+        service.channels.deliverDue(); assertEquals(4, posts.size)
+        answer = { 200 to "ok" }
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Post, "/api/notifications/deliveries/${failed.id}/retry", "{}", token).status)
+        service.channels.deliverDue()
+        assertEquals(DeliveryState.SENT, notices(token).single().deliveries.single().state)
+    }
+    @Test fun dingTalkMessagesAreSignedAndARefusalInTheReplyIsAFailure() = api {
+        val token = signUp("a@example.com").accessToken!!
+        answer = { 200 to """{"errcode":310000,"errmsg":"sign not match"}""" }
+        val result = json.decodeFromString(ChannelTestResult.serializer(), call(HttpMethod.Post, "/api/notifications/channels/test",
+            """{"save":{"kind":"DINGTALK","name":"群","fields":{"url":"https://oapi.dingtalk.com/robot/send?access_token=t","sign":"SECabc"}}}""", token).bodyAsText())
+        assertFalse(result.ok); assertTrue(result.message.contains("sign not match"))
+        assertTrue(posts.single().first.contains("&timestamp=") && posts.single().first.contains("&sign="))
+        assertTrue(posts.single().third.contains("【护肝宝】测试消息"))
+        // A test is not a notice and saves nothing.
+        assertTrue(notices(token).isEmpty()); assertTrue(channels(token).isEmpty())
+    }
+    @Test fun aTestOfAnEditedChannelUsesTheSavedSecretWhenTheFieldIsLeftBlank() = api {
+        val token = signUp("a@example.com").accessToken!!
+        val id = json.decodeFromString(ChannelView.serializer(), channel(token, """{"kind":"BARK","name":"手机","fields":{"key":"devkey1"}}""").bodyAsText()).id
+        call(HttpMethod.Post, "/api/notifications/channels/test", """{"id":"$id","save":{"kind":"BARK","name":"手机","fields":{"key":""}}}""", token)
+        assertEquals("https://api.day.app/push", posts.single().first); assertTrue(posts.single().third.contains("devkey1"))
+        // Changing the kind never carries a secret over.
+        assertEquals(HttpStatusCode.BadRequest, call(HttpMethod.Put, "/api/notifications/channels/$id", """{"kind":"WEBHOOK","name":"手机","fields":{}}""", token).status)
+    }
+    @Test fun aSavedSecretIsNeverSentToANewAddressAndCanBeCleared() = api {
+        val token = signUp("a@example.com").accessToken!!
+        val id = json.decodeFromString(ChannelView.serializer(), channel(token, hook).bodyAsText()).id
+        // The address changes, the header is left blank: it is not carried to the new address.
+        call(HttpMethod.Put, "/api/notifications/channels/$id", """{"kind":"WEBHOOK","name":"家里","fields":{"url":"https://elsewhere.example.test/","header":""}}""", token)
+        assertEquals(listOf("url"), channels(token).single().filled)
+        call(HttpMethod.Post, "/api/notifications/channels/test", """{"id":"$id","save":{"kind":"WEBHOOK","name":"家里","fields":{"url":"","header":""}}}""", token)
+        assertEquals(null, posts.single().second["Authorization"])
+        // An optional secret can be removed on purpose.
+        val ding = json.decodeFromString(ChannelView.serializer(), channel(token,
+            """{"kind":"DINGTALK","name":"群","fields":{"url":"https://oapi.dingtalk.com/robot/send?access_token=t","sign":"SECabc"}}""").bodyAsText()).id
+        call(HttpMethod.Put, "/api/notifications/channels/$ding", """{"kind":"DINGTALK","name":"群","fields":{"url":"","sign":""},"clear":["sign"]}""", token)
+        assertEquals(listOf("url"), channels(token).single { it.id == ding }.filled)
+    }
+    @Test fun mailGoesOnlyToTheAccountsVerifiedAddress() = api {
+        val token = signUp("a@example.com").accessToken!!
+        channel(token, """{"kind":"EMAIL","name":"邮箱"}""")
+        assertEquals("a@example.com", channels(token).single().target)
+        mail.clear()
+        call(HttpMethod.Post, "/api/notifications/channels/test", """{"save":{"kind":"EMAIL","name":"邮箱"}}""", token)
+        assertEquals("a@example.com", mail.single().first); assertTrue(mail.single().second.contains("测试消息"))
+        assertEquals(HttpStatusCode.Conflict, channel(token, """{"kind":"EMAIL","name":"又一个"}""").status)
+    }
+    @Test fun channelsNeverPostInsideThePrivateNetwork() {
+        for (address in listOf("http://127.0.0.1:8787/x", "http://localhost/x", "http://10.0.0.8/x", "http://192.168.1.2/x", "http://169.254.169.254/latest", "ftp://a.test/",
+                "http://100.64.0.1/", "http://198.18.0.1/", "http://[fd00::1]/", "http://[::7f00:1]/", "http://[64:ff9b::7f00:1]/", "http://0.0.0.0/"))
+            assertThrows(ChannelFailure::class.java) { Channels.publicAddress(address, allowPrivate = false) }
     }
 }

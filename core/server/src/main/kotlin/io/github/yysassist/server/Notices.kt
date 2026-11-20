@@ -33,7 +33,8 @@ internal object RuleCatalog {
  * conditions (waiting, offline) are checked on every tick. A notice is recorded once per occurrence, whether or not
  * anything is subscribed to it, and a rule turned on later never reports what came before.
  */
-class Notices(private val db: Database, private val clock: () -> Long, private val events: ConsoleEvents, private val online: (String) -> Boolean) {
+class Notices(private val db: Database, private val clock: () -> Long, private val events: ConsoleEvents, private val channels: Channels,
+    private val online: (String) -> Boolean) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val outcomes = ListSerializer(PlanOutcome.serializer())
     /** Devices are not judged offline for the time before the server came up: they could not have been connected then. */
@@ -88,6 +89,7 @@ class Notices(private val db: Database, private val clock: () -> Long, private v
         query("""SELECT id, rule_id, at, title, detail, job_id, device_id, account_id, plan_id FROM notices WHERE user_id = ? AND (? IS NULL OR rule_id = ?)
             AND (? IS NULL OR at < ? OR (at = ? AND id > ?)) ORDER BY at DESC, id LIMIT ?""",
             userId, ruleId, ruleId, at, at, at, id, limit.coerceIn(1, 200)) { notice(it) }
+            .map { notice -> notice.copy(deliveries = with(channels) { deliveriesOf(notice.id) }) }
     }
     private fun notice(row: java.sql.ResultSet): NoticeView {
         val ruleId = row.getString(2)
@@ -240,6 +242,8 @@ class Notices(private val db: Database, private val clock: () -> Long, private v
         val id = UUID.randomUUID().toString()
         if (update("""INSERT OR IGNORE INTO notices (id, user_id, rule_id, key, at, title, detail, job_id, device_id, account_id, plan_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", id, userId, ruleId, key.take(200), at, title.take(200), detail.take(500), jobId, deviceId, accountId, planId) == 0) return null
+        // Each channel subscribed to the rule gets the notice; sending happens apart, on the channels' own loop.
+        with(channels) { enqueue(userId, id, ruleId, title, at) }
         update("""DELETE FROM notices WHERE user_id = ? AND id NOT IN (SELECT id FROM notices WHERE user_id = ? ORDER BY at DESC, id LIMIT $KEPT)""", userId, userId)
         return single("SELECT id, rule_id, at, title, detail, job_id, device_id, account_id, plan_id FROM notices WHERE id = ?", id) { notice(it) }
     }

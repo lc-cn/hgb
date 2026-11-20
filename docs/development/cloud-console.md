@@ -51,7 +51,7 @@ YYS_SECRET="$(openssl rand -base64 48)" YYS_MAIL_MODE=console YYS_SECURE_COOKIES
 pnpm --dir client/web dev
 ```
 
-打开 <http://127.0.0.1:5173/console/>（控制台挂在 `/console` 下，`/` 和 `/docs` 留给首页和文档站）。Vite 把 `/api` 转发到 `http://127.0.0.1:8787`（可用环境变量 `YYS_API` 改），页面和接口同源，会话 cookie 照常生效。本地用 GitHub 登录时，`YYS_PUBLIC_URL` 设为网页地址（`http://127.0.0.1:5173`），回调经 Vite 转发。`YYS_MAIL_MODE=console` 会把验证码打印到服务端控制台，只能用于本地开发。
+打开 <http://127.0.0.1:5173/console/>（控制台挂在 `/console` 下，`/` 和 `/docs` 留给首页和文档站）。Vite 把 `/api` 转发到 `http://127.0.0.1:8787`（可用环境变量 `YYS_API` 改），页面和接口同源，会话 cookie 照常生效。本地用 GitHub 登录时，`YYS_PUBLIC_URL` 设为网页地址（`http://127.0.0.1:5173`），回调经 Vite 转发。`YYS_MAIL_MODE=console` 会把验证码打印到服务端控制台，只能用于本地开发。通知渠道默认不能发到本机或内网地址；本地用一个本机接收器测试 Webhook 时，加上 `YYS_CHANNELS_PRIVATE=allow`。
 
 网页构建：`pnpm --dir client/web build`，产物在 `client/web/dist`。上线时放到 CDN 或对象存储的 `/console/` 下，并在同一个域名下把 `/api` 路由到服务端（设计文档 C34、C42）。`/console/` 下的任何地址都要回退到 `/console/index.html`，否则直接打开或刷新深层地址会 404。
 

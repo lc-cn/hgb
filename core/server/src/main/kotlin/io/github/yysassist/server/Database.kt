@@ -96,6 +96,18 @@ class Database(path: String) : AutoCloseable {
                 key TEXT NOT NULL, at INTEGER NOT NULL, title TEXT NOT NULL, detail TEXT NOT NULL, job_id TEXT, device_id TEXT, account_id TEXT, plan_id TEXT,
                 UNIQUE (user_id, key))""",
             "CREATE INDEX IF NOT EXISTS notices_by_user ON notices (user_id, at)",
+            // Where notices are sent. secrets is the channel's secret fields, encrypted with a key only the server holds.
+            """CREATE TABLE IF NOT EXISTS channels (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, kind TEXT NOT NULL,
+                name TEXT NOT NULL, enabled INTEGER NOT NULL, rules_json TEXT NOT NULL, config_json TEXT NOT NULL, secrets BLOB, created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL)""",
+            // One notice's sending to one channel; notice_id is null for a test. A pending one is tried at next_at.
+            """CREATE TABLE IF NOT EXISTS deliveries (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                notice_id TEXT REFERENCES notices(id) ON DELETE CASCADE, channel_id TEXT REFERENCES channels(id) ON DELETE SET NULL, channel_name TEXT NOT NULL,
+                state TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, next_at INTEGER, error TEXT NOT NULL DEFAULT '', test INTEGER NOT NULL DEFAULT 0,
+                title TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)""",
+            "CREATE INDEX IF NOT EXISTS deliveries_due ON deliveries (state, next_at)",
+            "CREATE INDEX IF NOT EXISTS deliveries_by_notice ON deliveries (notice_id)",
+            "CREATE INDEX IF NOT EXISTS deliveries_by_channel ON deliveries (channel_id, created_at)",
             // A job's run log, sent by the device while it runs. key is the device's own record name, so resends are stored once.
             """CREATE TABLE IF NOT EXISTS job_events (job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE, key TEXT NOT NULL, at INTEGER NOT NULL,
                 kind TEXT NOT NULL, step TEXT NOT NULL, action TEXT NOT NULL, detail TEXT NOT NULL, elapsed_ms INTEGER NOT NULL, PRIMARY KEY (job_id, key))""",
