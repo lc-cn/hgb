@@ -42,11 +42,12 @@ VITE_API_ORIGIN=https://api-hgb.l2cl.link bash scripts/build-sites.sh
 
 | 位置 | 用途 |
 | --- | --- |
-| `/opt/hgb/releases/<日期-提交-说明>/` | 每次发布一个目录，内容是 `server.tar` 解开后的 `bin`、`lib` |
+| `/opt/hgb/releases/<提交号>-<运行编号>-<重试次数>/` | 每次发布一个目录，内容是打包文件里的 `bin`、`lib` 和 `release.json`（文件摘要） |
 | `/opt/hgb/server` | 软链接，指向正在用的发布目录；回滚就是把它指回上一个 |
 | `/etc/hgb/server.env` | 环境变量（root，权限 600，不进仓库） |
 | `/var/lib/hgb/hgb.db` | 全部数据，一个 SQLite 文件 |
-| 系统用户 `hgb` | 运行服务；`hgb-deploy` 预留给以后的自动发布 |
+| 系统用户 `hgb`、`hgb-deploy` | `hgb` 运行服务；`hgb-deploy` 只供 GitHub Actions 发布用 |
+| `/var/backups/hgb/<发布标识>/` | 每次发布前的数据库快照和发布记录 |
 
 `/etc/hgb/server.env`：
 
@@ -72,17 +73,13 @@ GITHUB_CLIENT_SECRET=<GitHub App 的 Client secret>
 
 ### 发布一个新版本
 
-```bash
-./gradlew :core:server:distTar
-```
+推送到 master 且改到服务端（`core/`、Gradle 配置）时，GitHub Actions 的“Deploy server”工作流（`.github/workflows/deploy-server.yml`）会自动跑测试、打包并部署；也可以在 GitHub 的 Actions 页面手动运行。
 
-```bash
-REL=$(date +%Y%m%d)-$(git rev-parse --short HEAD)
-scp core/server/build/distributions/server.tar ubuntu@213.35.99.41:/tmp/hgb-server.tar
-ssh ubuntu@213.35.99.41 "sudo mkdir -p /opt/hgb/releases/$REL && sudo tar -xf /tmp/hgb-server.tar -C /opt/hgb/releases/$REL --strip-components=1 && sudo ln -sfn /opt/hgb/releases/$REL /opt/hgb/server && sudo systemctl restart hgb && rm /tmp/hgb-server.tar"
-```
+1. 工作流用仓库 Secret `HGB_DEPLOY_SSH_KEY`（专用部署密钥）和 `HGB_DEPLOY_KNOWN_HOSTS`（主机指纹），以 `hgb-deploy` 身份连到变量 `HGB_DEPLOY_HOST` 指的主机，发送 `deploy <提交号>-<运行编号>-<重试次数>`，把 gzip 压缩的打包文件从标准输入传过去。
+2. 主机上 `hgb-deploy` 的密钥被限定只能执行 `/usr/local/libexec/hgb-receive`：它只接受顶层是 `server/` 的普通文件，解到 `/opt/hgb/releases/<发布标识>/`，记下每个文件的摘要，再调用 `sudo /usr/local/sbin/hgb-activate`（sudoers 只允许这一个命令）。
+3. `hgb-activate` 停服务，把数据库快照到 `/var/backups/hgb/<发布标识>/`，切换 `/opt/hgb/server`，启动后检查 `/api/me` 返回未登录；不健康就恢复数据库快照、切回原来的版本并让工作流失败。
 
-数据库表结构由服务端启动时自己建好；发布前没有正式用户，不做迁移（改了表结构就清库重来）。
+同一个发布标识不能重复部署；要重试就在 GitHub 上重新运行（重试次数会变）。主机和密钥的准备都已完成，换主机或换密钥时才需要重新设置这几个 Secret。
 
 ### systemd
 

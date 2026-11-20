@@ -1,0 +1,58 @@
+# Builds the server and ships it to the host (docs/development/deploy.md). The host accepts only
+# `deploy <commit>-<run>-<attempt>` with a gzipped Gradle distribution on stdin (/usr/local/libexec/hgb-receive),
+# then /usr/local/sbin/hgb-activate snapshots the database, switches the release and rolls back if it is not healthy.
+name: Deploy server
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - core/**
+      - gradle/**
+      - build.gradle.kts
+      - settings.gradle.kts
+      - gradle.properties
+      - .github/workflows/deploy-server.yml
+  workflow_dispatch:
+
+# One deployment at a time; a newer push waits rather than cancelling one half done.
+concurrency:
+  group: deploy-server
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Test and package the server
+        run: ./gradlew --no-daemon :core:protocol:test :core:engine:test :core:server:test :core:server:distTar
+
+      - name: Compress the package
+        # hgb-receive reads a gzipped tar whose top directory is server/.
+        run: gzip -c core/server/build/distributions/server.tar > server.tgz
+
+      - name: Ship and activate
+        env:
+          SSH_KEY: ${{ secrets.HGB_DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.HGB_DEPLOY_KNOWN_HOSTS }}
+          HOST: ${{ vars.HGB_DEPLOY_HOST }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
+            "hgb-deploy@$HOST" "deploy ${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" < server.tgz
+          rm -f ~/.ssh/deploy
