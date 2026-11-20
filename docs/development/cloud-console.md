@@ -53,7 +53,7 @@ pnpm --dir client/web dev
 
 打开 <http://127.0.0.1:5173/console/>（控制台挂在 `/console` 下，`/` 和 `/docs` 留给首页和文档站）。Vite 把 `/api` 转发到 `http://127.0.0.1:8787`（可用环境变量 `YYS_API` 改），页面和接口同源，会话 cookie 照常生效。本地用 GitHub 登录时，`YYS_PUBLIC_URL` 设为网页地址（`http://127.0.0.1:5173`），回调经 Vite 转发。`YYS_MAIL_MODE=console` 会把验证码打印到服务端控制台，只能用于本地开发。通知渠道默认不能发到本机或内网地址；本地用一个本机接收器测试 Webhook 时，加上 `YYS_CHANNELS_PRIVATE=allow`。
 
-网页构建：`pnpm --dir client/web build`，产物在 `client/web/dist`。上线时放到 CDN 或对象存储的 `/console/` 下，并在同一个域名下把 `/api` 路由到服务端（设计文档 C34、C42）。`/console/` 下的任何地址都要回退到 `/console/index.html`，否则直接打开或刷新深层地址会 404。
+网页构建：`pnpm --dir client/web build`，产物在 `client/web/dist`。接口在另一个主机时，构建时设 `VITE_API_ORIGIN`（如 `https://api-hgb.l2cl.link`）。线上部署见[部署](deploy.md)。上线时放到 CDN 或对象存储的 `/console/` 下，并在同一个域名下把 `/api` 路由到服务端（设计文档 C34、C42）。`/console/` 下的任何地址都要回退到 `/console/index.html`，否则直接打开或刷新深层地址会 404。
 
 模拟器里的调试版 App 用 `http://10.0.2.2:8787` 连接本机服务。正式版只接受 https 地址。
 
@@ -68,6 +68,9 @@ pnpm --dir client/web dev
 | `YYS_SECURE_COOKIES` | 否 | 只有本地 http 调试时才设为 `false` |
 | `YYS_MAIL_MODE` | 否 | `console` 仅用于本地开发 |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | 否 | 不配置时 GitHub 登录不可用 |
+| `YYS_CONSOLE_URL` | 否 | 控制台地址，GitHub 登录完成后跳回这里；默认 `/console/`（同域名） |
+| `YYS_ALLOWED_ORIGINS` | 否 | 控制台和接口不在同一个主机时，填控制台的来源（如 `https://hgb.l2cl.link`），逗号分隔；只有这些来源能带 cookie 跨域调用 |
+| `YYS_CHANNELS_PRIVATE` | 否 | `allow` 时通知渠道可以发往本机和内网，仅限本地开发 |
 
 ## 首页和文档站
 

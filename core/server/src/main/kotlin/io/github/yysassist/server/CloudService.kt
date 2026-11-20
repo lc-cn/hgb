@@ -129,13 +129,14 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
             zoneOf(caller.userId))
     }
 
-    fun githubStart(redirectUri: String, linkUser: String?): String {
+    /** The GitHub address to send the browser to, and the state the browser must bring back (see the route). */
+    fun githubStart(redirectUri: String, linkUser: String?): Pair<String, String> {
         val clientId = github.clientId ?: throw ApiException(503, "github_unavailable", "GitHub 登录未配置")
         val state = Secrets.token(); val verifier = Secrets.token()
         db.tx { update("DELETE FROM oauth_states WHERE expires_at < ?", clock())
             update("INSERT INTO oauth_states (state, verifier, link_user, expires_at) VALUES (?, ?, ?, ?)", state, verifier, linkUser, clock() + CODE_LIFETIME) }
         fun e(v: String) = java.net.URLEncoder.encode(v, Charsets.UTF_8)
-        return "https://github.com/login/oauth/authorize?client_id=${e(clientId)}&redirect_uri=${e(redirectUri)}&state=${e(state)}&code_challenge=${e(Secrets.challenge(verifier))}&code_challenge_method=S256"
+        return "https://github.com/login/oauth/authorize?client_id=${e(clientId)}&redirect_uri=${e(redirectUri)}&state=${e(state)}&code_challenge=${e(Secrets.challenge(verifier))}&code_challenge_method=S256" to state
     }
     fun githubCallback(code: String, state: String, redirectUri: String): IssuedSession? {
         val saved = db.tx { val row = single("SELECT verifier, link_user, expires_at FROM oauth_states WHERE state = ?", state) { Triple(it.getString(1), it.getString(2), it.getLong(3)) }

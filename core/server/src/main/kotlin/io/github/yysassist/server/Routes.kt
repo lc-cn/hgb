@@ -25,19 +25,32 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 
-data class ServerConfig(val publicUrl: String, val secureCookies: Boolean)
+/**
+ * [publicUrl] is where this server is reached (GitHub calls back there); [consoleUrl] is where the console is, to
+ * return to after signing in with GitHub; [allowedOrigins] are the sites (the console on another host of the same
+ * site) whose pages may call this API with the session cookie.
+ */
+data class ServerConfig(val publicUrl: String, val secureCookies: Boolean, val consoleUrl: String = "/console/", val allowedOrigins: Set<String> = emptySet())
 private const val COOKIE = "yys_session"
+private const val OAUTH_COOKIE = "yys_oauth"
 private const val CSRF_HEADER = "X-YYS-Request"
 private const val DEVICE_HEADER = "X-YYS-Client"
 
 private fun ApplicationCall.sessionKind() = if (request.headers[DEVICE_HEADER] == "device") SessionKind.DEVICE else SessionKind.WEB
 
-/** Cookie sessions must carry a header other sites cannot set, which stops cross-site form posts. */
-private fun ApplicationCall.caller(service: CloudService): Caller {
+/**
+ * Cookie sessions must carry a header other sites cannot set, which stops cross-site form posts; and a write from a
+ * page must come from this server's own origin or an allowed one.
+ */
+private fun ApplicationCall.caller(service: CloudService, config: ServerConfig? = null): Caller {
     val bearer = request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ")?.takeIf { it != request.headers[HttpHeaders.Authorization] }
     val token = bearer ?: request.cookies[COOKIE]
     val caller = token?.let(service::authenticate) ?: throw ApiException(401, "invalid_session", "请先登录")
-    if (bearer == null && request.httpMethod != HttpMethod.Get && request.headers[CSRF_HEADER] != "1") throw ApiException(403, "csrf", "请求来源无效")
+    if (bearer == null && request.httpMethod != HttpMethod.Get) {
+        if (request.headers[CSRF_HEADER] != "1") throw ApiException(403, "csrf", "请求来源无效")
+        val origin = request.headers[HttpHeaders.Origin]
+        if (config != null && origin != null && origin != originOf(config.publicUrl) && origin !in config.allowedOrigins) throw ApiException(403, "csrf", "请求来源无效")
+    }
     return caller
 }
 private fun ApplicationCall.setSessionCookie(config: ServerConfig, value: String, maxAge: Long) = response.cookies.append(Cookie(COOKIE, value, maxAge = maxAge.toInt(),
@@ -61,6 +74,21 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
     // Notices go out on their own loop, off the request threads, so a slow channel never holds up a tick or a request.
     launch(kotlinx.coroutines.Dispatchers.IO) { while (isActive) { delay(DELIVERY_MILLIS); runCatching { service.channels.deliverDue() } } }
     intercept(ApplicationCallPipeline.Plugins) {
+        // The console may live on another host of the same site (C42 as deployed): only the origins configured may
+        // read answers and send the session cookie; a preflight is answered here.
+        val origin = call.request.headers[HttpHeaders.Origin]
+        // Answers differ by Origin, so a cache in front must keep them apart.
+        call.response.headers.append(HttpHeaders.Vary, HttpHeaders.Origin)
+        if (origin != null && origin in config.allowedOrigins) {
+            call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, origin)
+            call.response.headers.append(HttpHeaders.AccessControlAllowCredentials, "true")
+            if (call.request.httpMethod == HttpMethod.Options) {
+                call.response.headers.append(HttpHeaders.AccessControlAllowMethods, "GET, POST, PUT, DELETE")
+                call.response.headers.append(HttpHeaders.AccessControlAllowHeaders, "Content-Type, $CSRF_HEADER, Last-Event-ID")
+                call.response.headers.append(HttpHeaders.AccessControlMaxAge, "600")
+                call.respond(HttpStatusCode.NoContent); finish(); return@intercept
+            }
+        }
         call.response.headers.append("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
         call.response.headers.append("X-Content-Type-Options", "nosniff")
         call.response.headers.append("Referrer-Policy", "no-referrer")
@@ -77,100 +105,112 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
             post("/password/reset") { service.resetPassword(call.receive()); call.respond(mapOf("ok" to true)) }
             post("/refresh") { call.respondSession(config, service.refresh(call.receive())) }
             post("/github/token") { call.respondSession(config, service.loginWithGitHubToken(call.receive())) }
+            // The state goes back to this browser in a cookie of its own: a GitHub link started by someone else (to sign
+            // a victim in to the attacker's account, or to bind the victim's GitHub to it) has no matching cookie here.
             get("/github/start") {
                 val link = runCatching { call.request.cookies[COOKIE]?.let(service::authenticate)?.userId }.getOrNull()
-                call.respondRedirect(service.githubStart(callback, link.takeIf { call.request.queryParameters["link"] == "1" }))
+                val (address, state) = service.githubStart(callback, link.takeIf { call.request.queryParameters["link"] == "1" })
+                call.response.cookies.append(Cookie(OAUTH_COOKIE, state, maxAge = (CloudService.CODE_LIFETIME / 1000).toInt(), path = "/api/auth/github",
+                    httpOnly = true, secure = config.secureCookies, extensions = mapOf("SameSite" to "Lax")))
+                call.respondRedirect(address)
             }
             get("/github/callback") {
                 val code = call.request.queryParameters["code"]; val state = call.request.queryParameters["state"]
-                val session = if (code != null && state != null) runCatching { service.githubCallback(code, state, callback) }.getOrNull() else null
-                if (session == null) call.respondRedirect("/console/?error=github")
-                else { call.setSessionCookie(config, session.accessToken, CloudService.WEB_LIFETIME / 1000); call.respondRedirect("/console/") }
+                val ours = call.request.cookies[OAUTH_COOKIE]
+                call.response.cookies.append(Cookie(OAUTH_COOKIE, "", maxAge = 0, path = "/api/auth/github"))
+                val session = if (code != null && state != null && ours != null && Secrets.same(ours, state))
+                    runCatching { service.githubCallback(code, state, callback) }.getOrNull() else null
+                if (session == null) call.respondRedirect(withQuery(config.consoleUrl, "error=github"))
+                else { call.setSessionCookie(config, session.accessToken, CloudService.WEB_LIFETIME / 1000); call.respondRedirect(config.consoleUrl) }
             }
-            post("/logout") { service.logout(call.caller(service)); call.response.cookies.append(Cookie(COOKIE, "", maxAge = 0, path = "/")); call.respond(mapOf("ok" to true)) }
-            delete("/github") { service.unlinkGitHub(call.caller(service)); call.respond(mapOf("ok" to true)) }
+            post("/logout") { service.logout(call.caller(service, config)); call.response.cookies.append(Cookie(COOKIE, "", maxAge = 0, path = "/")); call.respond(mapOf("ok" to true)) }
+            delete("/github") { service.unlinkGitHub(call.caller(service, config)); call.respond(mapOf("ok" to true)) }
         }
-        get("/api/me") { call.respond(service.account(call.caller(service))) }
-        get("/api/devices") { call.respond(service.devices(call.caller(service))) }
+        get("/api/me") { call.respond(service.account(call.caller(service, config))) }
+        get("/api/devices") { call.respond(service.devices(call.caller(service, config))) }
         delete("/api/devices/{id}") {
             val id = call.parameters.getOrFail("id")
-            service.revokeDevice(call.caller(service), id); service.sockets.close(id)
+            service.revokeDevice(call.caller(service, config), id); service.sockets.close(id)
             call.respond(mapOf("ok" to true))
         }
-        get("/api/jobs") { call.respond(service.jobs(call.caller(service))) }
-        post("/api/jobs") { call.respond(HttpStatusCode.Created, service.createJob(call.caller(service), call.receive())) }
-        put("/api/me/time-zone") { service.timeZone(call.caller(service), call.receive()); call.respond(mapOf("ok" to true)) }
-        get("/api/games") { call.respond(service.games(call.caller(service))) }
+        get("/api/jobs") { call.respond(service.jobs(call.caller(service, config))) }
+        post("/api/jobs") { call.respond(HttpStatusCode.Created, service.createJob(call.caller(service, config), call.receive())) }
+        put("/api/me/time-zone") { service.timeZone(call.caller(service, config), call.receive()); call.respond(mapOf("ok" to true)) }
+        get("/api/games") { call.respond(service.games(call.caller(service, config))) }
         // Event rules and what they noticed; both belong to the signed-in user, never to a device.
         route("/api/notifications") {
-            get("/rules") { call.respond(service.notices.rules(call.caller(service).userId)) }
+            get("/rules") { call.respond(service.notices.rules(call.caller(service, config).userId)) }
             put("/rules/{ruleId}") {
-                val caller = call.caller(service)
+                val caller = call.caller(service, config)
                 val rules = service.notices.save(caller.userId, call.parameters.getOrFail("ruleId"), call.receive())
                 service.rulesChanged(caller.userId)
                 call.respond(rules)
             }
-            get("/channels") { call.respond(service.channels.list(call.caller(service).userId)) }
-            post("/channels") { call.respond(HttpStatusCode.Created, service.channels.create(call.caller(service).userId, call.receive())) }
+            get("/channels") { call.respond(service.channels.list(call.caller(service, config).userId)) }
+            post("/channels") { call.respond(HttpStatusCode.Created, service.channels.create(call.caller(service, config).userId, call.receive())) }
             // A test waits for the other side (up to 15 seconds), so it runs off the request threads.
             post("/channels/test") {
-                val caller = call.caller(service); val test = call.receive<ChannelTest>()
+                val caller = call.caller(service, config); val test = call.receive<ChannelTest>()
                 call.respond(kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { service.channels.test(caller.userId, test) })
             }
-            put("/channels/{id}") { call.respond(service.channels.change(call.caller(service).userId, call.parameters.getOrFail("id"), call.receive())) }
-            delete("/channels/{id}") { service.channels.delete(call.caller(service).userId, call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
-            post("/deliveries/{id}/retry") { service.channels.retry(call.caller(service).userId, call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
+            put("/channels/{id}") { call.respond(service.channels.change(call.caller(service, config).userId, call.parameters.getOrFail("id"), call.receive())) }
+            delete("/channels/{id}") { service.channels.delete(call.caller(service, config).userId, call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
+            post("/deliveries/{id}/retry") { service.channels.retry(call.caller(service, config).userId, call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
             get("/events") {
-                val caller = call.caller(service)
+                val caller = call.caller(service, config)
                 val query = call.request.queryParameters
                 call.respond(service.notices.list(caller.userId, query["rule"]?.takeIf { it.isNotBlank() }, query["after"]))
             }
         }
         route("/api/accounts") {
-            get { call.respond(service.gameAccounts(call.caller(service))) }
-            post { call.respond(HttpStatusCode.Created, service.createGameAccount(call.caller(service), call.receive())) }
-            put("/{id}") { call.respond(service.updateGameAccount(call.caller(service), call.parameters.getOrFail("id"), call.receive())) }
-            delete("/{id}") { service.deleteGameAccount(call.caller(service), call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
+            get { call.respond(service.gameAccounts(call.caller(service, config))) }
+            post { call.respond(HttpStatusCode.Created, service.createGameAccount(call.caller(service, config), call.receive())) }
+            put("/{id}") { call.respond(service.updateGameAccount(call.caller(service, config), call.parameters.getOrFail("id"), call.receive())) }
+            delete("/{id}") { service.deleteGameAccount(call.caller(service, config), call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
             get("/{id}/configs/{target}/{task}") {
-                call.respond(service.config(call.caller(service), call.parameters.getOrFail("id"), call.parameters.getOrFail("target"), call.parameters.getOrFail("task")))
+                call.respond(service.config(call.caller(service, config), call.parameters.getOrFail("id"), call.parameters.getOrFail("target"), call.parameters.getOrFail("task")))
             }
             put("/{id}/configs/{target}/{task}") {
-                call.respond(service.saveConfig(call.caller(service), call.parameters.getOrFail("id"), call.parameters.getOrFail("target"), call.parameters.getOrFail("task"), call.receive()))
+                call.respond(service.saveConfig(call.caller(service, config), call.parameters.getOrFail("id"), call.parameters.getOrFail("target"), call.parameters.getOrFail("task"), call.receive()))
             }
-            post("/{id}/plans") { call.respond(HttpStatusCode.Created, service.createPlan(call.caller(service), call.parameters.getOrFail("id"), call.receive())) }
+            post("/{id}/plans") { call.respond(HttpStatusCode.Created, service.createPlan(call.caller(service, config), call.parameters.getOrFail("id"), call.receive())) }
         }
-        get("/api/plans") { call.respond(service.plans(call.caller(service))) }
-        post("/api/plans/{id}/run") { service.runPlan(call.caller(service), call.parameters.getOrFail("id")); call.respond(HttpStatusCode.Accepted, mapOf("ok" to true)) }
-        put("/api/plans/{id}") { call.respond(service.updatePlan(call.caller(service), call.parameters.getOrFail("id"), call.receive())) }
-        delete("/api/plans/{id}") { service.deletePlan(call.caller(service), call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
+        get("/api/plans") { call.respond(service.plans(call.caller(service, config))) }
+        post("/api/plans/{id}/run") { service.runPlan(call.caller(service, config), call.parameters.getOrFail("id")); call.respond(HttpStatusCode.Accepted, mapOf("ok" to true)) }
+        put("/api/plans/{id}") { call.respond(service.updatePlan(call.caller(service, config), call.parameters.getOrFail("id"), call.receive())) }
+        delete("/api/plans/{id}") { service.deletePlan(call.caller(service, config), call.parameters.getOrFail("id")); call.respond(mapOf("ok" to true)) }
         put("/api/devices/{id}/apps/{key}") {
-            service.setAppAccounts(call.caller(service), call.parameters.getOrFail("id"), call.parameters.getOrFail("key"), call.receive())
+            service.setAppAccounts(call.caller(service, config), call.parameters.getOrFail("id"), call.parameters.getOrFail("key"), call.receive())
             call.respond(mapOf("ok" to true))
         }
-        get("/api/jobs/{id}/events") { call.respond(service.events(call.caller(service), call.parameters.getOrFail("id"))) }
+        get("/api/jobs/{id}/events") { call.respond(service.events(call.caller(service, config), call.parameters.getOrFail("id"))) }
         post("/api/jobs/{id}/cancel") {
-            service.cancelJob(call.caller(service), call.parameters.getOrFail("id"))?.let { (deviceId, message) -> service.sockets.send(deviceId, service.encode(message)) }
+            service.cancelJob(call.caller(service, config), call.parameters.getOrFail("id"))?.let { (deviceId, message) -> service.sockets.send(deviceId, service.encode(message)) }
             call.respond(mapOf("ok" to true))
         }
         post("/api/jobs/{id}/pause") {
-            val (deviceId, message) = service.pauseJob(call.caller(service), call.parameters.getOrFail("id"), true)
+            val (deviceId, message) = service.pauseJob(call.caller(service, config), call.parameters.getOrFail("id"), true)
             service.sockets.send(deviceId, service.encode(message)); call.respond(mapOf("ok" to true))
         }
         post("/api/jobs/{id}/resume") {
-            val (deviceId, message) = service.pauseJob(call.caller(service), call.parameters.getOrFail("id"), false)
+            val (deviceId, message) = service.pauseJob(call.caller(service, config), call.parameters.getOrFail("id"), false)
             service.sockets.send(deviceId, service.encode(message)); call.respond(mapOf("ok" to true))
         }
         get("/api/events") { consoleStream(call, service) }
         route("/api/device") {
-            post("/register") { call.respond(service.registerDevice(call.caller(service), call.receive())) }
+            post("/register") { call.respond(service.registerDevice(call.caller(service, config), call.receive())) }
             webSocket("/socket") { deviceSocket(this, service) }
-            post("/catalog") { service.uploadCatalog(call.caller(service), call.receive()); call.respond(mapOf("ok" to true)) }
-            post("/jobs/{id}/events") { service.appendEvents(call.caller(service), call.parameters.getOrFail("id"), call.receive()); call.respond(mapOf("ok" to true)) }
-            post("/jobs/{id}/report") { service.report(call.caller(service), call.parameters.getOrFail("id"), call.receive()); call.respond(mapOf("ok" to true)) }
-            post("/notices") { service.deviceNotices(call.caller(service), call.receive()); call.respond(mapOf("ok" to true)) }
+            post("/catalog") { service.uploadCatalog(call.caller(service, config), call.receive()); call.respond(mapOf("ok" to true)) }
+            post("/jobs/{id}/events") { service.appendEvents(call.caller(service, config), call.parameters.getOrFail("id"), call.receive()); call.respond(mapOf("ok" to true)) }
+            post("/jobs/{id}/report") { service.report(call.caller(service, config), call.parameters.getOrFail("id"), call.receive()); call.respond(mapOf("ok" to true)) }
+            post("/notices") { service.deviceNotices(call.caller(service, config), call.receive()); call.respond(mapOf("ok" to true)) }
         }
     }
 }
+/** [url] with [query] added, whether or not it has a query already. */
+private fun withQuery(url: String, query: String) = url + (if ('?' in url) "&" else "?") + query
+/** "https://host:port" of a URL, as browsers send it in Origin. */
+private fun originOf(url: String): String = runCatching { java.net.URI(url).let { "${it.scheme}://${it.authority}" } }.getOrDefault(url)
 private fun Parameters.getOrFail(name: String) = get(name) ?: throw ApiException(400, "bad_request", "请求内容无效")
 
 /**

@@ -4,6 +4,7 @@
 
 - 不需要 Root，不问、不保存游戏密码；切号只从游戏自己记住的账号里选。
 - 认不出画面、遇到没见过的弹窗就停下来等人，不会乱点；没法确认的结果标为“待核对”，不假装成功。
+- 开源：代码在 GitHub，欢迎在 [Issues](https://github.com/lc-cn/hgb/issues) 反馈问题。
 
 ## 组成
 
@@ -89,5 +90,6 @@ APK 输出在 `client/android/app/build/outputs/apk/debug/app-debug.apk`。
 - [云端方案与已确认的决定](docs/design/cloud-executor.md)：账号、调度、切号、通知、三端界面等的设计和决定记录
 - [设计稿](https://claude.ai/artifact/7VRpYb4jWcQSAP7xa5Lyhk)：规范（三端）、网站、网页控制台、各页窄档和中档、App
 - [云端控制台开发说明](docs/development/cloud-console.md)
+- [部署](docs/development/deploy.md)：首页、文档站和控制台放 Vercel，服务端放自己的主机
 - [开发基线与验收](docs/development/README.md)、[实现进度](docs/development/implementation-status.md)
 - [需求](docs/PRD.md)、[设计与技术资料索引](docs/design/README.md)

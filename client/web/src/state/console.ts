@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef } from "react";
-import { api, ApiFailure } from "../api/client";
+import { api, ApiFailure, apiUrl } from "../api/client";
 import type { ConsoleSnapshot, Device, GameAccount, Game, Job, Plan } from "../api/types";
 
 /** Everything the console shows, as the server's event stream last described it. */
@@ -63,7 +63,7 @@ export function useConsoleStream(signedOut: () => void): { data: ConsoleData; co
     const json = (event: Event) => JSON.parse((event as MessageEvent<string>).data);
     function connect() {
       stream?.close();
-      const current = new EventSource("/api/events");
+      const current = new EventSource(apiUrl("/api/events"), { withCredentials: true });
       stream = current;
       current.addEventListener("snapshot", (event) => { retryMs = 2000; dispatch({ type: "snapshot", snapshot: json(event) }); setLoaded(); });
       current.addEventListener("device", (event) => dispatch({ type: "device", device: json(event) }));

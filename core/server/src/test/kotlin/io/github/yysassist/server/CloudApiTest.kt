@@ -37,17 +37,17 @@ class CloudApiTest {
         "targets":[{"id":"game","name":"游戏","androidPackages":["test.game"],"identityPolicy":"NONE","categories":[{"id":"daily","name":"日常"}]}]}"""
     private val digest = java.security.MessageDigest.getInstance("SHA-256").digest(bundle.toByteArray()).joinToString("") { "%02x".format(it) }
     private val bothTasks = """[{"targetId":"game","taskId":"gift","name":"每日礼包"},{"targetId":"game","taskId":"tour","name":"日常巡游"}]"""
-    private fun api(block: suspend Api.() -> Unit) {
+    private fun api(allowedOrigins: Set<String> = emptySet(), block: suspend Api.() -> Unit) {
         val file = File.createTempFile("cloud", ".db")
         val db = Database(file.path)
         val service = CloudService(db, { to, subject, body -> mail += Triple(to, subject, body) }, github, ByteArray(32) { 7 }, { now },
             channelHttp = { url, headers, body -> posts += Triple(url, headers, body); answer(url) })
-        try { testApplication { application { cloudModule(service, ServerConfig("http://localhost", false)) }; Api(this, service).block() } }
+        try { testApplication { application { cloudModule(service, ServerConfig("http://localhost", false, "/console/", allowedOrigins)) }; Api(this, service).block() } }
         finally { db.close(); file.delete() }
     }
     private val gift = """[{"targetId":"game","taskId":"gift","name":"每日礼包"}]"""
     private val gameApp = """[{"key":"test.game","gameId":"game","name":"游戏"}]"""
-    private inner class Api(private val app: ApplicationTestBuilder, val service: CloudService) {
+    private inner class Api(val app: ApplicationTestBuilder, val service: CloudService) {
         suspend fun call(method: HttpMethod, path: String, body: String? = null, token: String? = null, device: Boolean = true, cookie: String? = null, csrf: Boolean = true) = app.client.request(path) {
             this.method = method
             if (body != null) { contentType(ContentType.Application.Json); setBody(body) }
@@ -860,5 +860,48 @@ class CloudApiTest {
         // Another user's device cannot be chosen.
         val other = signUp("b@example.com").accessToken!!
         assertEquals(HttpStatusCode.BadRequest, channel(other, """{"kind":"LOCAL","name":"别人的","fields":{"device":"${device.deviceId}"}}""").status)
+    }
+
+    @Test fun gitHubSignInOnlyFinishesInTheBrowserThatStartedIt() = api {
+        val plain = app.createClient { followRedirects = false }
+        val start = plain.get("/api/auth/github/start")
+        assertEquals(HttpStatusCode.Found, start.status)
+        val state = Regex("[?&]state=([^&]+)").find(start.headers[HttpHeaders.Location]!!)!!.groupValues[1].decodeURLQueryComponent()
+        val bound = start.setCookie().single { it.name == "yys_oauth" }
+        assertEquals(state, bound.value)
+        assertTrue(bound.httpOnly)
+        suspend fun back(cookie: String?) = plain.get("/api/auth/github/callback?code=gh7&state=${state.encodeURLQueryComponent()}") {
+            if (cookie != null) header(HttpHeaders.Cookie, "yys_oauth=$cookie")
+        }
+        // A link someone else started reaches this browser without the cookie, or with another one: no session.
+        for (cookie in listOf(null, "someone-else")) {
+            val reply = back(cookie)
+            assertEquals("/console/?error=github", reply.headers[HttpHeaders.Location])
+            assertTrue(reply.setCookie().none { it.name == "yys_session" })
+        }
+        val reply = back(state)
+        assertEquals("/console/", reply.headers[HttpHeaders.Location])
+        assertTrue(reply.setCookie().single { it.name == "yys_session" }.value.isNotEmpty())
+        assertEquals(0, reply.setCookie().single { it.name == "yys_oauth" }.maxAge)
+    }
+
+    @Test fun theConsoleOnAnotherHostOfTheSiteMayCallWithItsCookieAndNoOtherSiteMay() = api(setOf("https://hgb.l2cl.link")) {
+        val preflight = app.client.request("/api/accounts") { method = HttpMethod.Options; header(HttpHeaders.Origin, "https://hgb.l2cl.link")
+            header(HttpHeaders.AccessControlRequestMethod, "POST"); header(HttpHeaders.AccessControlRequestHeaders, "content-type,x-yys-request") }
+        assertEquals(HttpStatusCode.NoContent, preflight.status)
+        assertEquals("https://hgb.l2cl.link", preflight.headers[HttpHeaders.AccessControlAllowOrigin])
+        assertEquals("true", preflight.headers[HttpHeaders.AccessControlAllowCredentials])
+        assertTrue(preflight.headers[HttpHeaders.AccessControlAllowHeaders]!!.contains("X-YYS-Request"))
+        val other = app.client.request("/api/me") { header(HttpHeaders.Origin, "https://evil.example") }
+        assertEquals(null, other.headers[HttpHeaders.AccessControlAllowOrigin])
+        // A cookie write from another origin is refused even with the header; from the console it goes through.
+        signUp("a@example.com", "correct horse")
+        val cookie = Regex("yys_session=([^;]+)").find(call(HttpMethod.Post, "/api/auth/login", """{"email":"a@example.com","password":"correct horse"}""", device = false)
+            .headers.getAll(HttpHeaders.SetCookie)!!.joinToString())!!.groupValues[1]
+        suspend fun write(origin: String) = app.client.request("/api/me/time-zone") { method = HttpMethod.Put; contentType(ContentType.Application.Json)
+            setBody("""{"timeZone":"Asia/Tokyo"}"""); header(HttpHeaders.Cookie, "yys_session=$cookie"); header("X-YYS-Request", "1"); header(HttpHeaders.Origin, origin) }
+        assertEquals(HttpStatusCode.Forbidden, write("https://evil.example").status)
+        val allowed = write("https://hgb.l2cl.link")
+        assertEquals(HttpStatusCode.OK, allowed.status); assertEquals("https://hgb.l2cl.link", allowed.headers[HttpHeaders.AccessControlAllowOrigin])
     }
 }

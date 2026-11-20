@@ -19,3 +19,4 @@ node_modules/
 client/web/dist/
 client/site/dist/
 client/site/.astro/
+dist-sites/

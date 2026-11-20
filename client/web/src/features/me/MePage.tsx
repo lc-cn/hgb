@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { api, enc } from "../../api/client";
+import { api, apiUrl, enc } from "../../api/client";
 import type { Account } from "../../api/types";
 import { Button, Card, Grow, Message, Muted, Row, Segments } from "../../components/ui";
 import { applyAppearance, readAppearance, type Appearance } from "../../theme/appearance";
@@ -46,7 +46,7 @@ export function MePage() {
           <Row><Grow><b className={s.semi}>邮箱</b><br /><Muted as="span">{account.email ? `${account.email} · ${account.hasPassword ? "已设置密码" : "没有设置密码，用验证码登录"}` : "未绑定"}</Muted></Grow></Row>
           <Row>
             <Grow><b className={s.semi}>GitHub</b><br /><Muted as="span">{account.githubLogin ? `已绑定 ${account.githubLogin}` : "未绑定"}</Muted></Grow>
-            {account.githubLogin ? <Button onClick={unlink} disabled={!account.email}>解除绑定</Button> : <a className={s.button} href="/api/auth/github/start?link=1">绑定 GitHub</a>}
+            {account.githubLogin ? <Button onClick={unlink} disabled={!account.email}>解除绑定</Button> : <a className={s.button} href={apiUrl("/api/auth/github/start?link=1")}>绑定 GitHub</a>}
           </Row>
         </Card>
         <Muted>至少保留一种登录方式。绑定 GitHub 并且是任务仓库的协作者，App 里会出现“开发”入口。</Muted>
@@ -78,6 +78,7 @@ export function MePage() {
         <h2 id="help">帮助</h2>
         <Card flush>
           <a className={s.linkRow} href="/docs/"><b className={s.semi}>使用文档</b><Muted as="span">→</Muted></a>
+          <a className={s.linkRow} href="https://github.com/lc-cn/hgb/issues" target="_blank" rel="noreferrer"><b className={s.semi}>反馈问题</b><Muted as="span">GitHub Issues →</Muted></a>
         </Card>
       </section>
       <div><Button onClick={logout}>退出登录</Button></div>

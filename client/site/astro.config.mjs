@@ -15,7 +15,8 @@ export default defineConfig({
       favicon: "/favicon.svg",
       defaultLocale: "root",
       locales: { root: { label: "简体中文", lang: "zh-CN" } },
-      // No GitHub link or "edit this page" while the repository is private: visitors would get a 404.
+      social: [{ icon: "github", label: "GitHub", href: "https://github.com/lc-cn/hgb" }],
+      editLink: { baseUrl: "https://github.com/lc-cn/hgb/edit/master/client/site/" },
       lastUpdated: true,
       customCss: ["./src/styles/tokens.css", "./src/styles/starlight.css"],
       components: { SiteTitle: "./src/components/DocsTitle.astro" },
