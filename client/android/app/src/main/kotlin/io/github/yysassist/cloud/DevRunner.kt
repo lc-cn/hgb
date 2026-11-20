@@ -195,6 +195,7 @@ internal class DevRunner(
         else -> null
     }
     private companion object {
-        val IDENTIFIERS = setOf("kind", "state", "template", "sha256", "templateSha256", "id", "capability", "found")
+        /** String fields that name things the author wrote (states, templates, expected text), never what was read. */
+        val IDENTIFIERS = setOf("kind", "state", "template", "sha256", "templateSha256", "id", "capability", "found", "expect")
     }
 }

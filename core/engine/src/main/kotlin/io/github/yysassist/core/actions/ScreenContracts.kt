@@ -443,14 +443,14 @@ val screenContracts: List<CapabilityContract> = listOf(
     CapabilityContract(LOCATE_IMAGE_IN, 1, inputTypes = mapOf("observation" to ActionValueType.STRING, "template" to ActionValueType.STRING,
         "minimumScore" to ActionValueType.NUMBER, "within" to ActionValueType.ARRAY, "referenceWidth" to ActionValueType.NUMBER, "referenceHeight" to ActionValueType.NUMBER,
         "optional" to ActionValueType.BOOLEAN),
-        outputTypes = locateInOutputs, outputHandles = mapOf("target" to TARGET), inputHandles = wholeObservation,
+        outputTypes = locateInOutputs, outputHandles = mapOf("target" to TARGET), inputHandles = wholeObservation, optionalInputs = setOf("optional"),
         validateDefinition = { bundle, _, _, action -> if (bundle.resources.none { it.id == action.inputs.text("template") }) "图像定位引用了未声明的模板资源" else null }) { inputs ->
         locateInIssue(inputs, "模板和得分", !inputs.text("template").isNullOrBlank() && unit(inputs["minimumScore"]) != null)
     },
     CapabilityContract(LOCATE_TEXT_IN, 1, inputTypes = mapOf("observation" to ActionValueType.STRING, "text" to ActionValueType.STRING,
         "minimumConfidence" to ActionValueType.NUMBER, "within" to ActionValueType.ARRAY, "referenceWidth" to ActionValueType.NUMBER, "referenceHeight" to ActionValueType.NUMBER,
         "optional" to ActionValueType.BOOLEAN),
-        outputTypes = locateInOutputs, outputHandles = mapOf("target" to TARGET), inputHandles = wholeObservation) { inputs ->
+        outputTypes = locateInOutputs, outputHandles = mapOf("target" to TARGET), inputHandles = wholeObservation, optionalInputs = setOf("optional")) { inputs ->
         locateInIssue(inputs, "文字和置信度", !inputs.text("text").isNullOrBlank() && threshold(inputs) != null)
     },
     // Which page is on screen, from recognized text and whole-frame templates. An unrecognized page reports

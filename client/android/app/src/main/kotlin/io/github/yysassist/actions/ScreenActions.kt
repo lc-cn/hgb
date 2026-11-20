@@ -570,8 +570,10 @@ internal class ScreenActions(
             val images = states.flatMap { it.present + it.absent }.map { it.template to checkNotNull(it.within) }.distinct()
             val started = android.os.SystemClock.elapsedRealtime()
             var held: String? = null; var heldSince = 0L; var polls = 0; var lastScores = emptyList<Double>(); var why = ""; var whyLocal = ""
+            var conditions = JsonArray(emptyList())
             fun trace(matched: String?) = buildJsonObject { put("kind", AWAIT_SCREEN); put("polls", polls); put("waitedMs", android.os.SystemClock.elapsedRealtime() - started)
-                matched?.let { put("state", it) }; put("scores", buildJsonArray { lastScores.forEach { add(it) } }); if (matched == null && whyLocal.isNotEmpty()) put("why", whyLocal) }
+                matched?.let { put("state", it) }; put("scores", buildJsonArray { lastScores.forEach { add(it) } }); if (matched == null && whyLocal.isNotEmpty()) put("why", whyLocal)
+                put("conditions", conditions) }
             while (true) {
                 if (!permitted(attempt.ticket)) return ActionResult.Interrupted
                 val observation = when (val acquired = snapshot(attempt, bundle, bridge, profile.packageName, models)) {
@@ -606,6 +608,26 @@ internal class ScreenActions(
                     possible = possible.filter { state -> state.text.none { it.within in texts && !seen(it) } && state.absentText.none { it.within in texts && seen(it) } }
                 }
                 val matched = possible.map { it.id }.distinct()
+                // Every condition of the last look, for the workbench's probe: what was expected where, and what was found.
+                // Only the author's own expectation is named; what the recognizer read is only counted.
+                conditions = buildJsonArray {
+                    states.forEach { state ->
+                        fun image(c: ImageCondition, absent: Boolean) = addJsonObject {
+                            val score = scores.getValue(c.template to checkNotNull(c.within))
+                            put("state", state.id); put("kind", if (absent) "absentImage" else "image"); put("expect", c.template)
+                            putJsonArray("within") { checkNotNull(c.within).forEach { add(it) } }; put("score", score); put("minimum", c.minimum)
+                            put("pass", (BigDecimal.valueOf(score) >= c.minimum) != absent)
+                        }
+                        fun text(c: TextCondition, absent: Boolean) = addJsonObject {
+                            put("state", state.id); put("kind", if (absent) "absentText" else "text"); put("expect", c.text)
+                            putJsonArray("within") { checkNotNull(c.within).forEach { add(it) } }
+                            val read = texts[c.within]
+                            put("read", read != null); read?.let { put("count", it.size); put("pass", seen(c) != absent) }
+                        }
+                        state.present.forEach { image(it, false) }; state.absent.forEach { image(it, true) }
+                        state.text.forEach { text(it, false) }; state.absentText.forEach { text(it, true) }
+                    }
+                }
                 // Why no single state held on this frame. The reason, which may leave the phone, names only what was missed and how
                 // much text a window held; what that text said (other players' names, perhaps) stays in the local trace.
                 fun score(c: ImageCondition) = String.format(java.util.Locale.ROOT, "%.2f", scores.getValue(c.template to checkNotNull(c.within)))

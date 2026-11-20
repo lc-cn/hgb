@@ -33,7 +33,7 @@ internal fun ConfigurationField.valueType(): ActionValueType = when (widget) {
 }
 
 fun CapabilityContract.inputIssue(values: JsonObject): String? {
-    if (inputTypes.isNotEmpty() && values.keys != inputTypes.keys) return "动作参数缺失或包含未知参数"
+    if (inputTypes.isNotEmpty() && !acceptsInputKeys(values.keys)) return "动作参数缺失或包含未知参数"
     return knownInputIssue(values)?.reason ?: validateInputs(values)
 }
 
@@ -55,7 +55,7 @@ internal fun actionBindingIssues(task: TaskDefinition, action: ActionDefinition,
     previous: Map<String, CapabilityContract>): List<String> = buildList {
     if (action.bindings.isEmpty()) { contract.inputIssue(action.inputs)?.let(::add); return@buildList }
     if (action.inputs.keys.intersect(action.bindings.keys).isNotEmpty()) add("同一动作参数不能同时提供常量与引用")
-    if (contract.inputTypes.keys != action.inputs.keys + action.bindings.keys) add("动作参数缺失、未知或未声明引用类型")
+    if (!contract.acceptsInputKeys(action.inputs.keys + action.bindings.keys)) add("动作参数缺失、未知或未声明引用类型")
     contract.knownInputIssue(action.inputs)?.let { add(it.reason) }
     action.bindings.forEach { (key, source) ->
         val type = when (source) {

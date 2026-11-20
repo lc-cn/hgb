@@ -37,18 +37,23 @@ import kotlinx.serialization.json.*
 import kotlin.math.cos
 import kotlin.math.sin
 
-internal enum class FloatingLayer { DOCKED, BALL, QUICK, COMMON }
+internal enum class FloatingLayer { DOCKED, BALL, QUICK, COMMON, DEV_SAMPLE, DEV_PROBE }
 internal object FloatingUi {
     val ball = 44.dp; val dockWidth = 18.dp; val dockHeight = 56.dp
     val fanWidth = 100.dp; val fanHeight = 168.dp; val fanRadius = 60.dp; val fanButton = 44.dp
+    /** With the developer tools: three labelled buttons beside the fan. */
+    val devFanWidth = 200.dp; val devPill = 92.dp
+    val sampleWidth = 520.dp; val probeWidth = 340.dp
     val quickWidth = 366.dp; val wideCommonWidth = 560.dp
     val portraitHeight = 480.dp; val landscapeHeight = 340.dp
     val portraitTop = 94.dp; val landscapeTop = 36.dp
-    fun width(layer: FloatingLayer, wide: Boolean): Dp = when (layer) {
+    fun width(layer: FloatingLayer, wide: Boolean, developer: Boolean = false): Dp = when (layer) {
         FloatingLayer.DOCKED -> dockWidth
         FloatingLayer.BALL -> ball
-        FloatingLayer.QUICK -> fanWidth
+        FloatingLayer.QUICK -> if (developer) devFanWidth else fanWidth
         FloatingLayer.COMMON -> if (wide) wideCommonWidth else quickWidth
+        FloatingLayer.DEV_SAMPLE -> if (wide) sampleWidth else quickWidth
+        FloatingLayer.DEV_PROBE -> probeWidth
     }
 }
 private val BallFill = Color(0xE6161616)
@@ -68,7 +73,7 @@ private fun stateColor(state: ExecutorSnapshot, status: RuntimeStatus): Color? {
 }
 
 @Composable
-private fun StatusBall(state: ExecutorSnapshot, status: RuntimeStatus, modifier: Modifier) {
+private fun StatusBall(state: ExecutorSnapshot, status: RuntimeStatus, modifier: Modifier, developer: Boolean = false) {
     val ring = stateColor(state, status)
     val progress = state.current?.let { (it.stepIndex + 1f) / it.task.stepIds.size.coerceAtLeast(1) }
     Box(modifier.size(FloatingUi.ball), Alignment.Center) {
@@ -82,6 +87,8 @@ private fun StatusBall(state: ExecutorSnapshot, status: RuntimeStatus, modifier:
         if (needsAttention(state, status)) Text("!", color = LocalAssistPalette.current.error, style = MaterialTheme.typography.titleMedium)
         else if (state.manualHold) Icon(AssistIcons.Pause, null, Modifier.size(20.dp), tint = Color.White)
         else Image(painterResource(io.github.yysassist.R.drawable.ic_logo_mark), null, Modifier.size(30.dp))
+        if (developer) Box(Modifier.align(Alignment.BottomCenter).offset(y = 4.dp).height(16.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFFCFB1FC))
+            .padding(horizontal = 4.dp), Alignment.Center) { Text("开发", color = Color(0xFF171717), style = MaterialTheme.typography.labelSmall) }
         state.waiting.size.takeIf { it > 0 }?.let { count ->
             Box(Modifier.align(Alignment.TopEnd).size(16.dp).clip(CircleShape).background(LocalAssistPalette.current.gold), Alignment.Center) {
                 Text(count.toString(), color = Color(0xFF171717), style = MaterialTheme.typography.labelSmall)
@@ -95,7 +102,8 @@ internal fun FloatingSurface(layer: FloatingLayer, state: ExecutorSnapshot, stat
     common: FloatingTasksState, wide: Boolean, maxHeight: Dp, changeLayer: (FloatingLayer) -> Unit,
     enqueue: (TaskAddress) -> Unit, pause: (Long?) -> Unit, stop: (Long) -> Unit, resume: (Long?, ResumeMode) -> Unit,
     openApp: (TaskAddress?) -> Unit, ballMotion: ((MotionEvent) -> Boolean)? = null, maxWidth: Dp = FloatingUi.wideCommonWidth, feedback: String? = null,
-    rightSide: Boolean = true, touched: () -> Unit = {}, resolve: (AttemptTicket, Boolean) -> Unit = { _, _ -> }) {
+    rightSide: Boolean = true, touched: () -> Unit = {}, resolve: (AttemptTicket, Boolean) -> Unit = { _, _ -> },
+    dev: FloatingDev? = null, openDevRun: () -> Unit = {}) {
     val palette = LocalAssistPalette.current
     val phase = when (status) { RuntimeStatus.Loading -> "读取中"; is RuntimeStatus.Waiting -> "等待中"; is RuntimeStatus.Failure -> "存储异常"; is RuntimeStatus.RecoveryBlocked -> "等待核对"; RuntimeStatus.Ready -> phaseLabel(state.phase) }
     @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
@@ -111,7 +119,13 @@ internal fun FloatingSurface(layer: FloatingLayer, state: ExecutorSnapshot, stat
     }
     if (layer == FloatingLayer.BALL) {
         val tap = { changeLayer(FloatingLayer.QUICK) }
-        StatusBall(state, status, gesture(tap).semantics { contentDescription = "展开快捷控制"; stateDescription = phase; role = Role.Button; onClick { tap(); true } })
+        StatusBall(state, status, gesture(tap).semantics { contentDescription = "展开快捷控制"; stateDescription = phase; role = Role.Button; onClick { tap(); true } },
+            developer = dev != null)
+        return
+    }
+    if (layer == FloatingLayer.DEV_SAMPLE && dev != null) { DevSampleSheet(dev) { changeLayer(FloatingLayer.BALL) }; return }
+    if (layer == FloatingLayer.DEV_PROBE && dev != null) {
+        DevProbePanel(dev, maxHeight, { changeLayer(FloatingLayer.BALL) }) { dev.takeSample(); changeLayer(FloatingLayer.DEV_SAMPLE) }
         return
     }
     if (layer == FloatingLayer.QUICK) {
@@ -121,9 +135,24 @@ internal fun FloatingSurface(layer: FloatingLayer, state: ExecutorSnapshot, stat
         var armedStop by remember { mutableStateOf(false) }
         LaunchedEffect(armedStop) { if (armedStop) { delay(2_000); armedStop = false } }
         val center = FloatingUi.ball / 2
-        val ballX = if (rightSide) FloatingUi.fanWidth - FloatingUi.ball else 0.dp
+        val fanWidth = FloatingUi.width(FloatingLayer.QUICK, wide, dev != null)
+        val ballX = if (rightSide) fanWidth - FloatingUi.ball else 0.dp
         val ballY = (FloatingUi.fanHeight - FloatingUi.ball) / 2
-        Box(Modifier.size(FloatingUi.fanWidth, FloatingUi.fanHeight)) {
+        Box(Modifier.size(fanWidth, FloatingUi.fanHeight)) {
+            // Developer tools: labelled, in the workbench's violet, on the side away from the screen edge.
+            if (dev != null) Column(Modifier.align(if (rightSide) Alignment.CenterStart else Alignment.CenterEnd), verticalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+                @Composable fun pill(icon: ImageVector, label: String, description: String, action: () -> Unit) {
+                    Row(Modifier.width(FloatingUi.devPill).height(40.dp).clip(RoundedCornerShape(20.dp)).background(Color(0xFF3B2A63))
+                        .clickable(role = Role.Button, onClickLabel = description) { touched(); action() }.semantics { contentDescription = description }
+                        .padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Icon(icon, null, Modifier.size(20.dp), tint = Color(0xFFEFE6FF))
+                        Text(label, color = Color(0xFFEFE6FF), style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                    }
+                }
+                pill(AssistIcons.Camera, "采样", "采样：保存当前画面和识别结果") { dev.takeSample(); changeLayer(FloatingLayer.DEV_SAMPLE) }
+                pill(AssistIcons.Probe, "探测", "探测：判定草稿里的页面状态") { dev.openProbe(); changeLayer(FloatingLayer.DEV_PROBE) }
+                pill(AssistIcons.StepRun, "试跑", "试跑草稿") { openDevRun() }
+            }
             @Composable fun fan(index: Int, icon: ImageVector, label: String, enabled: Boolean, tint: Color = Color.White, action: () -> Unit) {
                 val radians = Math.toRadians(-90.0 + index * 60.0)
                 val dx = FloatingUi.fanRadius * cos(radians).toFloat() * (if (rightSide) -1f else 1f)
@@ -144,7 +173,7 @@ internal fun FloatingSurface(layer: FloatingLayer, state: ExecutorSnapshot, stat
             fan(2, AssistIcons.Star, "常用", true) { changeLayer(FloatingLayer.COMMON) }
             fan(3, AssistIcons.Home, "返回助手", true) { openApp(null) }
             StatusBall(state, status, Modifier.offset(ballX, ballY).clickable(role = Role.Button) { changeLayer(FloatingLayer.BALL) }
-                .semantics { contentDescription = "收起悬浮面板"; stateDescription = phase })
+                .semantics { contentDescription = "收起悬浮面板"; stateDescription = phase }, developer = dev != null)
         }
         return
     }

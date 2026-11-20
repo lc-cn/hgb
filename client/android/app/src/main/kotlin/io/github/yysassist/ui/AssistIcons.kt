@@ -42,6 +42,9 @@ object AssistIcons {
     val Circle = glyph("Circle", "M20 12A8 8 0 1 1 4 12A8 8 0 1 1 20 12Z")
     val Cloud = glyph("Cloud", "M6 18A5 5 0 0 1 5 9A7 7 0 0 1 18 8A5 5 0 0 1 18 18Z")
     val Phone = glyph("Phone", "M6 2H18V22H6Z M10 18H14")
+    val Camera = glyph("Camera", "M4 8H7L9 5H15L17 8H20V19H4Z M15.500 13A3.500 3.500 0 1 1 8.500 13A3.500 3.500 0 1 1 15.500 13Z")
+    val Probe = glyph("Probe", "M17 11A6 6 0 1 1 5 11A6 6 0 1 1 17 11Z M20 20L15.500 15.500 M8.500 11H13.500 M11 8.500V13.500")
+    val StepRun = glyph("StepRun", "M6 5V19L15 12Z M18 5V19")
     val Data = glyph("Data", "M20 5A8 3 0 1 1 4 5A8 3 0 1 1 20 5Z M4 5V19C4 23 20 23 20 19V5 M4 12C4 16 20 16 20 12")
 
     private fun filled(name: String, data: String): ImageVector =

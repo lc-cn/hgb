@@ -205,7 +205,13 @@ internal fun LocalWorkbench(application: AssistApplication, navigation: AppNavig
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(application.taskUpdates) { application.taskUpdates.messages.collect { snackbar.showSnackbar(it) } }
     LaunchedEffect(application.taskEditor) { application.taskEditor.messages.collect { snackbar.showSnackbar(it) } }
-    LaunchedEffect(navigation?.id) { navigation?.let { editTarget = it.task.targetId; editTask = it.task.taskId; selected = Tool.TASKS; detail = "任务配置"; navigationHandled() } }
+    LaunchedEffect(navigation?.id) { navigation?.let { nav ->
+        val task = nav.task
+        if (nav.devRun) detail = "试跑草稿"
+        else if (task != null) { editTarget = task.targetId; editTask = task.taskId; selected = Tool.TASKS; detail = "任务配置" }
+        navigationHandled()
+    } }
+    val developer by application.devWorkbench.developer.collectAsState()
     LaunchedEffect(application.floating) { application.floating.messages.collect { snackbar.showSnackbar(it) } }
     LaunchedEffect(application.executor) { application.executor.messages.collect { snackbar.showSnackbar(it) } }
     BackHandler(detail != null) { detail = null }
@@ -242,6 +248,7 @@ internal fun LocalWorkbench(application: AssistApplication, navigation: AppNavig
                     "云端控制" -> CloudPage(application.accounts, application::identifyAccount, application.localNotices)
                     "任务来源" -> TaskSourcePage(application.taskSource)
                     "连接日志" -> ConnectionLogPage(application.connectionLog)
+                    "试跑草稿" -> DevRunPage(application)
                     "GitHub" -> GitHubAccountPage(github, taskSource.fullName, wide, application.github::signIn, application.github::cancelSignIn,
                         application.github::signOut, { detail = "任务更新" })
                     "任务更新" -> TaskVersionsPage(versions, pull, versionOperation, application.taskUpdates::reloadCatalog,
@@ -256,7 +263,8 @@ internal fun LocalWorkbench(application: AssistApplication, navigation: AppNavig
                             favorites = floating, toggleFavorite = application.floating::toggle, openHistory = { detail = "运行记录" }, favoritesRequest = favoritesRequest)
                         Tool.SETTINGS -> SettingsPage(appearance, mode, { item ->
                             scope.launch { try { application.appearance.setTheme(item) } catch (_: IOException) { snackbar.showSnackbar("主题设置保存失败") } }
-                        }, versions, github, taskSource.fullName, floating, application.floating::setVisible, application.floating::setAutoDock, application.floating::reload) {
+                        }, versions, github, taskSource.fullName, floating, application.floating::setVisible, application.floating::setAutoDock, application.floating::reload,
+                            developer = developer == true) {
                             if (it == "常用") { favoritesRequest++; selected = Tool.TASKS } else detail = it
                         }
                     }

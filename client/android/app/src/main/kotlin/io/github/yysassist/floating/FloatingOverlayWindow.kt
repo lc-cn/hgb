@@ -44,6 +44,18 @@ internal class FloatingOverlayWindow(
     private val feedback = mutableStateOf<String?>(null)
     private val manager = service.getSystemService(WindowManager::class.java)
     private val view = ComposeView(service)
+    private val dev = FloatingDev(app, scope)
+    private val developer get() = app.devWorkbench.developer.value == true
+    /** Probe boxes over the game: never touchable, hidden with the ball whenever the screen is captured. */
+    private val markers = ComposeView(service)
+    private var markersAttached = false
+    @android.annotation.SuppressLint("RtlHardcoded")
+    private val markerParams = WindowManager.LayoutParams(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT,
+        WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, PixelFormat.TRANSLUCENT).apply {
+        gravity = Gravity.TOP or Gravity.LEFT; title = "探测标记"; setFitInsetsTypes(0)
+        layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+    }
     // These coordinates match raw screen input and screenshots, not the text's reading direction.
     @android.annotation.SuppressLint("RtlHardcoded")
     private val params = WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
@@ -75,6 +87,7 @@ internal class FloatingOverlayWindow(
         view.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         view.setContent {
             val state by runtime.state.collectAsState(); val status by runtime.status.collectAsState(); val tasks by commonTasks.collectAsState()
+            val isDeveloper by app.devWorkbench.developer.collectAsState()
             val vp = viewport.value
             AssistTheme(ThemeMode.DARK) {
                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
@@ -88,7 +101,8 @@ internal class FloatingOverlayWindow(
                     rightSide = rightSide.value, touched = ::armIdle,
                     // "没生效" re-enters the step by looking at the screen again; "已生效" moves on to the next step.
                     resolve = { ticket, applied -> runtime.submit(ExecutorCommand.ResolveUnknown(ticket,
-                        if (applied) StepOutcome.Completed("用户在悬浮球确认这一步已生效") else StepOutcome.Interrupted)) })
+                        if (applied) StepOutcome.Completed("用户在悬浮球确认这一步已生效") else StepOutcome.Interrupted)) },
+                    dev = dev.takeIf { isDeveloper == true }, openDevRun = ::openDevRun)
                 }
             }
         }
@@ -103,6 +117,11 @@ internal class FloatingOverlayWindow(
             }
         }
         view.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> if (view.isShown && down == null) place() }
+        markers.setViewTreeLifecycleOwner(this); markers.setViewTreeSavedStateRegistryOwner(this); markers.setViewTreeViewModelStoreOwner(this)
+        markers.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+        markers.setContent { AssistTheme(ThemeMode.DARK) { dev.probe?.takeIf { layer.value == FloatingLayer.DEV_PROBE }?.let { ProbeMarkers(it) } } }
+        scope.launch { snapshotFlow { layer.value == FloatingLayer.DEV_PROBE && dev.probe != null }.collect { updateVisibility() } }
+        scope.launch { app.devWorkbench.developer.collect { place() } }
         scope.launch {
             combine(preferences.state, app.mainVisible) { pref, main -> pref to main }.collect { (pref, _) ->
                 settings = (pref as? FloatingPreferencesState.Ready)?.settings
@@ -147,6 +166,9 @@ internal class FloatingOverlayWindow(
             catch (error: Exception) { windowFailed(error); return }
         }
         if (attached) view.visibility = if (show) View.VISIBLE else View.GONE
+        val mark = show && layer.value == FloatingLayer.DEV_PROBE && dev.probe != null
+        if (mark && !markersAttached) { try { manager.addView(markers, markerParams); markersAttached = true } catch (_: Exception) { } }
+        if (markersAttached) markers.visibility = if (mark) View.VISIBLE else View.GONE
     }
     private fun place() {
         if (closed || down != null) return
@@ -158,10 +180,10 @@ internal class FloatingOverlayWindow(
         val ballY = vp.safe.top + (anchor?.y?.let { it * (vp.safe.height() - ball).coerceAtLeast(0) }
             ?: ((if (vp.wide) FloatingUi.landscapeTop.value else FloatingUi.portraitTop.value) * vp.density))
         val center = ballY + ball / 2f
-        val width = min(vp.safe.width(), px(FloatingUi.width(layer.value, vp.wide)))
+        val width = min(vp.safe.width(), px(FloatingUi.width(layer.value, vp.wide, developer)))
         val fixedHeight = when (layer.value) {
             FloatingLayer.DOCKED -> px(FloatingUi.dockHeight); FloatingLayer.BALL -> ball
-            FloatingLayer.QUICK -> px(FloatingUi.fanHeight); FloatingLayer.COMMON -> null
+            FloatingLayer.QUICK -> px(FloatingUi.fanHeight); FloatingLayer.COMMON, FloatingLayer.DEV_SAMPLE, FloatingLayer.DEV_PROBE -> null
         }
         val bounds = if (layer.value == FloatingLayer.DOCKED) vp.edge else vp.safe
         val height = fixedHeight ?: view.height.takeIf { it > ball } ?: ball
@@ -199,7 +221,18 @@ internal class FloatingOverlayWindow(
         if (view.isAttachedToWindow) try { manager.removeViewImmediate(view) } catch (_: IllegalArgumentException) { }
         attached = false
     }
-    private fun changeLayer(next: FloatingLayer) { feedback.value = null; layer.value = next; down = null; place(); armIdle() }
+    private fun changeLayer(next: FloatingLayer) {
+        feedback.value = null; layer.value = next; down = null
+        // Only the sample sheet takes typing; elsewhere the game keeps the keyboard focus.
+        val typing = next == FloatingLayer.DEV_SAMPLE
+        val flags = if (typing) params.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv() else params.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+        if (flags != params.flags) { params.flags = flags; if (attached) updateLayout() }
+        place(); armIdle(); updateVisibility()
+    }
+    private fun openDevRun() {
+        val intent = MainActivity.devRunIntent(service).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        try { service.startActivity(intent); changeLayer(FloatingLayer.BALL) } catch (_: Exception) { feedback.value = "未能打开助手，请从桌面进入" }
+    }
     private fun ballMotion(event: MotionEvent): Boolean {
         checkMain()
         when (event.actionMasked) {
@@ -266,6 +299,7 @@ internal class FloatingOverlayWindow(
         checkMain(); if (closed) return
         closed = true; scope.cancel()
         if (attached) { try { manager.removeViewImmediate(view) } catch (_: IllegalArgumentException) { }; attached = false }
+        if (markersAttached) { try { manager.removeViewImmediate(markers) } catch (_: IllegalArgumentException) { }; markersAttached = false }
         registry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE); registry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
         registry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY); viewModelStore.clear()
     }

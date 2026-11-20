@@ -46,7 +46,7 @@ private class SettingsSection(val name: String, val attention: Boolean = false, 
 @Composable
 internal fun SettingsPage(appearance: AppearanceState, mode: ThemeMode, setTheme: (ThemeMode) -> Unit, versions: VersionCatalogState,
     github: GitHubSessionState, taskSource: String, floating: FloatingPreferencesState, setFloatingVisible: (Boolean) -> Unit, setAutoDock: (Boolean) -> Unit, reloadFloating: () -> Unit,
-    open: (String) -> Unit) {
+    developer: Boolean = false, open: (String) -> Unit) {
     val p = LocalAssistPalette.current
     val service by GameAccessibilityService.connection.collectAsState()
     val notifications = rememberNotificationAccess()
@@ -97,6 +97,9 @@ internal fun SettingsPage(appearance: AppearanceState, mode: ThemeMode, setTheme
                 Chevron()
             }
         },
+        *(if (!developer) emptyArray() else arrayOf(SettingsSection("开发工作台") {
+            SettingRow(AssistIcons.StepRun, p.violet, "试跑草稿", "在这台手机上跑工作台里的任务", { open("试跑草稿") }) { Chevron() }
+        })),
         SettingsSection("数据与诊断") {
             SettingRow(AssistIcons.History, p.orange, "运行记录", "查看每次运行的结果和步骤", { open("运行记录") }) { Chevron() }
             RowDivider()

@@ -12,7 +12,8 @@ import io.github.yysassist.ui.AssistApp
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.util.UUID
 
-data class AppNavigation(val id: String, val task: TaskAddress)
+/** Where an outside intent opens the App: a task's settings, or [devRun] the draft trial page. */
+data class AppNavigation(val id: String, val task: TaskAddress?, val devRun: Boolean = false)
 class MainActivity : ComponentActivity() {
     companion object {
         private const val REQUEST = "floating_request"
@@ -20,6 +21,8 @@ class MainActivity : ComponentActivity() {
         private const val TASK = "floating_task"
         fun taskIntent(context: Context, address: TaskAddress) = Intent(context, MainActivity::class.java)
             .putExtra(REQUEST, UUID.randomUUID().toString()).putExtra(TARGET, address.targetId).putExtra(TASK, address.taskId)
+        private const val DEV_RUN = "floating_dev_run"
+        fun devRunIntent(context: Context) = Intent(context, MainActivity::class.java).putExtra(REQUEST, UUID.randomUUID().toString()).putExtra(DEV_RUN, true)
     }
     private val navigation = MutableStateFlow<AppNavigation?>(null)
     private var handledRequest: String? = null
@@ -44,6 +47,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); readNavigation(intent) }
     private fun readNavigation(intent: Intent) {
         val id = intent.getStringExtra(REQUEST)?.takeIf { it != handledRequest } ?: return
+        if (intent.getBooleanExtra(DEV_RUN, false)) { navigation.value = AppNavigation(id, null, devRun = true); return }
         val target = intent.getStringExtra(TARGET)?.takeIf { it.isNotBlank() } ?: return
         val task = intent.getStringExtra(TASK)?.takeIf { it.isNotBlank() } ?: return
         // An external intent can open a configuration page, never submit execution or grant access.

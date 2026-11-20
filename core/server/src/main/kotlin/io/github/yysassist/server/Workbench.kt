@@ -108,7 +108,8 @@ class Workbench(internal val db: Database, private val permissions: RepoPermissi
         private const val ALLOW_TTL = 10 * 60 * 1000L
         private const val DENY_TTL = 60 * 1000L
         const val MAX_BUNDLE_CHARS = 4_000_000
-        const val MAX_DEPTH = 64
+        /** Real programs nest deep (cases in loops in branches, each a few JSON levels); still far from a stack risk. */
+        const val MAX_DEPTH = 200
         /** Nesting depth, counted without recursion so a hostile document cannot overflow the stack. */
         fun depth(root: JsonElement): Int {
             var deepest = 0

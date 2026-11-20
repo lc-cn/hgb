@@ -121,4 +121,16 @@ class SnippetsTest {
         assertTrue(reasons(bundle(listOf(loop(UntilCondition(ActionInputBinding.Output("b", "ok"), JsonPrimitive("yes")))))).any { it.contains("类型不匹配") })
         assertTrue(reasons(bundle(listOf(loop(UntilCondition(ActionInputBinding.Output("elsewhere", "ok"), JsonPrimitive(true)))))).any { it.contains("顶层动作") })
     }
+
+    @Test fun anOptionalInputMayBeLeftOutButNothingUndeclaredMayBeAdded() {
+        val codec = BundleCodec(listOf(
+            CapabilityContract("find", 1, inputTypes = mapOf("dx" to ActionValueType.NUMBER, "optional" to ActionValueType.BOOLEAN),
+                outputTypes = mapOf("ok" to ActionValueType.BOOLEAN), role = ActionRole.VERIFICATION, optionalInputs = setOf("optional")) { null }))
+        fun find(inputs: JsonObject) = bundle(listOf(StepDefinition("go", "Go", program = listOf(ProgramNode.Action(ActionDefinition("f", "find", 1, inputs))))))
+        fun ok(inputs: JsonObject) = codec.read(codec.write(find(inputs))) is BundleReadResult.Valid
+        assertTrue(ok(buildJsonObject { put("dx", 1) }))
+        assertTrue(ok(buildJsonObject { put("dx", 1); put("optional", true) }))
+        assertFalse(ok(buildJsonObject { put("optional", true) }))
+        assertFalse(ok(buildJsonObject { put("dx", 1); put("extra", 2) }))
+    }
 }

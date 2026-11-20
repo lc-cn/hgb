@@ -29,6 +29,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import io.github.yysassist.auth.EncryptedGitHubSessionStore
@@ -43,6 +45,8 @@ class AssistApplication : Application() {
         private set
     /** Developer workbench commands on this phone; null until the app has set up. */
     internal var devRunner: io.github.yysassist.cloud.DevRunner? = null
+    /** Whether this account may use the developer workbench, and the phone's side of it. */
+    internal val devWorkbench = io.github.yysassist.cloud.DevWorkbench({ cloud }, { devRunner })
     lateinit var floating: FloatingPreferences
         private set
     private val foregroundActivities = mutableSetOf<MainActivity>()
@@ -142,6 +146,11 @@ class AssistApplication : Application() {
             cloudExecutor, "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}", "android", BuildConfig.VERSION_NAME, scope,
             dataStore = io.github.yysassist.cloud.CloudDataFile(File(noBackupFilesDir, "cloud-data.json")), trace = connectionLog::add)
         accounts = io.github.yysassist.cloud.CloudAccounts(cloud, cloudExecutor::apps)
+        // Asked again on every connect: linking or unlinking GitHub, or a changed repository permission, shows up then.
+        scope.launch {
+            cloud.state.map { (it as? io.github.yysassist.core.cloud.CloudState.SignedIn)?.online == true }.distinctUntilChanged()
+                .collect { online -> if (online) devWorkbench.refresh() }
+        }
         configurations = TaskConfigurationRepository(library, accounts)
         taskEditor = TaskConfigurationEditor(configurations, scope)
         scope.launch { cloud.data.drop(1).collect { settingsChanged.tryEmit(Unit); taskEditor.refresh() } }

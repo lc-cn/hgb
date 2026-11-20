@@ -168,8 +168,13 @@ data class CapabilityContract(
     /** Validate only present values; unresolved outputs are never replaced by fake placeholders. */
     val validateKnownInputs: (JsonObject) -> ContentIssue? = { null },
     val validateDefinition: (TaskBundle, TaskDefinition, ActionFlowContext, ActionDefinition) -> String? = { _, _, _, _ -> null },
+    /** Inputs an action may leave out; every other declared input must be given, as a constant or a binding. */
+    val optionalInputs: Set<String> = emptySet(),
     val validateInputs: (JsonObject) -> String?,
-)
+) {
+    /** Whether [keys] are exactly what an action may give: all required inputs, optional ones or not, nothing else. */
+    fun acceptsInputKeys(keys: Set<String>): Boolean = keys.all { it in inputTypes } && inputTypes.keys.all { it in keys || it in optionalInputs }
+}
 class BundleCodec(private val capabilities: List<CapabilityContract>) {
     init {
         capabilities.forEach { contract ->
