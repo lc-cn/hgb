@@ -11,5 +11,6 @@ export default defineConfig({
   // The site's home page and docs own "/"; the console is served under /console (C42).
   base: "/console/",
   server: { port: 5173, proxy: { "/api": { target: server, changeOrigin: false } } },
-  build: { outDir: "dist", sourcemap: true },
+  // Built under dist/console, so a host serving dist sees the same /console/... paths the pages ask for.
+  build: { outDir: "dist/console", sourcemap: true },
 });

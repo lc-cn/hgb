@@ -11,14 +11,24 @@
 
 ## Vercel：首页、文档站和控制台
 
-1. 在 Vercel 导入 GitHub 仓库 `lc-cn/hgb`，根目录用仓库根目录，Framework 选 Other。构建命令、输出目录都在仓库根目录的 `vercel.json` 里，不用在页面上填。
-2. 环境变量加 `VITE_API_ORIGIN=https://api-hgb.l2cl.link`（Production 和 Preview 都要）。
+1. 在 Vercel 导入 GitHub 仓库 `lc-cn/hgb`，根目录用仓库根目录。仓库根目录的 `vercel.json` 用 Vercel 的服务模式（Services）把它定义成一个项目里的两个服务，构建命令、输出目录都写在里面，不用在页面上填：
+
+   | 服务 | 目录 | 对外路径 |
+   | --- | --- | --- |
+   | `site` | `client/site`（Astro） | `/` 和 `/docs/`，以及其他所有没匹配上的路径 |
+   | `console` | `client/web`（Vite） | `/console/`；`/console` 会跳到 `/console/` |
+
+   两个服务之间不互相调用，所以没有绑定（bindings）。控制台调用的 API 在自己的主机上（`api-hgb.l2cl.link`），不是 Vercel 的服务。
+2. 环境变量加 `VITE_API_ORIGIN=https://api-hgb.l2cl.link`（Production 和 Preview 都要），控制台构建时会写进页面。
 3. Node.js 版本选 24.x（Astro 7 要求 22.23 以上，22.x 的小版本不一定够）。Vercel 按锁文件版本（lockfile v9）自动选 pnpm 9 以上，不用另外装。
-4. 在项目的 Domains 里加 `hgb.l2cl.link`，按提示在 DNS 里添加记录。
+4. 两个服务的构建都会读仓库根目录的 `design/tokens.json`（生成样式），项目设置里“包含根目录以外的文件”要保持打开（默认就是开的）。
+5. 在项目的 Domains 里加 `hgb.l2cl.link`，按提示在 DNS 里添加记录。
 
 **预览部署登不上**：Preview 部署的地址是 `*.vercel.app`，和 `api-hgb.l2cl.link` 不同站，浏览器不会带上登录 cookie，服务端也不在允许的来源里，所以预览版的首页和文档能看，控制台登录不了。要在预览里试控制台，给 Preview 分支绑一个 `l2cl.link` 下的子域名（如 `preview-hgb.l2cl.link`），并把它加进服务端的 `YYS_ALLOWED_ORIGINS`（逗号分隔）。
 
-构建脚本是 `scripts/build-sites.sh`：分别构建网站和控制台，合并到 `dist-sites`，网站在根路径，控制台在 `/console`。`vercel.json` 把 `/console/` 下除静态资源以外的地址都交给控制台的 `index.html`，直接打开或刷新深层地址不会 404。本地可以这样预览产物：
+Vercel 把请求原样交给服务，`/console/assets/...` 到了控制台服务还是这个路径，所以控制台构建到 `client/web/dist/console/`，服务的输出目录是 `client/web/dist`。控制台服务自己的改写规则把 `/console/` 下除静态资源以外的地址都交给 `index.html`，直接打开或刷新深层地址不会 404。
+
+本地一起跑两个服务用 `vercel dev`。要放到 Vercel 以外的静态主机，用 `scripts/build-sites.sh` 把网站和控制台合并到 `dist-sites`（网站在根路径，控制台在 `/console`）：
 
 ```bash
 VITE_API_ORIGIN=https://api-hgb.l2cl.link bash scripts/build-sites.sh
