@@ -1,0 +1,55 @@
+docs/design/developer-workbench-tech.md
+  s_fae32e7f0efe76::t_ba3fad934676c2 184-187
+core/server/src/main/kotlin/io/github/yysassist/server/Publisher.kt
+  s_fae32e7f0efe76::t_f2f522f245e203 92-100,102-103,108-115,123-125,137-138
+  s_fae32e7f0efe76::t_8e30eec72c3839 1-91,101,104-107,116-122,126-136,139-143
+core/server/src/test/kotlin/io/github/yysassist/server/WorkbenchApiTest.kt
+  s_fae32e7f0efe76::t_ea9dd22f2bfd35 32,164-168,170-171,191-194,203,205-208,214-217,236-237,240-245,247
+  s_fae32e7f0efe76::t_be80e9035a25a8 24-31,33-41,45,48-49,148-161,163,169,174-190,195-202,204,209-213,218-235,238-239,246,248-249,251-252
+  s_fae32e7f0efe76::t_b2febcfc33d36e 22,162
+  s_fae32e7f0efe76::t_8eb69542cdee88 172-173
+  s_fae32e7f0efe76::t_2531b898096898 23
+core/server/src/main/kotlin/io/github/yysassist/server/Database.kt
+  s_fae32e7f0efe76::t_eca7203de0da00 43-45,47-49
+  s_fae32e7f0efe76::t_f2f522f245e203 46
+core/server/src/main/kotlin/io/github/yysassist/server/Routes.kt
+  s_fae32e7f0efe76::t_f2f522f245e203 108-110
+  s_fae32e7f0efe76::t_7e2044db9e2973 105,111,129-167
+core/server/src/main/kotlin/io/github/yysassist/server/Workbench.kt
+  s_fae32e7f0efe76::t_7e2044db9e2973 61-62,72-73
+core/engine/src/test/kotlin/io/github/yysassist/core/content/GitHubTaskSourceTest.kt
+  s_fae32e7f0efe76::t_4928b5563dbca1 216-235,239,246
+  s_fae32e7f0efe76::t_ea9dd22f2bfd35 236-238,240-245
+core/server/src/main/kotlin/io/github/yysassist/server/Main.kt
+  s_fae32e7f0efe76::t_7e2044db9e2973 30-34
+client/android/app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_9aa5a9d622934d 124
+core/engine/src/main/kotlin/io/github/yysassist/core/content/GitHubTaskSource.kt
+  s_fae32e7f0efe76::t_783e926d65b30e 23,50-51,97-100,102-105,111-112,130,253-257
+  s_fae32e7f0efe76::t_3b96f21d37c752 58-60,70,85-96,150,154-156,158-160
+  s_fae32e7f0efe76::t_02a98567031959 69,71-79,106-107,149,151-153,157,161
+  s_fae32e7f0efe76::t_0e78433ae6e4ff 80-84,108-110
+core/server/src/main/kotlin/io/github/yysassist/server/Assets.kt
+  s_fae32e7f0efe76::t_23476f74e07bb4 4,130-131
+  s_fae32e7f0efe76::t_f2f522f245e203 21-23,58-74,97-103,109-110,129,132-133,156,167,169,193-208,218-219
+  s_fae32e7f0efe76::t_c0fde0d3d43fea 1-3,5-20,24-57,75-96,104-108,111-128,134-155,157-166,168,170-192,209-217,220-225
+core/engine/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt
+  s_fae32e7f0efe76::t_3b96f21d37c752 34-36
+  s_fae32e7f0efe76::t_02a98567031959 227
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7ca995a5d63d72366335b0ed14239ae96af9c160",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
