@@ -1,0 +1,38 @@
+core/server/src/main/kotlin/io/github/yysassist/server/SmtpMailer.kt
+  s_fae32e7f0efe76::t_be3bfc24577f6c 1-32,38-86
+  s_fae32e7f0efe76::t_62af979da466cc 33-37
+client/android/app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt
+  s_fae32e7f0efe76::t_02e02810c0d3ff 171-175
+core/server/src/main/kotlin/io/github/yysassist/server/Channels.kt
+  s_fae32e7f0efe76::t_62af979da466cc 252,285
+docs/development/cloud-console.md
+  s_fae32e7f0efe76::t_bd0aca05337496 37
+  s_fae32e7f0efe76::t_56d353c658d3c5 69-71
+core/server/src/main/kotlin/io/github/yysassist/server/Routes.kt
+  s_fae32e7f0efe76::t_62af979da466cc 68-72
+docs/design/cloud-executor.md
+  s_fae32e7f0efe76::t_2b155de35d7c5b 390,401
+docs/development/deploy.md
+  s_fae32e7f0efe76::t_2b155de35d7c5b 64-69,189-190
+core/server/src/test/kotlin/io/github/yysassist/server/SmtpMailerTest.kt
+  s_fae32e7f0efe76::t_5fd09ccc2b8257 6
+  s_fae32e7f0efe76::t_3e75ad6aabaae7 1-5,7-69
+core/server/src/main/kotlin/io/github/yysassist/server/Main.kt
+  s_fae32e7f0efe76::t_62af979da466cc 10-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b1706a6192409e06f679d2be049988c11ce7c421",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
