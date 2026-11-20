@@ -1,0 +1,11 @@
+---
+/** The "夜班" mark, coloured by the theme: a crescent and a star on the primary colour. */
+interface Props { size?: number }
+const { size = 32 } = Astro.props;
+---
+<svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true" class="mark">
+  <rect width="48" height="48" rx="12" fill="var(--color-primary)" />
+  <path d="M27 9.5 A15 15 0 1 0 39 31 A12 12 0 1 1 27 9.5 Z" fill="var(--color-on-primary)" />
+  <path d="M33.5 11 L34.8 14.3 L38 15.1 L34.8 16.1 L33.5 19.2 L32.2 16.1 L29 15.1 L32.2 14.3 Z" fill="var(--color-logo-star)" />
+</svg>
+<style>.mark { display: block; flex: none; }</style>

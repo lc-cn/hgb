@@ -1,0 +1,25 @@
+/*
+ * Starlight's colours taken from the shared design tokens, so the docs look like the home page and the console in
+ * both light and dark. tokens.css already switches with data-theme, which Starlight sets.
+ */
+:root, :root[data-theme="light"], :root[data-theme="dark"] {
+  --sl-font: var(--font-body);
+  --sl-color-accent-low: var(--color-primary-soft);
+  --sl-color-accent: var(--color-primary);
+  --sl-color-accent-high: var(--color-nav-current);
+  --sl-color-white: var(--color-ink);
+  --sl-color-gray-1: var(--color-ink);
+  --sl-color-gray-2: var(--color-nav);
+  --sl-color-gray-3: var(--color-muted);
+  --sl-color-gray-4: var(--color-faint);
+  --sl-color-gray-5: var(--color-line);
+  --sl-color-gray-6: var(--color-line-soft);
+  --sl-color-gray-7: var(--color-bg);
+  --sl-color-black: var(--color-surface);
+  --sl-color-bg-nav: var(--color-surface);
+  --sl-color-bg-sidebar: var(--color-surface);
+  --sl-color-hairline: var(--color-line);
+  --sl-color-hairline-light: var(--color-line-soft);
+  --sl-color-text-accent: var(--color-primary);
+}
+.site-title { font-weight: 900; letter-spacing: 1px; }

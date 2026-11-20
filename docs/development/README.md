@@ -114,14 +114,14 @@
 | C3 实际代表任务 | 领取类优先，具体选项取决于账号资格和当前游戏界面 | 制作真实任务、采集账号画面或发起游戏输入前明确；不能拿原型字段冒充真实规格 |
 | C4 定时规则 | 时间所属时区、错过、重叠、达到计划时长和停机期间的定时补做策略仍待定 | 对应调度路径，不阻塞手动入队和暂停语义 |
 | App 重开恢复 | 用户已确认：安全任务自动恢复，未知暂停核对；保留人工暂停 | 策略已定，输入／身份与结果证据仍需实现和实测 |
-| C5 GitHub 实际资源 | 用户已指定 lc-cn/yys-helper；2026-11-17 报告 GitHub App yys-helper 已创建并安装，仅 Contents Read & Write；公开 Client ID 已记录在 config/github-app-registration.json | 正式会话与 Device Flow 已实测，私有源可访问且无发布；非空附件、令牌真实到期续期及开发者有效写权仍需联调，不重复授权或创建 App，发送 Release 仍需具体授权 |
+| C5 GitHub 实际资源 | 用户已指定 lc-cn/hgb；2026-11-17 报告 GitHub App yys-helper 已创建并安装，仅 Contents Read & Write；公开 Client ID 已记录在 config/github-app-registration.json | 正式会话与 Device Flow 已实测，私有源可访问且无发布；非空附件、令牌真实到期续期及开发者有效写权仍需联调，不重复授权或创建 App，发送 Release 仍需具体授权 |
 | C6 高影响业务规则 | 商品／币种／数量、强化素材、御魂保留和处置、模型成本与外发、留存等待定 | 只阻塞相关功能；不自行填数值、启用自动化或放宽条件 |
 
 这不是要求一次回答所有问题。C1 已确认；做到依赖位置时再核对 C2–C6，已有明确授权可直接复用。用户已选网易官服作为开发模拟器的验证客户端。普通界面不放开发待决表，这些内容仅用于开发协作。
 
 ## 6. 本机工程与环境的真实状态
 
-- 用户已授权按阶段提交推送，工作目录已初始化 Git 并绑定私有 `lc-cn/yys-helper`；远端初次核对为空，默认分支 master。原生 `app`、纯 Kotlin `core`、官方 Gradle Wrapper、版本目录、依赖锁和校验元数据已建立。
+- 用户已授权按阶段提交推送，工作目录已初始化 Git 并绑定私有 `lc-cn/hgb`；远端初次核对为空，默认分支 master。原生 `app`、纯 Kotlin `core`、官方 Gradle Wrapper、版本目录、依赖锁和校验元数据已建立。
 - 已安装 Homebrew OpenJDK 17.0.20.1，可直接执行；macOS 的默认 `java_home` 没有登记到它，默认 `java` 只是不可用的系统入口。
 - Android SDK 在 `/opt/homebrew/share/android-commandlinetools`，含可执行 ADB、emulator 和 sdkmanager；ADB 实际输出 37.0.1。安装记录有 `platforms;android-37.0`、Build Tools 36.0.0／37.0.0，以及 Android 36 ARM64 系统镜像。
 - 上述是本机 Mac ARM64 的工具和镜像，不能替代 Windows 模拟器证据。已在项目隔离的 API 36 ARM64 开发 AVD 安装并检查原生界面及截图授权；不会操作其他既有 AVD。

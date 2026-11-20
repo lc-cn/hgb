@@ -1,39 +1,93 @@
-# 阴阳师助手
+# 护肝宝
 
-Android 任务管理与执行容器，目标同时用于安卓手机和 Windows 安卓模拟器。首期验证阴阳师，核心合同预留其他游戏和普通 App 的目标隔离。当前原生壳可构建、安装，核心测试与设备验证进度分别记录。
+护肝宝替你把游戏里每天重复的日常跑完：在手机上按任务的步骤看画面、点按钮，到点自动开始，需要时先切到对应的游戏账号，跑完把结果推给你。网页控制台管理所有设备、游戏账号、计划和通知。第一个支持的游戏是阴阳师，任务还在真机上调试，尚未正式发布。
 
-- [当前实现进度](docs/development/implementation-status.md)
-- [多目标应用扩展边界](docs/development/target-extensibility.md)
-- [开发基线、首期范围与验收](docs/development/README.md)
-- [完整需求](docs/PRD.md)
-- [已认可的 UI v5 预览](docs/design/ui-v5/index.html)
-- [设计与技术资料索引](docs/design/README.md)
+- 不需要 Root，不问、不保存游戏密码；切号只从游戏自己记住的账号里选。
+- 认不出画面、遇到没见过的弹窗就停下来等人，不会乱点；没法确认的结果标为“待核对”，不假装成功。
 
-App 提供基础动作能力，开发者发布版本化步骤、任务与配置 schema，用户拉取任务后直接执行或组合计划。具体技术实施与分期以开发基线中的确认状态为准。
+## 组成
 
-## 项目结构
+| 部分 | 是什么 | 位置 |
+| --- | --- | --- |
+| 安卓 App | 执行端：无障碍 + 截图操作游戏，悬浮球，本机运行；也能管理账号、设置和计划 | `client/android/app` |
+| 服务端 | 账号、游戏账号、任务设置和计划都存这里；计时、分配设备、下发作业；事件规则和通知渠道 | `core/server`（Ktor + SQLite） |
+| 网页控制台 | 管理设备、游戏账号、计划、运行记录和通知，挂在 `/console` | `client/web`（React + TypeScript + Vite） |
+| 首页和文档站 | 首页 `/`，文档 `/docs` | `client/site`（Astro + Starlight） |
+| 执行引擎 | 任务包格式、步骤程序、执行器、云端代理；安卓和以后的 Windows 端共用 | `core/engine` |
+| 协议 | App 与服务端之间的数据类型 | `core/protocol` |
+| 设计变量 | 颜色、字号、间距、圆角、断点的唯一来源，生成网页和网站的 CSS | `design/tokens.json` |
+
+Windows 端计划用 Compose Multiplatform 桌面版，和安卓共用 Kotlin 界面代码与执行引擎，还在计划中。
 
 ```text
-core/                 各端共用
-  protocol/           App 与云端之间的接口定义
-  engine/             任务包格式、步骤程序、执行器和计划，Android 与以后的 Windows 端共用
-  server/             云端服务（Ktor + SQLite），同时托管 client/web 的控制台页面
-client/               各端客户端
-  android/app/        Android App
-  android/vision/     Maa 识别子进程与原生库
-  android/visionprobe/、android/maaprobe/   识别实验探针，不进正式 App
-  web/                Web 控制台（静态页面，构建时打进 core/server）
-  windows/            以后的 Windows 端，尚未开始
+core/
+  protocol/        App 与服务端的接口类型
+  engine/          任务包、步骤程序、执行器、云端代理（CloudAgent）
+  server/          服务端，只提供 /api
+client/
+  android/app/     安卓 App
+  android/vision/  Maa 识别子进程与原生库
+  web/             网页控制台（/console）
+  site/            首页和文档站（/、/docs）
+design/tokens.json 设计变量
+docs/              需求、设计和开发资料
 ```
 
-依赖方向只能从 client 指向 core，core 内部为 server → engine → protocol。云端开发说明见 [云端控制台](docs/development/cloud-console.md)。
+依赖方向只能从 client 指向 core，core 内部为 server → engine → protocol。
 
-## 构建
+## 开发
 
-需要 JDK 17、Android SDK 37.0 和 Build Tools 36.0.0。设置 `JAVA_HOME`，通过 `ANDROID_HOME` 或本地不提交的 `local.properties` 提供 SDK 路径后运行：
+需要 JDK 17、Android SDK（compileSdk 37、Build Tools 36.0.0）、Node 22.23 以上和 pnpm。设置 `JAVA_HOME`，SDK 路径放在环境变量 `ANDROID_HOME` 或不提交的 `local.properties` 里。
 
-```sh
-./gradlew :core:engine:test :client:android:app:assembleDebug
+测试和构建：
+
+```bash
+./gradlew :core:engine:test :core:server:test :client:android:app:assembleDebug
 ```
 
-Windows 使用 `gradlew.bat`。首次构建需从官方仓库下载依赖；Wrapper 分发校验和固定。APK 输出为 `client/android/app/build/outputs/apk/debug/app-debug.apk`，只有构建通过后才存在。
+```bash
+pnpm --dir client/web install && pnpm --dir client/web build
+```
+
+```bash
+pnpm --dir client/site install && pnpm --dir client/site build
+```
+
+本地运行服务端、网页控制台和首页、文档站：
+
+```bash
+./gradlew :core:server:installDist
+YYS_SECRET="$(openssl rand -base64 48)" YYS_MAIL_MODE=console YYS_SECURE_COOKIES=false core/server/build/install/server/bin/server
+```
+
+```bash
+pnpm --dir client/web dev
+```
+
+```bash
+pnpm --dir client/site dev
+```
+
+控制台在 <http://127.0.0.1:5173/console/>，首页和文档在 <http://127.0.0.1:4321/>。服务端的环境变量、部署方式见[云端控制台](docs/development/cloud-console.md)。改颜色、字号等只改 `design/tokens.json`，构建时会重新生成各端的样式。
+
+APK 输出在 `client/android/app/build/outputs/apk/debug/app-debug.apk`。
+
+## 进度
+
+| 阶段 | 内容 | 状态 |
+| --- | --- | --- |
+| 第 1 期 | 设备连接、在线状态、网页实时查看 | 完成 |
+| 第 2 期 | 游戏账号、服务端计划和调度、网页下发和控制、识别账号和界面切号 | 完成（阴阳师的识别和切号任务还在调试任务包里，未发布） |
+| 第 3 期 | 通知：事件规则、钉钉 / 企业微信 / Bark / 邮件 / Webhook / 本机通知、设备上报的事件 | 完成 |
+| 网站 | 首页和文档站 | 进行中 |
+| 三端统一 | 安卓 App 改成和网页同一套页面结构；Windows 版 | 计划中 |
+| 第 4 期 | 任务版本上传、服务端草稿和当前版本、设备自动下载、开发页 | 未开始 |
+| 第 5 期 | AI 识图 | 未开始 |
+
+## 资料
+
+- [云端方案与已确认的决定](docs/design/cloud-executor.md)：账号、调度、切号、通知、三端界面等的设计和决定记录
+- [设计稿](https://claude.ai/artifact/7VRpYb4jWcQSAP7xa5Lyhk)：规范（三端）、网站、网页控制台、各页窄档和中档、App
+- [云端控制台开发说明](docs/development/cloud-console.md)
+- [开发基线与验收](docs/development/README.md)、[实现进度](docs/development/implementation-status.md)
+- [需求](docs/PRD.md)、[设计与技术资料索引](docs/design/README.md)

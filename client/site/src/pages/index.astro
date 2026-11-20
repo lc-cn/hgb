@@ -1,0 +1,262 @@
+---
+import Logo from "../components/Logo.astro";
+import "../styles/tokens.css";
+
+const steps = [
+  ["装上护肝宝并登录", "在安卓手机上安装，用邮箱登录。设备会自动出现在网页控制台。"],
+  ["选账号、选任务、定时间", "在网页或 App 里给每个游戏账号选好任务和设置，再设一个每天几点开始的计划。"],
+  ["到点自动跑，跑完告诉你", "护肝宝按计划开始，需要时先切到对应账号。结果推到钉钉、企业微信、Bark、邮箱或手机通知。"],
+];
+const features = [
+  ["定时计划", "按星期和时间自动开始；过了最晚开始时间就不硬跑，并记下原因。", "M12 7v5l3 3M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"],
+  ["多个游戏账号", "主号、小号各有自己的设置和计划；跑之前核对游戏里登录的账号，自动切号正在调试。", "M16 11a4 4 0 1 0-8 0M4 20a8 8 0 0 1 16 0M18 4l2 2-2 2"],
+  ["多台设备一起用", "每台设备上的游戏都是执行者；服务端按账号把任务分给登录着它、或空闲能切号的那一个。", "M3 5h12v9H3zM17 8h4v11h-4zM7 18h4"],
+  ["人不在也能管", "在网页上暂停、停止、立即运行，看到每台设备正在做什么。", "M4 5h16v11H4zM9 20h6M12 16v4"],
+  ["每一步都有记录", "每次运行按步骤记下来：在哪停住、为什么停住，一看就知道。", "M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"],
+  ["出事第一时间知道", "连续失败、设备掉线、结果需要你确认时，按你打开的规则推送。", "M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"],
+];
+const trust = [
+  ["不问游戏密码", "切号只从游戏自己记住的账号里选。"],
+  ["看不懂就停下", "遇到不认识的弹窗或验证，停下来等你处理。"],
+  ["结果说实话", "没法确认的结果标为“待核对”，不假装成功。"],
+  ["每一步看得见", "运行记录按步骤列出点了哪里、用了多久，在哪停下、为什么停下。"],
+];
+const faq = [
+  ["需要 Root 吗？", "不需要。护肝宝用系统的无障碍和截图能力操作游戏界面。"],
+  ["会保存我的游戏密码吗？", "不会。护肝宝只记下账号是谁（编号和游戏昵称），切号时从游戏记住的账号里选。"],
+  ["支持哪些游戏？", "第一个支持的是阴阳师，任务正在调试。以后会开放给开发者在 App 里做步骤、调试、上传，给新游戏做任务。"],
+  ["电脑能用吗？", "Windows 版在计划中，会支持游戏多开；现在可以先用网页控制台管理手机上的任务。"],
+];
+---
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>护肝宝 · 日常交给它，你去睡觉</title>
+  <meta name="description" content="护肝宝在你的手机上替你把游戏里每天重复的日常跑完：定时计划、多个游戏账号、多设备、远程控制、运行记录和通知推送。" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <!-- The docs' theme choice, when the visitor made one there, applies here too; otherwise the system's. -->
+  <script is:inline>try { const t = localStorage.getItem("starlight-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch {}</script>
+</head>
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+  <header class="top">
+    <nav class="bar" aria-label="网站导航">
+      <a class="brand" href="/" aria-label="护肝宝首页"><Logo /><span>护肝宝</span></a>
+      <div class="links">
+        <a href="#how">怎么用</a><a href="#features">功能</a><a href="#games">支持的游戏</a><a href="/docs/">文档</a>
+      </div>
+      <a class="docs" href="/docs/">文档</a>
+      <a class="cta small primary" href="/console/">登录控制台</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero wrap" aria-labelledby="hero">
+      <div class="heroText">
+        <span class="tag">安卓 · 网页控制台 · Windows 计划中</span>
+        <h1 id="hero">日常交给护肝宝，<br />你去睡觉。</h1>
+        <p class="lead">护肝宝在你的手机上，替你把游戏里每天重复的日常跑完。到点自动开始，换账号、排队、跑完通知你，人不在也能在网页上看到每一步。</p>
+        <div class="actions">
+          <a class="cta primary" href="#download"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>获取护肝宝</a>
+          <a class="cta ghost" href="/docs/start/quick-start/">看看怎么用</a>
+        </div>
+        <p class="note">不需要 Root · 不问游戏密码 · 每一步都有记录</p>
+      </div>
+      <div class="art" role="img" aria-label="示意：网页控制台显示两台设备正在运行，手机游戏上方有护肝宝的悬浮球和一条钉钉通知">
+        <div class="console">
+          <div class="dots"><span></span><span></span><span></span><em>控制台 · 设备</em></div>
+          <div class="devices">
+            <div class="device"><b>我的手机</b><span class="pill run">运行中</span><span class="muted">主号 · 日常巡游</span><i style="--w: 62%"></i></div>
+            <div class="device"><b>备用手机</b><span class="pill run">运行中</span><span class="muted">小号 · 喂猫喂狗</span><i style="--w: 30%"></i></div>
+          </div>
+          <ul class="runs">
+            <li><span>每日领取 · 主号</span><span class="muted">06:30</span><b class="ok">已完成</b></li>
+            <li><span>花合战领取 · 小号</span><span class="muted">06:42</span><b class="ok">已完成</b></li>
+            <li><span>日常巡游 · 主号</span><span class="muted">现在</span><b class="info">运行中</b></li>
+          </ul>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <span class="bubble">日常巡游 · 第 3/4 步</span>
+            <span class="ball"><Logo size={26} /></span>
+            <span class="toast"><b>钉钉 · 运维群</b><br />每日领取：全部完成</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" class="band" aria-labelledby="howh">
+      <div class="wrap stack">
+        <h2 id="howh">三步用起来</h2>
+        <ol class="steps">
+          {steps.map(([title, text], i) => <li><span class="num">{i + 1}</span><b>{title}</b><span class="muted">{text}</span></li>)}
+        </ol>
+      </div>
+    </section>
+
+    <section id="features" class="wrap stack" aria-labelledby="feath">
+      <h2 id="feath">它能替你做什么</h2>
+      <div class="grid">
+        {features.map(([title, text, icon]) => (
+          <article class="card feature">
+            <span class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d={icon} /></svg></span>
+            <h3>{title}</h3><p class="muted">{text}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="wrap" aria-labelledby="trusth">
+      <div class="trust">
+        <div><h2 id="trusth">放心交给它</h2><p>护肝宝只在你的设备上操作游戏界面，看不懂就停下来等你，不会为了跑完而乱点。</p></div>
+        <ul>{trust.map(([title, text]) => <li><span aria-hidden="true">✓</span><span><b>{title}</b><span>{text}</span></span></li>)}</ul>
+      </div>
+    </section>
+
+    <section id="games" class="wrap stack" aria-labelledby="gamesh">
+      <h2 id="gamesh">支持的游戏</h2>
+      <div class="grid two">
+        <article class="card feature">
+          <div class="row"><h3>阴阳师</h3><span class="pill run">调试中</span></div>
+          <p class="muted">日常巡游、花合战领取、喂猫喂狗、每日礼包等，正在真机上调试；识别账号和自动切号也在调试。</p>
+          <a href="/docs/games/onmyoji/">任务列表 →</a>
+        </article>
+        <article class="card feature dashed">
+          <h3>更多游戏</h3>
+          <p class="muted">护肝宝的动作是通用的，游戏相关的都写在任务包里；以后开发者可以在 App 里做步骤、调试、上传。</p>
+          <a href="/docs/dev/task-bundles/">怎么给新游戏做任务 →</a>
+        </article>
+      </div>
+    </section>
+
+    <section id="download" class="band soft" aria-labelledby="dl">
+      <div class="wrap download">
+        <div><h2 id="dl">现在开始</h2><p class="muted">护肝宝还没有正式发布。发布后在这里下载安卓版，用邮箱登录，设备会自动出现在控制台里。</p></div>
+        <div class="downloads">
+          <div class="card dl off"><span><b>安卓版</b><span class="muted">APK · 即将发布</span></span><span class="go muted">敬请期待</span></div>
+          <div class="card dl off"><span><b>Windows 版</b><span class="muted">计划中 · 将支持游戏多开</span></span><span class="go muted">敬请期待</span></div>
+          <a class="card dl" href="/console/"><span><b>网页控制台</b><span class="muted">不用安装，管理所有设备</span></span><span class="go">打开</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap narrow stack" aria-labelledby="faqh">
+      <h2 id="faqh">常见问题</h2>
+      {faq.map(([q, a]) => <details class="card"><summary>{q}</summary><p class="muted">{a}</p></details>)}
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap row">
+      <span class="brand small"><Logo size={22} />护肝宝</span>
+      <a href="/docs/">文档</a><a href="#download">下载</a><a href="/console/">控制台</a>
+    </div>
+  </footer>
+
+  <style>
+    :global(*) { box-sizing: border-box; }
+    :global(body) { margin: 0; background: var(--color-bg); color: var(--color-ink); font: 16px/1.65 var(--font-body); }
+    :global(h1), :global(h2), :global(h3), :global(p) { margin: 0; }
+    a { color: var(--color-primary); }
+    a:hover { color: var(--color-primary-hover); }
+    a:focus-visible, summary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; border-radius: 4px; }
+    .skip { position: absolute; left: -999px; top: 8px; padding: 8px 12px; background: var(--color-surface); z-index: 10; }
+    .skip:focus { left: 8px; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .narrow { max-width: 860px; }
+    .stack { display: flex; flex-direction: column; gap: 24px; padding-top: 64px; padding-bottom: 64px; }
+    .muted { color: var(--color-muted); }
+    h2 { font-size: clamp(26px, 3.4vw, 32px); font-weight: 800; }
+    h3 { font-size: 18px; font-weight: 700; }
+    .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
+    .card { border-radius: 16px; background: var(--color-surface); border: 1px solid var(--color-line); }
+    .pill { display: inline-flex; padding: 1px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .pill.ok, b.ok { background: var(--color-ok-bg); color: var(--color-ok); }
+    .pill.run { background: var(--color-run-bg); color: var(--color-run); }
+    b.ok, b.info { background: none; } b.info { color: var(--color-run); }
+
+    .top { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--color-bg) 92%, transparent); border-bottom: 1px solid var(--color-line);
+      backdrop-filter: blur(8px); }
+    .bar { max-width: 1200px; margin: 0 auto; padding: 0 24px; min-height: 64px; display: flex; align-items: center; gap: 24px; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-right: auto; color: var(--color-ink); text-decoration: none; font-size: 19px; font-weight: 900; letter-spacing: 1px; }
+    .brand:hover { color: var(--color-ink); }
+    .brand.small { font-size: 15px; margin-right: 8px; }
+    .links { display: flex; gap: 24px; }
+    .links a { color: var(--color-nav); text-decoration: none; font-weight: 500; }
+    .links a:hover { color: var(--color-primary); }
+    .cta { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 12px; font-weight: 600; text-decoration: none; }
+    .cta.small { min-height: 40px; padding: 0 16px; }
+    .cta.primary { background: var(--color-primary); color: var(--color-on-primary); }
+    .cta.primary:hover { background: var(--color-primary-hover); color: var(--color-on-primary); }
+    .cta.ghost { color: var(--color-primary); }
+    .docs { display: none; color: var(--color-nav); text-decoration: none; font-weight: 500; }
+
+    .hero { display: flex; flex-wrap: wrap; align-items: center; gap: 48px; padding-top: 72px; padding-bottom: 56px; }
+    .heroText { flex: 1 1 440px; display: flex; flex-direction: column; gap: 20px; }
+    .tag { align-self: flex-start; padding: 4px 12px; border-radius: 999px; background: var(--color-primary-soft); color: var(--color-nav-current); font-size: 14px; font-weight: 600; }
+    .hero h1 { font-size: clamp(36px, 5vw, 56px); line-height: 1.15; font-weight: 900; letter-spacing: 0.5px; }
+    .lead { font-size: 18px; color: var(--color-muted); max-width: 520px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+    .note { font-size: 14px; color: var(--color-muted); }
+    .art { flex: 1 1 460px; position: relative; min-height: 420px; }
+    .console { position: absolute; inset: 0 56px 40px 0; padding: 18px; display: flex; flex-direction: column; gap: 12px; border-radius: 16px;
+      background: var(--color-surface); border: 1px solid var(--color-line); box-shadow: 0 24px 60px rgb(28 27 34 / 0.1); font-size: 13px; }
+    .dots { display: flex; align-items: center; gap: 6px; } .dots span { width: 10px; height: 10px; border-radius: 50%; background: var(--color-line); }
+    .dots em { margin-left: 8px; font-style: normal; color: var(--color-muted); font-size: 12px; }
+    .devices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .device { display: grid; grid-template-columns: 1fr auto; gap: 6px; padding: 12px; border-radius: 12px; border: 1px solid var(--color-line); }
+    .device .muted { grid-column: 1 / -1; }
+    .device i { grid-column: 1 / -1; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--color-primary) var(--w), var(--color-track) var(--w)); }
+    .runs { list-style: none; margin: 0; padding: 0; border: 1px solid var(--color-line); border-radius: 12px; overflow: hidden; }
+    .runs li { display: flex; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--color-line-soft); }
+    .runs li:last-child { border-bottom: 0; } .runs li span:first-child { flex: 1; } .runs b { width: 52px; text-align: right; }
+    .phone { position: absolute; right: 0; bottom: 0; width: 200px; height: 330px; padding: 10px; border-radius: 28px; background: #1c1b22; box-shadow: 0 24px 60px rgb(28 27 34 / 0.25); }
+    .screen { position: relative; height: 100%; border-radius: 20px; overflow: hidden; background: linear-gradient(160deg, #2b2450, #1a1730); color: #fff; font-size: 12px; }
+    .bubble { position: absolute; left: 12px; right: 12px; top: 14px; padding: 8px 10px; border-radius: 12px; background: rgb(255 255 255 / 0.12); }
+    .ball { position: absolute; right: 14px; top: 120px; padding: 6px; border-radius: 50%; background: #1c1b22; border: 3px solid #b3a1f2; }
+    .toast { position: absolute; left: 12px; right: 12px; bottom: 14px; padding: 10px; border-radius: 12px; background: #fff; color: #1c1b22; }
+
+    .band { background: var(--color-surface); border-top: 1px solid var(--color-line); border-bottom: 1px solid var(--color-line); }
+    .band.soft { background: var(--color-primary-soft); border-color: var(--color-primary-line); }
+    .steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 20px; }
+    .steps li { display: flex; flex-direction: column; gap: 10px; padding: 24px; border-radius: 16px; background: var(--color-bg); }
+    .num { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--color-primary); color: var(--color-on-primary); font-weight: 800; font-size: 18px; }
+    .steps b { font-size: 18px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px; }
+    .grid.two { grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); }
+    .feature { padding: 22px; display: flex; flex-direction: column; gap: 8px; }
+    .feature.dashed { border-style: dashed; }
+    .icon { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--color-primary-soft); color: var(--color-primary); }
+    .trust { display: flex; flex-wrap: wrap; gap: 32px; padding: 40px; border-radius: 20px; background: var(--color-hero-bg); color: var(--color-hero-ink); margin-bottom: 64px; }
+    .trust > div { flex: 1 1 300px; display: flex; flex-direction: column; gap: 10px; }
+    .trust p, .trust li span span { color: var(--color-hero-muted); }
+    .trust ul { flex: 2 1 480px; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 18px; }
+    .trust li { display: flex; gap: 10px; } .trust li > span:first-child { color: #b3a1f2; font-weight: 800; }
+    .trust li b { display: block; color: #fff; } .trust li span span { font-size: 14px; }
+    .download { display: flex; flex-wrap: wrap; align-items: center; gap: 24px; padding-top: 64px; padding-bottom: 64px; }
+    .download > div:first-child { flex: 1 1 360px; display: flex; flex-direction: column; gap: 8px; }
+    .downloads { flex: 1 1 360px; display: grid; gap: 12px; }
+    .dl { display: flex; align-items: center; gap: 14px; padding: 16px 18px; color: var(--color-ink); text-decoration: none; }
+    .dl > span:first-child { flex: 1; display: flex; flex-direction: column; } .dl .muted { font-size: 14px; }
+    .dl:hover { color: var(--color-ink); border-color: var(--color-primary); }
+    .go { font-weight: 600; color: var(--color-primary); }
+    .dl.off .go { color: var(--color-muted); }
+    details { padding: 4px 20px; }
+    summary { min-height: 48px; display: flex; align-items: center; font-weight: 600; cursor: pointer; }
+    details p { padding-bottom: 16px; }
+    .foot { border-top: 1px solid var(--color-line); background: var(--color-surface); font-size: 14px; }
+    .foot .row { padding-top: 28px; padding-bottom: 28px; }
+
+    @media (max-width: 1023px) { .links { display: none; } .docs { display: inline; } }
+    @media (max-width: 599px) {
+      .bar { gap: 12px; padding: 0 16px; } .wrap { padding: 0 16px; }
+      .hero { padding-top: 40px; gap: 32px; }
+      .art { min-height: 360px; } .console { inset: 0 0 60px 0; } .devices { grid-template-columns: 1fr; }
+      .phone { width: 150px; height: 250px; } .trust { padding: 24px; }
+      .stack, .download { padding-top: 48px; padding-bottom: 48px; }
+    }
+  </style>
+</body>
+</html>

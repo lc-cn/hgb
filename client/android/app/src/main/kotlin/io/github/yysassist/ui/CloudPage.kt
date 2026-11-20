@@ -69,8 +69,8 @@ private fun CloudAccount(agent: CloudAgent, state: CloudState.SignedIn, notices:
 }
 
 /**
- * Which game account each game here is signed in to. The app cannot read it from the game yet, so the user says;
- * settings, plans and runs on this phone follow it.
+ * Which game account each game here is signed in to: read from the game when its task version can identify accounts,
+ * otherwise chosen by the user. Settings, plans and runs on this phone follow it.
  */
 @Composable
 private fun GameAccounts(accounts: CloudAccounts, online: Boolean, identify: (String) -> Unit) {

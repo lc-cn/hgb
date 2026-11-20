@@ -2,7 +2,7 @@
 
 设计见 [护肝宝云端控制方案](../design/cloud-executor.md)。本文说明当前已实现的范围和本地运行方法。
 
-> 2026-11-19：设计已定稿为“游戏账号管内容、应用只执行、服务端调度”。第 1 期（设备连接）和第 2 期第①～③步（游戏账号、按账号的设置和计划，服务端调度和下发，App 改读写服务端）已完成。App 还不会识别账号和切号（第④步），见设计文档第 10 节。网页将迁移为独立的 React 项目（设计文档 C34）。
+> 2026-11-20：第 1～3 期已完成：设备连接；游戏账号、服务端调度和下发、App 读写服务端、识别账号和切号（引擎和服务端已完成，阴阳师的识别和切号任务还在调试任务包里）；通知（规则、外部渠道、本机通知、设备上报的事件）。网页控制台是独立的 React 项目（C34），挂在 `/console`；首页和文档站是 `client/site`。
 
 ## 已实现
 
@@ -33,7 +33,7 @@
 
 - 游戏登录态的加密托管、下发和回传（要先在专用 Root 设备上验证）。
 - 断网时本机运行的记录，联网后补报到服务端。
-- 识别游戏里当前登录的账号、界面切号（第 2 期第④步）。
+- 阴阳师的“识别当前账号”“切换账号”任务随任务版本正式发布（现在只在本地调试任务包里）。
 - 正式发信服务：未配置时，需要发邮件的接口返回“发信服务未配置”。
 - 生产部署、HTTPS 证书、数据库备份。
 
@@ -68,3 +68,13 @@ pnpm --dir client/web dev
 | `YYS_SECURE_COOKIES` | 否 | 只有本地 http 调试时才设为 `false` |
 | `YYS_MAIL_MODE` | 否 | `console` 仅用于本地开发 |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | 否 | 不配置时 GitHub 登录不可用 |
+
+## 首页和文档站
+
+`client/site` 是 Astro + Starlight 项目：首页是 `src/pages/index.astro`，文档在 `src/content/docs/docs/` 下，按目录分成开始使用、日常使用、游戏、开发者四组，路径都在 `/docs/` 下。颜色、字号来自 `design/tokens.json`（`client/web/scripts/tokens.mjs` 同时生成网页和网站的 `tokens.css`），Starlight 的配色在 `src/styles/starlight.css` 里映射到这些变量。
+
+```bash
+pnpm --dir client/site dev
+```
+
+构建：`pnpm --dir client/site build`，产物在 `client/site/dist`，是纯静态页面，放到同一个域名的根路径；`/console/` 交给控制台的产物，`/api` 交给服务端。文档里还没定的内容用“[待补充：…]”标出，上线前补齐。

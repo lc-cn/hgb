@@ -1,4 +1,4 @@
-// Writes the console's theme from design/tokens.json, the one place colours, type, spacing and breakpoints are set.
+// Writes the console's and the site's theme from design/tokens.json, the one place colours, type, spacing and breakpoints are set.
 // Run by `pnpm dev` and `pnpm build`; the outputs are generated and must not be edited by hand.
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -31,6 +31,8 @@ ${colors("dark").join("\n")}
 }
 `;
 writeFileSync(here("../src/theme/tokens.css"), css);
+// The home page and docs (client/site) use the same variables.
+writeFileSync(here("../../site/src/styles/tokens.css"), css);
 
 const { medium, wide } = tokens.breakpoint;
 writeFileSync(here("../src/theme/tokens.ts"), `${header}

@@ -51,7 +51,7 @@
 
 核验来源：[AGP](https://developer.android.com/build/releases/agp-9-2-0-release-notes)、[内置 Kotlin](https://developer.android.com/build/migrate-to-built-in-kotlin)、[Kotlin／Gradle](https://kotlinlang.org/docs/gradle-configure-project.html)、[Compose BOM](https://developer.android.com/develop/ui/compose/bom)、[Compose compiler](https://developer.android.com/develop/ui/compose/setup-compose-dependencies-and-compiler)、[无障碍截图与手势合同](https://developer.android.com/reference/android/accessibilityservice/AccessibilityService)。下载使用官方 Google Maven／Maven Central／Gradle，未关闭 TLS 校验。
 
-本机 Java／SDK 路径记录在被忽略的 `local.properties` 或构建命令环境中；构建脚本不嵌入个人安装路径。已按用户授权初始化本地 Git，绑定既有私有仓库 `lc-cn/yys-helper`，通过阶段检查后提交推送；没有创建仓库或发布 Release。
+本机 Java／SDK 路径记录在被忽略的 `local.properties` 或构建命令环境中；构建脚本不嵌入个人安装路径。已按用户授权初始化本地 Git，绑定既有私有仓库 `lc-cn/hgb`，通过阶段检查后提交推送；没有创建仓库或发布 Release。
 
 Room 核验记录：2026-11-16 [Room 版本页](https://developer.android.com/jetpack/androidx/releases/room)列出 2.8.5，而同日[入门页](https://developer.android.com/training/data-storage/room)示例使用 `androidx.room3` 3.0.3，两处并不一致。本工程没有混用主版本，按实际存在的 2.8.5 依赖及编译／设备结果锁定。[KSP 官方发布](https://github.com/google/ksp/releases/tag/2.3.14)与[目录变化观察 API](https://developer.android.com/reference/kotlin/androidx/room/InvalidationTracker)已核对。Room schema 导出保留于 `client/android/app/schemas/`，无破坏性重建回退。
 
@@ -63,7 +63,7 @@ Room 核验记录：2026-11-16 [Room 版本页](https://developer.android.com/je
 - 分层高光是当前原生材质实现，不宣称已实现背景折射或经过性能验证。
 - 已连接首个真实设备 `SM-G9910`／Android 15／API 35，助手与官服已安装并启动；Windows 模拟器环境仍未指定。
 - 游戏开发模拟器暴露压缩纹理缺图，尚未修好；用户已确认进入庭院，取得当前只读画面；尚无 App 执行的真实任务结果，详见游戏验证记录。
-- 用户已将 `lc-cn/yys-helper` 改为私有并授权按阶段提交推送。开发机已推送 master；App 尚未接入私有仓库读取授权，不能使用开发机凭据代替客户端登录。真实 Release 发布、OAuth 客户端注册和资源上传未执行。
+- 用户已将 `lc-cn/hgb` 改为私有并授权按阶段提交推送。开发机已推送 master；App 尚未接入私有仓库读取授权，不能使用开发机凭据代替客户端登录。真实 Release 发布、OAuth 客户端注册和资源上传未执行。
 - 已有当前庭院和商店只读样本，代表免费领取项的资格及完成判据仍未确认。样本保留在忽略目录，不公开账号画面；未领取、消费或发外部通知。
 
 下一步：完成版本资源与识别器联动、native 故障边界，再将平台输入桥接入执行宿主；真机重连后推进代表任务和联验。分发实现及边界见[任务分发](task-distribution.md)，完整产品范围仍以 PRD 与开发基线为准。
@@ -198,7 +198,7 @@ core 新增一次设备码授权协议，按服务间隔／过期单调计时，
 
 最终核心 108 项通过，debug 主／测试 APK 和 Lint 通过；完整 Android 171 项中 167 通过、4 条件跳过，执行器和 GitHub 会话的两组实际进程强停／恢复各两阶段另行通过。主包及测试包安装摘要均与最终构建一致。原生浅色竖屏设备码、深色横屏账号与存储错误状态均由隔离夹具验证；实际 Keystore、AtomicFile、HTTPS、并发续期、取消和存储异常有集成证据。
 
-用户随后亲自完成正式 App 的真实设备码授权，App 显示账号，使用自己的会话读取私有 `lc-cn/yys-helper`，结果为经访问及 Release 列表核对的暂无发布。更新 APK 并重开仍保留登录，手动拉取结果一致。没有导出令牌／真实会话文件或提交真实授权截图；未使用开发机令牌替代 App。此轮仅在专用模拟器，未更新失联手机或执行游戏操作。
+用户随后亲自完成正式 App 的真实设备码授权，App 显示账号，使用自己的会话读取私有 `lc-cn/hgb`，结果为经访问及 Release 列表核对的暂无发布。更新 APK 并重开仍保留登录，手动拉取结果一致。没有导出令牌／真实会话文件或提交真实授权截图；未使用开发机令牌替代 App。此轮仅在专用模拟器，未更新失联手机或执行游戏操作。
 
 非空私有任务附件、真实到期续期／撤权、开发者有效写权与 App 内制作发布、实际游戏领取、留出主题和长期运行仍继续；本轮不发 Release、不解锁开发者入口，不据此完成 M2／M3／M4。职责和证据见 [Android GitHub 会话](github-session.md)及 [github-session](build-evidence/github-session/README.md)。
 

@@ -4,7 +4,7 @@
   "userReportedApp": {
     "appId": 5794664,
     "name": "yys-helper",
-    "installedRepository": "lc-cn/yys-helper",
+    "installedRepository": "lc-cn/hgb",
     "configuredRepositoryPermissions": { "contents": "write" }
   },
   "registration": {
@@ -33,11 +33,11 @@
   "installation": {
     "account": "lc-cn",
     "repositorySelection": "selected",
-    "repositories": ["lc-cn/yys-helper"]
+    "repositories": ["lc-cn/hgb"]
   },
   "client": {
     "authorizationFlow": "device-flow",
     "clientId": "Iv23liVW7AdPVQ5Ue4iz",
-    "developerRepository": "lc-cn/yys-helper"
+    "developerRepository": "lc-cn/hgb"
   }
 }

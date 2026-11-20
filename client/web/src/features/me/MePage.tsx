@@ -78,7 +78,6 @@ export function MePage() {
         <h2 id="help">帮助</h2>
         <Card flush>
           <a className={s.linkRow} href="/docs/"><b className={s.semi}>使用文档</b><Muted as="span">→</Muted></a>
-          <a className={s.linkRow} href="https://github.com/lc-cn/yys-helper/issues" target="_blank" rel="noreferrer"><b className={s.semi}>反馈问题</b><Muted as="span">GitHub Issues →</Muted></a>
         </Card>
       </section>
       <div><Button onClick={logout}>退出登录</Button></div>
