@@ -1,0 +1,77 @@
+core/server/src/main/kotlin/io/github/yysassist/server/Database.kt
+  s_fae32e7f0efe76::t_4c1cea8c5a6561 45-47
+client/web/src/features/me/AccountActions.tsx
+  s_fae32e7f0efe76::t_de2cb0e1f63323 50
+  s_fae32e7f0efe76::t_9ab65834d04d8b 1-49,51-80
+client/site/src/pages/index.astro
+  s_fae32e7f0efe76::t_aa346b83ccbfae 155
+core/server/src/main/kotlin/io/github/yysassist/server/CloudService.kt
+  s_fae32e7f0efe76::t_0523f50bcd3afe 146,177,187-188
+  s_fae32e7f0efe76::t_1d06c27b130822 22-26,148,153-157,175-176,178-186,189-243,967
+client/web/src/features/ConsolePage.tsx
+  s_fae32e7f0efe76::t_c68b7dab7398ac 4,30-35,40
+docs/development/deploy.md
+  s_fae32e7f0efe76::t_de2cb0e1f63323 94,180
+core/server/src/test/kotlin/io/github/yysassist/server/CloudApiTest.kt
+  s_fae32e7f0efe76::t_853ea616ddcf30 677-714,716-727,729-740,742-748,750-770,772
+  s_fae32e7f0efe76::t_988ae4c2357888 715,728,741,749,771
+client/shared/src/commonMain/kotlin/io/github/yysassist/shared/Instance.kt
+  s_fae32e7f0efe76::t_3263a65c467dd9 14-15
+client/site/src/content/docs/terms.mdx
+  s_fae32e7f0efe76::t_ce3cf223ce1631 1-53
+docs/design/cloud-executor.md
+  s_fae32e7f0efe76::t_76042228dbf6f0 390-391
+core/server/src/main/kotlin/io/github/yysassist/server/Routes.kt
+  s_fae32e7f0efe76::t_1d06c27b130822 127,129-134,140-155
+deploy/host/hgb-activate
+  s_fae32e7f0efe76::t_81ff805d6b43df 64-66,68-69,153,157-160
+  s_fae32e7f0efe76::t_57c00898206419 61-63,67,70-72,147
+core/protocol/src/main/kotlin/io/github/yysassist/protocol/CloudProtocol.kt
+  s_fae32e7f0efe76::t_4c1cea8c5a6561 25-32
+deploy/host/hgb-prune-backups.service
+  s_fae32e7f0efe76::t_81ff805d6b43df 1-7
+client/web/src/features/me/MePage.tsx
+  s_fae32e7f0efe76::t_c68b7dab7398ac 3,9,20-21,48-52,59,87-88,91
+client/web/src/features/auth/AuthPage.tsx
+  s_fae32e7f0efe76::t_90a649134a39fa 57
+client/shared/src/commonMain/kotlin/io/github/yysassist/shared/console/ConsoleApi.kt
+  s_fae32e7f0efe76::t_546dbdf327b837 20-26
+core/server/src/main/kotlin/io/github/yysassist/server/Accounts.kt
+  s_fae32e7f0efe76::t_0523f50bcd3afe 27-28,56-59,77-78,83-85
+  s_fae32e7f0efe76::t_a8880f7722ff2d 1-26,29-55,60-76,79-82,86-99
+deploy/host/hgb-prune-backups.timer
+  s_fae32e7f0efe76::t_81ff805d6b43df 1-9
+client/web/src/features/auth/AuthPage.module.css
+  s_fae32e7f0efe76::t_90a649134a39fa 37
+client/shared/src/commonMain/kotlin/io/github/yysassist/shared/pages/SignInPage.kt
+  s_fae32e7f0efe76::t_90a649134a39fa 78,176-189
+  s_fae32e7f0efe76::t_77d3a3df4d2876 14
+  s_fae32e7f0efe76::t_99612eaab2860d 190
+client/web/src/features/me/Me.module.css
+  s_fae32e7f0efe76::t_9ab65834d04d8b 24-30
+client/web/src/api/types.ts
+  s_fae32e7f0efe76::t_9ab65834d04d8b 6-9
+client/site/src/content/docs/privacy.mdx
+  s_fae32e7f0efe76::t_de2cb0e1f63323 50,58
+  s_fae32e7f0efe76::t_ce3cf223ce1631 1-49,51-57,59-72
+client/shared/src/commonMain/kotlin/io/github/yysassist/shared/pages/AccountActions.kt
+  s_fae32e7f0efe76::t_e5ba8a70a9da65 1-80
+client/shared/src/commonMain/kotlin/io/github/yysassist/shared/pages/MePage.kt
+  s_fae32e7f0efe76::t_08174df00ed8ba 38-40,64,66,76,121,124-125,128-132
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ebcd00478b15639628bba5bc32230d4fc7e67677",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
