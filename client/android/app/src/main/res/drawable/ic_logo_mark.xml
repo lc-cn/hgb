@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- The mark's crescent and star without its square (the floating ball draws its own round fill). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
-    <group android:translateX="-30" android:translateY="-30">
-        <group android:rotation="35" android:pivotX="54" android:pivotY="54">
-            <path android:pathData="M54,30 A24,24 0 0 0 54,78 A12,12 0 0 0 54,54 A12,12 0 0 1 54,30 Z" android:fillColor="#F7EFE1" />
-            <path android:pathData="M54,30 A24,24 0 0 1 54,78 A12,12 0 0 1 54,54 A12,12 0 0 0 54,30 Z" android:fillColor="#E0452F" />
-            <path android:pathData="M50.2,42 a3.8,3.8 0 1 0 7.6,0 a3.8,3.8 0 1 0 -7.6,0 Z" android:fillColor="#E0452F" />
-            <path android:pathData="M50.2,66 a3.8,3.8 0 1 0 7.6,0 a3.8,3.8 0 1 0 -7.6,0 Z" android:fillColor="#F7EFE1" />
-        </group>
+    <group android:translateX="-3" android:translateY="0.5">
+        <path android:pathData="M27,9.5 A15,15 0 1 0 39,31 A12,12 0 1 1 27,9.5 Z" android:fillColor="#FFFFFF" />
+        <path android:pathData="M33.5,11 L34.8,14.3 L38,15.1 L34.8,16.1 L33.5,19.2 L32.2,16.1 L29,15.1 L32.2,14.3 Z" android:fillColor="#FFD9A8" />
     </group>
 </vector>

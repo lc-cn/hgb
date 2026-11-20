@@ -291,12 +291,13 @@ private fun VersionRow(updates: io.github.yysassist.update.AppUpdater) {
         is io.github.yysassist.update.AppUpdateState.Ready -> "${s.release.version} 已下载并校验，安装时系统会再确认一次"
         is io.github.yysassist.update.AppUpdateState.Installing -> "正在交给系统安装 ${s.release.version}…"
         is io.github.yysassist.update.AppUpdateState.Failed -> s.message
+        io.github.yysassist.update.AppUpdateState.UpToDate -> "已是最新"
         else -> null
     }
     SettingRow(AssistIcons.Info, p.blue, "版本 $current", description) {
         when (val s = state) {
             io.github.yysassist.update.AppUpdateState.Checking -> SettingValue("正在检查…")
-            io.github.yysassist.update.AppUpdateState.UpToDate -> SettingValue("已是最新", p.success)
+            io.github.yysassist.update.AppUpdateState.UpToDate -> SmallAction("检查更新", onClick = updates::check)
             is io.github.yysassist.update.AppUpdateState.Available -> SmallAction("下载", onClick = updates::download)
             is io.github.yysassist.update.AppUpdateState.Downloading -> SettingValue("${(s.bytes * 100 / s.release.bytes.coerceAtLeast(1))}%")
             is io.github.yysassist.update.AppUpdateState.Ready -> SmallAction("安装", onClick = updates::install)

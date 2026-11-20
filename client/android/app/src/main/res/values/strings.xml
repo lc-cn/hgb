@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">阴阳师助手</string>
+    <string name="app_name">护肝宝</string>
     <string name="accessibility_description">用于观察目标应用画面、核对前台应用并执行已启动任务的点击与滑动。暂停后不再发送新动作。不读取界面控件文本。</string>
 </resources>
