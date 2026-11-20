@@ -1,5 +1,7 @@
 // Mirrors core/protocol CloudProtocol.kt: what the console reads from and sends to the server.
 
+/** How this server lets people sign in; email needs a mail service. */
+export interface AuthOptions { email: boolean; github: boolean }
 export interface Account { userId: string; email: string | null; hasPassword: boolean; githubLogin: string | null; timeZone: string }
 export interface CloudTask { targetId: string; taskId: string; name: string }
 /** The account the app last read on screen. */

@@ -45,7 +45,9 @@ private enum class Purpose { VERIFY, LOGIN, RESET }
  */
 @Composable
 fun SignInPage(actions: SignInActions, notice: String? = null, server: Pair<String, (String) -> Unit>? = null,
-    github: (@Composable () -> Unit)? = null, footer: (@Composable () -> Unit)? = null) {
+    github: (@Composable () -> Unit)? = null, footer: (@Composable () -> Unit)? = null,
+    /** False when the server has no mail service: then only the server address and GitHub are offered. */
+    email: Boolean = true) {
     val tokens = LocalTokens.current
     BoxWithConstraints(Modifier.fillMaxSize().background(tokens.bg)) {
         val tier = tierOf(maxWidth)
@@ -57,9 +59,17 @@ fun SignInPage(actions: SignInActions, notice: String? = null, server: Pair<Stri
                         if (tier == Tier.NARROW) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             HgbMark(32.dp); Text("护肝宝", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
                         }
-                        SignInForm(actions, notice, server)
+                        if (email) SignInForm(actions, notice, server)
+                        else {
+                            Column(verticalArrangement = Arrangement.spacedBy(Space.s1)) {
+                                Text("登录护肝宝", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                                Muted(if (github != null) "用 GitHub 账号登录" else "这台服务器还没有配置登录方式")
+                            }
+                            if (server != null) Field("服务器地址") { TextInput(server.first, server.second, "https://api-hgb.l2cl.link", Modifier.fillMaxWidth()) }
+                            notice?.let { Message(it) }
+                        }
                         if (github != null) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Space.s3)) {
+                            if (email) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Space.s3)) {
                                 HorizontalDivider(Modifier.weight(1f), color = tokens.line); Muted("或者"); HorizontalDivider(Modifier.weight(1f), color = tokens.line)
                             }
                             github()

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, enc } from "../../api/client";
-import type { Channel, ChannelKind, ChannelSave, Delivery, EventRule } from "../../api/types";
+import type { AuthOptions, Channel, ChannelKind, ChannelSave, Delivery, EventRule } from "../../api/types";
 import { Button, Card, Empty, Message, Muted, Pill, Switch } from "../../components/ui";
 import { orAlert, useAction } from "../../components/useAction";
 import { shortTime, type Tone } from "../../format";
@@ -86,6 +86,10 @@ function ChannelForm({ channel, rules, done }: { channel: Channel | null; rules:
   const [cleared, setCleared] = useState<string[]>([]);
   const [subscribed, setSubscribed] = useState<string[]>(channel?.rules ?? rules.filter((rule) => rule.enabled).map((rule) => rule.ruleId));
   const { busy, message, run } = useAction();
+  // Mail is sent by this server's mail service; without one, 邮件 is not offered (an existing mail channel still shows).
+  const [mail, setMail] = useState(true);
+  useEffect(() => { api<AuthOptions>("/api/auth/options").then((options) => setMail(options.email)).catch(() => {}); }, []);
+  const kinds = KINDS.filter(([id]) => id !== "EMAIL" || mail || channel?.kind === "EMAIL");
   const spec = KINDS.find(([id]) => id === kind)![2];
   // Only the fields of the chosen kind are sent; a blank secret of a saved channel of this kind keeps the saved one.
   const draft = (): ChannelSave => ({ kind, name: name.trim() || KIND_NAMES[kind], enabled: channel?.enabled ?? true, rules: subscribed,
@@ -113,7 +117,7 @@ function ChannelForm({ channel, rules, done }: { channel: Channel | null; rules:
       </div>
       <Message text={message?.text} ok={message?.ok} />
       <div role="radiogroup" aria-label="渠道类型" className={s.kinds}>
-        {KINDS.map(([id, label]) => <button key={id} type="button" role="radio" aria-checked={kind === id} className={s.kind} onClick={() => pick(id)}>{label}</button>)}
+        {kinds.map(([id, label]) => <button key={id} type="button" role="radio" aria-checked={kind === id} className={s.kind} onClick={() => pick(id)}>{label}</button>)}
       </div>
       <div className={s.fields}>
         <label className={s.field}><span>名称</span><input value={name} maxLength={40} placeholder={KIND_NAMES[kind]} onChange={(e) => setName(e.target.value)} /></label>

@@ -25,6 +25,8 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
     private val clock: () -> Long = System::currentTimeMillis, val events: ConsoleEvents = ConsoleEvents(), val sockets: DeviceSockets = DeviceSockets(),
     channelHttp: ChannelHttp = OkChannelHttp()) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    /** Sign-in by email works only with a mail service; without one the pages offer GitHub alone. */
+    val authOptions get() = AuthOptions(email = mailer !is UnconfiguredMailer, github = github.clientId != null)
     private val tasks = ListSerializer(CloudTask.serializer())
     private val apps = ListSerializer(AppStatus.serializer())
     private val loginLimit = RateLimiter(10, 10 * MINUTE, clock)

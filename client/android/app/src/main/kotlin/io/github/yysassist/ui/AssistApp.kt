@@ -137,9 +137,18 @@ private fun SignIn(application: AssistApplication, develop: () -> Unit) {
             agent.signInWithGitHub(address(), token.value); null
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled } catch (problem: Exception) { io.github.yysassist.shared.failureText(problem) }
     }
+    // Ask the typed server how it signs people in; one without a mail service offers GitHub alone.
+    var options by remember { mutableStateOf<io.github.yysassist.protocol.AuthOptions?>(null) }
+    LaunchedEffect(server) {
+        options = null
+        if (cloudServerIssue(server.trim()) != null) return@LaunchedEffect
+        kotlinx.coroutines.delay(600)
+        options = try { agent.authOptions(server.trim()) } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled } catch (_: Exception) { null }
+    }
     val uri = androidx.compose.ui.platform.LocalUriHandler.current
     io.github.yysassist.shared.pages.SignInPage(actions, (cloud as? CloudState.SignedOut)?.message, server to { next: String -> server = next },
-        github = {
+        email = options?.email != false,
+        github = if (options?.github == false) null else ({
             Column(verticalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
                 when (val state = github) {
                     is GitHubSessionState.SigningIn -> state.prompt?.let { prompt ->
@@ -159,7 +168,7 @@ private fun SignIn(application: AssistApplication, develop: () -> Unit) {
                 }
                 githubError?.let { io.github.yysassist.shared.ui.Message(it) }
             }
-        },
+        }),
         footer = { io.github.yysassist.shared.ui.LinkButton("开发 · 不登录也能在这台手机上调试任务", develop) })
 }
 

@@ -36,13 +36,19 @@ VITE_API_ORIGIN=https://api-hgb.l2cl.link bash scripts/build-sites.sh
 
 ## 主机：服务端
 
-需要 JDK 17 运行时。在开发机构建，把 `core/server/build/install/server` 整个目录拷到主机：
+当前部署在 `213.35.99.41`（Ubuntu，已装 OpenJDK 21，nginx 同时服务这台主机上的其他站点）。`api-hgb.l2cl.link` 在 Cloudflare 上指向这台主机并开启代理，SSL/TLS 模式为 Full (strict)。
 
-```bash
-./gradlew :core:server:installDist
-```
+### 目录和账号
 
-用一个单独的系统用户运行，数据放在 `/var/lib/hgb`。环境变量写在 `/etc/hgb/server.env`（权限 600，不要提交到仓库）：
+| 位置 | 用途 |
+| --- | --- |
+| `/opt/hgb/releases/<日期-提交-说明>/` | 每次发布一个目录，内容是 `server.tar` 解开后的 `bin`、`lib` |
+| `/opt/hgb/server` | 软链接，指向正在用的发布目录；回滚就是把它指回上一个 |
+| `/etc/hgb/server.env` | 环境变量（root，权限 600，不进仓库） |
+| `/var/lib/hgb/hgb.db` | 全部数据，一个 SQLite 文件 |
+| 系统用户 `hgb` | 运行服务；`hgb-deploy` 预留给以后的自动发布 |
+
+`/etc/hgb/server.env`：
 
 ```bash
 YYS_SECRET=<openssl rand -base64 48 生成，之后不要再改>
@@ -59,42 +65,68 @@ GITHUB_CLIENT_SECRET=<GitHub App 的 Client secret>
 - `YYS_SECRET` 用来给验证码做摘要，也用来派生通知渠道密钥的加密密钥；换掉它，已保存的渠道密钥就解不开了，需要重新填写。
 - `YYS_SECURE_COOKIES` 不要设，线上必须用安全 cookie。
 - `YYS_CHANNELS_PRIVATE` 不要设，线上不允许通知发往内网。
-- GitHub App 的回调地址（Callback URL）要改成 `https://api-hgb.l2cl.link/api/auth/github/callback`。GitHub 登录时服务端会给浏览器发一个只在这次回调里核对的 cookie（`yys_oauth`，10 分钟），从别人发来的链接完成的登录会被拒绝。
+- GitHub 登录用 GitHub App `yys-helper`（App 下载任务版本用的也是它，App 用它的设备授权换来的令牌登录服务端）。在 GitHub App 设置里：
+  - Callback URL 加上 `https://api-hgb.l2cl.link/api/auth/github/callback`；
+  - 生成一个 Client secret，和 Client ID 一起填进上面的 `GITHUB_CLIENT_ID`、`GITHUB_CLIENT_SECRET`。
+- GitHub 登录时服务端会给浏览器发一个只在这次回调里核对的 cookie（`yys_oauth`，10 分钟），从别人发来的链接完成的登录会被拒绝。
 
-systemd 服务示例（`/etc/systemd/system/hgb.service`）：
+### 发布一个新版本
+
+```bash
+./gradlew :core:server:distTar
+```
+
+```bash
+REL=$(date +%Y%m%d)-$(git rev-parse --short HEAD)
+scp core/server/build/distributions/server.tar ubuntu@213.35.99.41:/tmp/hgb-server.tar
+ssh ubuntu@213.35.99.41 "sudo mkdir -p /opt/hgb/releases/$REL && sudo tar -xf /tmp/hgb-server.tar -C /opt/hgb/releases/$REL --strip-components=1 && sudo ln -sfn /opt/hgb/releases/$REL /opt/hgb/server && sudo systemctl restart hgb && rm /tmp/hgb-server.tar"
+```
+
+数据库表结构由服务端启动时自己建好；发布前没有正式用户，不做迁移（改了表结构就清库重来）。
+
+### systemd
+
+`/etc/systemd/system/hgb.service`（已启用，开机自启）：
 
 ```ini
 [Unit]
-Description=护肝宝服务端
+Description=HGB server
 After=network-online.target
 
 [Service]
+Type=simple
 User=hgb
+Group=hgb
+WorkingDirectory=/var/lib/hgb
 EnvironmentFile=/etc/hgb/server.env
+Environment=JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 ExecStart=/opt/hgb/server/bin/server
 Restart=on-failure
 NoNewPrivileges=true
 ProtectSystem=strict
+ProtectHome=true
 PrivateTmp=true
 StateDirectory=hgb
+StateDirectoryMode=0700
+UMask=0077
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-`ProtectSystem=strict` 让整个文件系统只读：`StateDirectory=hgb` 创建 `/var/lib/hgb` 并让服务可写；`PrivateTmp=true` 给服务一个可写的私有 `/tmp`，SQLite 驱动启动时要把原生库解压到那里，少了它服务会起不来。
+`ProtectSystem=strict` 让整个文件系统只读：`StateDirectory=hgb` 创建 `/var/lib/hgb` 并让服务可写；`PrivateTmp=true` 给服务一个可写的私有 `/tmp`，SQLite 驱动启动时要把原生库解压到那里，少了它服务会起不来。看日志用 `journalctl -u hgb`。
 
-服务端只监听本机，由反向代理提供 HTTPS。用 Caddy 时（自动申请证书，WebSocket 自动转发）：
+### nginx 和证书
 
-```text
-api-hgb.l2cl.link {
-	reverse_proxy 127.0.0.1:8787 {
-		flush_interval -1
-	}
-}
-```
+服务端只监听本机 8787，由 nginx 提供 HTTPS（站点文件 `/etc/nginx/sites-available/hgb`）：
 
-`flush_interval -1` 让控制台的实时事件立即送出，不被缓冲。用 Nginx 的话，`/api/device/socket` 要开 WebSocket 升级，`/api/events` 要关 `proxy_buffering` 并把 `proxy_read_timeout` 调长。
+- 80 端口只留证书续期用的 `/.well-known/acme-challenge/`（目录 `/var/lib/letsencrypt`），其余跳转 HTTPS；
+- 443 端口用 Let's Encrypt 证书（`/etc/letsencrypt/live/api-hgb.l2cl.link/`，certbot 用 webroot 方式自动续期），`/api/` 转给 `127.0.0.1:8787`，其余返回 404；
+- `/api/device/socket` 开 WebSocket 升级，读写超时 1 小时；
+- `/api/events` 关 `proxy_buffering`，读超时 1 小时，控制台的实时事件才能立即送出；
+- 从 Cloudflare 的 IP 段取 `CF-Connecting-IP` 作为访客地址（只影响日志，服务端不用访客 IP）。Cloudflare 的 IP 段变了要更新这份列表。
+
+Cloudflare 会断开 100 秒没有数据的连接；事件流每 15 秒发一次保活，设备长连接每 20 秒 ping 一次，都不受影响。改完 nginx 先 `sudo nginx -t` 再 `sudo systemctl reload nginx`。
 
 ## App
 
@@ -102,6 +134,6 @@ App 的“云端控制”里，服务器地址填 `https://api-hgb.l2cl.link`。
 
 ## 还没解决的
 
-- **发信服务**：服务端还没接正式的发信服务（设计文档 C4 未定）。不配置时，邮箱注册、验证码登录、找回密码都会返回“发信服务未配置”；GitHub 登录不受影响。`YYS_MAIL_MODE=console` 只是把验证码打印到服务端日志，仅限本地开发，线上不要用。
+- **发信服务**：首次上线不接（设计文档 C45），只用 GitHub 登录。服务端没有发信服务时，`/api/auth/options` 返回 `email: false`，网页和 App 的登录页只显示 GitHub 登录，通知渠道里也没有“邮件”。以后接发信时走 SMTP。`YYS_MAIL_MODE=console` 只是把验证码打印到服务端日志，仅限本地开发，线上不要用。
 - **备份**：数据都在 `YYS_DB` 这一个 SQLite 文件里，需要自己定时备份，比如在服务停止或用 `sqlite3 hgb.db ".backup /backup/hgb-$(date +%F).db"` 做在线备份。
 - **访问速度**：Vercel 在中国大陆没有节点，大陆访问首页和控制台可能偏慢；`.link` 域名不能做 ICP 备案，用不了国内 CDN。

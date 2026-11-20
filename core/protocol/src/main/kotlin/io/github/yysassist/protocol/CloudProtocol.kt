@@ -14,6 +14,8 @@ import kotlinx.serialization.json.JsonObject
 @Serializable data class PasswordResetRequest(val email: String, val code: String, val password: String)
 @Serializable data class RefreshRequest(val refreshToken: String)
 @Serializable data class GitHubTokenRequest(val accessToken: String)
+/** How this server lets people sign in: [email] needs a mail service (codes, sign-up, reset), [github] a GitHub App. */
+@Serializable data class AuthOptions(val email: Boolean, val github: Boolean)
 
 /** Tokens are only returned to device clients; browsers receive an HttpOnly cookie instead. */
 @Serializable data class AuthResult(val userId: String, val email: String? = null, val accessToken: String? = null,

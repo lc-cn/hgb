@@ -862,6 +862,13 @@ class CloudApiTest {
         assertEquals(HttpStatusCode.BadRequest, channel(other, """{"kind":"LOCAL","name":"别人的","fields":{"device":"${device.deviceId}"}}""").status)
     }
 
+    @Test fun theSignInPagesAreToldWhichWaysThisServerOffers() = api {
+        // The test server has a mail service and a GitHub App.
+        assertEquals("""{"email":true,"github":true}""", call(HttpMethod.Get, "/api/auth/options", device = false).bodyAsText())
+        assertEquals(AuthOptions(email = false, github = true),
+            CloudService(Database(File.createTempFile("cloud", ".db").path), UnconfiguredMailer, github, ByteArray(32) { 7 }).authOptions)
+    }
+
     @Test fun gitHubSignInOnlyFinishesInTheBrowserThatStartedIt() = api {
         val plain = app.createClient { followRedirects = false }
         val start = plain.get("/api/auth/github/start")

@@ -96,6 +96,7 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig) {
     val callback = "${config.publicUrl.trimEnd('/')}/api/auth/github/callback"
     routing {
         route("/api/auth") {
+            get("/options") { call.respond(service.authOptions) }
             post("/register") { service.register(call.receive()); call.respond(HttpStatusCode.Accepted, mapOf("ok" to true)) }
             post("/verify-email") { call.respondSession(config, service.verifyEmail(call.receive(), call.sessionKind())) }
             post("/login") { call.respondSession(config, service.loginWithPassword(call.receive(), call.sessionKind())) }
