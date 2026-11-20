@@ -1,0 +1,54 @@
+client/android/app/src/main/kotlin/io/github/yysassist/floating/FloatingDev.kt
+  s_fae32e7f0efe76::t_cdab855a497bf4 1-244
+client/android/app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt
+  s_fae32e7f0efe76::t_6f0453bfba7ed1 573,575-576,611-617,619-630
+  s_fae32e7f0efe76::t_9bccf98d7cbb55 618
+client/android/app/src/main/kotlin/io/github/yysassist/floating/FloatingOverlayWindow.kt
+  s_fae32e7f0efe76::t_739bb54ff1e2b8 47-58,90,104-105,120-124,169-171,183,186,224-235,302
+core/engine/src/test/kotlin/io/github/yysassist/core/content/SnippetsTest.kt
+  s_fae32e7f0efe76::t_a4286d77cb4be6 124-135
+core/server/src/main/kotlin/io/github/yysassist/server/Workbench.kt
+  s_fae32e7f0efe76::t_5799f3cc85396f 111-112
+client/android/app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_cb4c425571ac51 32-33,48-49,149-153
+client/android/app/src/main/kotlin/io/github/yysassist/cloud/DevWorkbench.kt
+  s_fae32e7f0efe76::t_a9cb1b5e049478 1-109
+core/engine/src/main/kotlin/io/github/yysassist/core/actions/ScreenContracts.kt
+  s_fae32e7f0efe76::t_14235023f61bd7 446,453
+core/engine/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt
+  s_fae32e7f0efe76::t_14235023f61bd7 171-172,174-177
+client/android/app/src/main/kotlin/io/github/yysassist/ui/DevRunPage.kt
+  s_fae32e7f0efe76::t_5d7b145f190cb2 1-114,116-126
+  s_fae32e7f0efe76::t_43c7023c49fa29 115
+client/android/app/src/main/kotlin/io/github/yysassist/MainActivity.kt
+  s_fae32e7f0efe76::t_cb4c425571ac51 15-16,24-25,50
+client/android/app/src/main/kotlin/io/github/yysassist/cloud/DevRunner.kt
+  s_fae32e7f0efe76::t_6f0453bfba7ed1 198-199
+core/engine/src/main/kotlin/io/github/yysassist/core/content/ActionBindings.kt
+  s_fae32e7f0efe76::t_14235023f61bd7 36,58
+client/android/app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt
+  s_fae32e7f0efe76::t_cb4c425571ac51 208-214,251,266-267
+client/android/app/src/main/kotlin/io/github/yysassist/ui/AssistIcons.kt
+  s_fae32e7f0efe76::t_c0ece4cb16cf4e 45-47
+client/android/app/src/main/kotlin/io/github/yysassist/floating/FloatingSurface.kt
+  s_fae32e7f0efe76::t_f1f82b7038f455 40,44-46,50,53,55-56,76,91,105-106,122-128,138-139,141-155,176
+  s_fae32e7f0efe76::t_1c4180953767ed 90
+client/android/app/src/main/kotlin/io/github/yysassist/ui/SettingsPage.kt
+  s_fae32e7f0efe76::t_cb4c425571ac51 49,100-102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c8621654140f930e9041bb4c91508b82e32c46d7",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
