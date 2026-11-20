@@ -3,7 +3,7 @@
 
 `deploy <id>` reads the gzipped distribution from stdin. `fetch <id>` reads a small JSON request
 ({"url", "sha256", "bytes"}) from stdin and downloads the distribution itself from a release of
-lc-cn/hgb, which comes through GitHub's CDN far faster than a runner can push to this host (runner
+the configured repository, which comes through GitHub's CDN far faster than a runner can push to this host (runner
 uploads and Actions artifacts both crawl at ~70 KB/s here); the digest must match.
 """
 import hashlib
@@ -22,8 +22,17 @@ import urllib.request
 RELEASES = Path('/opt/hgb/releases')
 COMMAND = re.compile(r'(deploy|fetch) ([a-f0-9]{40}-[0-9]+-[0-9]+)')
 MAX_BYTES = 256 * 1024 * 1024
-# Only a server package of a lc-cn/hgb release; GitHub redirects the download to its asset CDN.
-SOURCE = re.compile(r'https://github\.com/lc-cn/hgb/releases/download/[A-Za-z0-9._-]+/server-[A-Za-z0-9._-]+\.tgz')
+# Which repository's releases are trusted: root-owned /etc/hgb-receive.json, {"repository": "owner/name"}, so a fork's
+# host names its own. Only a server package of that repository's releases is fetched; GitHub redirects the download to
+# its asset CDN.
+CONFIG = Path('/etc/hgb-receive.json')
+
+
+def trusted_source():
+    repository = json.loads(CONFIG.read_text())['repository']
+    if not re.fullmatch(r'[A-Za-z0-9-]+/[A-Za-z0-9._-]+', repository):
+        raise ValueError(f'{CONFIG} names no repository')
+    return re.compile(r'https://github\.com/' + re.escape(repository) + r'/releases/download/[A-Za-z0-9._-]+/server-[A-Za-z0-9._-]+\.tgz')
 ASSET_HOSTS = ('.githubusercontent.com',)
 
 
@@ -31,8 +40,8 @@ def fetch(request, scratch):
     """Downloads the distribution named by [request] into [scratch] and returns it opened, after checking its digest."""
     order = json.loads(sys.stdin.buffer.read(16384) if request is None else request)
     url, digest = order['url'], order['sha256']
-    if not SOURCE.fullmatch(url):
-        raise ValueError('Only a server package of a lc-cn/hgb release is fetched')
+    if not trusted_source().fullmatch(url):
+        raise ValueError('Only a server package of the configured repository\'s releases is fetched')
     if not re.fullmatch(r'[a-f0-9]{64}', digest):
         raise ValueError('Invalid digest')
     package = scratch / 'server.tgz'

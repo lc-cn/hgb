@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontFamily
 import io.github.yysassist.auth.GitHubSessionState
 
 @Composable
-internal fun GitHubAccountPage(state: GitHubSessionState, wide: Boolean, signIn: () -> Unit,
+internal fun GitHubAccountPage(state: GitHubSessionState, taskRepository: String, wide: Boolean, signIn: () -> Unit,
     cancel: () -> Unit, signOut: () -> Unit, openUpdates: () -> Unit,
     openBrowser: ((String) -> Unit)? = null, copyCode: ((String) -> Unit)? = null) {
     val context = LocalContext.current
@@ -33,7 +33,7 @@ internal fun GitHubAccountPage(state: GitHubSessionState, wide: Boolean, signIn:
         Column(verticalArrangement = Arrangement.spacedBy(UiSpace.medium)) {
             Icon(AssistIcons.Cloud, null, Modifier.size(UiSpace.tile), tint = LocalAssistPalette.current.blue.copy(alpha = .82f))
             Text("连接 GitHub", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
-            Text("读取 lc-cn/hgb-tasks 的任务。", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("读取 $taskRepository 的任务。", color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (state is GitHubSessionState.Connected) Text(state.login?.let { "@$it" } ?: "已登录 GitHub",
                 style = MaterialTheme.typography.titleMedium, color = LocalAssistPalette.current.teal)
         }

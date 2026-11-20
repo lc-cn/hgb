@@ -7,10 +7,21 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
-val githubPublicConfiguration = JsonSlurper().parseText(providers.fileContents(
-    rootProject.layout.projectDirectory.file("config/github-app-registration.json")).asText.get()) as Map<*, *>
-val githubClientId = (githubPublicConfiguration["client"] as Map<*, *>)["clientId"] as String
-check(githubPublicConfiguration["formatVersion"] == 1 && githubClientId.isNotBlank()) { "Missing public GitHub Client ID" }
+// This deployment's addresses and repositories (config/instance.json); HGB_* environment variables override them, so a
+// fork builds its own App by setting repository variables (see .github/workflows/build.yml).
+val instanceDefaults = JsonSlurper().parseText(providers.fileContents(
+    rootProject.layout.projectDirectory.file("config/instance.json")).asText.get()) as Map<*, *>
+fun instance(key: String, env: String): String =
+    (providers.environmentVariable(env).orNull?.takeIf { it.isNotBlank() } ?: instanceDefaults[key] as String?)?.trim()?.trimEnd('/')
+        ?.takeIf { it.isNotBlank() } ?: error("config/instance.json has no $key")
+val githubClientId = instance("githubClientId", "HGB_GITHUB_CLIENT_ID")
+val instanceApiUrl = instance("apiUrl", "HGB_API_URL")
+val instanceSiteUrl = instance("siteUrl", "HGB_SITE_URL")
+val instanceCodeRepo = instance("codeRepo", "HGB_CODE_REPO")
+val instanceTaskRepo = instance("taskRepo", "HGB_TASK_REPO")
+check(Regex("[A-Za-z0-9._-]+/[A-Za-z0-9._-]+").matches(instanceCodeRepo) && Regex("[A-Za-z0-9._-]+/[A-Za-z0-9._-]+").matches(instanceTaskRepo)) {
+    "Repositories must look like owner/name"
+}
 android {
     namespace = "io.github.yysassist"
     compileSdk { version = release(37) }
@@ -23,6 +34,10 @@ android {
         versionName = providers.gradleProperty("appVersionName").orNull ?: "0.1.0-dev"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "GITHUB_CLIENT_ID", JsonOutput.toJson(githubClientId))
+        buildConfigField("String", "API_URL", JsonOutput.toJson(instanceApiUrl))
+        buildConfigField("String", "SITE_URL", JsonOutput.toJson(instanceSiteUrl))
+        buildConfigField("String", "CODE_REPO", JsonOutput.toJson(instanceCodeRepo))
+        buildConfigField("String", "TASK_REPO", JsonOutput.toJson(instanceTaskRepo))
     }
     buildFeatures { compose = true; buildConfig = true }
     // The release key never lives in the repository: CI writes it from the HGB_ANDROID_KEYSTORE secret and passes its

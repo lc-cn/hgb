@@ -20,9 +20,6 @@ import io.github.yysassist.shared.theme.LocalTokens
 import io.github.yysassist.shared.ui.*
 import java.time.ZoneId
 
-/** Where the site lives, for help links. */
-const val SITE = "https://hgb.l2cl.link"
-
 /**
  * 我的: who is signed in and what they have, how they sign in, this end's look and the plan time zone, this device's
  * own settings, the devices bound to the account, help, and signing out.
@@ -33,6 +30,7 @@ fun MePage(local: LocalParts) = Page {
     val tokens = LocalTokens.current
     val data = console.data
     val uri = LocalUriHandler.current
+    val instance = io.github.yysassist.shared.LocalInstance.current
     var account by remember(console.account) { mutableStateOf(console.account) }
     var unlinking by remember { mutableStateOf(false) }
     var unbinding by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -107,14 +105,14 @@ fun MePage(local: LocalParts) = Page {
             }
             ListRow(last = true) {
                 Muted("在其他设备上安装护肝宝并登录这个账号即可添加", Modifier.weight(1f))
-                LinkButton("下载", { uri.openUri("$SITE/#download") })
+                LinkButton("下载", { uri.openUri(instance.downloadUrl) })
             }
         }
     }
     Block("帮助") {
         Card {
-            ListRow({ uri.openUri("$SITE/docs/") }) { Text("使用文档", Modifier.weight(1f), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium); Muted("→") }
-            ListRow({ uri.openUri("https://github.com/lc-cn/hgb/issues") }, last = true) {
+            ListRow({ uri.openUri(instance.docsUrl) }) { Text("使用文档", Modifier.weight(1f), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium); Muted("→") }
+            ListRow({ uri.openUri(instance.issuesUrl) }, last = true) {
                 Text("反馈问题", Modifier.weight(1f), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium); Muted("GitHub Issues →")
             }
         }

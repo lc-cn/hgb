@@ -64,6 +64,9 @@ class AssistApplication : Application() {
         private set
     internal lateinit var reactions: io.github.yysassist.reactions.ReactionMonitor
         private set
+    /** Which repository task versions are pulled from. */
+    lateinit var taskSource: TaskSourceSetting
+        private set
     lateinit var cloud: io.github.yysassist.core.cloud.CloudAgent
         private set
     /** The signed-in console's data and where the user is in it, kept while the activity is recreated. */
@@ -110,7 +113,8 @@ class AssistApplication : Application() {
         github = GitHubSession(BuildConfig.GITHUB_CLIENT_ID,
             EncryptedGitHubSessionStore(File(noBackupFilesDir, "github-session.bin"), "io.github.yysassist.github.v1"),
             GitHubDeviceAuthorization(BuildConfig.GITHUB_CLIENT_ID, client), GitHubUserApi(client), scope)
-        val source = GitHubTaskSource(TaskRepository("lc-cn", "hgb-tasks"), "https://api.github.com/".toHttpUrl(), client, github)
+        taskSource = TaskSourceSetting(this, BuildConfig.TASK_REPO)
+        val source = GitHubTaskSource({ taskSource.current.value }, "https://api.github.com/".toHttpUrl(), client, github)
         taskUpdates = TaskUpdates(library, source, scope)
         val cloudExecutor = io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library, database, observedAccounts, localNotices) { packageManager.getLaunchIntentForPackage(it) != null }
         cloud = io.github.yysassist.core.cloud.CloudAgent(client, io.github.yysassist.cloud.EncryptedCloudStore(File(noBackupFilesDir, "cloud-session.bin"), "io.github.yysassist.cloud.v1"),

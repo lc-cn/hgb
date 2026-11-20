@@ -65,7 +65,7 @@ fun SignInPage(actions: SignInActions, notice: String? = null, server: Pair<Stri
                                 Text("登录护肝宝", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                                 Muted(if (github != null) "用 GitHub 账号登录" else "这台服务器还没有配置登录方式")
                             }
-                            if (server != null) Field("服务器地址") { TextInput(server.first, server.second, "https://api-hgb.l2cl.link", Modifier.fillMaxWidth()) }
+                            if (server != null) Field("服务器地址") { TextInput(server.first, server.second, io.github.yysassist.shared.LocalInstance.current.apiUrl, Modifier.fillMaxWidth()) }
                             notice?.let { Message(it) }
                         }
                         if (github != null) {
@@ -129,7 +129,7 @@ private fun SignInForm(actions: SignInActions, notice: String?, server: Pair<Str
     }
     PageTabs(SignInTab.entries.map { it to it.label }, tab) { tab = it; step = FormStep.Start; message = null; code = ""; password = "" }
     Column(verticalArrangement = Arrangement.spacedBy(Space.s3)) {
-        if (server != null && step == FormStep.Start) Field("服务器地址") { TextInput(server.first, server.second, "https://api-hgb.l2cl.link", Modifier.fillMaxWidth()) }
+        if (server != null && step == FormStep.Start) Field("服务器地址") { TextInput(server.first, server.second, io.github.yysassist.shared.LocalInstance.current.apiUrl, Modifier.fillMaxWidth()) }
         val wide = Modifier.fillMaxWidth()
         when (val now = step) {
             is FormStep.Code -> {

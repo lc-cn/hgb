@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
+import { repoUrl } from "./src/instance.mjs";
 
 // The home page is "/", the docs live under "/docs"; the console is a separate app under "/console" (C42, C43).
 export default defineConfig({
@@ -15,8 +16,8 @@ export default defineConfig({
       favicon: "/favicon.svg",
       defaultLocale: "root",
       locales: { root: { label: "简体中文", lang: "zh-CN" } },
-      social: [{ icon: "github", label: "GitHub", href: "https://github.com/lc-cn/hgb" }],
-      editLink: { baseUrl: "https://github.com/lc-cn/hgb/edit/master/client/site/" },
+      social: [{ icon: "github", label: "GitHub", href: repoUrl }],
+      editLink: { baseUrl: `${repoUrl}/edit/master/client/site/` },
       lastUpdated: true,
       customCss: ["./src/styles/tokens.css", "./src/styles/starlight.css"],
       components: { SiteTitle: "./src/components/DocsTitle.astro" },

@@ -1,0 +1,8 @@
+{
+  "$comment": "这一套护肝宝部署的地址和仓库，所有端构建时从这里读默认值。fork 后不用改这个文件：在 GitHub 仓库变量里设 HGB_API_URL、HGB_SITE_URL、HGB_TASK_REPO、HGB_GITHUB_CLIENT_ID（代码仓库自动取 fork 的仓库），构建时覆盖；本地构建用同名环境变量。见 docs/development/deploy.md。",
+  "apiUrl": "https://api-hgb.l2cl.link",
+  "siteUrl": "https://hgb.l2cl.link",
+  "codeRepo": "lc-cn/hgb",
+  "taskRepo": "lc-cn/hgb-tasks",
+  "githubClientId": "Iv23liVW7AdPVQ5Ue4iz"
+}

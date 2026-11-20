@@ -40,7 +40,8 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
     val appearance by application.appearance.state.collectAsState()
     val mode = (appearance as? AppearanceState.Ready)?.mode ?: ThemeMode.SYSTEM
     val cloud by application.cloud.state.collectAsState()
-    AssistTheme(mode) {
+    val instance = remember { io.github.yysassist.shared.Instance(BuildConfig.API_URL, BuildConfig.SITE_URL, BuildConfig.CODE_REPO) }
+    AssistTheme(mode) { CompositionLocalProvider(io.github.yysassist.shared.LocalInstance provides instance) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
                 when (val state = cloud) {
@@ -50,7 +51,7 @@ fun AssistApp(application: AssistApplication, navigation: AppNavigation? = null,
                 }
             }
         }
-    }
+    } }
 }
 
 @Composable
@@ -114,7 +115,8 @@ private fun SignedOut(application: AssistApplication, navigation: AppNavigation?
 private fun SignIn(application: AssistApplication, develop: () -> Unit) {
     val cloud by application.cloud.state.collectAsState()
     val github by application.github.state.collectAsState()
-    var server by rememberSaveable { mutableStateOf("") }
+    // This build's own server, filled in; someone running their own types theirs.
+    var server by rememberSaveable { mutableStateOf(BuildConfig.API_URL) }
     var wantGitHub by rememberSaveable { mutableStateOf(false) }
     var githubError by remember { mutableStateOf<String?>(null) }
     val agent = application.cloud
@@ -189,6 +191,7 @@ internal fun LocalWorkbench(application: AssistApplication, navigation: AppNavig
     val versionOperation by application.taskUpdates.operation.collectAsState()
     val taskDrafts by application.taskEditor.drafts.collectAsState()
     val github by application.github.state.collectAsState()
+    val taskSource by application.taskSource.current.collectAsState()
     val mode = (appearance as? AppearanceState.Ready)?.mode ?: ThemeMode.SYSTEM
     val cloudState by application.cloud.state.collectAsState()
     val online = (cloudState as? CloudState.SignedIn)?.online == true
@@ -239,7 +242,8 @@ internal fun LocalWorkbench(application: AssistApplication, navigation: AppNavig
                         else RunHistoryPage(executor)
                     "运行与数据" -> DataUsagePage(executor)
                     "云端控制" -> CloudPage(application.accounts, application::identifyAccount, application.localNotices)
-                    "GitHub" -> GitHubAccountPage(github, wide, application.github::signIn, application.github::cancelSignIn,
+                    "任务来源" -> TaskSourcePage(application.taskSource)
+                    "GitHub" -> GitHubAccountPage(github, taskSource.fullName, wide, application.github::signIn, application.github::cancelSignIn,
                         application.github::signOut, { detail = "任务更新" })
                     "任务更新" -> TaskVersionsPage(versions, pull, versionOperation, application.taskUpdates::reloadCatalog,
                         application.taskUpdates::activate, application.taskUpdates::delete)
@@ -253,7 +257,7 @@ internal fun LocalWorkbench(application: AssistApplication, navigation: AppNavig
                             favorites = floating, toggleFavorite = application.floating::toggle, openHistory = { detail = "运行记录" }, favoritesRequest = favoritesRequest)
                         Tool.SETTINGS -> SettingsPage(appearance, mode, { item ->
                             scope.launch { try { application.appearance.setTheme(item) } catch (_: IOException) { snackbar.showSnackbar("主题设置保存失败") } }
-                        }, versions, github, floating, application.floating::setVisible, application.floating::setAutoDock, application.floating::reload) {
+                        }, versions, github, taskSource.fullName, floating, application.floating::setVisible, application.floating::setAutoDock, application.floating::reload) {
                             if (it == "常用") { favoritesRequest++; selected = Tool.TASKS } else detail = it
                         }
                     }

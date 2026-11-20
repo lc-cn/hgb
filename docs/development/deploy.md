@@ -156,6 +156,28 @@ git tag v0.1.1 && git push origin v0.1.1
 
 本仓库的发布只放安装包和服务端包；任务包发布在 `lc-cn/hgb-tasks`（设计文档 C46）。
 
+## fork 后部署自己的一套
+
+这一套的地址和仓库只写在 `config/instance.json`，其他地方都从它或构建变量读，fork 不用改代码：
+
+| 值 | 默认（`config/instance.json`） | fork 怎么改 | 谁用 |
+| --- | --- | --- | --- |
+| API 地址 `apiUrl` | `https://api-hgb.l2cl.link` | 仓库变量 `HGB_API_URL`；网页控制台用 Vercel 环境变量 `VITE_API_ORIGIN` | App 登录页预填的服务器地址、网页控制台 |
+| 网站地址 `siteUrl` | `https://hgb.l2cl.link` | 仓库变量 `HGB_SITE_URL` | App“我的”里的文档、下载链接 |
+| 代码仓库 `codeRepo` | `lc-cn/hgb` | 不用设：工作流取当前仓库，Vercel 取它正在构建的仓库 | 反馈、GitHub、下载、文档编辑链接；主机只从它的 Releases 拉服务端 |
+| 任务仓库 `taskRepo` | `lc-cn/hgb-tasks` | 仓库变量 `HGB_TASK_REPO` | App 下载任务版本（用户也能在 App“开发 → 设置 → 任务来源”里改） |
+| GitHub App `githubClientId` | `yys-helper` 的 Client ID | 仓库变量 `HGB_GITHUB_CLIENT_ID` | App 的 GitHub 授权 |
+
+还要准备：
+
+1. **自己的 GitHub App**：开启设备授权（Device Flow），回调地址填 `<你的 API 地址>/api/auth/github/callback`，装到你的任务仓库（Contents 读写）。Client ID 填进 `HGB_GITHUB_CLIENT_ID`，Client ID 和 Client secret 填进主机的 `/etc/hgb/server.env`。
+2. **主机**：照上面“主机：服务端”一节准备目录、`server.env`、systemd、nginx 和证书；把 `deploy/host/` 下的两个脚本装到 `/usr/local/libexec/hgb-receive`、`/usr/local/sbin/hgb-activate`；建 `hgb-deploy` 用户，`authorized_keys` 里限定部署密钥只能执行 `hgb-receive`，sudoers 只允许它执行 `hgb-activate`；写 `/etc/hgb-receive.json`（root，644）：`{"repository": "<你的用户名>/<仓库名>"}`。
+3. **仓库 Secret 和变量**：`HGB_DEPLOY_SSH_KEY`、`HGB_DEPLOY_KNOWN_HOSTS`、变量 `HGB_DEPLOY_HOST`；要发 App 还要 `HGB_ANDROID_KEYSTORE`、`HGB_ANDROID_KEYSTORE_PASSWORD`（自己生成的签名密钥，别名 `hgb`）。
+4. **Vercel**：导入 fork 的仓库，设 `VITE_API_ORIGIN`，绑定自己的域名。
+5. **服务端**的 `YYS_PUBLIC_URL`、`YYS_CONSOLE_URL`、`YYS_ALLOWED_ORIGINS` 写自己的地址。
+
+App 和以后的 Windows 版里，服务器地址在登录时可以改成任何一台护肝宝服务器；网页控制台和它的 API 绑定部署，不做运行时切换。
+
 ## 还没解决的
 
 - **发信服务**：首次上线不接（设计文档 C45），只用 GitHub 登录。服务端没有发信服务时，`/api/auth/options` 返回 `email: false`，网页和 App 的登录页只显示 GitHub 登录，通知渠道里也没有“邮件”。以后接发信时走 SMTP。`YYS_MAIL_MODE=console` 只是把验证码打印到服务端日志，仅限本地开发，线上不要用。

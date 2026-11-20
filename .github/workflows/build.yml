@@ -6,6 +6,9 @@
 #   the host deploy that server.
 # - Run by hand: tick what to build. The App is built only with a version, which also creates that release.
 #
+# A fork builds its own deployment by setting repository variables (HGB_API_URL, HGB_SITE_URL, HGB_TASK_REPO,
+# HGB_GITHUB_CLIENT_ID, HGB_DEPLOY_HOST) and secrets; anything unset falls back to config/instance.json.
+#
 # The host downloads the server package from the release itself (GitHub's CDN reaches it ~100x faster than a runner
 # can push to it) and checks its SHA-256; see deploy/host/hgb-receive and deploy/host/hgb-activate.
 name: Build
@@ -136,6 +139,12 @@ jobs:
         env:
           KEYSTORE: ${{ secrets.HGB_ANDROID_KEYSTORE }}
           HGB_SIGNING_STORE_PASSWORD: ${{ secrets.HGB_ANDROID_KEYSTORE_PASSWORD }}
+          # This deployment's addresses; unset variables fall back to config/instance.json. A fork sets its own.
+          HGB_API_URL: ${{ vars.HGB_API_URL }}
+          HGB_SITE_URL: ${{ vars.HGB_SITE_URL }}
+          HGB_TASK_REPO: ${{ vars.HGB_TASK_REPO }}
+          HGB_GITHUB_CLIENT_ID: ${{ vars.HGB_GITHUB_CLIENT_ID }}
+          HGB_CODE_REPO: ${{ github.repository }}
         run: |
           export HGB_SIGNING_STORE_FILE="$RUNNER_TEMP/hgb-release.p12"
           printf '%s' "$KEYSTORE" | base64 -d > "$HGB_SIGNING_STORE_FILE"

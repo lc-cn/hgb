@@ -1,9 +1,10 @@
 ---
 import Logo from "../components/Logo.astro";
 import "../styles/tokens.css";
+import { repoUrl } from "../instance.mjs";
 
 const steps = [
-  ["装上护肝宝并登录", "在安卓手机上安装，用邮箱登录。设备会自动出现在网页控制台。"],
+  ["装上护肝宝并登录", "在安卓手机上安装并登录。设备会自动出现在网页控制台。"],
   ["选账号、选任务、定时间", "在网页或 App 里给每个游戏账号选好任务和设置，再设一个每天几点开始的计划。"],
   ["到点自动跑，跑完告诉你", "护肝宝按计划开始，需要时先切到对应账号。结果推到钉钉、企业微信、Bark、邮箱或手机通知。"],
 ];
@@ -135,7 +136,7 @@ const faq = [
       <div class="wrap download">
         <div><h2 id="dl">现在开始</h2><p class="muted">护肝宝还没有正式发布。发布后在这里下载安卓版，用邮箱登录，设备会自动出现在控制台里。</p></div>
         <div class="downloads">
-          <div class="card dl off"><span><b>安卓版</b><span class="muted">APK · 即将发布</span></span><span class="go muted">敬请期待</span></div>
+          <a class="card dl" href={`${repoUrl}/releases/latest`}><span><b>安卓版</b><span class="muted">APK · Android 11 及以上</span></span><span class="go">下载最新版</span></a>
           <div class="card dl off"><span><b>Windows 版</b><span class="muted">计划中 · 将支持游戏多开</span></span><span class="go muted">敬请期待</span></div>
           <a class="card dl" href="/console/"><span><b>网页控制台</b><span class="muted">不用安装，管理所有设备</span></span><span class="go">打开</span></a>
         </div>
@@ -151,7 +152,7 @@ const faq = [
   <footer class="foot">
     <div class="wrap row">
       <span class="brand small"><Logo size={22} />护肝宝</span>
-      <a href="/docs/">文档</a><a href="#download">下载</a><a href="/console/">控制台</a><a href="https://github.com/lc-cn/hgb">GitHub</a><a href="https://github.com/lc-cn/hgb/issues">反馈问题</a>
+      <a href="/docs/">文档</a><a href="#download">下载</a><a href="/console/">控制台</a><a href={repoUrl}>GitHub</a><a href={`${repoUrl}/issues`}>反馈问题</a>
     </div>
   </footer>
 

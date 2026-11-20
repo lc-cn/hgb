@@ -45,7 +45,7 @@ private class SettingsSection(val name: String, val attention: Boolean = false, 
 
 @Composable
 internal fun SettingsPage(appearance: AppearanceState, mode: ThemeMode, setTheme: (ThemeMode) -> Unit, versions: VersionCatalogState,
-    github: GitHubSessionState, floating: FloatingPreferencesState, setFloatingVisible: (Boolean) -> Unit, setAutoDock: (Boolean) -> Unit, reloadFloating: () -> Unit,
+    github: GitHubSessionState, taskSource: String, floating: FloatingPreferencesState, setFloatingVisible: (Boolean) -> Unit, setAutoDock: (Boolean) -> Unit, reloadFloating: () -> Unit,
     open: (String) -> Unit) {
     val p = LocalAssistPalette.current
     val service by GameAccessibilityService.connection.collectAsState()
@@ -85,6 +85,8 @@ internal fun SettingsPage(appearance: AppearanceState, mode: ThemeMode, setTheme
                 }, if (catalog?.hasKnownUpdate == true) p.error else MaterialTheme.colorScheme.onSurfaceVariant)
                 Chevron()
             }
+            RowDivider()
+            SettingRow(AssistIcons.Cloud, p.violet, "任务来源", null, { open("任务来源") }) { SettingValue(taskSource); Chevron() }
             RowDivider()
             SettingRow(AssistIcons.User, p.teal, "GitHub", "用于下载任务版本", { open("GitHub") }) {
                 SettingValue(when (github) {
@@ -282,6 +284,25 @@ internal fun LocalNoticeSwitch(notices: io.github.yysassist.cloud.LocalNotices) 
     AssistCard {
         SettingRow(AssistIcons.Bell, p.violet, "在这台手机上弹出通知", "要在网页添加“本机通知”渠道") {
             AssistSwitch(shown, label = "在这台手机上弹出通知", change = notices::setEnabled)
+        }
+    }
+}
+
+/** Where task versions are pulled from: this build's repository, or another "owner/name" the user enters. */
+@Composable
+internal fun TaskSourcePage(setting: io.github.yysassist.TaskSourceSetting) {
+    val current by setting.current.collectAsState()
+    var text by remember(current) { mutableStateOf(current.fullName) }
+    var problem by remember { mutableStateOf<String?>(null) }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(UiSpace.page), verticalArrangement = Arrangement.spacedBy(UiSpace.medium)) {
+        Text("任务版本从这个 GitHub 仓库的正式发布下载。用自己 fork 的任务仓库时改成它，下次拉取生效；已下载的版本保留。",
+            color = io.github.yysassist.shared.theme.LocalTokens.current.muted, style = MaterialTheme.typography.bodySmall)
+        io.github.yysassist.shared.ui.TextInput(text, { text = it.trim(); problem = null }, setting.default.fullName, Modifier.fillMaxWidth())
+        problem?.let { io.github.yysassist.shared.ui.Message(it) }
+        Row(horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
+            io.github.yysassist.shared.ui.HgbButton("保存", { if (!setting.set(text)) problem = "要写成 owner/name，比如 ${setting.default.fullName}" },
+                io.github.yysassist.shared.ui.ButtonKind.PRIMARY, enabled = text != current.fullName)
+            if (current != setting.default) io.github.yysassist.shared.ui.HgbButton("恢复默认（${setting.default.fullName}）", { setting.reset() })
         }
     }
 }

@@ -26,6 +26,11 @@ import kotlin.coroutines.resumeWithException
 data class TaskRepository(val owner: String, val name: String) {
     init { require(owner.matches(Regex("[A-Za-z0-9-]+")) && name.matches(Regex("[A-Za-z0-9_.-]+"))) }
     val fullName: String get() = "$owner/$name"
+    companion object {
+        /** "owner/name", or null when it is not one. */
+        fun parse(text: String): TaskRepository? = text.trim().split('/').takeIf { it.size == 2 }
+            ?.let { (owner, name) -> runCatching { TaskRepository(owner, name) }.getOrNull() }
+    }
 }
 data class RemoteReleaseAsset(val id: Long, val name: String, val state: String, val bytes: Long, val digest: String?)
 data class RemoteTaskVersion(val version: String, val assetId: Long, val bytes: Long, val sha256: String,
@@ -36,11 +41,15 @@ class TaskSourceException(val problem: TaskSourceProblem, message: String, val h
 
 /** Read-only Releases adapter. Credentials come from the client session, never task content or URLs. */
 class GitHubTaskSource(
-    private val repository: TaskRepository,
+    /** Read on every request, so a task source the user switches to applies to the next pull. */
+    private val repositoryOf: () -> TaskRepository,
     private val apiBase: HttpUrl,
     private val calls: Call.Factory,
     private val authorization: GitHubAuthorization = GitHubAuthorization { null },
 ) {
+    constructor(repository: TaskRepository, apiBase: HttpUrl, calls: Call.Factory, authorization: GitHubAuthorization = GitHubAuthorization { null }) :
+        this({ repository }, apiBase, calls, authorization)
+    private val repository: TaskRepository get() = repositoryOf()
     private val json = Json { ignoreUnknownKeys = true }
     @Serializable private data class Repository(val full_name: String)
     @Serializable private data class Release(val tag_name: String, val draft: Boolean, val prerelease: Boolean, val assets: List<Asset>)
