@@ -1,0 +1,25 @@
+tools/tasks/chores_1120.py
+  s_fae32e7f0efe76::t_496fc5c9fcad17 195-196,198-201,243-244
+  s_fae32e7f0efe76::t_0708e2c5323bed 18-19,40-41,43-45,193-194,197,202-211,222-232,237-242,245-246,253,260-261
+  s_fae32e7f0efe76::t_d4adb3fe168091 42,213-221,236
+  s_fae32e7f0efe76::t_2883963f81a606 212
+  s_fae32e7f0efe76::t_10fd96b22f14ce 233-235
+tools/tasks/build_release.py
+  s_fae32e7f0efe76::t_2883963f81a606 25-26,78,80-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c13a7b0a1cb773c0efd6b01efbe8e150178f96e8",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
