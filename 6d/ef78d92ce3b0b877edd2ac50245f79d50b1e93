@@ -1,0 +1,62 @@
+client/android/app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt
+  s_fae32e7f0efe76::t_ac68d789e34663 43-44,54,118-119
+  s_fae32e7f0efe76::t_6f6313effb9837 194,245-246,260
+client/shared/src/commonMain/kotlin/io/github/yysassist/shared/pages/SignInPage.kt
+  s_fae32e7f0efe76::t_ac68d789e34663 68,132
+client/android/app/src/main/kotlin/io/github/yysassist/ui/GitHubAccountPage.kt
+  s_fae32e7f0efe76::t_6f6313effb9837 24,36
+client/android/app/src/main/kotlin/io/github/yysassist/ui/SettingsPage.kt
+  s_fae32e7f0efe76::t_6f6313effb9837 48,89-90,290-298,300-305
+  s_fae32e7f0efe76::t_25e2b584e78569 299
+  s_fae32e7f0efe76::t_f553d3916dee55 306-308
+client/site/src/instance.mjs
+  s_fae32e7f0efe76::t_19fca1793d7004 3-14
+  s_fae32e7f0efe76::t_74c3ed3133bbb1 1-2,15-19
+deploy/host/hgb-receive
+  s_fae32e7f0efe76::t_ba6c1fc825cf9e 6,25-30,32-35,44
+  s_fae32e7f0efe76::t_fef2823cdf2920 31,43
+client/android/app/build.gradle.kts
+  s_fae32e7f0efe76::t_44da0e03a3b4d3 10-24,37-40
+client/android/app/src/main/kotlin/io/github/yysassist/TaskSourceSetting.kt
+  s_fae32e7f0efe76::t_ef43198f413d5b 1-29
+.github/workflows/build.yml
+  s_fae32e7f0efe76::t_af8250edc9a7d6 9-11,142-147
+core/engine/src/main/kotlin/io/github/yysassist/core/content/GitHubTaskSource.kt
+  s_fae32e7f0efe76::t_80fc91197d7f08 29-33,44-45,50-52
+client/shared/src/commonMain/kotlin/io/github/yysassist/shared/Instance.kt
+  s_fae32e7f0efe76::t_ac68d789e34663 1-15
+client/shared/src/commonMain/kotlin/io/github/yysassist/shared/pages/MePage.kt
+  s_fae32e7f0efe76::t_ac68d789e34663 33,108,114-115
+client/android/app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_ef43198f413d5b 67-69,116-117
+config/instance.json
+  s_fae32e7f0efe76::t_44da0e03a3b4d3 1-8
+docs/development/deploy.md
+  s_fae32e7f0efe76::t_4da846b116c173 159-180
+client/site/astro.config.mjs
+  s_fae32e7f0efe76::t_766a46cf1ade12 4,19-20
+client/site/src/pages/index.astro
+  s_fae32e7f0efe76::t_4db10b019ca067 4,7,139,155
+client/web/src/features/me/MePage.tsx
+  s_fae32e7f0efe76::t_aefaa00072b792 78
+client/web/src/vite-env.d.ts
+  s_fae32e7f0efe76::t_63c48233537adf 4-5
+client/web/vite.config.ts
+  s_fae32e7f0efe76::t_ddb059b91f99ce 3,10-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6def78d92ce3b0b877edd2ac50245f79d50b1e93",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
