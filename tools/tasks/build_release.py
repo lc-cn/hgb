@@ -22,7 +22,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / ".local/task-release"
 # What a public version holds unless the command names tasks. v1.0.0 was ["daily-gift"].
-TASKS = ["daily-gift", "flower-chore", "pets-chore", "daily-tour", "mail-claim", "daily-lottery", "friendship-points", "guild-funds"]
+# 喂猫喂狗 and 每日抽签 are left out: 庭院事务一键完成 does both (and more) in one press.
+TASKS = ["daily-tour", "daily-gift", "flower-chore", "courtyard-affairs", "mail-claim", "friendship-points", "guild-funds"]
 
 
 def draft_module():
@@ -74,8 +75,13 @@ def build(version, changelog, wanted=TASKS):
     import importlib.util as util
     spec = util.spec_from_file_location("chores", Path(__file__).with_name("chores_1120.py"))
     chores = util.module_from_spec(spec); spec.loader.exec_module(chores)
-    extra, _ = chores.build(draft)
+    extra, chore_steps = chores.build(draft)
     bundle["tasks"] += extra
+    # 日常巡游: the game's own 一键完成 (庭院事务) now covers feeding the pets and the lottery, so the tour runs it instead
+    # of the separate pets step, then the chores it does not cover.
+    tour = next(task for task in bundle["tasks"] if task["id"] == "daily-tour")
+    tour["steps"] = [step for step in tour["steps"] if step["id"] != "pets"] + \
+        [chore_steps[key] for key in ("oneclick", "mail", "friendship", "guild")]
     for name, data in chores.icons(draft.crop).items():
         bundle["resources"].append(draft.resource(name.removesuffix(".png"), name, data)); files[name] = data
 

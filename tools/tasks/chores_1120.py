@@ -15,6 +15,8 @@ ICONS = {
     "mail-icon.png": ("15-mail-closed-private.png", (2068, 40, 52, 40)),
     "lottery-sign.png": ("04-entered-private.png", (605, 733, 66, 80)),
     "lottery-bag.png": ("22-lottery-closed-private.png", (606, 735, 66, 70)),
+    # The checklist the courtyard paper man floats above its head: it opens 庭院事务.
+    "affairs-icon.png": ("oneclick/30-courtyard-after-private.png", (1417, 572, 44, 40)),
 }
 
 MAIL_CORNER = [2000, 0, 200, 110]
@@ -35,6 +37,12 @@ FUNDS_BUTTON = [540, 890, 300, 100]
 FUNDS_BADGE = [780, 886, 44, 44]
 FUNDS_DIALOG = [960, 280, 480, 90]
 FUNDS_CLAIM = [1060, 640, 280, 100]
+AFFAIRS_TITLE = [620, 50, 400, 110]
+DAILY_TAB = [1940, 200, 160, 110]
+ONECLICK_RIM = [1884, 930, 14, 60]
+CLAIMED_TITLE = [680, 40, 340, 110]
+CLOSE_HINT = [1040, 1010, 340, 60]
+LOT_TOTAL = [920, 730, 200, 70]
 
 
 def build(d):
@@ -182,18 +190,75 @@ def build(d):
         d.await_screen("guildBack", [d.COURTYARD_CLOSED, d.COURTYARD_OPEN], 20000, 1000),
     ]
 
+    # ---- 庭院事务一键完成 ----
+    affairs = {"id": "affairs", "text": [word("庭院事务", AFFAIRS_TITLE)], "absentText": [word("领取成功", CLAIMED_TITLE), word("累计奖励", LOT_TOTAL)]}
+    # The paper man floats a checklist while 庭院事务 has something to do; with everything done it is gone.
+    checklist = picture("affairs-icon", 0.85, COURTYARD_GROUND)
+    oneclick = d.walk_to_courtyard(5, 8000, [], []) + [
+        d.await_screen("affairsStart", [{"id": "open", "present": [checklist], **plain}, {"id": "none", "absent": [checklist], **plain}], 8000, 1200),
+        {"type": "branch", "value": out("affairsStart", "state"), "cases": [
+            {"equals": "none", "program": [d.await_screen("affairsNone", [{"id": "courtyard", **plain}], 4000, 0)]},
+            {"equals": "open", "program": [
+        pick("affairsIcon", "affairs-icon", 0.85, "top", "affairsStart"), d.press("openAffairs", "affairsIcon"),
+        # The first visit shows a one-time tip over the page; a tap anywhere dismisses it.
+        d.await_screen("affairsOpen", [{"id": "tip", "text": [word("点击任意位置继续", [900, 960, 600, 90])]}, affairs], 8000),
+        {"type": "branch", "value": out("affairsOpen", "state"), "cases": [
+            {"equals": "affairs", "program": []},
+            {"equals": "tip", "program": [d.find_text("tipHint", "点击任意位置继续", [900, 960, 600, 90], "affairsOpen"),
+                                          d.press("dismissTip", "tipHint")]},
+        ]},
+        d.await_screen("affairsPage", [affairs], 6000),
+        # The daily tab, where 一键完成 lives.
+        d.find_text("dailyTab", "日常", DAILY_TAB, "affairsPage"), d.press("openDailyTab", "dailyTab"),
+        d.await_screen("dailyPage", [affairs], 6000, 800),
+        # A lit 一键完成 has a white rim; once everything is done it turns grey.
+        act("oneclickLit", "screen.matchColorIn", 1, {"within": ONECLICK_RIM, "lower": [230, 230, 230], "upper": [255, 255, 255], "minimumRatio": 0.25, **d.REFERENCE},
+            {"observation": out("dailyPage", "observation")}),
+        {"type": "branch", "value": out("oneclickLit", "matched"), "cases": [
+            {"equals": False, "program": []},
+            {"equals": True, "program": [
+                d.find_text("dailyAgain", "日常", DAILY_TAB, "dailyPage"),
+                *d.press_offset("pressOneclick", "dailyAgain", -48, 644),
+                # The results page, with the lottery paper laid over it when the draw was among them.
+                {"type": "until", "value": out("claimed", "state"), "equals": "list", "maximum": 4, "program": [
+                    d.await_screen("claimed", [{"id": "paper", "text": [word("累计奖励", LOT_TOTAL)]},
+                                               {"id": "list", "text": [word("领取成功", CLAIMED_TITLE)], "absentText": [word("累计奖励", LOT_TOTAL)]}], 10000, 800),
+                    {"type": "branch", "value": out("claimed", "state"), "cases": [
+                        {"equals": "list", "program": []},
+                        # Close the paper by its X; never 补签 (it may cost) or 解签.
+                        {"equals": "paper", "program": [d.find_text("paperTotal", "累计奖励", LOT_TOTAL, "claimed"),
+                                                        *d.press_offset("closeLotPaper", "paperTotal", 529, -650)]},
+                    ]},
+                ]},
+                d.await_screen("claimedList", [{"id": "list", "text": [word("领取成功", CLAIMED_TITLE), word("点击空白处关闭", CLOSE_HINT)],
+                                                "absentText": [word("累计奖励", LOT_TOTAL)]}], 6000),
+                d.find_text("closeHint", "点击空白处关闭", CLOSE_HINT, "claimedList"), d.press("closeClaimed", "closeHint"),
+                d.await_screen("affairsDone", [affairs], 8000, 800),
+            ]},
+        ]},
+        d.await_screen("affairsLeaving", [affairs], 6000),
+        d.find_text("affairsTitle", "庭院事务", AFFAIRS_TITLE, "affairsLeaving"),
+        *d.press_offset("leaveAffairs", "affairsTitle", -650, -110),
+        d.await_screen("affairsBack", [d.COURTYARD_CLOSED, d.COURTYARD_OPEN], 10000, 800),
+            ]},
+        ]},
+    ]
+
     enter = {"id": "enter", "name": "启动并进入庭院", "use": "enter-courtyard"}
     steps = {
         "mail": {"id": "mail", "name": "领取邮件附件", "program": mail},
         "lottery": {"id": "lottery", "name": "每日抽签", "program": lottery},
         "friendship": {"id": "friendship", "name": "收送友情点", "program": friendship},
         "guild": {"id": "guild", "name": "领取阴阳寮资金", "program": guild},
+        "oneclick": {"id": "oneclick", "name": "庭院事务一键完成", "program": oneclick},
     }
     tasks = [
         {"id": "mail-claim", "targetId": "onmyoji", "name": "邮件领取", "category": "daily", "priority": 10, "fields": [], "steps": [enter, steps["mail"]]},
         {"id": "daily-lottery", "targetId": "onmyoji", "name": "每日抽签", "category": "daily", "priority": 10, "fields": [], "steps": [enter, steps["lottery"]]},
         {"id": "friendship-points", "targetId": "onmyoji", "name": "好友友情点", "category": "daily", "priority": 10, "fields": [], "steps": [enter, steps["friendship"]]},
         {"id": "guild-funds", "targetId": "onmyoji", "name": "阴阳寮资金", "category": "daily", "priority": 10, "fields": [], "steps": [enter, steps["guild"]]},
+        {"id": "courtyard-affairs", "targetId": "onmyoji", "name": "庭院事务一键完成", "category": "daily", "priority": 10, "fields": [],
+         "steps": [enter, steps["oneclick"]]},
     ]
     return tasks, steps
 
