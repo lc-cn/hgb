@@ -1,0 +1,19 @@
+gradle/verification-metadata.xml
+  s_fae32e7f0efe76::t_d5b4ef94f698f2 2852-2856,6227-6231,6635-6637,6643-6645
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2b757ab7b0371e4c8d511378c736bc7b1dc82f50",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "unknown"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
