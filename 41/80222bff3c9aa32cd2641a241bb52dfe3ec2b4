@@ -1,0 +1,65 @@
+core/server/src/main/kotlin/io/github/yysassist/server/Database.kt
+  s_fae32e7f0efe76::t_e0957d71f56256 99-110
+core/server/src/main/kotlin/io/github/yysassist/server/Routes.kt
+  s_fae32e7f0efe76::t_087ee9193cdb50 52
+  s_fae32e7f0efe76::t_02c05120045d5a 61-62,111-112,118-120,269
+  s_fae32e7f0efe76::t_db6bd9d58d8ba3 113-117
+client/web/src/features/notices/NoticesPage.tsx
+  s_fae32e7f0efe76::t_d90eed707a1ee2 3,9,89-95,179,181-185
+docs/development/cloud-console.md
+  s_fae32e7f0efe76::t_3d9f6e8e5ce5ca 54
+core/server/src/main/kotlin/io/github/yysassist/server/Main.kt
+  s_fae32e7f0efe76::t_02c05120045d5a 12,14-15
+  s_fae32e7f0efe76::t_db6bd9d58d8ba3 13
+core/server/src/main/kotlin/io/github/yysassist/server/CloudService.kt
+  s_fae32e7f0efe76::t_02c05120045d5a 25,35-37
+  s_fae32e7f0efe76::t_db6bd9d58d8ba3 26
+client/web/src/features/notices/Notices.module.css
+  s_fae32e7f0efe76::t_d90eed707a1ee2 29-47
+  s_fae32e7f0efe76::t_93ec7eb8692b46 48
+client/web/src/state/console.ts
+  s_fae32e7f0efe76::t_f9a8affa151dd4 79
+docs/design/cloud-executor.md
+  s_fae32e7f0efe76::t_17175c3e98c3db 316-317,319-320
+  s_fae32e7f0efe76::t_3d9f6e8e5ce5ca 314-315,318,321
+client/web/src/features/notices/Channels.tsx
+  s_fae32e7f0efe76::t_437dc5e9b5a28a 1-3,5,7-82,84-88,93-112,114-117,123-140
+  s_fae32e7f0efe76::t_93ec7eb8692b46 83,89-92,113,118-122
+  s_fae32e7f0efe76::t_d90eed707a1ee2 4,6
+core/server/build.gradle.kts
+  s_fae32e7f0efe76::t_e7e370999485d1 18
+core/server/src/test/kotlin/io/github/yysassist/server/CloudApiTest.kt
+  s_fae32e7f0efe76::t_3e8f4bcf195af5 24-26,43-44,744-774,776-799,814-820,822-823,826-827
+  s_fae32e7f0efe76::t_6fbfdedf621be5 800-813,821,824-825
+  s_fae32e7f0efe76::t_5315b012044beb 775
+core/protocol/src/main/kotlin/io/github/yysassist/protocol/CloudProtocol.kt
+  s_fae32e7f0efe76::t_db6bd9d58d8ba3 190,193
+  s_fae32e7f0efe76::t_cbdf88c5d689d7 177-189,191-192,194-200
+core/server/src/main/kotlin/io/github/yysassist/server/Channels.kt
+  s_fae32e7f0efe76::t_fa5c25bd72821f 1-7,15-18,20-36,41,47-48,55-64,66-110,115-121,125-128,133-148,150-160,167-171,174-185,187-215,227-241,243-274,276-290,297-318,321,324-336,342-355,357-360,363,365-367,369-370,389
+  s_fae32e7f0efe76::t_2b09e147e851ba 8-14,19,37-40,42-46,49-54,364,368,371-388
+  s_fae32e7f0efe76::t_5a53902a91efbf 149,161-166,172-173,186
+  s_fae32e7f0efe76::t_db6bd9d58d8ba3 65,111-114,122-124,129-132,216-226,242,275,291-296,319-320,322-323,337-341,356,361-362
+  s_fae32e7f0efe76::t_c86b1fee140237 390
+core/server/src/main/kotlin/io/github/yysassist/server/Notices.kt
+  s_fae32e7f0efe76::t_02c05120045d5a 36-37,92,245-246
+client/web/src/api/types.ts
+  s_fae32e7f0efe76::t_93ec7eb8692b46 56
+  s_fae32e7f0efe76::t_f9a8affa151dd4 52-55,57-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4180222bff3c9aa32cd2641a241bb52dfe3ec2b4",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
