@@ -1,0 +1,121 @@
+client/site/astro.config.mjs
+  s_fae32e7f0efe76::t_da933e066d779e 1-7,9-17,19-22,27-30
+  s_fae32e7f0efe76::t_a2b4aedae3c329 23-26
+  s_fae32e7f0efe76::t_027faca9ee8a88 8
+  s_fae32e7f0efe76::t_7e30ba3d14ee96 18
+client/site/src/content/docs/docs/use/devices.md
+  s_fae32e7f0efe76::t_7e30ba3d14ee96 16
+  s_fae32e7f0efe76::t_873cf5b26d1d89 1-15,17-23
+client/site/src/content/docs/docs/use/notices.md
+  s_fae32e7f0efe76::t_873cf5b26d1d89 1-37
+docs/development/github-app-registration.md
+  s_fae32e7f0efe76::t_9aa2e1780eca8d 3,5,31,51
+  s_fae32e7f0efe76::t_7e30ba3d14ee96 35
+client/site/src/content/docs/docs/use/plans.md
+  s_fae32e7f0efe76::t_873cf5b26d1d89 1-19
+client/site/src/content/docs/docs/use/runs.md
+  s_fae32e7f0efe76::t_873cf5b26d1d89 1-12,14,17-24,26-29
+  s_fae32e7f0efe76::t_7e30ba3d14ee96 13,15-16,25
+client/site/src/content/docs/docs/use/accounts.md
+  s_fae32e7f0efe76::t_7e30ba3d14ee96 12,17-18
+  s_fae32e7f0efe76::t_873cf5b26d1d89 1-11,13-16,19-35
+client/site/src/content/docs/docs/start/quick-start.md
+  s_fae32e7f0efe76::t_afe29f715f4a0b 1-8,10-18,20,24-33
+  s_fae32e7f0efe76::t_7e30ba3d14ee96 9,19,21-23
+client/site/tsconfig.json
+  s_fae32e7f0efe76::t_da933e066d779e 1-5
+client/site/src/content/docs/docs/start/what.md
+  s_fae32e7f0efe76::t_afe29f715f4a0b 1-12,14-22,24-30
+  s_fae32e7f0efe76::t_7e30ba3d14ee96 13,23
+docs/development/implementation-status.md
+  s_fae32e7f0efe76::t_9aa2e1780eca8d 54,66,201
+client/site/src/assets/logo-light.svg
+  s_fae32e7f0efe76::t_a6f1b2380beb7e 1
+README.md
+  s_fae32e7f0efe76::t_7e30ba3d14ee96 3,20,40,80,83
+  s_fae32e7f0efe76::t_52542d98964b13 1,5-6,8,10-18,23-39,41-49,52-54,56,58-61,63-64,67-79,81-82,84-93
+  s_fae32e7f0efe76::t_331739756f9910 19
+client/android/app/src/main/kotlin/io/github/yysassist/ui/CloudPage.kt
+  s_fae32e7f0efe76::t_7e30ba3d14ee96 72-73
+client/android/app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_9aa2e1780eca8d 111
+settings.gradle.kts
+  s_fae32e7f0efe76::t_7e30ba3d14ee96 11
+docs/design/cloud-executor.md
+  s_fae32e7f0efe76::t_9aa2e1780eca8d 116,386
+docs/development/README.md
+  s_fae32e7f0efe76::t_9aa2e1780eca8d 117,124
+.gitignore
+  s_fae32e7f0efe76::t_edd9d68e8c59f0 20-21
+client/site/src/assets/logo-dark.svg
+  s_fae32e7f0efe76::t_a6f1b2380beb7e 1
+client/site/src/components/DocsTitle.astro
+  s_fae32e7f0efe76::t_da933e066d779e 1-16
+config/github-app-registration.json
+  s_fae32e7f0efe76::t_9aa2e1780eca8d 7,36,41
+client/site/src/content/docs/docs/games/onmyoji.md
+  s_fae32e7f0efe76::t_7e30ba3d14ee96 11,17,21,29
+  s_fae32e7f0efe76::t_49aa3b061244e3 1-10,12-16,18-20,22-28,30-32
+client/site/src/content/docs/docs/start/android.md
+  s_fae32e7f0efe76::t_7e30ba3d14ee96 9
+  s_fae32e7f0efe76::t_afe29f715f4a0b 1-8,10-28
+client/site/src/content/docs/docs/dev/publishing.md
+  s_fae32e7f0efe76::t_49aa3b061244e3 1-15
+.claude/launch.json
+  s_fae32e7f0efe76::t_7b23b90dcf45e9 7-13,15-24
+client/site/src/content/docs/docs/index.md
+  s_fae32e7f0efe76::t_afe29f715f4a0b 1-5,7-10
+  s_fae32e7f0efe76::t_7e30ba3d14ee96 6
+client/site/src/content.config.ts
+  s_fae32e7f0efe76::t_da933e066d779e 1-5
+client/site/public/favicon.svg
+  s_fae32e7f0efe76::t_a6f1b2380beb7e 1
+client/site/src/styles/starlight.css
+  s_fae32e7f0efe76::t_da933e066d779e 1-25
+client/site/src/styles/tokens.css
+  s_fae32e7f0efe76::t_a6f1b2380beb7e 1-155
+docs/development/task-distribution.md
+  s_fae32e7f0efe76::t_9aa2e1780eca8d 9
+client/site/src/content/docs/docs/dev/task-bundles.md
+  s_fae32e7f0efe76::t_7e30ba3d14ee96 16
+  s_fae32e7f0efe76::t_49aa3b061244e3 1-15
+client/site/package.json
+  s_fae32e7f0efe76::t_6d5d89cb2052d2 1-14,16-21
+  s_fae32e7f0efe76::t_1ba7ad896ece0d 15
+client/android/app/src/main/kotlin/io/github/yysassist/ui/GitHubAccountPage.kt
+  s_fae32e7f0efe76::t_9aa2e1780eca8d 36
+client/web/scripts/tokens.mjs
+  s_fae32e7f0efe76::t_a6f1b2380beb7e 1,34-35
+client/site/src/content/docs/docs/start/windows.md
+  s_fae32e7f0efe76::t_7e30ba3d14ee96 3,7
+  s_fae32e7f0efe76::t_afe29f715f4a0b 1-2,4-6,8-15
+client/site/src/content/docs/docs/dev/making.md
+  s_fae32e7f0efe76::t_49aa3b061244e3 1-15
+client/site/src/pages/index.astro
+  s_fae32e7f0efe76::t_904257deb46a3b 1-5,7-11,13-21,23-26,29-36,38-49,51-57,59-61,63-121,124-127,129-135,137,140-153,155-193,195-222,224-226,229-234,236-251,253-262
+  s_fae32e7f0efe76::t_7e30ba3d14ee96 6,12,22,27-28,37,50,58,62,122-123,128,136,138-139,154,194,223,227-228,235,252
+docs/development/cloud-console.md
+  s_fae32e7f0efe76::t_229024d098572b 36
+  s_fae32e7f0efe76::t_651850523744ee 5
+  s_fae32e7f0efe76::t_f1b8e5b359840a 71-80
+client/site/src/components/Logo.astro
+  s_fae32e7f0efe76::t_bd6377efcaf3bf 1-11
+client/site/pnpm-lock.yaml
+  s_fae32e7f0efe76::t_5ff394f1f7a2ba 1-5120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0fba2785c5215946d41b97250895adc98048efba",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <chunlang.liu@rdc-west.com>"
+    }
+  }
+}
