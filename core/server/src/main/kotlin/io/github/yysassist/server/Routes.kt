@@ -88,7 +88,7 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig, workben
             call.response.headers.append(HttpHeaders.AccessControlAllowOrigin, origin)
             call.response.headers.append(HttpHeaders.AccessControlAllowCredentials, "true")
             if (call.request.httpMethod == HttpMethod.Options) {
-                call.response.headers.append(HttpHeaders.AccessControlAllowMethods, "GET, POST, PUT, DELETE")
+                call.response.headers.append(HttpHeaders.AccessControlAllowMethods, "GET, POST, PUT, PATCH, DELETE")
                 call.response.headers.append(HttpHeaders.AccessControlAllowHeaders, "Content-Type, $CSRF_HEADER, Last-Event-ID")
                 call.response.headers.append(HttpHeaders.AccessControlMaxAge, "600")
                 call.respond(HttpStatusCode.NoContent); finish(); return@intercept
