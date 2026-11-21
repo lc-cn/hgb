@@ -1,0 +1,32 @@
+/* ⑦ 状态库与判定台, as drawn. */
+.title { flex: 1 1 300px; min-width: 0; }
+.layout { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+.tree { flex: 0 0 220px; padding: 10px; display: flex; flex-direction: column; gap: 4px; max-height: 760px; overflow: auto; }
+.st { display: flex; flex-direction: column; align-items: flex-start; width: 100%; min-height: 48px; padding: 6px 10px; border-radius: var(--radius-md); border: 0; text-align: left; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.st:hover { background: var(--color-bg); }
+.st[aria-current] { background: var(--color-nav-current-bg); }
+.main { flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.waits { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.select { min-height: var(--control-height-sm); max-width: 100%; padding: 0 10px; border: 1px solid var(--color-primary); border-radius: var(--radius-md); background: var(--color-nav-current-bg); font-weight: 600; }
+.banner { padding: 10px 14px; border-radius: var(--radius-lg); font-weight: 600; }
+.banner[data-tone="bad"] { background: var(--color-danger-bg); color: var(--color-danger); }
+.banner[data-tone="ok"] { background: var(--color-ok-bg); color: var(--color-ok); }
+.banner[data-tone="idle"] { background: var(--color-neutral-bg); color: var(--color-neutral); }
+.scroll { overflow-x: auto; }
+.table { border-collapse: collapse; width: 100%; }
+.table th, .table td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--color-line-soft); font-size: var(--text-sm); white-space: nowrap; }
+.table thead th { background: var(--color-surface-head); color: var(--color-muted); font-weight: 600; }
+.table tbody th { color: var(--color-ink); }
+.table tr[data-bad="true"] { background: #fdf1f2; }
+.table td[data-held="true"] { color: var(--color-ok); font-weight: 600; }
+.table td[data-held="false"] { color: #8a8896; font-weight: 600; }
+.table td[data-verdict="ok"] { color: var(--color-ok); font-weight: 600; }
+.table td[data-verdict="bad"] { color: var(--color-danger); font-weight: 600; }
+.aside { flex: 0 0 300px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.name { font-size: var(--text-xl); }
+.cond { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius-md); border: 1px solid var(--color-line); font-size: var(--text-sm); }
+.k { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; white-space: nowrap; }
+.k[data-tone="has"] { background: var(--color-ok-bg); color: var(--color-ok); }
+.k[data-tone="not"] { background: var(--color-danger-bg); color: var(--color-danger); }
+.grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 1023px) { .tree, .aside { flex: 1 1 100%; } }

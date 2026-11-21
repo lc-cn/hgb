@@ -122,7 +122,14 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig, workben
             get("/me") { val caller = call.author(); call.respond(workbench!!.me(caller)) }
             get("/catalog") { call.author(); call.respond(workbench!!.catalog()) }
             post("/check") { call.author("check"); call.respond(workbench!!.check(call.receiveText())) }
+            get("/drafts") { val caller = call.author(); call.respond(workbench!!.drafts.list(caller.userId)) }
             route("/drafts/{target}") {
+                // The newest published version, fetched by the server (the browser cannot reach GitHub's files directly).
+                post("/import-latest") {
+                    val caller = call.author("write")
+                    call.respond(kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        workbench!!.publisher.importLatest(caller.userId, call.parameters.getOrFail("target")) })
+                }
                 get { val caller = call.author(); call.respond(workbench!!.drafts.get(caller.userId, call.parameters.getOrFail("target"))) }
                 put { val caller = call.author("write"); call.respond(workbench!!.drafts.import(caller.userId, call.parameters.getOrFail("target"), call.receive())) }
                 // Patches are small edits; a whole draft goes through the import.
@@ -175,6 +182,11 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig, workben
                         q["name"].orEmpty(), q["device"].orEmpty(), call.receive<ByteArray>()))
                 }
                 get("/samples") { val caller = call.author(); call.respond(workbench!!.assets.samples(caller.userId, call.parameters.getOrFail("target"))) }
+                get("/trials") {
+                    val caller = call.author()
+                    val runs = devRuns ?: throw ApiException(503, "workbench_unconfigured", "开发工作台不可用")
+                    call.respond(runs.trials(caller.userId, call.parameters.getOrFail("target")))
+                }
                 get("/templates") { val caller = call.author(); call.respond(workbench!!.assets.templatesOf(caller.userId, call.parameters.getOrFail("target"))) }
                 post("/templates") {
                     val caller = call.author("write")

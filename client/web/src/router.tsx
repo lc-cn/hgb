@@ -62,4 +62,5 @@ export const paths = {
   library: "/library",
   notices: "/notices",
   me: "/me",
+  dev: "/dev",
 };

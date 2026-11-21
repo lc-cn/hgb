@@ -13,7 +13,7 @@ import java.net.http.HttpResponse
 import java.time.Duration
 import java.time.Instant
 
-data class HostAsset(val name: String, val bytes: Long, val sha256: String?)
+data class HostAsset(val name: String, val bytes: Long, val sha256: String?, val id: Long = 0)
 data class HostRelease(val id: Long, val tag: String, val draft: Boolean, val assets: List<HostAsset>)
 
 /** Where task versions are published. A release is created as a draft, filled, then published, so none is seen half-made. */
@@ -24,11 +24,15 @@ interface ReleaseHost {
     fun upload(release: Long, name: String, bytes: ByteArray, type: String)
     fun publish(release: Long, latest: Boolean)
     fun discard(release: Long)
+    /** One published asset's bytes. */
+    fun download(asset: HostAsset): ByteArray
 }
 
 /** The task repository's Releases, with the server's own token. Failures become 502s that say what GitHub answered. */
 class GitHubReleaseHost(private val repository: String, private val token: String) : ReleaseHost {
-    private val http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build()
+    private val http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).followRedirects(HttpClient.Redirect.NORMAL).build()
+    /** For downloads, whose redirect leaves GitHub: followed by hand so the token is not sent along. */
+    private val direct = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).followRedirects(HttpClient.Redirect.NEVER).build()
     private fun send(method: String, url: String, body: HttpRequest.BodyPublisher = HttpRequest.BodyPublishers.noBody(), type: String = "application/json",
                      timeout: Long = 30): JsonElement? {
         val request = HttpRequest.newBuilder(URI(url)).timeout(Duration.ofSeconds(timeout)).header("Accept", "application/vnd.github+json")
@@ -48,7 +52,8 @@ class GitHubReleaseHost(private val repository: String, private val token: Strin
         HostRelease(o.getValue("id").jsonPrimitive.long, o.getValue("tag_name").jsonPrimitive.content, o["draft"]?.jsonPrimitive?.boolean == true,
             (o["assets"] as? JsonArray).orEmpty().map { a -> a.jsonObject.let {
                 HostAsset(it.getValue("name").jsonPrimitive.content, it.getValue("size").jsonPrimitive.long,
-                    it["digest"]?.jsonPrimitive?.contentOrNull?.removePrefix("sha256:")?.takeIf { d -> it["state"]?.jsonPrimitive?.content == "uploaded" && d.length == 64 })
+                    it["digest"]?.jsonPrimitive?.contentOrNull?.removePrefix("sha256:")?.takeIf { d -> it["state"]?.jsonPrimitive?.content == "uploaded" && d.length == 64 },
+                    it["id"]?.jsonPrimitive?.longOrNull ?: 0)
             } })
     }.toList()
 
@@ -65,6 +70,22 @@ class GitHubReleaseHost(private val repository: String, private val token: Strin
             put("draft", false); put("make_latest", latest.toString()) }.toString()))
     }
     override fun discard(release: Long) { runCatching { send("DELETE", "$api/releases/$release") } }
+    /** Asks GitHub with the token, then fetches where it points (its storage host) without it, so the token stays with GitHub. */
+    override fun download(asset: HostAsset): ByteArray {
+        fun get(uri: URI, authorized: Boolean): HttpResponse<ByteArray> {
+            val request = HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(120)).header("Accept", "application/octet-stream")
+                .header("User-Agent", "hgb-workbench").apply { if (authorized) header("Authorization", "Bearer $token") }.GET().build()
+            return runCatching { direct.send(request, HttpResponse.BodyHandlers.ofByteArray()) }
+                .getOrElse { throw ApiException(502, "github_unavailable", "连不上 GitHub：${it.message}") }
+        }
+        var reply = get(URI("$api/releases/assets/${asset.id}"), true)
+        if (reply.statusCode() in 301..308) {
+            val location = reply.headers().firstValue("Location").orElse(null) ?: throw ApiException(502, "github_failed", "GitHub 没给下载地址")
+            reply = get(URI(location), false)
+        }
+        if (reply.statusCode() != 200) throw ApiException(502, "github_failed", "GitHub 拒绝了请求（HTTP ${reply.statusCode()}）")
+        return reply.body()
+    }
 }
 
 /**
@@ -125,6 +146,23 @@ class Publisher(private val workbench: Workbench, private val drafts: Drafts, pr
             throw failure
         }
         return result.copy(published = true)
+    }
+
+    /**
+     * Starts (or replaces) the caller's draft of [target] from the newest published version: the highest version tag,
+     * as the App picks it.
+     */
+    fun importLatest(userId: String, target: String): PatchResult {
+        val host = host ?: throw ApiException(503, "workbench_unconfigured", "服务端还没有配置任务仓库")
+        fun order(tag: String) = tag.removePrefix("v").split('.').map { it.toIntOrNull() ?: -1 }
+        val release = host.releases().filter { r -> !r.draft && r.assets.any { it.name == GitHubTaskSource.BUNDLE_ASSET } }
+            .maxWithOrNull { a, b -> order(a.tag).zip(order(b.tag)).map { (x, y) -> x.compareTo(y) }.firstOrNull { it != 0 } ?: 0 }
+            ?: throw ApiException(404, "no_release", "任务仓库还没有发布过版本")
+        val bytes = host.download(release.assets.single { it.name == GitHubTaskSource.BUNDLE_ASSET })
+        val body = runCatching { Json.parseToJsonElement(bytes.decodeToString()).jsonObject }.getOrElse { throw ApiException(502, "bad_release", "发布的任务包读不出来") }
+        if ((body["targets"] as? JsonArray).orEmpty().none { (it as? JsonObject)?.get("id")?.jsonPrimitive?.contentOrNull == target })
+            throw ApiException(404, "no_target", "最新发布的版本里没有这个游戏")
+        return drafts.import(userId, target, DraftImport(release.tag, body))
     }
 
     /** The task repository's releases; empty when no repository is configured (then nothing counts as published). */

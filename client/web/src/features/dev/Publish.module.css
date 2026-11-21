@@ -1,0 +1,22 @@
+/* ⑨ 校验并发布, as drawn. */
+.layout { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.checks { flex: 1 1 520px; min-width: 0; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.version { flex: 1 1 380px; min-width: 0; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.h2 { margin: 0; font-size: var(--text-xl); font-weight: 600; }
+.item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: var(--radius-md); }
+.item[data-mark="pass"] { background: #f3faf6; color: inherit; }
+.item[data-mark="fail"] { background: #fdf1f2; }
+.item[data-mark="warn"] { background: #fff8ec; }
+.mark { font-weight: 700; width: 16px; flex: none; }
+.item[data-mark="pass"] .mark { color: var(--color-ok); }
+.item[data-mark="fail"] .mark { color: var(--color-danger); }
+.item[data-mark="warn"] .mark { color: #7d5315; }
+.grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.link { font-size: var(--text-sm); font-weight: 600; white-space: nowrap; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: var(--text-xs); color: var(--color-muted); font-weight: 600; }
+.field input, .field textarea { padding: 8px 10px; border: 1px solid var(--color-control); border-radius: var(--radius-md); background: var(--color-surface); font: inherit; color: inherit; }
+.field input { min-height: var(--control-height); box-sizing: border-box; }
+.note { padding: 10px 12px; border-radius: var(--radius-md); background: #fff3e0; color: #7d5315; font-size: var(--text-sm); }
+.center { justify-content: center; }
+.done { padding: 10px 12px; border-radius: var(--radius-md); background: var(--color-ok-bg); color: var(--color-ok); font-weight: 600; }

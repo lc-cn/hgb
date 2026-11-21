@@ -1,0 +1,11 @@
+/* ② 游戏设置, as drawn. */
+.grow { flex: 1; min-width: 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 14px; }
+.card { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.h2 { margin: 0; font-size: var(--text-xl); font-weight: 700; }
+.pair { display: flex; flex-wrap: wrap; gap: 10px; }
+.f { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.f label { font-size: var(--text-xs); color: var(--color-muted); font-weight: 600; }
+.f input { min-height: var(--control-height); padding: 0 10px; border: 1px solid var(--color-control); border-radius: var(--radius-md); box-sizing: border-box; }
+.row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-height: 48px; padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid var(--color-line); }
+@media (max-width: 599px) { .grid { grid-template-columns: 1fr; } }

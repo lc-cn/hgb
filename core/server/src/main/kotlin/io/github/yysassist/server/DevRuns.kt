@@ -18,7 +18,12 @@ data class DevStart(val kind: String, val target: String, val device: String, va
     val configuration: JsonObject = JsonObject(emptyMap()), val sample: String? = null, val states: JsonArray? = null)
 @Serializable
 data class DevRunView(val id: String, val kind: String, val device: String, val target: String, val state: String, val detail: String = "",
-    val createdAt: Long, val updatedAt: Long, val sample: String? = null, val facts: List<DevFact> = emptyList(), val traces: List<DevTrace> = emptyList())
+    val createdAt: Long, val updatedAt: Long, val sample: String? = null, val facts: List<DevFact> = emptyList(), val traces: List<DevTrace> = emptyList(),
+    val task: String? = null, val step: String? = null)
+/** The newest finished trial of one task: what the workbench's task list shows. [digest]: the task's node digest when it ran. */
+@Serializable
+data class TrialRecord(val task: String, val step: String? = null, val device: String, val state: String, val detail: String,
+    val startedAt: Long, val endedAt: Long, val digest: String)
 
 /**
  * Phone commands for the developer workbench. They travel on the job channel and exclude managed jobs: one is only sent
@@ -28,7 +33,7 @@ data class DevRunView(val id: String, val kind: String, val device: String, val 
 class DevRuns(private val workbench: Workbench, private val service: CloudService, private val clock: () -> Long = System::currentTimeMillis) {
     private val db get() = workbench.db
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
-    private class Run(val userId: String, @Volatile var view: DevRunView, @Volatile var command: DevCommand) { @Volatile var sentAt = 0L }
+    private class Run(val userId: String, @Volatile var view: DevRunView, @Volatile var command: DevCommand, val digest: String? = null) { @Volatile var sentAt = 0L }
     private val runs = ConcurrentHashMap<String, Run>()
 
     /** Which bucket a start counts against: trials are long, the rest are quick looks. */
@@ -39,6 +44,7 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
         if (kind !in setOf("sample", "probe", "judge", "trial")) throw ApiException(400, "bad_kind", "不认识的命令")
         // The phone first: nothing is compiled for a phone that is not the caller's, offline or busy.
         ensureFree(userId, start.device, clock())
+        var digest: String? = null
         val (devKind, bundle, task) = when (kind) {
             "sample" -> Triple(DevKind.SAMPLE, null, null)
             "probe", "judge" -> {
@@ -48,20 +54,24 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
             }
             else -> {
                 val id = start.task ?: throw ApiException(400, "no_task", "请选择任务")
-                Triple(DevKind.RUN, workbench.heavy { trial(userId, start.target, id, start.step) }, id)
+                // One read of the draft: what runs and what its digest says ran are the same.
+                val body = workbench.drafts.get(userId, start.target).body
+                digest = trialDigest(body, id)
+                Triple(DevKind.RUN, workbench.heavy { trial(userId, start.target, id, start.step, body) }, id)
             }
         }
         val now = clock()
         val id = UUID.randomUUID().toString()
-        val view = DevRunView(id, kind, start.device, start.target, "SENT", "", now, now, start.sample.takeIf { kind == "judge" })
+        val view = DevRunView(id, kind, start.device, start.target, "SENT", "", now, now, start.sample.takeIf { kind == "judge" },
+            task = start.task.takeIf { kind == "trial" }, step = start.step.takeIf { kind == "trial" })
         val command = DevCommand(id, devKind, start.target, start.name.trim().take(64), bundle, task, start.configuration,
-            start.sample.takeIf { kind == "judge" }, if (kind == "trial") 600_000 else 60_000)
+            start.sample.takeIf { kind == "judge" }, timeoutOf(kind))
         // Claiming the phone is the only part done one at a time, so two starts cannot both find it free.
         synchronized(this) {
             ensureFree(userId, start.device, now)
             prune(now)
             if (runs.size >= MAX_RUNS) throw ApiException(503, "busy", "服务器忙，请稍后再试")
-            runs[id] = Run(userId, view, command).also { it.sentAt = now }
+            runs[id] = Run(userId, view, command, digest).also { it.sentAt = now }
             db.tx { update("UPDATE devices SET phase = 'DEVELOPING' WHERE id = ?", start.device) }
         }
         if (!service.sockets.send(start.device, service.encode(ServerMessage.Dev(command)))) {
@@ -70,6 +80,9 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
         publish(userId, view)
         return view
     }
+
+    /** A trial runs a whole task; a sample uploads a full screenshot, which takes minutes on a weak link; a probe is quick. */
+    private fun timeoutOf(kind: String) = when (kind) { "trial" -> 600_000L; "sample" -> 300_000L; else -> 60_000L }
 
     private fun ensureFree(userId: String, device: String, now: Long) {
         db.tx {
@@ -88,7 +101,7 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
      */
     private fun active(view: DevRunView, now: Long) = when (view.state) {
         "SENT" -> now - view.updatedAt < START_WITHIN
-        "RUNNING" -> now - view.updatedAt < (if (view.kind == "trial") 600_000 else 60_000) + GRACE
+        "RUNNING" -> now - view.updatedAt < timeoutOf(view.kind) + GRACE
         else -> false
     }
 
@@ -117,8 +130,24 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
                 facts = report.facts.take(200).map { it.copy(type = it.type.take(60), detail = it.detail.take(400)) },
                 traces = report.traces.takeLast(500).map { it.copy(reason = it.reason?.take(600)) }).also { run.view = it }
         }
+        if (next.state !in ACTIVE && next.kind == "trial" && next.task != null && run.digest != null) remember(caller.userId, next, run.digest)
         publish(caller.userId, next)
         return next
+    }
+
+    /** Keeps the finished trial as its task's newest one. */
+    private fun remember(userId: String, view: DevRunView, digest: String) = db.tx {
+        update("""INSERT INTO dev_trials (user_id, target_id, task_id, step_id, device_id, state, detail, started_at, ended_at, digest) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT (user_id, target_id, task_id) DO UPDATE SET step_id = excluded.step_id, device_id = excluded.device_id, state = excluded.state,
+            detail = excluded.detail, started_at = excluded.started_at, ended_at = excluded.ended_at, digest = excluded.digest
+            WHERE excluded.started_at >= dev_trials.started_at""",
+            userId, view.target, view.task, view.step, view.device, view.state, view.detail.take(300), view.createdAt, view.updatedAt, digest)
+    }
+
+    /** Each task's newest finished trial in [target]. */
+    fun trials(userId: String, target: String): List<TrialRecord> = db.tx {
+        query("SELECT task_id, step_id, device_id, state, detail, started_at, ended_at, digest FROM dev_trials WHERE user_id = ? AND target_id = ? ORDER BY ended_at DESC",
+            userId, target) { TrialRecord(it.getString(1), it.getString(2), it.getString(3), it.getString(4), it.getString(5), it.getLong(6), it.getLong(7), it.getString(8)) }
     }
 
     private fun publish(userId: String, view: DevRunView) = service.events.publish(userId, "dev-run", json.encodeToString(DevRunView.serializer(), view))
@@ -154,8 +183,7 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
     }
 
     /** Only [taskId] (and only [stepId] of it when given) with the snippets it uses. */
-    fun trial(userId: String, target: String, taskId: String, stepId: String?): String {
-        val body = workbench.drafts.get(userId, target).body
+    fun trial(userId: String, target: String, taskId: String, stepId: String?, body: JsonObject = workbench.drafts.get(userId, target).body): String {
         val task = (body["tasks"] as? JsonArray).orEmpty().map { it.jsonObject }.singleOrNull { it["id"]?.jsonPrimitive?.contentOrNull == taskId }
             ?: throw ApiException(404, "no_task", "草稿里没有任务 $taskId")
         val trimmed = if (stepId == null) task else {
@@ -164,6 +192,16 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
             JsonObject(task + ("steps" to JsonArray(listOf(step))))
         }
         return finish(userId, target, body, JsonArray(listOf(trimmed)), used(body, trimmed))
+    }
+
+    /**
+     * What a trial of [taskId] ran: the task and every snippet it calls, by id (so their order does not matter). A
+     * change to either makes an earlier trial stale. The workbench computes the same (model.ts trialDigest).
+     */
+    fun trialDigest(body: JsonObject, taskId: String): String? {
+        val task = (body["tasks"] as? JsonArray).orEmpty().firstOrNull { it.jsonObject["id"]?.jsonPrimitive?.contentOrNull == taskId } ?: return null
+        val snippets = used(body, task).associateBy { it.jsonObject["id"]?.jsonPrimitive?.contentOrNull.orEmpty() }
+        return nodeDigest(buildJsonObject { put("task", task); put("snippets", JsonObject(snippets)) })
     }
 
     /** The snippets [root] calls, directly or through other snippets. */

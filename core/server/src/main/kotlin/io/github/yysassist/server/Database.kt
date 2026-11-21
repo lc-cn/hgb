@@ -40,6 +40,13 @@ class Database(path: String) : AutoCloseable {
                 base_version TEXT NOT NULL, revision INTEGER NOT NULL, body TEXT NOT NULL, updated_at INTEGER NOT NULL, PRIMARY KEY (user_id, target_id))""",
             """CREATE TABLE IF NOT EXISTS dev_patches (user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, target_id TEXT NOT NULL,
                 revision INTEGER NOT NULL, source TEXT NOT NULL, at INTEGER NOT NULL, patches TEXT NOT NULL, PRIMARY KEY (user_id, target_id, revision))""",
+            // What each task and snippet was when the draft was imported (node digests), to tell what the draft changed.
+            """CREATE TABLE IF NOT EXISTS dev_draft_bases (user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, target_id TEXT NOT NULL,
+                digests TEXT NOT NULL, PRIMARY KEY (user_id, target_id))""",
+            // Each task's newest finished trial.
+            """CREATE TABLE IF NOT EXISTS dev_trials (user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, target_id TEXT NOT NULL,
+                task_id TEXT NOT NULL, step_id TEXT, device_id TEXT NOT NULL, state TEXT NOT NULL, detail TEXT NOT NULL, started_at INTEGER NOT NULL,
+                ended_at INTEGER NOT NULL, digest TEXT NOT NULL, PRIMARY KEY (user_id, target_id, task_id))""",
             // Samples and templates; the images themselves are files.
             """CREATE TABLE IF NOT EXISTS dev_samples (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, target_id TEXT NOT NULL,
                 name TEXT NOT NULL, device TEXT NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL, bytes INTEGER NOT NULL, sha256 TEXT NOT NULL,

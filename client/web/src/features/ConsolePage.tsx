@@ -15,6 +15,7 @@ import { JobPage } from "./jobs/JobPage";
 import { LibraryPage } from "./library/LibraryPage";
 import { MePage } from "./me/MePage";
 import { NoticesPage } from "./notices/NoticesPage";
+import { DevWorkbench } from "./dev/DevWorkbench";
 
 /** The signed-in console: one page per address, all kept live by the event stream. */
 export function ConsolePage({ account, signedOut }: { account: Account; signedOut: () => void }) {
@@ -57,6 +58,7 @@ function route(path: string): [Section, ReactNode] {
   if (path === paths.library) return ["library", <LibraryPage />];
   if (path === paths.notices) return ["notices", <NoticesPage />];
   if (path === paths.me) return ["me", <MePage />];
+  if (path === paths.dev || path.startsWith(`${paths.dev}/`)) return ["dev", <DevWorkbench />];
   return ["devices", <NotFound text="没有这个页面" />];
 }
 

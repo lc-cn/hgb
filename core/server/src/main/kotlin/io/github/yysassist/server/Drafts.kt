@@ -1,6 +1,8 @@
 package io.github.yysassist.server
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import java.security.MessageDigest
 
@@ -11,7 +13,11 @@ import java.security.MessageDigest
  * `library`) are passed through. Ids must be unique among everything directly under one parent.
  */
 @Serializable
-data class DraftView(val target: String, val baseVersion: String, val revision: Long, val body: JsonObject)
+data class DraftView(val target: String, val baseVersion: String, val revision: Long, val body: JsonObject,
+    /** Node digests of the tasks and snippets as imported, keyed `tasks/<id>` and `snippets/<id>`: what is unchanged since. */
+    val bases: Map<String, String> = emptyMap())
+@Serializable
+data class DraftSummary(val target: String, val baseVersion: String, val revision: Long, val updatedAt: Long)
 @Serializable
 data class DraftImport(val baseVersion: String, val body: JsonObject)
 /**
@@ -67,11 +73,17 @@ private object Nodes {
         else -> emptyList()
     } }
 
+    /** Whether [segment] names a node with [id] in the list [key]: `id`, or `list:id` when ids repeat across lists. */
+    fun names(segment: String, id: String?, key: String?): Boolean {
+        val colon = segment.indexOf(':')
+        return if (colon < 0) id == segment else id == segment.substring(colon + 1) && key == segment.substring(0, colon)
+    }
+
     /** The node at [path], or why not. */
     fun find(root: JsonObject, path: List<String>): Result<JsonObject> {
         var node = root
         for (segment in path) {
-            val hits = children(node).filter { idOf(it.first) == segment }
+            val hits = children(node).filter { names(segment, idOf(it.first), it.second.lastOrNull()) }
             node = when (hits.size) {
                 1 -> hits.single().first
                 0 -> return Result.failure(IllegalArgumentException("找不到节点 $segment（可能已被删除或改名）"))
@@ -87,13 +99,13 @@ private object Nodes {
 
     private fun inObject(o: JsonObject, rest: List<String>, change: (JsonObject) -> JsonObject?): JsonObject = JsonObject(o.mapValues { (key, v) -> when {
         key == "action" -> v
-        v is JsonArray -> inList(v, rest, change)
+        v is JsonArray -> inList(v, key, rest, change)
         v is JsonObject && idOf(v) == null -> inObject(v, rest, change)
         else -> v
     } })
-    private fun inList(list: JsonArray, rest: List<String>, change: (JsonObject) -> JsonObject?): JsonArray = JsonArray(list.mapNotNull { e -> when {
+    private fun inList(list: JsonArray, key: String, rest: List<String>, change: (JsonObject) -> JsonObject?): JsonArray = JsonArray(list.mapNotNull { e -> when {
         e !is JsonObject -> e
-        idOf(e) == rest.first() -> if (rest.size == 1) change(e) else inObject(e, rest.drop(1), change)
+        names(rest.first(), idOf(e), key) -> if (rest.size == 1) change(e) else inObject(e, rest.drop(1), change)
         idOf(e) == null -> inObject(e, rest, change)
         else -> e
     } })
@@ -116,7 +128,18 @@ private object Nodes {
 class Drafts(private val db: Database, private val clock: () -> Long) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
-    fun get(userId: String, target: String): DraftView = db.tx { find(userId, target) } ?: throw ApiException(404, "no_draft", "还没有这个游戏的草稿")
+    /** The caller's drafts, newest first. */
+    fun list(userId: String): List<DraftSummary> = db.tx {
+        query("SELECT target_id, base_version, revision, updated_at FROM dev_drafts WHERE user_id = ? ORDER BY updated_at DESC", userId) {
+            DraftSummary(it.getString(1), it.getString(2), it.getLong(3), it.getLong(4)) }
+    }
+
+    fun get(userId: String, target: String): DraftView = db.tx {
+        find(userId, target)?.let { view ->
+            val bases = single("SELECT digests FROM dev_draft_bases WHERE user_id = ? AND target_id = ?", userId, target) { it.getString(1) }
+            if (bases == null) view else view.copy(bases = json.decodeFromString<Map<String, String>>(bases))
+        }
+    } ?: throw ApiException(404, "no_draft", "还没有这个游戏的草稿")
     private fun find(userId: String, target: String): DraftView? = db.single("SELECT base_version, revision, body FROM dev_drafts WHERE user_id = ? AND target_id = ?", userId, target) {
         DraftView(target, it.getString(1), it.getLong(2), json.parseToJsonElement(it.getString(3)).jsonObject)
     }
@@ -142,6 +165,10 @@ class Drafts(private val db: Database, private val clock: () -> Long) {
                 ON CONFLICT (user_id, target_id) DO UPDATE SET base_version = excluded.base_version, revision = excluded.revision, body = excluded.body, updated_at = excluded.updated_at""",
                 userId, target, draft.baseVersion, revision, json.encodeToString(JsonObject.serializer(), draft.body), clock())
             record(userId, target, revision, "import", emptyList())
+            val bases = listOf("tasks", "snippets").flatMap { field -> (draft.body[field] as? JsonArray).orEmpty().mapNotNull { node ->
+                (node as? JsonObject)?.let(::idOf)?.let { id -> "$field/$id" to nodeDigest(node) } } }.toMap()
+            db.update("""INSERT INTO dev_draft_bases (user_id, target_id, digests) VALUES (?, ?, ?)
+                ON CONFLICT (user_id, target_id) DO UPDATE SET digests = excluded.digests""", userId, target, json.encodeToString(bases))
             PatchResult(revision)
         }
     }

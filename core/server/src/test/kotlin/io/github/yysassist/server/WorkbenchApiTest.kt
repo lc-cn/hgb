@@ -41,6 +41,7 @@ class WorkbenchApiTest {
         }
         override fun publish(release: Long, latest: Boolean) { this.latest = latest; list.replaceAll { if (it.id == release) it.copy(draft = false) else it } }
         override fun discard(release: Long) { list.removeAll { it.id == release } }
+        override fun download(asset: HostAsset): ByteArray = files.entries.first { it.key.second == asset.name && sha(it.value) == asset.sha256 }.value
     }
     private val host = FakeHost()
 
@@ -137,9 +138,22 @@ class WorkbenchApiTest {
         val clobber = send(HttpMethod.Post, "/api/dev/drafts/game/patches",
             """{"patches":[{"op":"insert","path":"t","field":"name","value":${action("y", 1)}}]}""", writer)
         assertEquals(HttpStatusCode.Conflict, clobber.status)
+        // Ids may repeat across lists (a target and its vision profile share one): the list then names which.
+        val twins = JsonObject(draft + ("visionProfiles" to Json.parseToJsonElement("""[{"id":"game","targetId":"game"}]""")))
+        send(HttpMethod.Put, "/api/dev/drafts/game", """{"baseVersion":"v1","body":$twins}""", writer)
+        val stored = Json.parseToJsonElement(get("/api/dev/drafts/game", writer).bodyAsText()).jsonObject.getValue("body").jsonObject
+        val app = stored.getValue("targets").jsonArray[0].jsonObject
+        val renamed = JsonObject(app + ("name" to JsonPrimitive("新名字")))
+        assertEquals(HttpStatusCode.Conflict, send(HttpMethod.Post, "/api/dev/drafts/game/patches",
+            """{"patches":[{"op":"put","path":"game","expect":"${nodeDigest(app)}","value":$renamed}]}""", writer).status)
+        assertEquals(HttpStatusCode.OK, send(HttpMethod.Post, "/api/dev/drafts/game/patches",
+            """{"patches":[{"op":"put","path":"targets:game","expect":"${nodeDigest(app)}","value":$renamed}]}""", writer).status)
+        val both = Json.parseToJsonElement(get("/api/dev/drafts/game", writer).bodyAsText()).jsonObject.getValue("body").jsonObject
+        assertEquals(JsonPrimitive("新名字"), both.getValue("targets").jsonArray[0].jsonObject["name"])
+        assertEquals(null, both.getValue("visionProfiles").jsonArray[0].jsonObject["name"])
         // Importing again is recorded, so an editor following patches knows to reload.
         send(HttpMethod.Put, "/api/dev/drafts/game", """{"baseVersion":"v1","body":$draft}""", writer)
-        val after = Json.parseToJsonElement(get("/api/dev/drafts/game/patches?since=4", writer).bodyAsText()).jsonObject.getValue("records").jsonArray
+        val after = Json.parseToJsonElement(get("/api/dev/drafts/game/patches?since=6", writer).bodyAsText()).jsonObject.getValue("records").jsonArray
         assertEquals(JsonPrimitive(true), after.single().jsonObject["replaced"])
         // The draft still reads as a valid bundle.
         val checked = Json.parseToJsonElement(check(Json.encodeToString(JsonObject.serializer(), body.getValue("body").jsonObject), writer).bodyAsText()).jsonObject
@@ -295,6 +309,13 @@ class WorkbenchApiTest {
             assertEquals(HttpStatusCode.OK, reported.status)
             val view = Json.parseToJsonElement(get("/api/dev/runs/$run", writer).bodyAsText()).jsonObject
             assertEquals(JsonPrimitive("FINISHED"), view["state"])
+            // The task keeps it as its newest trial, with what ran: the task and the snippets it calls (none here).
+            val trial = Json.parseToJsonElement(get("/api/dev/games/game/trials", writer).bodyAsText()).jsonArray.single().jsonObject
+            assertEquals(JsonPrimitive("t"), trial["task"])
+            val draft = Json.parseToJsonElement(get("/api/dev/drafts/game", writer).bodyAsText()).jsonObject
+            val task = draft.getValue("body").jsonObject.getValue("tasks").jsonArray[0]
+            assertEquals(JsonPrimitive(nodeDigest(buildJsonObject { put("task", task); put("snippets", JsonObject(emptyMap())) })), trial["digest"])
+            assertEquals(JsonPrimitive(nodeDigest(task)), draft.getValue("bases").jsonObject["tasks/t"])
             // Someone else cannot read it; a phone running a job gets none.
             assertEquals(HttpStatusCode.NotFound, get("/api/dev/runs/$run", signIn("second")).status)
             status("RUNNING"); kotlinx.coroutines.delay(300)
@@ -315,6 +336,17 @@ class WorkbenchApiTest {
         assertFalse(ids.first().getValue("id") in left)
         assertEquals(HttpStatusCode.PayloadTooLarge, client.post("/api/dev/games/game/samples") { bearerAuth(writer); contentType(ContentType.Image.PNG); setBody(png(400, 400)) }.status)
     } }
+
+    @Test fun aDraftStartsFromTheNewestPublishedVersion() = api(repo) {
+        val writer = signIn("writer")
+        val text = bundle("control.wait").toByteArray()
+        host.list += HostRelease(1, "v1.9.0", false, listOf(HostAsset("task-bundle.json", text.size.toLong(), sha(text), 1)))
+        host.list += HostRelease(2, "v1.10.0", false, listOf(HostAsset("task-bundle.json", text.size.toLong(), sha(text), 2)))
+        host.files[2L to "task-bundle.json"] = text
+        assertEquals(HttpStatusCode.OK, send(HttpMethod.Post, "/api/dev/drafts/game/import-latest", "{}", writer).status)
+        val drafts = Json.parseToJsonElement(get("/api/dev/drafts", writer).bodyAsText()).jsonArray
+        assertEquals(JsonPrimitive("v1.10.0"), drafts.single().jsonObject["baseVersion"])
+    }
 }
 
 private fun sha(bytes: ByteArray) = java.security.MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
