@@ -145,7 +145,9 @@ class AssistApplication : Application() {
         connectionLog = io.github.yysassist.cloud.ConnectionLog(File(noBackupFilesDir, "connection.log"), scope)
         cloud = io.github.yysassist.core.cloud.CloudAgent(client, io.github.yysassist.cloud.EncryptedCloudStore(File(noBackupFilesDir, "cloud-session.bin"), "io.github.yysassist.cloud.v1"),
             cloudExecutor, "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}", "android", BuildConfig.VERSION_NAME, scope,
-            dataStore = io.github.yysassist.cloud.CloudDataFile(File(noBackupFilesDir, "cloud-data.json")), trace = connectionLog::add)
+            dataStore = io.github.yysassist.cloud.CloudDataFile(File(noBackupFilesDir, "cloud-data.json")), trace = connectionLog::add,
+            installId = { installId(File(noBackupFilesDir, "install-id")) },
+            keepInstallId = { id -> File(noBackupFilesDir, "install-id").let { if (!it.exists()) it.writeText(id) } })
         accounts = io.github.yysassist.cloud.CloudAccounts(cloud, cloudExecutor::apps)
         // Writing tasks is open to anyone signed in; the ball shows the tools once the user turns them on.
         scope.launch {
@@ -182,4 +184,10 @@ class AssistApplication : Application() {
             catch (_: java.io.IOException) { executor.notify("没有连上服务器，请稍后再试") }
         }
     }
+}
+
+/** This installation's id, made once and kept across sign-outs (only uninstalling the App or clearing its data makes a new one). */
+private fun installId(file: File): String = synchronized(file.absolutePath.intern()) {
+    file.takeIf { it.exists() }?.readText()?.trim()?.takeIf { it.isNotEmpty() }
+        ?: java.util.UUID.randomUUID().toString().also { file.writeText(it) }
 }

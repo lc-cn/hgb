@@ -140,6 +140,10 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
     private val deviceName: String, private val platform: String, private val appVersion: String, private val scope: CoroutineScope,
     private val clock: () -> Long = System::currentTimeMillis, private val heartbeatMillis: Long = 15_000, private val retryMillis: Long = 5_000,
     private val progressMillis: Long = 1_500, private val statusMillis: Long = 1_000, private val dataStore: CloudDataStore? = null,
+    /** This installation's id, the same across sign-ins, so signing in again finds the same device (its plans, its accounts). */
+    private val installId: () -> String = { UUID.randomUUID().toString() },
+    /** Told the id of the installation already signed in at start, so an [installId] kept elsewhere can adopt it. */
+    private val keepInstallId: (String) -> Unit = {},
     private val watchMillis: Long = 5_000, private val conditionGraceMillis: Long = 60_000,
     /** What the connection and the job loop just did, in a sentence, for the 连接日志 a user can read and send in. */
     private val trace: (String) -> Unit = {}) {
@@ -182,6 +186,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         scope.launch {
             val saved = try { store.read() } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { null }
             mutex.withLock { credentials = saved }
+            if (saved != null) runCatching { keepInstallId(saved.installId) }
             if (saved != null) mutableData.value = runCatching { dataStore?.read() }.getOrNull()
             if (saved == null) mutableState.value = CloudState.SignedOut() else startWorking(saved)
         }
@@ -276,7 +281,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         val access = result.accessToken; val refresh = result.refreshToken; val expires = result.accessExpiresAt
         if (access == null || refresh == null || expires == null) throw CloudRequestException(0, "invalid_reply", "服务器回复无效")
         trace("登录：服务器已确认，保存中")
-        val saved = CloudCredentials(server.trimEnd('/'), result.userId, result.email, access, refresh, expires, UUID.randomUUID().toString())
+        val saved = CloudCredentials(server.trimEnd('/'), result.userId, result.email, access, refresh, expires, installId())
         clearData() // whoever was signed in before, their accounts and settings are not shown or run for this user
         mutex.withLock { save(saved) }
         trace("登录：已保存，开始连接")
