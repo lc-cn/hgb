@@ -222,7 +222,7 @@ class Drafts(private val db: Database, private val clock: () -> Long) {
     companion object {
         private const val MAX_PATCHES = 200
         private const val MAX_DRAFTS = 20
-        private const val KEPT_PATCHES = 1000
+        private const val KEPT_PATCHES = 200
         private const val PAGE = 500
     }
 }

@@ -76,7 +76,8 @@ private fun SignedIn(application: AssistApplication, mode: ThemeMode, navigation
                 { id, resume -> application.executor.submit(id?.let { ExecutorCommand.ResumeCurrent(it, resume) } ?: ExecutorCommand.Resume(resume)) },
                 { executor.current?.let { application.executor.submit(ExecutorCommand.StopCurrent(it.runId)) } })
         }),
-        settings = { LocalDeviceSettings(floating, application.floating::setVisible, application.floating::setAutoDock, application.floating::reload, { nav.openLocal(DEVELOP) }, application.updates, application.standby) },
+        settings = { LocalDeviceSettings(floating, application.floating::setVisible, application.floating::setAutoDock, application.floating::reload, { nav.openLocal(DEVELOP) }, application.updates, application.standby,
+            application.floating::setDevTools) },
         notices = { LocalNoticeSwitch(application.localNotices) },
         appearance = when (mode) { ThemeMode.SYSTEM -> "auto"; ThemeMode.LIGHT -> "light"; ThemeMode.DARK -> "dark" } to { look ->
             scope.launch { runCatching { application.appearance.setTheme(when (look) { "light" -> ThemeMode.LIGHT; "dark" -> ThemeMode.DARK; else -> ThemeMode.SYSTEM }) } }
@@ -264,7 +265,7 @@ internal fun LocalWorkbench(application: AssistApplication, navigation: AppNavig
                         Tool.SETTINGS -> SettingsPage(appearance, mode, { item ->
                             scope.launch { try { application.appearance.setTheme(item) } catch (_: IOException) { snackbar.showSnackbar("主题设置保存失败") } }
                         }, versions, github, taskSource.fullName, floating, application.floating::setVisible, application.floating::setAutoDock, application.floating::reload,
-                            developer = developer == true) {
+                            developer = developer == true, setDevTools = application.floating::setDevTools) {
                             if (it == "常用") { favoritesRequest++; selected = Tool.TASKS } else detail = it
                         }
                     }

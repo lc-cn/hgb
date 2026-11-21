@@ -28,48 +28,58 @@ data class DevRunView(val id: String, val kind: String, val device: String, val 
 class DevRuns(private val workbench: Workbench, private val service: CloudService, private val clock: () -> Long = System::currentTimeMillis) {
     private val db get() = workbench.db
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
-    private class Run(val userId: String, @Volatile var view: DevRunView, val command: DevCommand) { @Volatile var sentAt = 0L }
+    private class Run(val userId: String, @Volatile var view: DevRunView, @Volatile var command: DevCommand) { @Volatile var sentAt = 0L }
     private val runs = ConcurrentHashMap<String, Run>()
 
-    /** One start at a time, so two cannot both find the phone free. */
-    @Synchronized fun start(userId: String, start: DevStart): DevRunView {
+    /** Which bucket a start counts against: trials are long, the rest are quick looks. */
+    fun limitKind(start: DevStart) = if (start.kind == "trial") "trial" else "probe"
+
+    fun start(userId: String, start: DevStart): DevRunView {
         val kind = start.kind
+        if (kind !in setOf("sample", "probe", "judge", "trial")) throw ApiException(400, "bad_kind", "不认识的命令")
+        // The phone first: nothing is compiled for a phone that is not the caller's, offline or busy.
+        ensureFree(userId, start.device, clock())
         val (devKind, bundle, task) = when (kind) {
             "sample" -> Triple(DevKind.SAMPLE, null, null)
             "probe", "judge" -> {
                 val states = start.states?.takeIf { it.isNotEmpty() } ?: throw ApiException(400, "no_states", "请选择要判定的状态")
                 if (kind == "judge") workbench.assets.sample(userId, start.sample ?: throw ApiException(400, "no_sample", "请选择样本"))
-                Triple(DevKind.RUN, probe(userId, start.target, states), PROBE_TASK)
+                Triple(DevKind.RUN, workbench.heavy { probe(userId, start.target, states) }, PROBE_TASK)
             }
-            "trial" -> {
+            else -> {
                 val id = start.task ?: throw ApiException(400, "no_task", "请选择任务")
-                Triple(DevKind.RUN, trial(userId, start.target, id, start.step), id)
+                Triple(DevKind.RUN, workbench.heavy { trial(userId, start.target, id, start.step) }, id)
             }
-            else -> throw ApiException(400, "bad_kind", "不认识的命令")
         }
         val now = clock()
         val id = UUID.randomUUID().toString()
         val view = DevRunView(id, kind, start.device, start.target, "SENT", "", now, now, start.sample.takeIf { kind == "judge" })
         val command = DevCommand(id, devKind, start.target, start.name.trim().take(64), bundle, task, start.configuration,
             start.sample.takeIf { kind == "judge" }, if (kind == "trial") 600_000 else 60_000)
-        db.tx {
-            val phase = single("SELECT phase FROM devices WHERE id = ? AND user_id = ? AND revoked = 0", start.device, userId) { it.getString(1).orEmpty() }
-                ?: throw ApiException(404, "no_device", "没有这台手机")
-            if (!service.sockets.isOnline(start.device)) throw ApiException(409, "device_offline", "手机不在线")
-            if (single("SELECT 1 FROM jobs WHERE device_id = ? AND state IN ('LEASED', 'RUNNING') LIMIT 1", start.device) { true } == true || phase != "IDLE")
-                throw ApiException(409, "device_busy", "手机正在执行任务，等它空下来")
-            if (runs.values.any { it.view.device == start.device && active(it.view, now) })
-                throw ApiException(409, "device_busy", "手机上还有一个调试命令没结束")
+        // Claiming the phone is the only part done one at a time, so two starts cannot both find it free.
+        synchronized(this) {
+            ensureFree(userId, start.device, now)
             prune(now)
+            if (runs.size >= MAX_RUNS) throw ApiException(503, "busy", "服务器忙，请稍后再试")
             runs[id] = Run(userId, view, command).also { it.sentAt = now }
-            // Held at once, not only when the phone's next status says so: no job is leased to it in between.
-            update("UPDATE devices SET phase = 'DEVELOPING' WHERE id = ?", start.device)
+            db.tx { update("UPDATE devices SET phase = 'DEVELOPING' WHERE id = ?", start.device) }
         }
         if (!service.sockets.send(start.device, service.encode(ServerMessage.Dev(command)))) {
             runs.remove(id); throw ApiException(409, "device_offline", "手机不在线")
         }
         publish(userId, view)
         return view
+    }
+
+    private fun ensureFree(userId: String, device: String, now: Long) {
+        db.tx {
+            val phase = single("SELECT phase FROM devices WHERE id = ? AND user_id = ? AND revoked = 0", device, userId) { it.getString(1).orEmpty() }
+                ?: throw ApiException(404, "no_device", "没有这台手机")
+            if (!service.sockets.isOnline(device)) throw ApiException(409, "device_offline", "手机不在线")
+            if (single("SELECT 1 FROM jobs WHERE device_id = ? AND state IN ('LEASED', 'RUNNING') LIMIT 1", device) { true } == true || phase != "IDLE")
+                throw ApiException(409, "device_busy", "手机正在执行任务，等它空下来")
+        }
+        if (runs.values.any { it.view.device == device && active(it.view, now) }) throw ApiException(409, "device_busy", "手机上还有一个调试命令没结束")
     }
 
     /**
@@ -101,6 +111,8 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
         val run = runs[id]?.takeIf { it.userId == caller.userId && it.view.device == caller.deviceId } ?: throw ApiException(404, "no_run", "没有这个调试命令")
         val next = synchronized(run) {
             if (run.view.state !in ACTIVE) return run.view
+            // Started: the bundle was only kept for resending.
+            run.command = run.command.copy(bundle = null)
             run.view.copy(state = report.state.name, detail = report.detail.take(1000), updatedAt = clock(), sample = report.sample ?: run.view.sample,
                 facts = report.facts.take(200).map { it.copy(type = it.type.take(60), detail = it.detail.take(400)) },
                 traces = report.traces.takeLast(500).map { it.copy(reason = it.reason?.take(600)) }).also { run.view = it }
@@ -136,7 +148,7 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
             "changelog" to JsonPrimitive("调试"), "tasks" to tasks, "snippets" to snippets,
             "resources" to json.encodeToJsonElement(kotlinx.serialization.builtins.ListSerializer(io.github.yysassist.core.content.TaskResource.serializer()), placed)))
         val text = json.encodeToString(JsonObject.serializer(), bundle)
-        val checked = workbench.check(text)
+        val checked = workbench.checkNow(text)
         if (!checked.ok) throw ApiException(400, "invalid_draft", "草稿没通过检查：" + checked.issues.take(5).joinToString("；") { "${it.location} ${it.reason}" })
         return text
     }
@@ -206,6 +218,7 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
         private const val START_WITHIN = 60_000L
         private const val RESEND_AFTER = 5_000L
         private const val KEEP = 6 * 60 * 60 * 1000L
-        private const val MAX_PER_USER = 50
+        private const val MAX_PER_USER = 10
+        private const val MAX_RUNS = 2_000
     }
 }

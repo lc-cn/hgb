@@ -24,25 +24,15 @@ internal data class ProbeResult(val matched: String?, val reason: String?, val c
 internal data class DraftView(val revision: Long, val body: JsonObject)
 
 /**
- * The phone's side of the developer workbench: whether this account may use it, what the draft holds, and commands
+ * The phone's side of the developer workbench: whether its tools are on, what the draft holds, and commands
  * this phone sends itself through the server (so they go through the same checks and the same runner).
  */
 internal class DevWorkbench(private val cloud: () -> CloudAgent, private val runner: () -> DevRunner?) {
     private val mutableDeveloper = MutableStateFlow<Boolean?>(null)
-    /** True for a GitHub account with write access to the task repository; null until asked. */
+    /** Whether this phone shows the workbench tools: signed in and turned on in 悬浮球开发工具. */
     val developer: StateFlow<Boolean?> = mutableDeveloper.asStateFlow()
+    fun enable(on: Boolean) { mutableDeveloper.value = on }
     private fun path(value: String) = URLEncoder.encode(value, Charsets.UTF_8).replace("+", "%20")
-
-    suspend fun refresh(): Boolean? {
-        // Only a definite answer changes it: GitHub unreachable (503), rate limits and network trouble leave it as it was.
-        val answer = try { cloud().request("GET", "/api/dev/catalog"); true }
-        catch (refused: CloudRequestException) { if (refused.status == 403) false else null }
-        catch (_: java.io.IOException) { null }
-        if (answer != null) mutableDeveloper.value = answer
-        return answer
-    }
-
-    fun forget() { mutableDeveloper.value = null }
 
     suspend fun draft(target: String): JsonObject? = draftView(target)?.body
     /** The draft with its revision; null when there is none yet. */

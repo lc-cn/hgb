@@ -52,6 +52,8 @@ data class CapabilityView(
     val optional: List<String> = emptyList(),
 )
 @Serializable
+data class DevMe(val maintainer: Boolean?, val samples: Int, val sampleBytes: Long, val sampleQuota: Long)
+@Serializable
 data class CheckIssue(val location: String, val reason: String)
 @Serializable
 data class CheckResult(val ok: Boolean, val issues: List<CheckIssue>, val tasks: Int, val publishedBytes: Int, val expandedBytes: Int)
@@ -60,8 +62,33 @@ data class CheckResult(val ok: Boolean, val issues: List<CheckIssue>, val tasks:
  * The server side of the developer workbench. Checks run the engine's own reader with the App's own action contracts,
  * so what passes here is what the App will accept.
  */
+/**
+ * Requests per user and kind within a sliding minute or hour: everyone signed in may use the workbench now, so each
+ * kind of work is capped (open-contribution.md, 分级与配额).
+ */
+class RateLimits(private val clock: () -> Long) {
+    private data class Rule(val count: Int, val windowMs: Long)
+    // Sized for real use: the editor checks while typing, the ball probes again on every pick.
+    private val rules = mapOf("read" to Rule(240, 60_000), "check" to Rule(60, 60_000), "write" to Rule(180, 60_000),
+        "sample" to Rule(120, 600_000), "probe" to Rule(120, 600_000), "trial" to Rule(30, 600_000))
+    private val seen = ConcurrentHashMap<Pair<String, String>, ArrayDeque<Long>>()
+    @Volatile private var swept = 0L
+    fun take(userId: String, kind: String) {
+        val rule = rules.getValue(kind)
+        val now = clock()
+        // Now and then, forget users who have been quiet for an hour.
+        if (now - swept > 600_000) { swept = now; seen.entries.removeIf { (_, times) -> synchronized(times) { times.lastOrNull()?.let { now - it > 3_600_000 } ?: true } } }
+        val times = seen.computeIfAbsent(userId to kind) { ArrayDeque() }
+        synchronized(times) {
+            while (times.isNotEmpty() && now - times.first() >= rule.windowMs) times.removeFirst()
+            if (times.size >= rule.count) throw ApiException(429, "too_many_requests", "操作太频繁，请稍后再试")
+            times.addLast(now)
+        }
+    }
+}
+
 class Workbench(internal val db: Database, private val permissions: RepoPermissions?, files: java.io.File,
-                releases: ReleaseHost? = null, private val clock: () -> Long = System::currentTimeMillis) {
+                releases: ReleaseHost? = null, private val clock: () -> Long = System::currentTimeMillis, sampleQuota: Long = Assets.SAMPLE_QUOTA) {
     private val provider = object : ActionProvider {
         override val contracts = screenContracts
         override fun open(attempt: StepAttempt, bundle: TaskBundle): ActionSession = error("服务端不执行动作")
@@ -70,25 +97,46 @@ class Workbench(internal val db: Database, private val permissions: RepoPermissi
     private val codec = BundleCodec(contracts)
     /** (user, GitHub account) -> allowed, when decided. Keyed by the account so unlinking or relinking takes effect at once. */
     private val decided = ConcurrentHashMap<Pair<String, String>, Pair<Boolean, Long>>()
+    private val unknown = ConcurrentHashMap<Pair<String, String>, Long>()
+    /** Server-wide: at most this many bundle reads (checks, trial and probe compiles) at once; anyone may sign up now. */
+    private val reading = java.util.concurrent.Semaphore(2)
+    fun <T> heavy(block: () -> T): T {
+        if (!reading.tryAcquire(5, java.util.concurrent.TimeUnit.SECONDS)) throw ApiException(503, "busy", "服务器忙，请稍后再试")
+        try { return block() } finally { reading.release() }
+    }
     val drafts = Drafts(db, clock)
-    val assets = Assets(db, files, clock)
+    val assets = Assets(db, files, clock, sampleQuota)
     val publisher = Publisher(this, drafts, assets, releases, clock)
 
-    /** Only a GitHub account that can write to the task repository may use the workbench. */
-    fun requireDeveloper(caller: Caller) {
+    val limits = RateLimits(clock)
+
+    /** What the workbench pages and the App show about the caller: whether they maintain the task repository, and their quota. */
+    fun me(caller: Caller): DevMe {
+        val maintainer = try { requireMaintainer(caller); true } catch (refused: ApiException) { if (refused.status == 403) false else null }
+        val (count, bytes) = db.tx { single("SELECT COUNT(*), COALESCE(SUM(bytes), 0) FROM dev_samples WHERE user_id = ?", caller.userId) { it.getInt(1) to it.getLong(2) } } ?: (0 to 0L)
+        return DevMe(maintainer, count, bytes, assets.quota(caller.userId))
+    }
+
+    /** Publishing and reviewing: only a GitHub account that can write to the task repository. */
+    fun requireMaintainer(caller: Caller) {
         val checker = permissions ?: throw ApiException(503, "workbench_unconfigured", "服务端还没有配置任务仓库，开发工作台不可用")
         val (subject, login) = db.tx { single("SELECT subject, login FROM identities WHERE provider = 'github' AND user_id = ?", caller.userId) {
             it.getString(1) to (it.getString(2) ?: "") } } ?: throw ApiException(403, "github_required", "请先在“我的”里绑定 GitHub")
         val key = caller.userId to subject
         val now = clock()
         decided[key]?.takeIf { (allowed, at) -> now - at < if (allowed) ALLOW_TTL else DENY_TTL }?.let { (allowed, _) ->
-            if (allowed) return else throw ApiException(403, "not_developer", "这个 GitHub 账号对任务仓库没有写权限")
+            if (allowed) return else throw ApiException(403, "not_maintainer", "只有维护者（对任务仓库有写权限的 GitHub 账号）能做这件事")
         }
-        // Unknown is neither granted nor remembered.
-        val permission = checker.permission(subject, login) ?: throw ApiException(503, "github_unavailable", "暂时查不到 GitHub 权限（或服务端的任务仓库配置有误），请稍后再试")
+        // Unknown is not granted, and only remembered briefly so a GitHub outage is not asked about on every request.
+        unknown[key]?.takeIf { now - it < UNKNOWN_TTL }?.let { throw ApiException(503, "github_unavailable", "暂时查不到 GitHub 权限，请稍后再试") }
+        val permission = checker.permission(subject, login) ?: run {
+            unknown[key] = now
+            throw ApiException(503, "github_unavailable", "暂时查不到 GitHub 权限（或服务端的任务仓库配置有误），请稍后再试")
+        }
+        unknown.remove(key)
         val allowed = permission in setOf("admin", "maintain", "write")
         decided[key] = allowed to now
-        if (!allowed) throw ApiException(403, "not_developer", "这个 GitHub 账号对任务仓库没有写权限")
+        if (!allowed) throw ApiException(403, "not_maintainer", "只有维护者（对任务仓库有写权限的 GitHub 账号）能做这件事")
     }
 
     fun catalog(): List<CapabilityView> = contracts.map { c ->
@@ -97,7 +145,8 @@ class Workbench(internal val db: Database, private val permissions: RepoPermissi
     }
 
     /** Reads [text] (a task bundle in its compact, published form) exactly as the App would. */
-    fun check(text: String): CheckResult {
+    fun check(text: String): CheckResult = heavy { checkNow(text) }
+    internal fun checkNow(text: String): CheckResult {
         if (text.length > MAX_BUNDLE_CHARS) throw ApiException(413, "too_large", "任务包太大")
         if (depth(Json.parseToJsonElement(text)) > MAX_DEPTH) throw ApiException(400, "too_deep", "任务包嵌套太深")
         return when (val read = codec.read(text)) {
@@ -109,6 +158,7 @@ class Workbench(internal val db: Database, private val permissions: RepoPermissi
     companion object {
         private const val ALLOW_TTL = 10 * 60 * 1000L
         private const val DENY_TTL = 60 * 1000L
+        private const val UNKNOWN_TTL = 30 * 1000L
         const val MAX_BUNDLE_CHARS = 4_000_000
         /** Real programs nest deep (cases in loops in branches, each a few JSON levels); still far from a stack risk. */
         const val MAX_DEPTH = 200

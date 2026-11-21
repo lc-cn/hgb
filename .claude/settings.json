@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf %s '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"提醒：本项目与用户的所有文字一律用中文——回复、工具调用之间的进度短句、提问与选项、收尾总结（recap、ask、按钮）、思考过程。用户点了英文按钮也照样用中文。见 CLAUDE.md。\"}}'"
+          }
+        ]
+      }
+    ]
+  }
+}

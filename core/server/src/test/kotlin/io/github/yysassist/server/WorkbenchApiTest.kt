@@ -44,12 +44,12 @@ class WorkbenchApiTest {
     }
     private val host = FakeHost()
 
-    private fun api(permissions: RepoPermissions?, block: suspend ApplicationTestBuilder.() -> Unit) {
+    private fun api(permissions: RepoPermissions?, quota: Long = Assets.SAMPLE_QUOTA, block: suspend ApplicationTestBuilder.() -> Unit) {
         val file = File.createTempFile("workbench", ".db")
         val dir = kotlin.io.path.createTempDirectory("workbench").toFile()
         val db = Database(file.path)
         val service = CloudService(db, { _, _, _ -> }, github, ByteArray(32) { 7 }, { 1_000_000L })
-        try { testApplication { application { cloudModule(service, ServerConfig("http://localhost", false), Workbench(db, permissions, dir, host)) }; block() } }
+        try { testApplication { application { cloudModule(service, ServerConfig("http://localhost", false), Workbench(db, permissions, dir, host, sampleQuota = quota)) }; block() } }
         finally { db.close(); file.delete(); dir.deleteRecursively() }
     }
     private suspend fun ApplicationTestBuilder.signIn(login: String): String {
@@ -64,18 +64,26 @@ class WorkbenchApiTest {
         "name":"T","category":"daily","priority":1,"steps":[{"id":"s","name":"S","program":[{"type":"action","action":{"id":"w",
         "capability":"$capability","contractVersion":1,"inputs":{"durationMs":10}}}]}]}],"targets":[$target}]}"""
 
-    @Test fun onlyAccountsThatCanWriteTheTaskRepositoryGetIn() = api(repo) {
-        assertEquals(HttpStatusCode.Forbidden, get("/api/dev/catalog", signIn("reader")).status)
-        assertEquals(HttpStatusCode.Forbidden, get("/api/dev/catalog", signIn("stranger")).status)
+    @Test fun anyoneSignedInWritesTasksButOnlyMaintainersPublish() = api(repo) {
+        // Writing for oneself is open to everyone signed in; whether one maintains the repository is told apart.
+        assertEquals(HttpStatusCode.OK, get("/api/dev/catalog", signIn("stranger")).status)
+        assertEquals(HttpStatusCode.Unauthorized, client.get("/api/dev/catalog").status)
+        assertEquals(JsonPrimitive(false), body(get("/api/dev/me", signIn("reader")))["maintainer"])
         val writer = signIn("writer")
+        assertEquals(JsonPrimitive(true), body(get("/api/dev/me", writer))["maintainer"])
         val catalog = get("/api/dev/catalog", writer)
         assertEquals(HttpStatusCode.OK, catalog.status)
         val ids = Json.parseToJsonElement(catalog.bodyAsText()).jsonArray.map { it.jsonObject.getValue("id").jsonPrimitive.content }
         assertTrue(ids.containsAll(listOf("screen.awaitScreen", "screen.dragRegion", "control.wait", "task.result")))
         // The answer is remembered for a while, so pages do not ask GitHub on every request.
         val before = asked
-        get("/api/dev/catalog", writer)
+        get("/api/dev/me", writer)
         assertEquals(before, asked)
+        // Each kind of work is capped per user.
+        val stranger = signIn("stranger")
+        val codes = (1..61).map { check(bundle("control.wait"), stranger).status }
+        assertEquals(HttpStatusCode.OK, codes.first())
+        assertEquals(HttpStatusCode.TooManyRequests, codes.last())
     }
 
     @Test fun checksReadABundleExactlyAsTheAppWould() = api(repo) {
@@ -140,14 +148,16 @@ class WorkbenchApiTest {
 
     @Test fun theDecisionFollowsTheLinkedGitHubAccount() = api(repo) {
         val writer = signIn("writer")
-        assertEquals(HttpStatusCode.OK, get("/api/dev/catalog", writer).status)
+        assertEquals(JsonPrimitive(true), body(get("/api/dev/me", writer))["maintainer"])
         // Each GitHub account is decided on its own; a cached yes for one never lets another in.
-        val reader = signIn("reader")
-        assertEquals(HttpStatusCode.Forbidden, get("/api/dev/catalog", reader).status)
+        assertEquals(JsonPrimitive(false), body(get("/api/dev/me", signIn("reader")))["maintainer"])
     }
 
-    @Test fun withoutARepositoryTokenTheWorkbenchSaysItIsNotConfigured() = api(null) {
-        assertEquals(HttpStatusCode.ServiceUnavailable, get("/api/dev/catalog", signIn("writer")).status)
+    @Test fun withoutARepositoryTokenWritingWorksButPublishingDoesNot() = api(null) {
+        val writer = signIn("writer")
+        assertEquals(HttpStatusCode.OK, get("/api/dev/catalog", writer).status)
+        assertEquals(JsonNull, body(get("/api/dev/me", writer))["maintainer"] ?: JsonNull)
+        assertEquals(HttpStatusCode.ServiceUnavailable, send(HttpMethod.Post, "/api/dev/drafts/game/publish", """{"version":"v1.0.1","changelog":"x","minApp":"0.2.0"}""", writer).status)
     }
 
     private fun png(width: Int, height: Int): ByteArray {
@@ -172,7 +182,7 @@ class WorkbenchApiTest {
         assertEquals(HttpStatusCode.BadRequest, client.post("/api/dev/games/game/samples") { bearerAuth(writer); setBody(bomb) }.status)
         fun cut(id: String, rect: String, extra: String = "") = """{"id":"$id","sample":"$sample","rect":$rect$extra}"""
         // Others cannot see or touch it, and nothing is cut before the phone said what it recognized.
-        assertEquals(HttpStatusCode.Forbidden, get("/api/dev/samples/$sample", signIn("reader")).status)
+        assertEquals(HttpStatusCode.NotFound, get("/api/dev/samples/$sample", signIn("reader")).status)
         val fresh = body(client.post("/api/dev/games/game/samples") { bearerAuth(writer); contentType(ContentType.Image.PNG); setBody(png(20, 20)) }).getValue("id").jsonPrimitive.content
         assertEquals(HttpStatusCode.Conflict, send(HttpMethod.Post, "/api/dev/games/game/templates", """{"id":"early","sample":"$fresh","rect":[0,0,8,8]}""", writer).status)
         // Text inside the box must be confirmed as the game's own.
@@ -295,6 +305,16 @@ class WorkbenchApiTest {
                 """{"kind":"probe","target":"game","device":"$device","states":["home"]}""", writer).status)
         }
     }
+
+    @Test fun overTheQuotaTheOldestSamplesMakeRoom() = png(20, 20).let { image -> api(repo, quota = image.size * 3L + image.size / 2) {
+        val writer = signIn("second")
+        val ids = (1..4).map { body(client.post("/api/dev/games/game/samples") { bearerAuth(writer); contentType(ContentType.Image.PNG); setBody(image) }) }
+        // Room for three and a half: the fourth pushes the first one out.
+        assertEquals(JsonPrimitive(1), ids.last()["pruned"])
+        val left = Json.parseToJsonElement(get("/api/dev/games/game/samples", writer).bodyAsText()).jsonArray.map { it.jsonObject.getValue("id") }
+        assertFalse(ids.first().getValue("id") in left)
+        assertEquals(HttpStatusCode.PayloadTooLarge, client.post("/api/dev/games/game/samples") { bearerAuth(writer); contentType(ContentType.Image.PNG); setBody(png(400, 400)) }.status)
+    } }
 }
 
 private fun sha(bytes: ByteArray) = java.security.MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }

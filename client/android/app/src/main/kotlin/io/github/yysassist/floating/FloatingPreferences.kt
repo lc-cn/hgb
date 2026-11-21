@@ -14,7 +14,9 @@ data class FloatingAnchor(val x: Float, val y: Float) {
     init { require(x.isFinite() && y.isFinite() && x in 0f..1f && y in 0f..1f) }
 }
 data class FloatingSettings(val visible: Boolean, val favorites: Set<TaskAddress>, val portrait: FloatingAnchor?, val landscape: FloatingAnchor?,
-    val autoDock: Boolean = true)
+    val autoDock: Boolean = true,
+    /** 采样、探测、试跑 on the ball: off until the user turns it on (anyone signed in may write tasks). */
+    val devTools: Boolean = false)
 sealed interface FloatingPreferencesState {
     data object Loading : FloatingPreferencesState
     data class Ready(val settings: FloatingSettings) : FloatingPreferencesState
@@ -27,6 +29,7 @@ class FloatingPreferences(context: Context, private val scope: CoroutineScope,
     private val visible = booleanPreferencesKey("visible")
     private val favorites = stringSetPreferencesKey("favorite_tasks")
     private val autoDock = booleanPreferencesKey("auto_dock")
+    private val devTools = booleanPreferencesKey("dev_tools")
     private val revision = MutableStateFlow(0L)
     private val mutableMessages = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val messages = mutableMessages.asSharedFlow()
@@ -36,6 +39,7 @@ class FloatingPreferences(context: Context, private val scope: CoroutineScope,
     fun reload() { revision.value++ }
     fun setVisible(value: Boolean) = update { it[visible] = value }
     fun setAutoDock(value: Boolean) = update { it[autoDock] = value }
+    fun setDevTools(value: Boolean) = update { it[devTools] = value }
     fun toggle(address: TaskAddress) = update { prefs ->
         val values = prefs[favorites].orEmpty().toMutableSet()
         val key = JsonArray(listOf(JsonPrimitive(address.targetId), JsonPrimitive(address.taskId))).toString()
@@ -65,6 +69,7 @@ class FloatingPreferences(context: Context, private val scope: CoroutineScope,
             TaskAddress(items[0].jsonPrimitive.content, items[1].jsonPrimitive.content)
         }.toSet()
         // User confirmed: visible by default once accessibility is authorized.
-        return FloatingSettings(prefs[visible] ?: true, selected, anchor("portrait"), anchor("landscape"), prefs[autoDock] ?: true)
+        return FloatingSettings(prefs[visible] ?: true, selected, anchor("portrait"), anchor("landscape"), prefs[autoDock] ?: true,
+            prefs[devTools] ?: false)
     }
 }

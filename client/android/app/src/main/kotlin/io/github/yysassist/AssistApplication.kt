@@ -45,7 +45,7 @@ class AssistApplication : Application() {
         private set
     /** Developer workbench commands on this phone; null until the app has set up. */
     internal var devRunner: io.github.yysassist.cloud.DevRunner? = null
-    /** Whether this account may use the developer workbench, and the phone's side of it. */
+    /** The phone's side of the developer workbench, shown once 悬浮球开发工具 is on. */
     internal val devWorkbench = io.github.yysassist.cloud.DevWorkbench({ cloud }, { devRunner })
     lateinit var floating: FloatingPreferences
         private set
@@ -138,7 +138,8 @@ class AssistApplication : Application() {
         updates.checkIfDue()
         // Before the cloud agent, so a command that arrives as soon as it connects has somewhere to go.
         devRunner = io.github.yysassist.cloud.DevRunner(this, { cloud }, executor, resourceFiles, { textObserver },
-            { ((taskUpdates.catalog.value as? VersionCatalogState.Ready)?.catalog?.activeContent as? io.github.yysassist.storage.ActiveTaskContent.Available)?.bundle }, source, scope)
+            { ((taskUpdates.catalog.value as? VersionCatalogState.Ready)?.catalog?.activeContent as? io.github.yysassist.storage.ActiveTaskContent.Available)?.bundle }, source, scope,
+            enabled = { devWorkbench.developer.value == true })
         val cloudExecutor = io.github.yysassist.cloud.RuntimeCloudExecutor(executor, taskUpdates, library, database, observedAccounts, localNotices,
             dev = { devRunner }) { packageManager.getLaunchIntentForPackage(it) != null }
         connectionLog = io.github.yysassist.cloud.ConnectionLog(File(noBackupFilesDir, "connection.log"), scope)
@@ -146,16 +147,11 @@ class AssistApplication : Application() {
             cloudExecutor, "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}", "android", BuildConfig.VERSION_NAME, scope,
             dataStore = io.github.yysassist.cloud.CloudDataFile(File(noBackupFilesDir, "cloud-data.json")), trace = connectionLog::add)
         accounts = io.github.yysassist.cloud.CloudAccounts(cloud, cloudExecutor::apps)
-        // Asked again on every connect: linking or unlinking GitHub, or a changed repository permission, shows up then.
-        scope.launch { cloud.state.collect { if (it is io.github.yysassist.core.cloud.CloudState.SignedOut) devWorkbench.forget() } }
+        // Writing tasks is open to anyone signed in; the ball shows the tools once the user turns them on.
         scope.launch {
-            cloud.state.map { (it as? io.github.yysassist.core.cloud.CloudState.SignedIn)?.online == true }.distinctUntilChanged()
-                .collect { online ->
-                    if (!online) return@collect
-                    try { devWorkbench.refresh() }
-                    catch (cancelled: kotlinx.coroutines.CancellationException) { if (!kotlinx.coroutines.currentCoroutineContext()[kotlinx.coroutines.Job]!!.isActive) throw cancelled }
-                    catch (_: Exception) { }
-                }
+            kotlinx.coroutines.flow.combine(floating.state, cloud.state) { f, c ->
+                (f as? io.github.yysassist.floating.FloatingPreferencesState.Ready)?.settings?.devTools == true && c is io.github.yysassist.core.cloud.CloudState.SignedIn
+            }.distinctUntilChanged().collect(devWorkbench::enable)
         }
         configurations = TaskConfigurationRepository(library, accounts)
         taskEditor = TaskConfigurationEditor(configurations, scope)

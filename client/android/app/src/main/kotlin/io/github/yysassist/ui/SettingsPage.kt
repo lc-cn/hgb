@@ -46,7 +46,7 @@ private class SettingsSection(val name: String, val attention: Boolean = false, 
 @Composable
 internal fun SettingsPage(appearance: AppearanceState, mode: ThemeMode, setTheme: (ThemeMode) -> Unit, versions: VersionCatalogState,
     github: GitHubSessionState, taskSource: String, floating: FloatingPreferencesState, setFloatingVisible: (Boolean) -> Unit, setAutoDock: (Boolean) -> Unit, reloadFloating: () -> Unit,
-    developer: Boolean = false, open: (String) -> Unit) {
+    developer: Boolean = false, setDevTools: ((Boolean) -> Unit)? = null, open: (String) -> Unit) {
     val p = LocalAssistPalette.current
     val service by GameAccessibilityService.connection.collectAsState()
     val notifications = rememberNotificationAccess()
@@ -55,7 +55,7 @@ internal fun SettingsPage(appearance: AppearanceState, mode: ThemeMode, setTheme
             AccessibilityRow(service != null); RowDivider()
             NotificationAccessContent(notifications.access, notifications.request, notifications.openSettings); RowDivider(); ScreenshotRow()
         },
-        SettingsSection("悬浮球") { FloatingRows(floating, setFloatingVisible, setAutoDock, reloadFloating, { open("常用") }) },
+        SettingsSection("悬浮球") { FloatingRows(floating, setFloatingVisible, setAutoDock, reloadFloating, { open("常用") }, setDevTools) },
         SettingsSection("外观") {
             SettingRow(AssistIcons.Theme, p.rose, "主题", "跟随系统或固定明暗") {
                 Row(Modifier.clip(RoundedCornerShape(UiSpace.medium)).background(MaterialTheme.colorScheme.surfaceContainer)
@@ -211,7 +211,8 @@ private fun ScreenshotRow() {
 }
 
 @Composable
-private fun ColumnScope.FloatingRows(state: FloatingPreferencesState, setVisible: (Boolean) -> Unit, setAutoDock: (Boolean) -> Unit, reload: () -> Unit, openFavorites: () -> Unit) {
+private fun ColumnScope.FloatingRows(state: FloatingPreferencesState, setVisible: (Boolean) -> Unit, setAutoDock: (Boolean) -> Unit, reload: () -> Unit, openFavorites: () -> Unit,
+    setDevTools: ((Boolean) -> Unit)? = null) {
     val p = LocalAssistPalette.current
     val service by GameAccessibilityService.connection.collectAsState()
     val failures = remember(service) { service?.floating?.failure ?: kotlinx.coroutines.flow.MutableStateFlow<String?>(null) }
@@ -232,6 +233,12 @@ private fun ColumnScope.FloatingRows(state: FloatingPreferencesState, setVisible
             }
             RowDivider()
             SettingRow(AssistIcons.Star, p.gold, "悬浮球里的常用任务", null, openFavorites) { SettingValue("${state.settings.favorites.size} 个"); Chevron() }
+            if (setDevTools != null) {
+                RowDivider()
+                SettingRow(AssistIcons.Camera, p.violet, "悬浮球开发工具", "采样、探测、试跑草稿") {
+                    AssistSwitch(state.settings.devTools, label = "悬浮球开发工具", change = setDevTools)
+                }
+            }
         }
     }
 }
@@ -271,7 +278,7 @@ internal fun DataUsagePage(state: io.github.yysassist.core.execution.ExecutorSna
 /** This device's own switches, in 我的 → 本机: what it needs to run games, and the floating ball. */
 @Composable
 internal fun LocalDeviceSettings(floating: FloatingPreferencesState, setVisible: (Boolean) -> Unit, setAutoDock: (Boolean) -> Unit, reload: () -> Unit, openFavorites: () -> Unit,
-    updates: io.github.yysassist.update.AppUpdater, standby: io.github.yysassist.standby.StandbyMode) {
+    updates: io.github.yysassist.update.AppUpdater, standby: io.github.yysassist.standby.StandbyMode, setDevTools: ((Boolean) -> Unit)? = null) {
     val service by GameAccessibilityService.connection.collectAsState()
     val notifications = rememberNotificationAccess()
     Column {
@@ -280,7 +287,7 @@ internal fun LocalDeviceSettings(floating: FloatingPreferencesState, setVisible:
         AccessibilityRow(service != null); RowDivider()
         NotificationAccessContent(notifications.access, notifications.request, notifications.openSettings); RowDivider()
         ScreenshotRow(); RowDivider()
-        FloatingRows(floating, setVisible, setAutoDock, reload, openFavorites)
+        FloatingRows(floating, setVisible, setAutoDock, reload, openFavorites, setDevTools)
     }
 }
 

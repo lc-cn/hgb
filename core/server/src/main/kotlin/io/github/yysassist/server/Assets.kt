@@ -20,7 +20,9 @@ data class SampleView(val id: String, val target: String, val name: String, val 
     /** Boxes marked as player information (names, ids, chat): never cut into a template. */
     val privateRegions: List<List<Int>> = emptyList(),
     /** Whether the phone has sent what it recognized on it; templates are cut only after that. */
-    val recognized: Boolean = false)
+    val recognized: Boolean = false,
+    /** On upload: how many of the oldest samples were deleted to make room. */
+    val pruned: Int = 0)
 /** What a later edit of a sample may change; a field left null stays as it is. */
 @Serializable
 data class SampleChange(val name: String? = null, val texts: List<SampleText>? = null, val privateRegions: List<List<Int>>? = null)
@@ -42,7 +44,7 @@ data class TemplateView(val id: String, val target: String, val assetName: Strin
  * Samples (screenshots a developer took on the phone) and the templates cut from them. Images live on disk under
  * [root], named by digest for templates so the same image is stored once; rows hold what pages list.
  */
-class Assets(private val db: Database, private val root: File, private val clock: () -> Long) {
+class Assets(private val db: Database, private val root: File, private val clock: () -> Long, private val sampleQuota: Long = SAMPLE_QUOTA) {
     private val json = Json { ignoreUnknownKeys = true }
     private val samples = File(root, "samples")
     private val templates = File(root, "templates")
@@ -91,18 +93,30 @@ class Assets(private val db: Database, private val root: File, private val clock
         val label = name.trim().take(64).ifEmpty { "样本" }
         val view = SampleView(UUID.randomUUID().toString(), target, label, device.trim().take(64), image.width, image.height,
             bytes.size.toLong(), sha256(bytes), clock())
-        db.tx {
-            val count = single("SELECT COUNT(*) FROM dev_samples WHERE user_id = ?", userId) { it.getInt(1) } ?: 0
-            if (count >= MAX_SAMPLES) throw ApiException(409, "too_many", "样本已满 $MAX_SAMPLES 张，请先删掉不用的")
-            val file = File(samples, "${view.id}.png")
-            write(file, bytes)
-            try {
+        val pruned = mutableListOf<String>()
+        // The file goes down before the transaction, which serializes every database user: 16 MB is not written inside it.
+        val file = File(samples, "${view.id}.png")
+        write(file, bytes)
+        try { db.tx {
+            // Over the quota, the oldest samples make room (templates already cut from them stay).
+            val quota = quota(userId)
+            val mine = query("SELECT id, bytes FROM dev_samples WHERE user_id = ? ORDER BY created_at", userId) { it.getString(1) to it.getLong(2) }
+            var used = mine.sumOf { it.second }; var count = mine.size
+            for ((old, size) in mine) {
+                if (used + view.bytes <= quota && count < MAX_SAMPLES) break
+                update("DELETE FROM dev_samples WHERE user_id = ? AND id = ?", userId, old)
+                update("UPDATE dev_templates SET sample_id = NULL WHERE user_id = ? AND sample_id = ?", userId, old)
+                pruned += old; used -= size; count--
+            }
+            if (used + view.bytes > quota) throw ApiException(413, "over_quota", "样本空间不够")
+            run {
                 update("""INSERT INTO dev_samples (id, user_id, target_id, name, device, width, height, bytes, sha256, texts, private_regions, recognized, created_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', '[]', 0, ?)""",
                     view.id, userId, target, view.name, view.device, view.width, view.height, view.bytes, view.sha256, view.createdAt)
-            } catch (failure: Exception) { file.delete(); throw failure }
-        }
-        return view
+            }
+        } } catch (failure: Exception) { file.delete(); throw failure }
+        pruned.forEach { File(samples, "$it.png").delete() }
+        return view.copy(pruned = pruned.size)
     }
 
     private fun sampleRow(rs: java.sql.ResultSet) = SampleView(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getInt(5),
@@ -123,6 +137,7 @@ class Assets(private val db: Database, private val root: File, private val clock
             if (texts.size > MAX_TEXTS) throw ApiException(400, "too_many", "识别文字太多")
             texts.forEach { rectangle(it.box, current.width, current.height, "文字 ${it.text.take(16)} 的位置") }
         }
+        if ((change.privateRegions?.size ?: 0) > MAX_REGIONS) throw ApiException(400, "too_many", "玩家信息区域太多")
         change.privateRegions?.forEach { rectangle(it, current.width, current.height, "玩家信息区域") }
         val next = current.copy(name = change.name?.trim()?.take(64)?.ifEmpty { null } ?: current.name,
             texts = change.texts?.map { it.copy(text = it.text.take(64)) } ?: current.texts, privateRegions = change.privateRegions ?: current.privateRegions)
@@ -142,6 +157,9 @@ class Assets(private val db: Database, private val root: File, private val clock
         File(samples, "$id.png").delete()
     }
 
+    /** Bytes of samples a user may keep. Tiers raise it later (open-contribution.md, 分级与配额). */
+    fun quota(@Suppress("UNUSED_PARAMETER") userId: String): Long = sampleQuota
+
     // ---- Templates ----
 
     /**
@@ -159,12 +177,18 @@ class Assets(private val db: Database, private val root: File, private val clock
         val reason = cut.reason?.trim()?.take(120)?.ifEmpty { null }
         if ((w > MAX_TEMPLATE || h > MAX_TEMPLATE) && reason == null)
             throw ApiException(400, "too_big", "模板超过 ${MAX_TEMPLATE}×$MAX_TEMPLATE，请裁小或写明理由")
+        if (w > MAX_TEMPLATE_WITH_REASON || h > MAX_TEMPLATE_WITH_REASON) throw ApiException(400, "too_big", "模板最大 $MAX_TEMPLATE_WITH_REASON×$MAX_TEMPLATE_WITH_REASON")
+        val count = db.tx { single("SELECT COUNT(*) FROM dev_templates WHERE user_id = ? AND id <> ?", userId, cut.id) { it.getInt(1) } ?: 0 }
+        if (count >= MAX_TEMPLATES) throw ApiException(409, "too_many", "模板最多 $MAX_TEMPLATES 个")
         fun overlaps(a: List<Int>) = a[0] < x + w && x < a[0] + a[2] && a[1] < y + h && y < a[1] + a[3]
         if (sample.privateRegions.any(::overlaps)) throw ApiException(400, "private", "裁剪框碰到了玩家信息区域")
         val unconfirmed = sample.texts.filter { overlaps(it.box) }.map { it.text }.distinct().filter { it !in cut.confirmedTexts }
         if (unconfirmed.isNotEmpty()) throw ApiException(409, "confirm_texts", "框内有文字需确认是游戏界面：${unconfirmed.joinToString("、")}")
         // Opaque RGB with nothing but pixels: no alpha, no text chunks, no timestamps.
-        val source = read(File(samples, "${sample.id}.png").readBytes(), java.awt.Rectangle(x, y, w, h))
+        // The sample may have just made room for a newer one.
+        val sourceFile = File(samples, "${sample.id}.png")
+        val source = read(runCatching { sourceFile.readBytes() }.getOrElse { throw ApiException(409, "sample_gone", "样本已被删除") },
+            java.awt.Rectangle(x, y, w, h))
         val image = BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
         image.createGraphics().apply { drawImage(source, 0, 0, null); dispose() }
         val bytes = ByteArrayOutputStream().also { ImageIO.write(image, "png", it) }.toByteArray()
@@ -172,6 +196,8 @@ class Assets(private val db: Database, private val root: File, private val clock
         val assetName = "${cut.id}.${digest.take(8)}.png"
         write(File(templates, "$digest.png"), bytes)
         return db.tx {
+            if (single("SELECT 1 FROM dev_samples WHERE user_id = ? AND id = ?", userId, sample.id) { true } != true)
+                throw ApiException(409, "sample_gone", "样本已被删除")
             update("""INSERT INTO dev_templates (user_id, target_id, id, asset_name, bytes, sha256, width, height, sample_id, rect, reason, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (user_id, target_id, id) DO UPDATE SET asset_name = excluded.asset_name,
                 bytes = excluded.bytes, sha256 = excluded.sha256, width = excluded.width, height = excluded.height, sample_id = excluded.sample_id,
@@ -218,6 +244,10 @@ class Assets(private val db: Database, private val root: File, private val clock
         const val MAX_SIDE = 4096
         const val MAX_PIXELS = 4096L * 4096
         const val MAX_SAMPLES = 500
+        const val SAMPLE_QUOTA = 500L * 1024 * 1024
+        const val MAX_REGIONS = 50
+        const val MAX_TEMPLATES = 500
+        const val MAX_TEMPLATE_WITH_REASON = 512
         const val MAX_TEXTS = 2000
         /** Largest side of a template without a stated reason: small templates keep packages small and matching fast. */
         const val MAX_TEMPLATE = 64

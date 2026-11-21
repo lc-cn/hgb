@@ -109,7 +109,7 @@ class Publisher(private val workbench: Workbench, private val drafts: Drafts, pr
         // Apps from before resources could live in another release read GitHub's latest one and would reject this.
         if (request.latest && placed.any { it.release != null })
             throw ApiException(400, "latest_needs_own_assets", "设为最新版时旧 App 会读它，但它引用了别的版本的素材")
-        val checked = workbench.check(text)
+        val checked = workbench.checkNow(text)
         if (!checked.ok) throw ApiException(400, "invalid_draft", "草稿没通过检查：" + checked.issues.take(5).joinToString("；") { "${it.location} ${it.reason}" })
         val result = PublishResult(request.version, false, text.toByteArray().size, uploads.map { (r, _) -> PublishedAsset(r.id, r.assetName, r.bytes) },
             placed.filter { it.release != null }.map { PublishedAsset(it.id, it.assetName, it.bytes, it.release) }, uploads.sumOf { it.first.bytes })

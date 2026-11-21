@@ -43,6 +43,8 @@ internal class DevRunner(
     private val activeBundle: () -> TaskBundle?,
     private val github: GitHubTaskSource,
     private val scope: CoroutineScope,
+    /** Whether the user turned on the developer tools here: a command from anywhere else is refused while they are off. */
+    private val enabled: () -> Boolean = { true },
 ) {
     private val running = AtomicBoolean(false)
     val busy: Boolean get() = running.get()
@@ -56,6 +58,7 @@ internal class DevRunner(
             if (!seen.add(command.id)) return
             while (seen.size > 50) seen.remove(seen.first())
         }
+        if (!enabled()) { scope.launch { report(command, DevReport(DevState.FAILED, "这台手机没打开悬浮球开发工具")) }; return }
         if (!running.compareAndSet(false, true)) { scope.launch { report(command, DevReport(DevState.FAILED, "上一个调试命令还没结束")) }; return }
         scope.launch {
             try {
