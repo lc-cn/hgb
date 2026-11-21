@@ -1,0 +1,23 @@
+core/server/src/test/kotlin/io/github/yysassist/server/WorkbenchApiTest.kt
+  s_fae32e7f0efe76::t_73b79e5dc6c509 315
+client/web/src/features/dev/RunPage.tsx
+  s_fae32e7f0efe76::t_73b79e5dc6c509 12-13,45-46
+core/server/src/main/kotlin/io/github/yysassist/server/DevRuns.kt
+  s_fae32e7f0efe76::t_73b79e5dc6c509 138-140,147
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "55423a864c0d5dd8b3b1e676f62b7e0403560265",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
