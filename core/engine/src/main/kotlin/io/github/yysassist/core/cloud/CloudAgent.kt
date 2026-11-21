@@ -169,7 +169,9 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
      */
     private val transfers = http.newBuilder().callTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
         .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS).readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-        .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS).pingInterval(15, java.util.concurrent.TimeUnit.SECONDS).build()
+        .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS).pingInterval(15, java.util.concurrent.TimeUnit.SECONDS)
+        // One connection per transfer: on a lossy link a shared HTTP/2 connection resets or stalls every stream on it.
+        .protocols(listOf(okhttp3.Protocol.HTTP_1_1)).build()
     /** Runs [call]; when it stalls, the pooled connections go, so a retry does not reuse one that died on the way. */
     private inline fun <T> dropStalled(call: () -> T): T = try { call() }
         catch (stalled: java.io.InterruptedIOException) { http.connectionPool.evictAll(); throw stalled }

@@ -227,8 +227,9 @@ internal class DevRunner(
         var bytes: ByteArray? = null
         for (attempt in 1..FETCH_ATTEMPTS) {
             bytes = try { cloud().requestBytes("GET", "/api/dev/games/${path(command.target)}/assets/${resource.sha256}") ?: throw java.io.IOException("工作台没有素材 ${resource.id}") }
-            catch (slow: java.io.InterruptedIOException) {
-                if (attempt == FETCH_ATTEMPTS) throw java.io.IOException("下载素材 ${resource.id} 超时 $FETCH_ATTEMPTS 次，网络不稳，请重试")
+            catch (refused: io.github.yysassist.core.cloud.CloudRequestException) { throw refused }
+            catch (broken: java.io.IOException) {
+                if (attempt == FETCH_ATTEMPTS) throw java.io.IOException("下载素材 ${resource.id} 失败 $FETCH_ATTEMPTS 次（${broken.javaClass.simpleName}），网络不稳，请重试")
                 null
             }
             if (bytes != null) break
