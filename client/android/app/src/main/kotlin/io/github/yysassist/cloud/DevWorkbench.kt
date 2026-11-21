@@ -93,7 +93,7 @@ internal class DevWorkbench(private val cloud: () -> CloudAgent, private val run
     }
 
     suspend fun sample(target: String, name: String): DevReport =
-        run(buildJsonObject { put("kind", "sample"); put("target", target); put("name", name) }, 105_000)
+        run(buildJsonObject { put("kind", "sample"); put("target", target); put("name", name) }, 345_000)
     suspend fun rename(sample: String, name: String) {
         cloud().request("PATCH", "/api/dev/samples/${path(sample)}", buildJsonObject { put("name", name) }.toString())
     }

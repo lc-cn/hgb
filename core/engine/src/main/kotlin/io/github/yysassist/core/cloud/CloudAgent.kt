@@ -156,6 +156,13 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
     private val requests = http.newBuilder().callTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
         .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS).readTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
         .writeTimeout(20, java.util.concurrent.TimeUnit.SECONDS).build()
+    /**
+     * Images (a sample is several megabytes): on a lossy mobile link one may take minutes, so only a long stall fails it,
+     * not the slow pace.
+     */
+    private val transfers = http.newBuilder().callTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
+        .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS).readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS).build()
     /** The console stream sends a keep-alive every 15 s, so a minute of silence means the link is gone. */
     private val streams = http.newBuilder().readTimeout(60, java.util.concurrent.TimeUnit.SECONDS).callTimeout(0, java.util.concurrent.TimeUnit.MILLISECONDS).build()
     private val mutex = Mutex()
@@ -207,7 +214,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         withContext(Dispatchers.IO) {
             val request = Request.Builder().url(url(saved.serverUrl, path)).header("X-YYS-Client", "device").header("Authorization", "Bearer ${saved.accessToken}")
                 .method(method, body?.toRequestBody(type.toMediaType())).build()
-            requests.newCall(request).execute().use { reply ->
+            transfers.newCall(request).execute().use { reply ->
                 val bytes = reply.body.bytes()
                 if (!reply.isSuccessful) throw failure(reply.code, bytes.decodeToString())
                 bytes.takeIf { it.isNotEmpty() }
