@@ -1,0 +1,41 @@
+client/android/app/src/main/kotlin/io/github/yysassist/cloud/DevWorkbench.kt
+  s_fae32e7f0efe76::t_c81a0bd0b0338a 99-101,116
+client/android/app/src/main/kotlin/io/github/yysassist/device/DeviceExecutionReadiness.kt
+  s_fae32e7f0efe76::t_6b058a8d8a2208 10-11,20-23,25,40,47-54,65,69
+  s_fae32e7f0efe76::t_3e2c9d627a20c8 30-32,55-60
+client/android/app/src/androidTest/kotlin/io/github/yysassist/device/DeviceExecutionReadinessTest.kt
+  s_fae32e7f0efe76::t_ab1200bb263b89 49,57,60-76
+  s_fae32e7f0efe76::t_3e2c9d627a20c8 21,42,45
+  s_fae32e7f0efe76::t_a7086b51184370 77
+core/engine/src/main/kotlin/io/github/yysassist/core/cloud/CloudAgent.kt
+  s_fae32e7f0efe76::t_8f2ac9634381d3 688-689
+  s_fae32e7f0efe76::t_b6fdb0a9ce7674 412-418,421,426
+core/server/src/test/kotlin/io/github/yysassist/server/WorkbenchApiTest.kt
+  s_fae32e7f0efe76::t_c81a0bd0b0338a 281-283
+client/android/app/src/main/kotlin/io/github/yysassist/device/AndroidDeviceBridge.kt
+  s_fae32e7f0efe76::t_6b058a8d8a2208 112-120
+client/android/app/src/main/kotlin/io/github/yysassist/cloud/DevRunner.kt
+  s_fae32e7f0efe76::t_e69f2129b94c76 51-53,55-58
+core/server/src/main/kotlin/io/github/yysassist/server/Routes.kt
+  s_fae32e7f0efe76::t_e69f2129b94c76 317,337,367-371
+core/server/src/main/kotlin/io/github/yysassist/server/DevRuns.kt
+  s_fae32e7f0efe76::t_e69f2129b94c76 31,64,85-94,205-207
+CLAUDE.md
+  s_fae32e7f0efe76::t_7c6b67c6043e85 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9a728e836dcbce3a8e0a6363582c4b5d1a07d1ae",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
