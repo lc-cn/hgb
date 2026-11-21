@@ -1,0 +1,22 @@
+core/engine/src/main/kotlin/io/github/yysassist/core/cloud/CloudAgent.kt
+  s_fae32e7f0efe76::t_66805fef1dc068 278,282,285-291,293,296,310
+client/android/app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt
+  s_fae32e7f0efe76::t_4f0fd8fa21fc8f 115-119,133-135,164,168,171,176
+  s_fae32e7f0efe76::t_66805fef1dc068 136,138-143
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "69d4dee94ad40bc831fa7d0242349bfc54688cba",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
