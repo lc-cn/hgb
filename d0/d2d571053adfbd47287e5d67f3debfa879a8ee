@@ -1,0 +1,25 @@
+client/web/src/features/dev/SamplesPage.tsx
+  s_fae32e7f0efe76::t_d654ec3000e8fe 172,185-204
+  s_fae32e7f0efe76::t_0e6b3fa41336b0 205-207
+client/web/src/features/dev/Samples.module.css
+  s_fae32e7f0efe76::t_d654ec3000e8fe 41-44
+core/server/src/main/kotlin/io/github/yysassist/server/Drafts.kt
+  s_fae32e7f0efe76::t_741066fd4feced 140-145,173,178-184
+  s_fae32e7f0efe76::t_c11729e67db07d 185-186
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d0d2d571053adfbd47287e5d67f3debfa879a8ee",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
