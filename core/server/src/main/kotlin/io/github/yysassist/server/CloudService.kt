@@ -117,14 +117,25 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         db.tx { update("UPDATE users SET password_hash = ? WHERE email = ?", hash, address)
             update("DELETE FROM sessions WHERE user_id = (SELECT id FROM users WHERE email = ?)", address) }
     }
-    /** Refresh tokens rotate: the old pair stops working the moment a new one is issued. */
+    /**
+     * Refresh tokens rotate: a new pair replaces the old one. On a weak link the reply carrying the new pair can be lost,
+     * and the phone then tries again with the token it still has; that one is accepted again for [REPLAY_GRACE] after
+     * it was first replaced (each time issuing another pair), so a lost reply does not sign the phone out for good.
+     */
     fun refresh(request: RefreshRequest): IssuedSession = db.tx {
-        val row = single("SELECT s.id, s.user_id, s.refresh_expires_at, u.email FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.refresh_hash = ?", Secrets.sha256(request.refreshToken)) {
-            listOf(it.getString(1), it.getString(2), it.getLong(3), it.getString(4)) } ?: throw ApiException(401, "invalid_session", "登录已失效，请重新登录")
+        val hash = Secrets.sha256(request.refreshToken)
+        fun session(where: String, vararg args: Any?) = single("SELECT s.id, s.user_id, s.refresh_expires_at, u.email, s.refresh_hash FROM sessions s JOIN users u ON u.id = s.user_id WHERE $where", *args) {
+            listOf(it.getString(1), it.getString(2), it.getLong(3), it.getString(4), it.getString(5)) }
+        val current = session("s.refresh_hash = ?", hash)
+        val row = current ?: session("s.id = (SELECT session_id FROM session_rotations WHERE previous_hash = ? AND rotated_at >= ?)", hash, clock() - REPLAY_GRACE)
+            ?: throw ApiException(401, "invalid_session", "登录已失效，请重新登录")
         if ((row[2] as Long) < clock()) { update("DELETE FROM sessions WHERE id = ?", row[0]); throw ApiException(401, "invalid_session", "登录已失效，请重新登录") }
         val access = Secrets.token(); val refresh = Secrets.token(); val expires = clock() + DEVICE_ACCESS_LIFETIME
         update("UPDATE sessions SET access_hash = ?, refresh_hash = ?, access_expires_at = ?, refresh_expires_at = ? WHERE id = ?",
             Secrets.sha256(access), Secrets.sha256(refresh), expires, clock() + REFRESH_LIFETIME, row[0])
+        // A first use remembers the token it replaced; a replay keeps that record, so the grace counts from the first rotation.
+        if (current != null) update("""INSERT INTO session_rotations (session_id, previous_hash, rotated_at) VALUES (?, ?, ?)
+            ON CONFLICT (session_id) DO UPDATE SET previous_hash = excluded.previous_hash, rotated_at = excluded.rotated_at""", row[0], hash, clock())
         IssuedSession(row[1] as String, row[3] as String?, access, refresh, expires)
     }
     fun authenticate(token: String): Caller? = db.tx {
@@ -964,6 +975,8 @@ class CloudService(private val db: Database, private val mailer: Mailer, val git
         const val MINUTE = 60_000L; const val CODE_LIFETIME = 10 * MINUTE; const val MAX_CODE_ATTEMPTS = 5
         const val WEB_LIFETIME = 7 * 24 * 60 * MINUTE; const val DEVICE_ACCESS_LIFETIME = 60 * MINUTE; const val REFRESH_LIFETIME = 30 * 24 * 60 * MINUTE
         const val LEASE_LIFETIME = 2 * MINUTE
+        /** How long a just-replaced refresh token still works, for a phone whose refresh reply was lost. */
+        const val REPLAY_GRACE = 5 * MINUTE
         /** How long a device has to confirm a job it was handed. Generous: on a lossy mobile link one request can take tens of seconds. */
         const val ACK_LIFETIME = 2 * MINUTE
         /** How long a job started from the console may wait for its app before it is skipped. */

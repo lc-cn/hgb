@@ -91,6 +91,9 @@ class Database(path: String) : AutoCloseable {
             """CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, kind TEXT NOT NULL,
                 device_id TEXT REFERENCES devices(id) ON DELETE CASCADE, access_hash TEXT NOT NULL UNIQUE, refresh_hash TEXT UNIQUE,
                 access_expires_at INTEGER NOT NULL, refresh_expires_at INTEGER)""",
+            // The refresh token each session last replaced, accepted again for a short while (CloudService.refresh).
+            """CREATE TABLE IF NOT EXISTS session_rotations (session_id TEXT PRIMARY KEY REFERENCES sessions(id) ON DELETE CASCADE,
+                previous_hash TEXT NOT NULL, rotated_at INTEGER NOT NULL)""",
             // A job waits (no device) until the server finds an app for it; version and digest are set when it is assigned.
             """CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 device_id TEXT REFERENCES devices(id) ON DELETE CASCADE, app_key TEXT, target_id TEXT NOT NULL, task_id TEXT NOT NULL, task_name TEXT NOT NULL,

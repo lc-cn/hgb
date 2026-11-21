@@ -182,7 +182,15 @@ class CloudApiTest {
         val reply = call(HttpMethod.Post, "/api/auth/refresh", """{"refreshToken":"${session.refreshToken}"}""")
         val fresh = json.decodeFromString(AuthResult.serializer(), reply.bodyAsText())
         assertEquals(HttpStatusCode.OK, call(HttpMethod.Get, "/api/me", token = fresh.accessToken).status)
+        // The reply was lost on a weak link: the phone tries again with the old token, and gets another pair.
+        now += 60_000
+        val again = json.decodeFromString(AuthResult.serializer(), call(HttpMethod.Post, "/api/auth/refresh", """{"refreshToken":"${session.refreshToken}"}""").bodyAsText())
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Get, "/api/me", token = again.accessToken).status)
+        // The pair it replaced is gone, and once the grace is over the old token is refused.
+        assertEquals(HttpStatusCode.Unauthorized, call(HttpMethod.Get, "/api/me", token = fresh.accessToken).status)
+        now += CloudService.REPLAY_GRACE
         assertEquals(HttpStatusCode.Unauthorized, call(HttpMethod.Post, "/api/auth/refresh", """{"refreshToken":"${session.refreshToken}"}""").status)
+        assertEquals(HttpStatusCode.OK, call(HttpMethod.Post, "/api/auth/refresh", """{"refreshToken":"${again.refreshToken}"}""").status)
     }
     @Test fun browserSessionsUseAnHttpOnlyCookieAndRejectCrossSiteWrites() = api {
         signUp("a@example.com")
