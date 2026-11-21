@@ -1,0 +1,54 @@
+core/engine/src/test/kotlin/io/github/yysassist/core/execution/GuardedWaitTest.kt
+  s_fae32e7f0efe76::t_4cbbea5ddde82a 104,106
+  s_fae32e7f0efe76::t_512678047b8e78 88,105,107-115,117-120
+  s_fae32e7f0efe76::t_9b114b8ce1c814 116
+  s_fae32e7f0efe76::t_99699581824497 121
+core/engine/src/main/kotlin/io/github/yysassist/core/content/Library.kt
+  s_fae32e7f0efe76::t_5d400df48cc31d 69-70
+  s_fae32e7f0efe76::t_35348e3efd8332 25-27
+  s_fae32e7f0efe76::t_e7f6988bb6cc2f 36
+core/engine/src/main/kotlin/io/github/yysassist/core/execution/StepWorker.kt
+  s_fae32e7f0efe76::t_e92f7a35790726 88-89,110,248
+client/web/src/features/dev/model.ts
+  s_fae32e7f0efe76::t_b04a4cc664f132 124,127-130
+core/server/src/main/kotlin/io/github/yysassist/server/DevRuns.kt
+  s_fae32e7f0efe76::t_b04a4cc664f132 209-210,213-217,224-226,270-275
+core/engine/src/main/kotlin/io/github/yysassist/core/content/StepProgram.kt
+  s_fae32e7f0efe76::t_35348e3efd8332 239
+  s_fae32e7f0efe76::t_7ba0b8328d691e 237-238,240,242-246
+  s_fae32e7f0efe76::t_bd4940efefdb5d 61
+client/android/app/src/main/kotlin/io/github/yysassist/device/DeviceExecutionReadiness.kt
+  s_fae32e7f0efe76::t_f7767452acaab5 29-30
+  s_fae32e7f0efe76::t_1d7065479eb9b9 31
+client/web/src/features/dev/Interruptions.tsx
+  s_fae32e7f0efe76::t_38ad1e052cdf47 5,57,83-86
+core/engine/src/main/kotlin/io/github/yysassist/core/content/TaskBundle.kt
+  s_fae32e7f0efe76::t_e92f7a35790726 111-122
+client/android/app/src/main/kotlin/io/github/yysassist/actions/ScreenActions.kt
+  s_fae32e7f0efe76::t_35348e3efd8332 36
+  s_fae32e7f0efe76::t_f869daa358fdac 647-648,653
+  s_fae32e7f0efe76::t_0d503f4fa32c59 702-704,709
+client/web/src/features/dev/HomePage.tsx
+  s_fae32e7f0efe76::t_38ad1e052cdf47 167-169
+core/engine/src/main/kotlin/io/github/yysassist/core/content/Snippets.kt
+  s_fae32e7f0efe76::t_7ba0b8328d691e 54-58,60,69-70
+  s_fae32e7f0efe76::t_bd4940efefdb5d 73
+client/web/src/features/dev/TaskPage.tsx
+  s_fae32e7f0efe76::t_38ad1e052cdf47 182,208
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "caf4cc5a621ab4fc64aca6591a774e518bc2be80",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
