@@ -1,0 +1,23 @@
+core/server/src/test/kotlin/io/github/yysassist/server/DraftBasesTest.kt
+  s_fae32e7f0efe76::t_cf4ddf48df8a7d 1-4,9-14,16-43
+  s_fae32e7f0efe76::t_1a311fc72ae172 5-8,15
+core/server/src/main/kotlin/io/github/yysassist/server/Drafts.kt
+  s_fae32e7f0efe76::t_85485a090497c4 142-143,178-196
+  s_fae32e7f0efe76::t_522bb6260a0b90 197-198
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "246986f3a1863dded82e27a42c1bca2ca4f5c576",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
