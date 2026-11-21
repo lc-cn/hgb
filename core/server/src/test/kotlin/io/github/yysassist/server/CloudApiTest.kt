@@ -130,7 +130,15 @@ class CloudApiTest {
             """{"name":"$name","days":$days,"minuteOfDay":390,"tasks":$tasks,"revision":$revision}"""
         /** Jobs the server pushes to the device when it connects and reports. */
         suspend fun leases(token: String) = socket(token) { send(Frame.Text(status())); replies() }.filterIsInstance<ServerMessage.Job>().map { it.lease }
-        suspend fun lease(token: String) = leases(token).single()
+        /** The one lease the server hands the device; waits for it (a slow machine may take longer than [replies] does). */
+        suspend fun lease(token: String) = socket(token) {
+            send(Frame.Text(status()))
+            val seen = mutableListOf<JobLease>()
+            withTimeoutOrNull(5_000) { while (seen.isEmpty()) (incoming.receive() as? Frame.Text)?.let { frame ->
+                (json.decodeFromString(ServerMessage.serializer(), frame.readText()) as? ServerMessage.Job)?.let { seen += it.lease } } }
+            seen.addAll(replies().filterIsInstance<ServerMessage.Job>().map { it.lease })
+            seen.single()
+        }
         suspend fun report(token: String, lease: JobLease, state: JobState, leaseNo: Long = lease.leaseNo) =
             call(HttpMethod.Post, "/api/device/jobs/${lease.jobId}/report", """{"leaseNo":$leaseNo,"state":"$state"}""", token)
         suspend fun jobs(token: String) = json.decodeFromString(ListSerializer(JobView.serializer()), call(HttpMethod.Get, "/api/jobs", token = token).bodyAsText())
