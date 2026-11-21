@@ -639,6 +639,9 @@ class CloudApiTest {
         val seen = socket(token) { send(Frame.Text(status(apps = app))); replies(); devices(token).single() }
         assertTrue(seen.online)
         assertEquals(listOf(AppView("test.game", "game", "游戏", "RUNNING", "每日礼包", 1)), seen.apps)
+        // The server notices the close a moment after the client sends it.
+        val until = System.currentTimeMillis() + 3000
+        while (devices(token).single().online && System.currentTimeMillis() < until) kotlinx.coroutines.delay(50)
         assertFalse(devices(token).single().online)
     }
     @Test fun aSocketWithoutAValidDeviceSessionIsRefusedWithACode() = api {
