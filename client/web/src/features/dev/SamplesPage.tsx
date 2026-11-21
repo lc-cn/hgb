@@ -52,6 +52,14 @@ export function SamplesPage({ id }: { id?: string }) {
     <header className={w.header}>
       <Link to={devPaths.home} aria-label="返回开发工作台" className={w.back}><Back /></Link>
       <div className={m.title}><h1 className={w.h1Small}>样本库</h1><div className={w.muted}>{me?.samples ?? list?.length ?? 0} 张 · 只属于你</div></div>
+      <label className={w.btn}>上传图片
+        <input type="file" accept="image/*" hidden onChange={async (e) => {
+          const file = e.target.files?.[0]; e.target.value = "";
+          if (!file) return;
+          setText(null);
+          try { const made = await dev.uploadSample(game, file); await load(); navigate(devPaths.sample(made.id)); setText(["已上传；识别文字要等手机读一遍，先可以框选和裁模板", true]); }
+          catch (error) { setText([failure(error), false]); }
+        }} /></label>
       <button type="button" className={w.btn} disabled={sampling} onClick={takeOne}>{sampling ? "等手机采样…" : "让手机现在采一张"}</button>
     </header>
   );
@@ -144,6 +152,16 @@ export function SamplesPage({ id }: { id?: string }) {
               onBlur={async (e) => { const name = e.target.value.trim(); if (!name || name === sample.name) return;
                 try { await dev.changeSample(sample.id, { name }); await load(); } catch (error) { setText([failure(error), false]); } }} />
             <span className={w.muted}>{sample.width}×{sample.height} · {sample.device || "手机"} · {clock(sample.createdAt)}</span>
+            {!sample.recognized && <button type="button" className={w.btn} disabled={sampling} onClick={async () => {
+              if (!phone) { setText(["没有在线的手机", false]); return; }
+              setSampling(true); setText(null);
+              try {
+                const run = await dev.startRun({ kind: "recognize", target: game, device: phone.id, sample: sample.id });
+                const done = await follow(run.id, () => {});
+                if (done.state === "FINISHED") { await load(); setText([done.detail || "已识别", true]); } else setText([done.detail || "没识别成", false]);
+              } catch (error) { setText([failure(error), false]); }
+              setSampling(false);
+            }}>{sampling ? "手机识别中…" : "让手机识别"}</button>}
           </div>
           <div role="toolbar" aria-label="工具" className={`${w.card} ${m.toolbar}`}>
             {TOOLS.map(([t, label]) => <button key={t} type="button" aria-pressed={tool === t} className={m.tool} onClick={() => setTool(t)}>{label}</button>)}

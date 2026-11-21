@@ -37,6 +37,15 @@ export const dev = {
   check: (body: Obj) => api<CheckResult>("/api/dev/check", { method: "POST", body }),
   trials: (target: string) => api<TrialRecord[]>(`/api/dev/games/${enc(target)}/trials`),
   samples: (target: string) => api<Sample[]>(`/api/dev/games/${enc(target)}/samples`),
+  /** A screenshot from elsewhere as a sample; redrawn as a PNG first, which also drops whatever metadata the file carried. */
+  uploadSample: async (target: string, file: File) => {
+    const bitmap = await createImageBitmap(file);
+    const canvas = Object.assign(document.createElement("canvas"), { width: bitmap.width, height: bitmap.height });
+    canvas.getContext("2d")!.drawImage(bitmap, 0, 0);
+    const png = await new Promise<Blob>((done, fail) => canvas.toBlob((b) => b ? done(b) : fail(new Error("图片转换失败")), "image/png"));
+    const name = file.name.replace(/\.[^.]+$/, "").slice(0, 64) || "上传的图";
+    return api<Sample>(`/api/dev/games/${enc(target)}/samples?name=${enc(name)}&device=${enc("上传")}`, { method: "POST", body: png });
+  },
   sampleImage: (id: string) => apiUrl(`/api/dev/samples/${enc(id)}/image`),
   changeSample: (id: string, change: { name?: string; privateRegions?: number[][] }) => api<Sample>(`/api/dev/samples/${enc(id)}`, { method: "PATCH", body: change }),
   deleteSample: (id: string) => api(`/api/dev/samples/${enc(id)}`, { method: "DELETE" }),

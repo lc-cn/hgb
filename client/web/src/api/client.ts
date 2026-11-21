@@ -19,10 +19,12 @@ export class ApiFailure extends Error {
 export async function api<T = unknown>(path: string, options: { method?: string; body?: unknown } = {}): Promise<T> {
   const { method = "GET", body } = options;
   const headers: Record<string, string> = { "X-YYS-Request": "1" };
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+  // A file goes up as it is (an image, say); anything else as JSON.
+  const raw = body instanceof Blob;
+  if (body !== undefined) headers["Content-Type"] = raw ? (body.type || "application/octet-stream") : "application/json";
   let reply: Response;
   try {
-    reply = await fetch(apiUrl(path), { method, headers, body: body === undefined ? undefined : JSON.stringify(body), credentials: "include" });
+    reply = await fetch(apiUrl(path), { method, headers, body: body === undefined ? undefined : raw ? body : JSON.stringify(body), credentials: "include" });
   } catch {
     throw new ApiFailure(0, "network", "无法连接服务器，请检查网络");
   }

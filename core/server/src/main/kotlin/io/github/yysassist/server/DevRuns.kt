@@ -41,12 +41,16 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
 
     fun start(userId: String, start: DevStart): DevRunView {
         val kind = start.kind
-        if (kind !in setOf("sample", "probe", "judge", "trial")) throw ApiException(400, "bad_kind", "不认识的命令")
+        if (kind !in setOf("sample", "recognize", "probe", "judge", "trial")) throw ApiException(400, "bad_kind", "不认识的命令")
         // The phone first: nothing is compiled for a phone that is not the caller's, offline or busy.
         ensureFree(userId, start.device, clock())
         var digest: String? = null
         val (devKind, bundle, task) = when (kind) {
             "sample" -> Triple(DevKind.SAMPLE, null, null)
+            "recognize" -> {
+                workbench.assets.sample(userId, start.sample ?: throw ApiException(400, "no_sample", "请选择样本"))
+                Triple(DevKind.RECOGNIZE, null, null)
+            }
             "probe", "judge" -> {
                 val states = start.states?.takeIf { it.isNotEmpty() } ?: throw ApiException(400, "no_states", "请选择要判定的状态")
                 if (kind == "judge") workbench.assets.sample(userId, start.sample ?: throw ApiException(400, "no_sample", "请选择样本"))
@@ -62,10 +66,11 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
         }
         val now = clock()
         val id = UUID.randomUUID().toString()
-        val view = DevRunView(id, kind, start.device, start.target, "SENT", "", now, now, start.sample.takeIf { kind == "judge" },
+        val withSample = kind == "judge" || kind == "recognize"
+        val view = DevRunView(id, kind, start.device, start.target, "SENT", "", now, now, start.sample.takeIf { withSample },
             task = start.task.takeIf { kind == "trial" }, step = start.step.takeIf { kind == "trial" })
         val command = DevCommand(id, devKind, start.target, start.name.trim().take(64), bundle, task, start.configuration,
-            start.sample.takeIf { kind == "judge" }, timeoutOf(kind))
+            start.sample.takeIf { withSample }, timeoutOf(kind))
         // Claiming the phone is the only part done one at a time, so two starts cannot both find it free.
         synchronized(this) {
             ensureFree(userId, start.device, now)
@@ -82,7 +87,7 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
     }
 
     /** A trial runs a whole task; a sample uploads a full screenshot, which takes minutes on a weak link; a probe is quick. */
-    private fun timeoutOf(kind: String) = when (kind) { "trial" -> 600_000L; "sample" -> 300_000L; else -> 60_000L }
+    private fun timeoutOf(kind: String) = when (kind) { "trial" -> 600_000L; "sample", "recognize" -> 300_000L; else -> 60_000L }
 
     private fun ensureFree(userId: String, device: String, now: Long) {
         db.tx {

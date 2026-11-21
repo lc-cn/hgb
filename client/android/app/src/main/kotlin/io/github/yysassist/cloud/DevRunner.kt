@@ -68,7 +68,7 @@ internal class DevRunner(
                 else try {
                     withTimeout(command.timeoutMs + 30_000) {
                         report(command, DevReport(DevState.RUNNING))
-                        when (command.kind) { DevKind.SAMPLE -> sample(command); DevKind.RUN -> run(command) }
+                        when (command.kind) { DevKind.SAMPLE -> sample(command); DevKind.RUN -> run(command); DevKind.RECOGNIZE -> recognize(command) }
                     }
                 } catch (timeout: TimeoutCancellationException) { DevReport(DevState.FAILED, "超时") }
                 report(command, report)
@@ -117,6 +117,26 @@ internal class DevRunner(
         val id = Json.parseToJsonElement(created.decodeToString()).jsonObject.getValue("id").jsonPrimitive.content
         cloud().request("PATCH", "/api/dev/samples/$id", buildJsonObject { put("texts", texts) }.toString())
         return DevReport(DevState.FINISHED, "已采样，读到 ${texts.size} 处文字", sample = id)
+    }
+
+    /** Reads the whole of an existing sample (uploaded from elsewhere) with the active version's recognizer, and stores the text on it. */
+    private suspend fun recognize(command: DevCommand): DevReport {
+        val id = command.sample ?: return DevReport(DevState.FAILED, "命令里没有样本")
+        val bundle = activeBundle() ?: return DevReport(DevState.FAILED, "手机还没有可用的任务包")
+        val profile = bundle.visionProfiles.firstOrNull { it.targetId == command.target } ?: return DevReport(DevState.FAILED, "任务包里没有这个游戏的视觉配置")
+        val bytes = cloud().requestBytes("GET", "/api/dev/samples/${path(id)}/image") ?: return DevReport(DevState.FAILED, "取不到样本")
+        val bitmap = withContext(Dispatchers.IO) { BitmapFactory.decodeByteArray(bytes, 0, bytes.size) } ?: return DevReport(DevState.FAILED, "样本不能解码")
+        val frame = when (val capture = StillScreen(bitmap, profile.packageName).capture(profile.packageName)) {
+            is FrameResult.Ready -> capture.frame
+            is FrameResult.Unavailable -> return DevReport(DevState.FAILED, "样本不能读：${capture.reason}")
+        }
+        val texts = frame.use {
+            val read = mainObserver().observe(bundle.version, OcrModelReferences(profile.recognizer, profile.models), frame)
+            val candidates = (read as? TextReadResult.Observed)?.candidates ?: return DevReport(DevState.FAILED, "整图识别失败：$read")
+            JsonArray(candidates.map { buildJsonObject { put("text", it.text); putJsonArray("box") { add(it.bounds.left); add(it.bounds.top); add(it.bounds.width); add(it.bounds.height) } } })
+        }
+        cloud().request("PATCH", "/api/dev/samples/${path(id)}", buildJsonObject { put("texts", texts) }.toString())
+        return DevReport(DevState.FINISHED, "已识别，读到 ${texts.size} 处文字", sample = id)
     }
 
     /** Runs the command's task once in a throwaway executor, on the real screen or on a still sample. */

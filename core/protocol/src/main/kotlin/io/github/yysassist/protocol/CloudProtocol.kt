@@ -86,7 +86,8 @@ import kotlinx.serialization.json.JsonObject
  * [configuration], against the screen or, with [sample], against that sample shown as a still screen that no input
  * changes. Assets the bundle names without a `release` come from the workbench.
  */
-@Serializable enum class DevKind { SAMPLE, RUN }
+/** SAMPLE: capture the screen as a new sample. RUN: run a compiled task. RECOGNIZE: read the text of an existing sample (one uploaded from elsewhere). */
+@Serializable enum class DevKind { SAMPLE, RUN, RECOGNIZE }
 @Serializable data class DevCommand(val id: String, val kind: DevKind, val target: String, val name: String = "", val bundle: String? = null,
     val task: String? = null, val configuration: JsonObject = JsonObject(emptyMap()), val sample: String? = null, val timeoutMs: Long = 600_000)
 @Serializable enum class DevState { RUNNING, FINISHED, FAILED }
