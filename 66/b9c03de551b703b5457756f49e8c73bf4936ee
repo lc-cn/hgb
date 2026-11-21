@@ -1,0 +1,69 @@
+client/android/app/src/main/kotlin/io/github/yysassist/AssistApplication.kt
+  s_fae32e7f0efe76::t_43448acdfa6f6e 48,141-142
+  s_fae32e7f0efe76::t_0f74702c25692a 150,152-154
+core/server/src/main/kotlin/io/github/yysassist/server/Assets.kt
+  s_fae32e7f0efe76::t_5e6d8233983a46 47,161
+  s_fae32e7f0efe76::t_f86d0d037af132 23-25,97-112,116-119,140,180-182,188-191,199-200,247-250
+  s_fae32e7f0efe76::t_2073216c9a3093 96,160,162
+core/server/src/test/kotlin/io/github/yysassist/server/WorkbenchApiTest.kt
+  s_fae32e7f0efe76::t_696377e12473b8 309,312,317
+  s_fae32e7f0efe76::t_7069e59df8109e 84
+  s_fae32e7f0efe76::t_4072c7137ae28c 67-71,73,80,82-83,85-86,151,153,156-160,185
+  s_fae32e7f0efe76::t_5e6d8233983a46 47,52,308,310-311,313-316
+docs/design/developer-workbench.md
+  s_fae32e7f0efe76::t_83ce0edef3a3a2 3
+docs/design/open-contribution.md
+  s_fae32e7f0efe76::t_6618f30c371118 5,7-10,12,19-21,23,25-26,29,31,33,35,37-43,46-47,49,51-56,58-65,67,69,71-78,85,87,89-113,116,121,124-126,129-133,135-136,138,140-143,145,149,151-152,154-157,161-166,170-175,179-185,187-193,197-200,202
+  s_fae32e7f0efe76::t_65875dd462c42d 1-2,4,6,11,13-17,22,24,30,32,34,36,44,48,50,57,66,68,70,86,88,114-115,117-119,122-123,127-128,137,139,144,146-148,150,153,158-159,167-169,176-178,194,196
+  s_fae32e7f0efe76::t_c21812b04195a4 45,79-84,134,160,186,201
+  s_fae32e7f0efe76::t_83ce0edef3a3a2 3,18,27-28,120,195
+client/android/app/src/main/kotlin/io/github/yysassist/floating/FloatingPreferences.kt
+  s_fae32e7f0efe76::t_0f74702c25692a 17-19,32,42,72-73
+client/android/app/src/main/kotlin/io/github/yysassist/ui/SettingsPage.kt
+  s_fae32e7f0efe76::t_5e58e27ec87e4e 49,58
+  s_fae32e7f0efe76::t_0f74702c25692a 214-215,236-241,281,290
+client/android/app/src/main/kotlin/io/github/yysassist/ui/AssistApp.kt
+  s_fae32e7f0efe76::t_0f74702c25692a 79-80
+  s_fae32e7f0efe76::t_5e58e27ec87e4e 268
+core/server/src/main/kotlin/io/github/yysassist/server/Routes.kt
+  s_fae32e7f0efe76::t_38b5f1ef5052a4 128,130,146-150,188,195-196
+  s_fae32e7f0efe76::t_43448acdfa6f6e 103,154
+  s_fae32e7f0efe76::t_869cf237b4ec2e 106-110,117,120-124,126-127,135,140,151-152,165,172,177-178,184,194,198
+  s_fae32e7f0efe76::t_f9dcc6e98b0146 180
+core/server/src/main/kotlin/io/github/yysassist/server/Drafts.kt
+  s_fae32e7f0efe76::t_f86d0d037af132 225
+core/server/src/main/kotlin/io/github/yysassist/server/Publisher.kt
+  s_fae32e7f0efe76::t_38b5f1ef5052a4 112
+docs/design/developer-workbench-tech.md
+  s_fae32e7f0efe76::t_83ce0edef3a3a2 9-10
+core/server/src/main/kotlin/io/github/yysassist/server/DevRuns.kt
+  s_fae32e7f0efe76::t_38b5f1ef5052a4 31,34-37,39-41,47,49,51,59-61,63,65,74-84,114-115,151,221-222
+client/android/app/src/main/kotlin/io/github/yysassist/cloud/DevWorkbench.kt
+  s_fae32e7f0efe76::t_43448acdfa6f6e 27
+  s_fae32e7f0efe76::t_0f74702c25692a 32,34
+client/android/app/src/main/kotlin/io/github/yysassist/cloud/DevRunner.kt
+  s_fae32e7f0efe76::t_43448acdfa6f6e 46-47,61
+.claude/settings.json
+  s_fae32e7f0efe76::t_a6bd946c3de836 1-14
+core/server/src/main/kotlin/io/github/yysassist/server/Workbench.kt
+  s_fae32e7f0efe76::t_4072c7137ae28c 128,139
+  s_fae32e7f0efe76::t_f9dcc6e98b0146 55-56,65-70,74,76,78,81-89,111-114,116-121
+  s_fae32e7f0efe76::t_38b5f1ef5052a4 71-73,75,77,79-80,100-106,115,129-134,136,148-149,161
+  s_fae32e7f0efe76::t_5e6d8233983a46 91,108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "66b9c03de551b703b5457756f49e8c73bf4936ee",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
