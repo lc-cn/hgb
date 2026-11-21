@@ -112,7 +112,11 @@ private fun SignIn(application: AssistApplication, develop: () -> Unit) {
     val github by application.github.state.collectAsState()
     // This build's own server, filled in; someone running their own types theirs.
     var server by rememberSaveable { mutableStateOf(BuildConfig.API_URL) }
-    var wantGitHub by rememberSaveable { mutableStateOf(false) }
+    // Each press asks for one GitHub sign-in; the effect below handles the newest one once GitHub is connected. The
+    // handled count is not one of the effect's keys: changing a key cancels the running effect, and with it a sign-in
+    // whose request the server has already answered.
+    var githubAsked by rememberSaveable { mutableStateOf(0) }
+    var githubHandled by rememberSaveable { mutableStateOf(0) }
     var githubError by remember { mutableStateOf<String?>(null) }
     val agent = application.cloud
     fun address(): String = server.trim().also { cloudServerIssue(it)?.let { issue -> throw io.github.yysassist.core.cloud.CloudRequestException(0, "invalid_server", issue) } }
@@ -126,13 +130,17 @@ private fun SignIn(application: AssistApplication, develop: () -> Unit) {
         override suspend fun reset(email: String, code: String, password: String) = agent.resetPassword(address(), email, code, password)
     } }
     // Once GitHub has signed in at the user's request, sign in to the server with its token.
-    LaunchedEffect(wantGitHub, github is GitHubSessionState.Connected) {
-        if (!wantGitHub || github !is GitHubSessionState.Connected) return@LaunchedEffect
-        wantGitHub = false
+    LaunchedEffect(githubAsked, github is GitHubSessionState.Connected) {
+        if (githubAsked == githubHandled || github !is GitHubSessionState.Connected) return@LaunchedEffect
+        githubHandled = githubAsked
+        // Bounded: on a weak link a step can stall; the user then sees it and can try again instead of waiting on nothing.
         githubError = try {
-            val token = application.github.token() ?: throw java.io.IOException("GitHub 授权已失效，请重新授权")
-            agent.signInWithGitHub(address(), token.value); null
-        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled } catch (problem: Exception) { io.github.yysassist.shared.failureText(problem) }
+            kotlinx.coroutines.withTimeout(120_000) {
+                val token = application.github.token() ?: throw java.io.IOException("GitHub 授权已失效，请重新授权")
+                agent.signInWithGitHub(address(), token.value)
+            }; null
+        } catch (timeout: kotlinx.coroutines.TimeoutCancellationException) { "登录超时，网络可能不稳，请重试" }
+        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled } catch (problem: Exception) { io.github.yysassist.shared.failureText(problem) }
     }
     // Ask the typed server how it signs people in; one without a mail service offers GitHub alone.
     var options by remember { mutableStateOf<io.github.yysassist.protocol.AuthOptions?>(null) }
@@ -153,19 +161,19 @@ private fun SignIn(application: AssistApplication, develop: () -> Unit) {
                         Text(prompt.userCode, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                         Row(horizontalArrangement = Arrangement.spacedBy(UiSpace.gap)) {
                             io.github.yysassist.shared.ui.HgbButton("打开 GitHub", { uri.openUri(prompt.verificationUri.toString()) }, io.github.yysassist.shared.ui.ButtonKind.PRIMARY)
-                            io.github.yysassist.shared.ui.HgbButton("取消", { wantGitHub = false; application.github.cancelSignIn() })
+                            io.github.yysassist.shared.ui.HgbButton("取消", { githubHandled = githubAsked; application.github.cancelSignIn() })
                         }
                     } ?: io.github.yysassist.shared.ui.Muted("正在连接 GitHub…")
                     is GitHubSessionState.Connected -> io.github.yysassist.shared.ui.HgbButton("用 GitHub${state.login?.let { " @$it" } ?: ""} 登录",
-                        { githubError = null; wantGitHub = true }, modifier = Modifier.fillMaxWidth())
+                        { githubError = null; githubAsked++ }, modifier = Modifier.fillMaxWidth())
                     else -> io.github.yysassist.shared.ui.HgbButton("使用 GitHub 登录", {
                         githubError = cloudServerIssue(server.trim())
-                        if (githubError == null) { wantGitHub = true; application.github.signIn() }
+                        if (githubError == null) { githubAsked++; application.github.signIn() }
                     }, modifier = Modifier.fillMaxWidth())
                 }
                 // Why GitHub sign-in stopped (most often: github.com cannot be reached from this network).
                 val githubProblem = (github as? GitHubSessionState.SignedOut)?.message ?: (github as? GitHubSessionState.Failure)?.message
-                (githubError ?: githubProblem?.takeIf { wantGitHub || githubError == null })?.let {
+                (githubError ?: githubProblem?.takeIf { githubAsked != githubHandled || githubError == null })?.let {
                     io.github.yysassist.shared.ui.Message("$it。连不上 GitHub 时请检查网络（国内可能需要代理），或改用邮箱登录。".replace("。。", "。"))
                 }
             }

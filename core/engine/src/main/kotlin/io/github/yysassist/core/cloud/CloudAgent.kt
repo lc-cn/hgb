@@ -275,16 +275,25 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
     private suspend fun adopt(server: String, result: AuthResult) {
         val access = result.accessToken; val refresh = result.refreshToken; val expires = result.accessExpiresAt
         if (access == null || refresh == null || expires == null) throw CloudRequestException(0, "invalid_reply", "服务器回复无效")
+        trace("登录：服务器已确认，保存中")
         val saved = CloudCredentials(server.trimEnd('/'), result.userId, result.email, access, refresh, expires, UUID.randomUUID().toString())
         clearData() // whoever was signed in before, their accounts and settings are not shown or run for this user
         mutex.withLock { save(saved) }
+        trace("登录：已保存，开始连接")
         startWorking(saved)
     }
+    /** Signs in with [request], noting each stage in the connection log, so a sign-in that stalls shows where. */
+    private suspend fun signInVia(server: String, how: String, request: suspend () -> AuthResult?) {
+        trace("登录：$how，发送中")
+        val result = try { checkNotNull(request()) } catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: Exception) { trace("登录失败：${error.message ?: error.javaClass.simpleName}"); throw error }
+        adopt(server, result)
+    }
     suspend fun signIn(server: String, email: String, password: String) =
-        adopt(server, checkNotNull(send<AuthResult>(server, "/api/auth/login", json.encodeToString(PasswordLoginRequest(email, password)))))
+        signInVia(server, "邮箱和密码") { send<AuthResult>(server, "/api/auth/login", json.encodeToString(PasswordLoginRequest(email, password))) }
     suspend fun requestCode(server: String, email: String) { send<Unit>(server, "/api/auth/code/request", json.encodeToString(CodeRequest(email))) }
     suspend fun signInWithCode(server: String, email: String, code: String) =
-        adopt(server, checkNotNull(send<AuthResult>(server, "/api/auth/code/login", json.encodeToString(CodeLoginRequest(email, code)))))
+        signInVia(server, "邮箱验证码") { send<AuthResult>(server, "/api/auth/code/login", json.encodeToString(CodeLoginRequest(email, code))) }
     /** How [server] lets people sign in (email needs its mail service). */
     suspend fun authOptions(server: String): AuthOptions = checkNotNull(send<AuthOptions>(server, "/api/auth/options", null, method = "GET"))
     /** Starts an account; the server mails a code, and [verifyEmail] with it signs this device in. */
@@ -298,7 +307,7 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
     }
     /** Signs in with a GitHub user token this App already holds; the server checks it with GitHub. */
     suspend fun signInWithGitHub(server: String, accessToken: String) =
-        adopt(server, checkNotNull(send<AuthResult>(server, "/api/auth/github/token", json.encodeToString(GitHubTokenRequest(accessToken)))))
+        signInVia(server, "GitHub") { send<AuthResult>(server, "/api/auth/github/token", json.encodeToString(GitHubTokenRequest(accessToken))) }
 
     /** Local work is stopped and credentials are erased even when the server cannot be reached. */
     suspend fun signOut(message: String? = null) {
