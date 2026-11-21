@@ -278,6 +278,9 @@ class WorkbenchApiTest {
             assertEquals("t", command.task)
             // Only one at a time.
             assertEquals(HttpStatusCode.Conflict, send(HttpMethod.Post, "/api/dev/runs", start, writer).status)
+            // Not started yet: once the phone says it is idle again (as after reconnecting), the command is sent again.
+            kotlinx.coroutines.delay(5_100); status("IDLE")
+            assertEquals(run, next().command.id)
             val reported = send(HttpMethod.Post, "/api/dev/runs/$run/report", """{"state":"FINISHED","detail":"完成","facts":[{"type":"task-completed"}]}""", writer)
             assertEquals(HttpStatusCode.OK, reported.status)
             val view = Json.parseToJsonElement(get("/api/dev/runs/$run", writer).bodyAsText()).jsonObject

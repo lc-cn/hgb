@@ -48,7 +48,14 @@ internal class DevRunner(
     val busy: Boolean get() = running.get()
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
+    /** Commands already taken, newest last: the server resends one it has not seen start, and it must run only once. */
+    private val seen = java.util.Collections.synchronizedSet(LinkedHashSet<String>())
+
     fun start(command: DevCommand) {
+        synchronized(seen) {
+            if (!seen.add(command.id)) return
+            while (seen.size > 50) seen.remove(seen.first())
+        }
         if (!running.compareAndSet(false, true)) { scope.launch { report(command, DevReport(DevState.FAILED, "上一个调试命令还没结束")) }; return }
         scope.launch {
             try {

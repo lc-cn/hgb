@@ -109,6 +109,15 @@ internal class AndroidDeviceBridge(private val service: AccessibilityService) : 
     }
 
     override suspend fun capture(expectedPackage: String): FrameResult = captureScreen(expectedPackage)
+    /**
+     * Opens the first of [packages] that can be launched: started if it is not running, its task brought to the front
+     * if it is. No step input is involved, so this happens before a step, outside its attempt. False when none can be.
+     */
+    suspend fun bringToFront(packages: Collection<String>): Boolean = withContext(Dispatchers.Main.immediate) {
+        if (!connected) return@withContext false
+        val intent = packages.firstNotNullOfOrNull { service.packageManager.getLaunchIntentForPackage(it) } ?: return@withContext false
+        runCatching { service.startActivity(intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
+    }
     suspend fun checkScreen(): FrameResult = captureScreen(null)
     /** Query app focus, not the last touched overlay. Potential remote node lookup stays off Main. */
     override suspend fun availability(expectedPackages: Set<String>): DeviceAvailability {

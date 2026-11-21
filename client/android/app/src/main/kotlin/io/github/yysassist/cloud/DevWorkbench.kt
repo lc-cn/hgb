@@ -96,6 +96,9 @@ internal class DevWorkbench(private val cloud: () -> CloudAgent, private val run
             ?: throw java.io.IOException("服务器没有回应")
         val id = Json.parseToJsonElement(started).jsonObject.getValue("id").jsonPrimitive.content
         val dev = runner() ?: throw java.io.IOException("调试执行器还没准备好")
+        // The server resends a command the phone has not started; if it still has not after a while, say so instead of waiting it out.
+        kotlinx.coroutines.withTimeoutOrNull(START_WITHIN) { dev.last.first { it?.first == id } }
+            ?: throw java.io.IOException("手机没收到命令，请检查网络后重试")
         return withTimeout(timeoutMs) { dev.last.first { it?.first == id && it.second.state != DevState.RUNNING }!!.second }
     }
 
@@ -110,6 +113,7 @@ internal class DevWorkbench(private val cloud: () -> CloudAgent, private val run
         run(buildJsonObject { put("kind", "trial"); put("target", target); put("task", task); step?.let { put("step", it) } }, 11 * 60_000 + 15_000)
 
     companion object {
+        private const val START_WITHIN = 75_000L
         /** Reads a probe run's single awaitScreen trace. */
         fun probeResult(report: DevReport): ProbeResult {
             val trace = report.traces.lastOrNull { it.capability == "screen.awaitScreen" }

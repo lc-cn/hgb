@@ -28,7 +28,7 @@ data class DevRunView(val id: String, val kind: String, val device: String, val 
 class DevRuns(private val workbench: Workbench, private val service: CloudService, private val clock: () -> Long = System::currentTimeMillis) {
     private val db get() = workbench.db
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
-    private class Run(val userId: String, @Volatile var view: DevRunView)
+    private class Run(val userId: String, @Volatile var view: DevRunView, val command: DevCommand) { @Volatile var sentAt = 0L }
     private val runs = ConcurrentHashMap<String, Run>()
 
     /** One start at a time, so two cannot both find the phone free. */
@@ -61,7 +61,7 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
             if (runs.values.any { it.view.device == start.device && active(it.view, now) })
                 throw ApiException(409, "device_busy", "手机上还有一个调试命令没结束")
             prune(now)
-            runs[id] = Run(userId, view)
+            runs[id] = Run(userId, view, command).also { it.sentAt = now }
             // Held at once, not only when the phone's next status says so: no job is leased to it in between.
             update("UPDATE devices SET phase = 'DEVELOPING' WHERE id = ?", start.device)
         }
@@ -80,6 +80,16 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
         "SENT" -> now - view.updatedAt < START_WITHIN
         "RUNNING" -> now - view.updatedAt < (if (view.kind == "trial") 600_000 else 60_000) + GRACE
         else -> false
+    }
+
+    /**
+     * Commands sent to [deviceId] that it has not started, to send again when it reports itself idle: the first send may
+     * have gone into a connection that was already gone. The phone runs each command id once, so a resend is harmless.
+     */
+    fun unstarted(userId: String, deviceId: String): List<ServerMessage> {
+        val now = clock()
+        return runs.values.filter { it.userId == userId && it.view.device == deviceId && it.view.state == "SENT" && active(it.view, now) && now - it.sentAt >= RESEND_AFTER }
+            .map { it.sentAt = now; ServerMessage.Dev(it.command) }
     }
 
     fun get(userId: String, id: String): DevRunView = runs[id]?.takeIf { it.userId == userId }?.view ?: throw ApiException(404, "no_run", "没有这个调试命令")
@@ -192,7 +202,9 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
         const val PROBE_TASK = "workbench-probe"
         private val ACTIVE = setOf("SENT", "RUNNING")
         private const val GRACE = 60_000L
-        private const val START_WITHIN = 20_000L
+        /** How long a sent command may wait for its phone to start it (resent meanwhile) before the phone counts as free. */
+        private const val START_WITHIN = 60_000L
+        private const val RESEND_AFTER = 5_000L
         private const val KEEP = 6 * 60 * 60 * 1000L
         private const val MAX_PER_USER = 50
     }

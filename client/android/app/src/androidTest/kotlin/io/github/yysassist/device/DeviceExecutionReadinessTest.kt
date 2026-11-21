@@ -18,6 +18,7 @@ class DeviceExecutionReadinessTest {
         CapabilityContract("fixture.read", 1, role = ActionRole.OBSERVATION, validateInputs = { null }),
         CapabilityContract("fixture.input", 1, sendsDeviceInput = true, validateInputs = { null }),
         CapabilityContract("fixture.launch", 1, sendsDeviceInput = true, startsTarget = true, validateInputs = { null }),
+        CapabilityContract("screen.awaitFixture", 1, role = ActionRole.VERIFICATION, validateInputs = { null }),
     )
     private fun fixture(capability: String): Pair<StepAttempt, TaskBundle> {
         val context = ExecutionContext("fixture", Principal.Anonymous)
@@ -38,14 +39,14 @@ class DeviceExecutionReadinessTest {
         }, changes = emptyFlow())
         fixture("fixture.utility").let { (attempt, bundle) -> assertEquals(StepStartCondition.Ready, readiness.check(attempt, bundle)) }
         assertEquals(0, checks)
-        for (id in listOf("fixture.read", "fixture.input")) {
+        for (id in listOf("fixture.read", "fixture.input", "screen.awaitFixture")) {
             fixture(id).let { (attempt, bundle) -> assertTrue(readiness.check(attempt, bundle) is StepStartCondition.Waiting) }
         }
-        assertEquals(2, checks)
+        assertEquals(3, checks)
     }
     @Test fun onlyAStepThatOpensWithALaunchMayStartWhileTheTargetIsInTheBackground(): Unit = runBlocking {
         var state = DeviceAvailability.WRONG_FOREGROUND
-        val readiness = DeviceExecutionReadiness(contracts, availability = { state }, changes = emptyFlow())
+        val readiness = DeviceExecutionReadiness(contracts, availability = { state }, changes = emptyFlow(), bringToFront = { false })
         fixture("fixture.launch").let { (attempt, bundle) ->
             assertEquals(StepStartCondition.Ready, readiness.check(attempt, bundle))
             // The service and a lit screen are still required.
@@ -53,7 +54,26 @@ class DeviceExecutionReadinessTest {
             state = DeviceAvailability.DISPLAY_UNAVAILABLE; assertTrue(readiness.check(attempt, bundle) is StepStartCondition.Waiting)
         }
         state = DeviceAvailability.WRONG_FOREGROUND
+        // Any other step waits for the game to be in front (opening it first).
         fixture("fixture.input").let { (attempt, bundle) -> assertTrue(readiness.check(attempt, bundle) is StepStartCondition.Waiting) }
+    }
+    @Test fun aStepFindingTheGameInTheBackgroundOpensItOnceAndStartsWhenItIsInFront(): Unit = runBlocking {
+        var state = DeviceAvailability.WRONG_FOREGROUND
+        var now = 0L
+        val opened = mutableListOf<Set<String>>()
+        val readiness = DeviceExecutionReadiness(contracts, availability = { state }, changes = emptyFlow(),
+            bringToFront = { opened += it; true }, clock = { now })
+        fixture("fixture.input").let { (attempt, bundle) ->
+            assertEquals(StepStartCondition.Waiting(WAIT_LAUNCHING), readiness.check(attempt, bundle))
+            assertEquals(listOf(setOf("fixture.primary", "fixture.channel")), opened)
+            // Still loading: not opened again right away.
+            now += 5_000; assertEquals(StepStartCondition.Waiting(WAIT_LAUNCHING), readiness.check(attempt, bundle)); assertEquals(1, opened.size)
+            now += DeviceExecutionReadiness.LAUNCH_RETRY_MS; readiness.check(attempt, bundle); assertEquals(2, opened.size)
+            state = DeviceAvailability.READY; assertEquals(StepStartCondition.Ready, readiness.check(attempt, bundle))
+        }
+        // A game with nothing to launch waits for it to be brought up by hand.
+        val nothing = DeviceExecutionReadiness(contracts, availability = { DeviceAvailability.WRONG_FOREGROUND }, changes = emptyFlow(), bringToFront = { false }, clock = { 0 })
+        fixture("fixture.read").let { (attempt, bundle) -> assertEquals(StepStartCondition.Waiting(WAIT_FOREGROUND), nothing.check(attempt, bundle)) }
     }
     @Test fun anUnconfirmedPlatformLookupDoesNotPretendTheTargetIsKnownToBeInTheBackground(): Unit = runBlocking {
         val readiness = DeviceExecutionReadiness(contracts, availability = { DeviceAvailability.UNCONFIRMED }, changes = emptyFlow())

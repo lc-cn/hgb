@@ -409,14 +409,21 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
             }
         })
         var reporter: Job? = null
+        // The handshake has no read timeout of its own (the socket's reads never time out, pings start only once open):
+        // on a lossy network it could wait for hours, leaving the phone offline to the server all that time.
+        val handshake = launch {
+            delay(HANDSHAKE_MILLIS)
+            trace("连接超时：${HANDSHAKE_MILLIS / 1000} 秒内没有建立连接")
+            events.trySend(SocketEvent.Closed(-1))
+        }
         try {
             for (event in events) when (event) {
-                SocketEvent.Opened -> { trace("已连接"); publish(true); reporter = launch { reportStatus(socket) } }
+                SocketEvent.Opened -> { handshake.cancel(); trace("已连接"); publish(true); reporter = launch { reportStatus(socket) } }
                 is SocketEvent.Text -> handle(event.text)
                 is SocketEvent.Closed -> return@coroutineScope event.code
             }
             -1
-        } finally { reporter?.cancel(); socket.cancel() }
+        } finally { handshake.cancel(); reporter?.cancel(); socket.cancel() }
     }
     /** Sends the device's state when it changes, and unchanged at least every [heartbeatMillis] so the server keeps its leases. */
     private suspend fun reportStatus(socket: WebSocket) {
@@ -678,6 +685,8 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         const val TRACE_SETTLE_MILLIS = 600L
         val JSON_TYPE = "application/json".toMediaType()
         const val RENEW_MARGIN = 60_000L
+        /** Longest a socket may take to open before it is given up and tried again. */
+        const val HANDSHAKE_MILLIS = 30_000L
         const val STREAM_RETRY_MILLIS = 2_000L
         const val STREAM_RETRY_MAX_MILLIS = 60_000L
         const val MAX_PENDING_NOTICES = 50

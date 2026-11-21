@@ -314,7 +314,7 @@ fun Application.cloudModule(service: CloudService, config: ServerConfig, workben
         get("/api/events") { consoleStream(call, service) }
         route("/api/device") {
             post("/register") { call.respond(service.registerDevice(call.caller(service, config), call.receive())) }
-            webSocket("/socket") { deviceSocket(this, service) }
+            webSocket("/socket") { deviceSocket(this, service, devRuns) }
             post("/catalog") { service.uploadCatalog(call.caller(service, config), call.receive()); call.respond(mapOf("ok" to true)) }
             post("/jobs/{id}/events") { service.appendEvents(call.caller(service, config), call.parameters.getOrFail("id"), call.receive()); call.respond(mapOf("ok" to true)) }
             post("/jobs/{id}/report") { service.report(call.caller(service, config), call.parameters.getOrFail("id"), call.receive()); call.respond(mapOf("ok" to true)) }
@@ -334,7 +334,7 @@ private val socketLog = org.slf4j.LoggerFactory.getLogger("hgb.socket")
  * A device's one connection. The handshake carries the device's bearer token; a bad one is closed with a code the app
  * understands, so it can renew and come back. Each text frame is a [DeviceMessage]; replies are [ServerMessage]s.
  */
-private suspend fun deviceSocket(session: DefaultWebSocketServerSession, service: CloudService) = with(session) {
+private suspend fun deviceSocket(session: DefaultWebSocketServerSession, service: CloudService, devRuns: DevRuns? = null) = with(session) {
     val token = call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ")
     val caller = token?.let(service::authenticate)
     if (caller == null) { close(CloseReason(SocketClose.INVALID_SESSION, "invalid_session")); return }
@@ -364,7 +364,11 @@ private suspend fun deviceSocket(session: DefaultWebSocketServerSession, service
             if (++inWindow > MAX_FRAMES_PER_SECOND) continue
             val message = runCatching { service.decodeDeviceMessage(frame.readText()) }.getOrNull() ?: continue
             when (message) {
-                is DeviceMessage.Status -> service.status(caller, message.status).forEach { connection.outbox.trySend(service.encode(it)) }
+                is DeviceMessage.Status -> {
+                    service.status(caller, message.status).forEach { connection.outbox.trySend(service.encode(it)) }
+                    // A workbench command sent into a connection that was already dead is sent again once the phone is back.
+                    if (message.status.phase == "IDLE") devRuns?.unstarted(caller.userId, deviceId)?.forEach { connection.outbox.trySend(service.encode(it)) }
+                }
             }
         }
     } catch (_: ApiException) {
