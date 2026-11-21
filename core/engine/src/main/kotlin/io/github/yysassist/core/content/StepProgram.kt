@@ -47,7 +47,18 @@ sealed interface ProgramNode {
     /** Ends the enclosing block or loop named [loop], as a normal end. [index]: the copy it sits in, set when read. */
     @Serializable @SerialName("exit")
     data class Exit(val loop: String, val index: Int? = null) : ProgramNode
+    /**
+     * A page wait with the game's interruptions (technical design 1.6). Never written: reading a bundle wraps every
+     * screen.awaitScreen of a game that declares interruptions. It waits for [wait]'s states and the [guards]' states
+     * together; an interruption's handler runs and the wait starts again, at most each guard's maximum times; one of
+     * [wait]'s own states ends it, with outputs under [wait]'s id exactly as the plain wait would give.
+     */
+    @Serializable @SerialName("guarded")
+    data class Guarded(val wait: ActionDefinition, val guards: List<Guard>) : ProgramNode
 }
+/** One interruption inside a [ProgramNode.Guarded]: the page [state] (its id is the guard's), the [program] that clears it, how often. */
+@Serializable
+data class Guard(val state: JsonElement, val program: List<ProgramNode>, val maximum: Int = 3)
 @Serializable
 data class ProgramCase(val equals: JsonPrimitive, val program: List<ProgramNode>, val id: String? = null)
 
@@ -59,6 +70,7 @@ fun StepDefinition.actionDefinitions(): List<ActionDefinition> = nodes().allActi
 /** Nested programs of a node, in order. Snippets and forEach are gone once read. */
 internal fun ProgramNode.children(): List<List<ProgramNode>> = when (this) {
     is ProgramNode.Action, is ProgramNode.Exit, is ProgramNode.UseSnippet -> emptyList()
+    is ProgramNode.Guarded -> guards.map { it.program }
     is ProgramNode.Branch -> cases.map { it.program }
     is ProgramNode.Repeat -> listOf(program)
     is ProgramNode.Until -> listOf(program)
@@ -66,7 +78,11 @@ internal fun ProgramNode.children(): List<List<ProgramNode>> = when (this) {
     is ProgramNode.Block -> listOf(program)
 }
 internal fun List<ProgramNode>.walk(): List<ProgramNode> = flatMap { node -> listOf(node) + node.children().flatMap { it.walk() } }
-private fun List<ProgramNode>.allActions(): List<ActionDefinition> = walk().filterIsInstance<ProgramNode.Action>().map { it.action }
+private fun List<ProgramNode>.allActions(): List<ActionDefinition> = walk().mapNotNull { node -> when (node) {
+    is ProgramNode.Action -> node.action
+    is ProgramNode.Guarded -> node.wait
+    else -> null
+} }
 internal fun List<ProgramNode>.repeats(): List<ProgramNode.Repeat> = walk().filterIsInstance<ProgramNode.Repeat>()
 /** One way an [ProgramNode.Until] loop ends: [value] equals [equals]. */
 @Serializable
@@ -180,32 +196,46 @@ internal fun programIssues(bundle: TaskBundle, task: TaskDefinition, step: StepD
     }
     fun block(nodes: List<ProgramNode>, initial: Flow, path: String, enclosing: Set<String>): Flow {
         var flow = initial
+        /** An action in the flow; [input]: something before its outputs may have sent input (an interruption handler). */
+        fun act(action: ActionDefinition, location: String, input: Boolean) {
+            if (action.id.isBlank()) issue(location, "缺少动作身份")
+            val definition = contract(action)
+            if (definition == null) issue(location, "容器不支持所需动作或合同版本")
+            else {
+                val previous = flow.context.previous.mapNotNull { (id, a) -> contract(a)?.let { id to it } }.toMap()
+                actionBindingIssues(task, action, definition, previous).forEach { issue(location, it) }
+                handleIssues(action, definition, flow.context, ::contract).forEach { issue(location, it) }
+                definition.validateDefinition(bundle, task, flow.context, action)?.let { issue(location, it) }
+                val proofs = when {
+                    // A result line (task.result) only records what happened; it leaves the proof as it was.
+                    action.capability == "task.result" -> flow.proofs
+                    definition.role == ActionRole.VERIFICATION -> flow.proofs.map {
+                        if (it == Proof.NONE && !definition.sendsDeviceInput && !input) Proof.NONE else Proof.VERIFIED
+                    }.toSet()
+                    definition.role == ActionRole.OBSERVATION || definition.sendsDeviceInput -> setOf(Proof.UNVERIFIED)
+                    else -> flow.proofs.map { if (it == Proof.NONE) it else Proof.UNVERIFIED }.toSet()
+                }
+                val fresh = if (definition.sendsDeviceInput || input) emptySet() else flow.context.freshOutputs
+                flow = Flow(ActionFlowContext(flow.context.previous + (action.id to action), fresh + action.id), proofs)
+            }
+        }
         nodes.forEachIndexed { index, node ->
             val location = "$path/$index"
             if (flow.dead) { issue(location, "退出循环之后的内容不会执行"); return flow }
             when (node) {
-                is ProgramNode.Action -> {
-                    val action = node.action
-                    if (action.id.isBlank()) issue(location, "缺少动作身份")
-                    val definition = contract(action)
-                    if (definition == null) issue(location, "容器不支持所需动作或合同版本")
-                    else {
-                        val previous = flow.context.previous.mapNotNull { (id, a) -> contract(a)?.let { id to it } }.toMap()
-                        actionBindingIssues(task, action, definition, previous).forEach { issue(location, it) }
-                        handleIssues(action, definition, flow.context, ::contract).forEach { issue(location, it) }
-                        definition.validateDefinition(bundle, task, flow.context, action)?.let { issue(location, it) }
-                        val proofs = when {
-                            // A result line (task.result) only records what happened; it leaves the proof as it was.
-                            action.capability == "task.result" -> flow.proofs
-                            definition.role == ActionRole.VERIFICATION -> flow.proofs.map {
-                                if (it == Proof.NONE && !definition.sendsDeviceInput) Proof.NONE else Proof.VERIFIED
-                            }.toSet()
-                            definition.role == ActionRole.OBSERVATION || definition.sendsDeviceInput -> setOf(Proof.UNVERIFIED)
-                            else -> flow.proofs.map { if (it == Proof.NONE) it else Proof.UNVERIFIED }.toSet()
-                        }
-                        val fresh = if (definition.sendsDeviceInput) emptySet() else flow.context.freshOutputs
-                        flow = Flow(ActionFlowContext(flow.context.previous + (action.id to action), fresh + action.id), proofs)
+                is ProgramNode.Action -> act(node.action, location, false)
+                is ProgramNode.Guarded -> {
+                    // Each handler is closed: it starts with nothing from before and observes the screen itself.
+                    var input = false
+                    node.guards.forEachIndexed { g, guard ->
+                        if (guard.maximum !in 1..10) issue("$location/guard/$g", "干扰页处理次数需为 1–10")
+                        if (guard.program.isEmpty()) issue("$location/guard/$g", "干扰页的处理不能为空")
+                        val end = block(guard.program, Flow(ActionFlowContext(emptyMap(), emptySet()), setOf(Proof.NONE)), "$location/guard/$g", emptySet())
+                        if (end.dead) issue("$location/guard/$g", "干扰页的处理不能退出循环")
+                        input = input || guard.program.allActions().any { contract(it)?.sendsDeviceInput == true }
                     }
+                    // Seen from outside it is the wait itself, which may have sent input (a handler ran) before its outputs.
+                    act(node.wait, location, input)
                 }
                 is ProgramNode.Branch -> {
                     val source = node.value as? ActionInputBinding.Output

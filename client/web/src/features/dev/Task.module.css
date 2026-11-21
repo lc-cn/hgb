@@ -33,3 +33,5 @@
 .lib:hover { border-color: var(--color-primary-line); background: var(--color-primary-soft); }
 .grow { flex: 1; min-width: 0; }
 @media (max-width: 1023px) { .aside { max-width: none; } }
+.small { min-height: 32px; padding: 0 10px; }
+.select { min-height: var(--control-height-sm); border: 1px solid var(--color-control); border-radius: var(--radius-sm); padding: 0 8px; background: var(--color-surface); }

@@ -18,7 +18,20 @@ data class TargetLibrary(
      * conditions (e.g. minimumConfidence / minimumScore). Only inputs an action declares and leaves out are filled.
      */
     val defaults: Map<String, JsonObject> = emptyMap(),
+    /** Pages that can come up over any other (a lost connection, a popup): every page wait handles them first. */
+    val interruptions: List<Interruption> = emptyList(),
 )
+
+/**
+ * An interruption page: its [state] (a library state's id, or one written in full) and the snippet [use] (with [with])
+ * that clears it. A page wait meeting it runs that, then waits again; more than [maximum] times leaves the step unknown.
+ */
+@Serializable
+data class Interruption(val id: String, val name: String? = null, val state: JsonElement, val use: String,
+    val with: JsonObject = JsonObject(emptyMap()), val maximum: Int = 3) {
+    /** The state id a guarded wait reports for this page; never one of a task's own states. */
+    val stateId: String get() = "interruption:$id"
+}
 
 /**
  * A named page state. [base] contributes its conditions first. Conditions are written either in full
@@ -48,6 +61,9 @@ internal fun TaskBundle.resolveLibrary(capabilities: List<CapabilityContract>): 
         val library = target.library ?: return@forEach
         val ids = library.states.map { it.id }
         if (ids.distinct().size != ids.size) issues += ContentIssue("target/${target.id}/library", "状态身份重复")
+        val interruptions = library.interruptions.map { it.id }
+        if (interruptions.any { it.isBlank() } || interruptions.distinct().size != interruptions.size) issues += ContentIssue("target/${target.id}/library", "干扰页身份为空或重复")
+        library.interruptions.filter { it.maximum !in 1..10 }.forEach { issues += ContentIssue("target/${target.id}/library", "干扰页 ${it.id} 的处理次数需为 1–10") }
         library.regions.forEach { (name, rect) ->
             if (rect.size != 4 || rect[2] <= 0 || rect[3] <= 0 || rect[0] < 0 || rect[1] < 0) issues += ContentIssue("target/${target.id}/library", "区域 $name 需为 x,y,宽,高")
         }
@@ -72,6 +88,8 @@ private class LibraryResolver(val library: TargetLibrary, val capabilities: List
         is ProgramNode.Block -> node.copy(program = nodes(node.program))
         is ProgramNode.ForEach -> node.copy(program = nodes(node.program))
         is ProgramNode.Exit, is ProgramNode.UseSnippet -> node
+        is ProgramNode.Guarded -> ProgramNode.Guarded(action(node.wait), node.guards.map { guard ->
+            guard.copy(state = (states(JsonArray(listOf(guard.state))) as JsonArray).single(), program = nodes(guard.program)) })
     } }
 
     fun action(action: ActionDefinition): ActionDefinition {

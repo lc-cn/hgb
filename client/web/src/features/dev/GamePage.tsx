@@ -5,6 +5,7 @@ import { devPaths, useDev } from "./context";
 import { uses } from "./HomePage";
 import { arr, inlineStates, isObj, nodeDigest, objs, programOf, snippets, states, str, target, tasks } from "./model";
 import { Back } from "./TaskPage";
+import { Interruptions } from "./Interruptions";
 import w from "./Wb.module.css";
 import g from "./Game.module.css";
 
@@ -59,6 +60,7 @@ export function GamePage() {
           <div className={g.row}><span className={g.grow}>验证过的屏幕比例</span>
             {ratios.length ? ratios.map(([k, n]) => <span key={k} className={`${w.chip} ${n > 1 ? w.pass : w.none}`}>{k} · {n} 张</span>) : <span className={w.muted}>还没有样本</span>}</div>
         </section>
+        <Interruptions />
         <section className={`${w.card} ${g.card}`} aria-labelledby="g4">
           <h2 id="g4" className={g.h2}>账号</h2>
           <div className={g.row}><span className={g.grow}><b>识别当前账号</b><span className={`${w.muted} ${w.block}`}>{IDENTITY[str(app.identityPolicy) ?? ""] ?? str(app.identityPolicy)}</span></span></div>

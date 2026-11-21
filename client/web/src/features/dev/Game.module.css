@@ -9,3 +9,11 @@
 .f input { min-height: var(--control-height); padding: 0 10px; border: 1px solid var(--color-control); border-radius: var(--radius-md); box-sizing: border-box; }
 .row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-height: 48px; padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid var(--color-line); }
 @media (max-width: 599px) { .grid { grid-template-columns: 1fr; } }
+.headRow { display: flex; align-items: center; gap: 10px; }
+.rowButton { width: 100%; background: var(--color-surface); text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.rowButton:hover { border-color: var(--color-control); }
+.form { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--color-primary); }
+.lb { font-size: var(--text-xs); color: var(--color-muted); font-weight: 600; }
+.radio { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); }
+.f select { min-height: var(--control-height); padding: 0 10px; border: 1px solid var(--color-control); border-radius: var(--radius-md); background: var(--color-surface); }
+.form input { min-height: var(--control-height); padding: 0 10px; border: 1px solid var(--color-control); border-radius: var(--radius-md); box-sizing: border-box; min-width: 0; }

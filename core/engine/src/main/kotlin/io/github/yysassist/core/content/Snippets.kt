@@ -41,28 +41,54 @@ internal fun TaskBundle.expandSnippets(): Pair<TaskBundle, List<ContentIssue>> {
         if (snippet.params.map { it.name }.distinct().size != snippet.params.size) issues += ContentIssue("snippet/${snippet.id}", "片段参数重名")
     }
     val used = mutableSetOf<String>()
+    val interruptions = targets.associate { it.id to it.library?.interruptions.orEmpty() }
     val expanded = tasks.map { task ->
         task.copy(steps = task.steps.map { step ->
             val location = "target/${task.targetId}/task/${task.id}/step/${step.id}"
-            val expander = Expander(snippets.associateBy { it.id }, used, issues, location)
-            val id = step.use
-            if (id == null) {
-                if (step.with != null) issues += ContentIssue(location, "with只能和use一起使用")
-                val program = step.program ?: return@map step
-                step.copy(program = expander.expand(program, Scope.ROOT))
-            } else {
-                if (step.program != null || step.actions.isNotEmpty()) issues += ContentIssue(location, "use与actions、program不能同时指定")
-                val snippet = snippets.firstOrNull { it.id == id }
-                if (snippet == null) { issues += ContentIssue(location, "引用了未声明的片段"); return@map step }
-                used += id
-                val scope = expander.arguments(snippet, step.with ?: JsonObject(emptyMap()), Scope.ROOT) ?: return@map step
-                step.copy(use = null, with = null, actions = emptyList(),
-                    program = expander.expand(snippet.program, scope.copy(locals = snippet.program.localIds(), stack = listOf(id))))
-            }
+            val guards = interruptions[task.targetId].orEmpty()
+            val plain = expandStep(task, step, location, used, issues)
+            if (guards.isEmpty()) plain
+            else plain.copy(program = guard(plain.nodes(), guards, Expander(snippets.associateBy { it.id }, used, issues, location)), actions = emptyList())
         })
     }
     snippets.filter { it.id !in used }.forEach { issues += ContentIssue("snippet/${it.id}", "片段未被任何任务使用") }
     return copy(tasks = expanded, snippets = emptyList()) to issues
+}
+
+/** Every page wait in [nodes] wrapped with the game's interruptions, each with its own copy of the handler. */
+private fun guard(nodes: List<ProgramNode>, interruptions: List<Interruption>, expander: Expander): List<ProgramNode> = nodes.map { node -> when (node) {
+    is ProgramNode.Action -> if (node.action.capability != "screen.awaitScreen") node else ProgramNode.Guarded(node.action, interruptions.map { page ->
+        val call = "${node.action.id}~${page.id}"
+        val state = when (val written = page.state) {
+            is JsonPrimitive -> buildJsonObject { put("state", written); put("as", page.stateId) }
+            is JsonObject -> JsonObject(written + ("id" to JsonPrimitive(page.stateId)))
+            else -> written
+        }
+        Guard(state, expander.expand(listOf(ProgramNode.UseSnippet(call, page.use, page.with)), Scope.ROOT), page.maximum)
+    })
+    is ProgramNode.Branch -> node.copy(cases = node.cases.map { it.copy(program = guard(it.program, interruptions, expander)) })
+    is ProgramNode.Until -> node.copy(program = guard(node.program, interruptions, expander))
+    is ProgramNode.Repeat -> node.copy(program = guard(node.program, interruptions, expander))
+    is ProgramNode.Block -> node.copy(program = guard(node.program, interruptions, expander))
+    else -> node
+} }
+
+/** One step with its snippets and forEach expanded. */
+private fun TaskBundle.expandStep(task: TaskDefinition, step: StepDefinition, location: String, used: MutableSet<String>, issues: MutableList<ContentIssue>): StepDefinition {
+    val expander = Expander(snippets.associateBy { it.id }, used, issues, location)
+    val id = step.use
+    if (id == null) {
+        if (step.with != null) issues += ContentIssue(location, "with只能和use一起使用")
+        val program = step.program ?: return step
+        return step.copy(program = expander.expand(program, Scope.ROOT))
+    }
+    if (step.program != null || step.actions.isNotEmpty()) issues += ContentIssue(location, "use与actions、program不能同时指定")
+    val snippet = snippets.firstOrNull { it.id == id }
+    if (snippet == null) { issues += ContentIssue(location, "引用了未声明的片段"); return step }
+    used += id
+    val scope = expander.arguments(snippet, step.with ?: JsonObject(emptyMap()), Scope.ROOT) ?: return step
+    return step.copy(use = null, with = null, actions = emptyList(),
+        program = expander.expand(snippet.program, scope.copy(locals = snippet.program.localIds(), stack = listOf(id))))
 }
 
 /** Ids defined anywhere inside these nodes: actions and named loops. */
@@ -197,6 +223,7 @@ private class Expander(
                 if (scope.snippetLoops != null && node.loop !in scope.snippetLoops) issue("片段不能退出片段外的循环 ${node.loop}")
                 listOf(ProgramNode.Exit(scope.rename(node.loop), scope.indexes[node.loop] ?: node.index))
             }
+            is ProgramNode.Guarded -> { issue("guarded 节点只在读包时生成，不能直接写"); emptyList() }
             is ProgramNode.ForEach -> {
                 if (node.items.isEmpty()) issue("逐项循环 ${node.id} 的表不能为空")
                 if (node.items.map { it.keys }.distinct().size > 1) issue("逐项循环 ${node.id} 的各项字段必须一致")

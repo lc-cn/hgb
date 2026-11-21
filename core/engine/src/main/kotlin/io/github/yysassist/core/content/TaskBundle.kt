@@ -1,5 +1,6 @@
 package io.github.yysassist.core.content
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
@@ -98,7 +99,25 @@ data class StepDefinition(
     /** Id of a [Snippet] supplying this step's program, with [with] for its parameters. */
     val use: String? = null,
     val with: JsonObject? = null,
+    /** Runs only when this holds on the run's settings; otherwise the step is skipped (technical design 2.3 ①). */
+    @SerialName("when") val runWhen: StepCondition? = null,
 )
+/**
+ * A step's run condition on setting [field]: it [equals] a value, or (a multiple choice) [contains] an option; [not]
+ * turns it round. A setting with no value (an optional one left empty) never holds.
+ */
+@Serializable
+data class StepCondition(val field: String, val equals: JsonPrimitive? = null, val contains: String? = null, val not: Boolean = false) {
+    fun holds(configuration: JsonObject): Boolean {
+        val value = configuration[field]?.takeIf { it != JsonNull } ?: return false
+        val matched = when {
+            equals != null -> sameProgramValue(value, equals)
+            contains != null -> (value as? JsonArray)?.any { (it as? JsonPrimitive)?.contentOrNull == contains } == true
+            else -> false
+        }
+        return matched != not
+    }
+}
 @Serializable
 data class ActionDefinition(
     val id: String,
@@ -301,7 +320,28 @@ class BundleCodec(private val capabilities: List<CapabilityContract>) {
                 val path = "$location/step/${step.id}"
                 if (step.id.isBlank() || step.name.isBlank()) issue(path, "步骤身份或名称为空")
                 programIssues(bundle, task, step, capabilities).forEach { issue("$path/${it.location}", it.reason) }
+                step.runWhen?.let { condition ->
+                    val field = task.fields.singleOrNull { it.id == condition.field }
+                    when {
+                        field == null -> issue(path, "运行条件引用了不存在的配置项")
+                        (condition.equals == null) == (condition.contains == null) -> issue(path, "运行条件需要且只需要“等于”或“包含”之一")
+                        condition.contains != null && (field.widget != FieldWidget.MULTI_CHOICE || field.options.none { it.value == condition.contains }) ->
+                            issue(path, "“包含”只用于多选配置项的某个选项")
+                        condition.equals != null && field.widget == FieldWidget.MULTI_CHOICE -> issue(path, "多选配置项用“包含”")
+                        condition.equals != null && primitiveTypeOf(condition.equals) != field.valueType() -> issue(path, "运行条件的值类型与配置项不符")
+                        condition.equals != null && field.options.isNotEmpty() && field.options.none { it.value == condition.equals.contentOrNull } ->
+                            issue(path, "运行条件的值不是该配置项的选项")
+                    }
+                }
             }
         }
     }
+}
+
+private fun primitiveTypeOf(value: JsonPrimitive): ActionValueType? = when {
+    value == JsonNull -> null
+    value.isString -> ActionValueType.STRING
+    value.booleanOrNull != null -> ActionValueType.BOOLEAN
+    value.content.toBigDecimalOrNull() != null -> ActionValueType.NUMBER
+    else -> null
 }

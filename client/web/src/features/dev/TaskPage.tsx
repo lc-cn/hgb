@@ -44,6 +44,14 @@ export function TaskPage({ id }: { id: string }) {
     if (!confirm(`把「${str(steps[i].name) ?? sid}」移出任务？`)) return;
     await run(async (body) => { const step = stepsIn(body).find((st) => st.id === sid); return step ? [{ op: "delete", path: `${taskPath}/steps:${sid}`, expect: await nodeDigest(step) }] : []; });
   };
+  /** Sets or removes a step's run condition, on the step as the latest draft has it. */
+  const setWhen = (sid: string, next: Obj | null) => run(async (body) => {
+    const step = stepsIn(body).find((st) => st.id === sid);
+    if (!step) return [];
+    const value: Obj = { ...step };
+    if (next) value.when = next; else delete value.when;
+    return [{ op: "put", path: `${taskPath}/steps:${sid}`, expect: await nodeDigest(step), value }];
+  });
   /** Inserts at the chosen place; the step's index, or null when it was refused. */
   const insert = async (value: Obj): Promise<number | null> => {
     const at = insertAt ?? steps.length;
@@ -100,7 +108,7 @@ export function TaskPage({ id }: { id: string }) {
                       <button type="button" className={w.btn} aria-label="移出任务" onClick={() => remove(i)}>✕</button>
                     </span>
                   </div>
-                  <div className={t.cond}><span className={w.muted} style={{ fontWeight: 600 }}>运行条件</span><span className={w.muted}>总是运行</span></div>
+                  <RunCondition step={step} fields={task.fields} onChange={(next) => setWhen(String(step.id), next)} />
                 </div>
                 <div className={t.ins}><button type="button" aria-pressed={insertAt === i + 1} onClick={() => setInsertAt(i + 1)}>＋ 在这里插入步骤</button></div>
               </div>
@@ -168,4 +176,46 @@ export function reads(program: Obj[], fields: Obj[]): string[] {
   };
   scan(program);
   return [...ids].map((fid) => str(fields.find((f) => f.id === fid)?.label) ?? fid);
+}
+
+/** The settings a run condition can test: single and multiple choices, and switches. */
+const testable = (fields: Obj[]) => fields.filter((f) => f.widget === "SINGLE_CHOICE" || f.widget === "MULTI_CHOICE" || f.widget === "SWITCH");
+/** A condition on [field] that holds for its first value: the editor's starting point. */
+function firstCondition(field: Obj): Obj {
+  if (field.widget === "SWITCH") return { field: String(field.id), equals: true };
+  const first = str(objs(field.options)[0]?.value) ?? "";
+  return field.widget === "MULTI_CHOICE" ? { field: String(field.id), contains: first } : { field: String(field.id), equals: first };
+}
+
+/** 运行条件: always, or a setting is / is not a value (contains / does not contain an option); otherwise the step is skipped. */
+function RunCondition({ step, fields, onChange }: { step: Obj; fields: Obj[]; onChange: (next: Obj | null) => void }) {
+  const choices = testable(fields);
+  const when = isObj(step.when) ? step.when : null;
+  const field = when ? fields.find((f) => f.id === when.field) : undefined;
+  if (!when) return (
+    <div className={t.cond}><span className={w.muted} style={{ fontWeight: 600 }}>运行条件</span><span className={w.muted}>总是运行</span>
+      {choices.length > 0 && <button type="button" className={`${w.btn} ${t.small}`} onClick={() => onChange(firstCondition(choices[0]))}>加条件</button>}</div>
+  );
+  const multi = field?.widget === "MULTI_CHOICE";
+  const toggle = field?.widget === "SWITCH";
+  const value = multi ? str(when.contains) : when.equals === true ? "true" : when.equals === false ? "false" : str(when.equals);
+  const options: [string, string][] = toggle ? [["true", "开"], ["false", "关"]] : objs(field?.options).map((o) => [str(o.value) ?? "", str(o.label) ?? ""]);
+  const set = (v: string, not: boolean) => onChange({ field: String(when.field), ...(multi ? { contains: v } : { equals: toggle ? v === "true" : v }), ...(not ? { not: true } : {}) });
+  return (
+    <div className={t.cond}>
+      <span className={w.muted} style={{ fontWeight: 600 }}>运行条件</span>
+      <select aria-label="按哪个配置项" className={t.select} value={String(when.field)} onChange={(e) => { const f = choices.find((x) => x.id === e.target.value); if (f) onChange(firstCondition(f)); }}>
+        {!field && <option value={String(when.field)}>{String(when.field)}（找不到）</option>}
+        {choices.map((f) => <option key={String(f.id)} value={String(f.id)}>{str(f.label) ?? String(f.id)}</option>)}
+      </select>
+      <select aria-label="判断" className={t.select} value={when.not === true ? "not" : "is"} onChange={(e) => set(value ?? "", e.target.value === "not")}>
+        <option value="is">{multi ? "含" : "是"}</option><option value="not">{multi ? "不含" : "不是"}</option>
+      </select>
+      <select aria-label="值" className={t.select} value={value ?? ""} onChange={(e) => set(e.target.value, when.not === true)}>
+        {options.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+      </select>
+      <span className={w.muted}>否则跳过</span>
+      <button type="button" className={`${w.btn} ${t.small}`} onClick={() => onChange(null)}>去掉</button>
+    </div>
+  );
 }

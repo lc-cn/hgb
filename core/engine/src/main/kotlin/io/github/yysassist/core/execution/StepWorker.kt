@@ -78,6 +78,15 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
     }.getOrDefault(false)
     override fun create(attempt: StepAttempt, bundle: TaskBundle): StepWork {
         val (step, configuration) = program(attempt, bundle)
+        val fields = definition(attempt.run.request, attempt.run.task, bundle).first.fields
+        /** "收取结界奖励 ≠ 开": the setting and the value the condition wanted, as the user knows them. */
+        fun skipReason(condition: StepCondition): String {
+            val field = fields.singleOrNull { it.id == condition.field }
+            val wanted = condition.contains ?: condition.equals?.contentOrNull
+            val label = field?.options?.singleOrNull { it.value == wanted }?.label
+                ?: when (condition.equals?.booleanOrNull) { true -> "开"; false -> "关"; null -> wanted }
+            return "${field?.label ?: condition.field} ${if (condition.contains != null) (if (condition.not) "含" else "不含") else (if (condition.not) "=" else "≠")} $label"
+        }
         val usesInput = step.actionDefinitions().any { action -> contracts.single { it.id == action.capability && it.version == action.contractVersion }.sendsDeviceInput }
         return object : StepWork {
             private val lock = Any()
@@ -95,6 +104,10 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                             owner = execution; claimed = true
                         }
                         currentCoroutineContext().ensureActive()
+                        // A step whose run condition does not hold is skipped before it touches the screen.
+                        step.runWhen?.takeIf { !it.holds(configuration) }?.let { condition ->
+                            return@coroutineScope StepOutcome.Completed("已跳过（${skipReason(condition)}）")
+                        }
                         val activeSession = actions?.open(attempt, bundle).also { session = it }
                         var verification: String? = null
                         var requiresVerification = false
@@ -107,6 +120,61 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                         // How a block ended early: the step's outcome, or an exit to the loop named.
                         class Halt(val outcome: StepOutcome?, val loop: String? = null, val index: Int? = null)
                         fun loopOutputs(halt: Halt?) = buildJsonObject { put("exited", halt?.loop != null); put("exitIndex", halt?.index ?: -1) }
+                        /**
+                         * Runs one action and keeps its outputs; a Halt when the step must stop. [extraStates]: interruption pages a
+                         * guarded wait also looks for, added to its own.
+                         */
+                        suspend fun perform(action: ActionDefinition, atEnd: Boolean, outputs: MutableMap<String, JsonObject>,
+                            extraStates: List<JsonElement> = emptyList()): Halt? {
+                            val contract = contracts.single { it.id == action.capability && it.version == action.contractVersion }
+                            val inputs = resolveActionInputs(action, configuration, outputs).let { own ->
+                                if (extraStates.isEmpty()) own else JsonObject(own + ("states" to JsonArray(own.getValue("states").jsonArray + extraStates)))
+                            }
+                            require(contract.inputIssue(inputs) == null)
+                            activeSession?.prepareAction(action, atEnd)
+                            val started = System.nanoTime()
+                            val result = if (action.capability == "control.wait") {
+                                val milliseconds = checkNotNull(duration(inputs)); delay(milliseconds)
+                                ActionResult.Produced(buildJsonObject { put("durationMs", milliseconds) })
+                            } else if (action.capability == TASK_RESULT) {
+                                val line = (inputs.getValue("text") as JsonPrimitive).content
+                                if (line !in results) results += line
+                                ActionResult.Produced(buildJsonObject { })
+                            } else if (action.capability == SELECTION_CONTAINS) {
+                                ActionResult.Produced(buildJsonObject { put("selected", inputs.getValue("value") in inputs.getValue("selection").jsonArray) })
+                            } else checkNotNull(activeSession).perform(action, inputs)
+                            traces?.let { sink ->
+                                val (kind, reason, trace) = when (result) {
+                                    ActionResult.Interrupted -> Triple("INTERRUPTED", null, null)
+                                    is ActionResult.Unavailable -> Triple("UNAVAILABLE", result.reason, result.trace)
+                                    is ActionResult.Produced -> Triple("PRODUCED", null, result.trace)
+                                    is ActionResult.Verified -> Triple("VERIFIED", result.evidence, result.trace)
+                                }
+                                // Diagnostics only: a failing sink never changes the step.
+                                runCatching { sink.record(ActionTraceRecord(attempt.ticket, attempt.run.task.id, attempt.run.stepId,
+                                    action.id, action.capability, action.contractVersion, kind, reason, trace,
+                                    (System.nanoTime() - started) / 1_000_000)) }
+                            }
+                            currentCoroutineContext().ensureActive()
+                            val value = when (result) {
+                                ActionResult.Interrupted -> return Halt(StepOutcome.Interrupted)
+                                is ActionResult.Unavailable -> return Halt(StepOutcome.Unknown(result.reason))
+                                is ActionResult.Produced -> {
+                                    check(contract.role != ActionRole.VERIFICATION) { "核对动作未提供核对证据" }
+                                    // A result line only records; what was verified before it still stands.
+                                    if (action.capability != TASK_RESULT) verification = null
+                                    result.outputs
+                                }
+                                is ActionResult.Verified -> {
+                                    check(contract.role == ActionRole.VERIFICATION && result.evidence.isNotBlank())
+                                    verification = result.evidence; result.outputs
+                                }
+                            }
+                            check(contract.outputIssue(value) == null)
+                            outputs[action.id] = value
+                            requiresVerification = requiresVerification || contract.role == ActionRole.OBSERVATION || contract.sendsDeviceInput
+                            return null
+                        }
                         suspend fun executeBlock(nodes: List<ProgramNode>, outputs: MutableMap<String, JsonObject>, completesStep: Boolean): Halt? {
                             // Only skip provably empty repetition tails. A future branch must still
                             // actually resolve; never predict its outcome to retain completion.
@@ -162,53 +230,24 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                                     }
                                     is ProgramNode.Exit -> return Halt(null, node.loop, node.index)
                                     is ProgramNode.UseSnippet, is ProgramNode.ForEach -> error("片段或逐项未展开")
-                                    is ProgramNode.Action -> {
-                                        val action = node.action
-                                        val contract = contracts.single { it.id == action.capability && it.version == action.contractVersion }
-                                        val inputs = resolveActionInputs(action, configuration, outputs)
-                                        require(contract.inputIssue(inputs) == null)
-                                        activeSession?.prepareAction(action, atEnd)
-                                        val started = System.nanoTime()
-                                        val result = if (action.capability == "control.wait") {
-                                            val milliseconds = checkNotNull(duration(inputs)); delay(milliseconds)
-                                            ActionResult.Produced(buildJsonObject { put("durationMs", milliseconds) })
-                                        } else if (action.capability == TASK_RESULT) {
-                                            val line = (inputs.getValue("text") as JsonPrimitive).content
-                                            if (line !in results) results += line
-                                            ActionResult.Produced(buildJsonObject { })
-                                        } else if (action.capability == SELECTION_CONTAINS) {
-                                            ActionResult.Produced(buildJsonObject { put("selected", inputs.getValue("value") in inputs.getValue("selection").jsonArray) })
-                                        } else checkNotNull(activeSession).perform(action, inputs)
-                                        traces?.let { sink ->
-                                            val (kind, reason, trace) = when (result) {
-                                                ActionResult.Interrupted -> Triple("INTERRUPTED", null, null)
-                                                is ActionResult.Unavailable -> Triple("UNAVAILABLE", result.reason, result.trace)
-                                                is ActionResult.Produced -> Triple("PRODUCED", null, result.trace)
-                                                is ActionResult.Verified -> Triple("VERIFIED", result.evidence, result.trace)
-                                            }
-                                            // Diagnostics only: a failing sink never changes the step.
-                                            runCatching { sink.record(ActionTraceRecord(attempt.ticket, attempt.run.task.id, attempt.run.stepId,
-                                                action.id, action.capability, action.contractVersion, kind, reason, trace,
-                                                (System.nanoTime() - started) / 1_000_000)) }
+                                    is ProgramNode.Action -> perform(node.action, atEnd, outputs)?.let { return it }
+                                    is ProgramNode.Guarded -> {
+                                        // Wait for the page or any interruption; clear an interruption and wait again.
+                                        val cleared = mutableMapOf<Int, Int>()
+                                        while (true) {
+                                            yield()
+                                            val pages = node.guards.map { it.state }
+                                            perform(node.wait, atEnd, outputs, pages)?.let { return it }
+                                            val state = (outputs[node.wait.id]?.get("state") as? JsonPrimitive)?.contentOrNull
+                                            val index = node.guards.indexOfFirst { (it.state as? JsonObject)?.get("id")?.let { id -> (id as? JsonPrimitive)?.content } == state }
+                                            if (index < 0) break
+                                            val times = (cleared[index] ?: 0) + 1
+                                            if (times > node.guards[index].maximum)
+                                                return Halt(StepOutcome.Unknown("干扰页 ${state?.removePrefix("interruption:")} 处理了 ${times - 1} 次仍在"))
+                                            cleared[index] = times
+                                            outputs.remove(node.wait.id)
+                                            executeBlock(node.guards[index].program, mutableMapOf(), false)?.let { return it }
                                         }
-                                        currentCoroutineContext().ensureActive()
-                                        val value = when (result) {
-                                            ActionResult.Interrupted -> return Halt(StepOutcome.Interrupted)
-                                            is ActionResult.Unavailable -> return Halt(StepOutcome.Unknown(result.reason))
-                                            is ActionResult.Produced -> {
-                                                check(contract.role != ActionRole.VERIFICATION) { "核对动作未提供核对证据" }
-                                                // A result line only records; what was verified before it still stands.
-                                                if (action.capability != TASK_RESULT) verification = null
-                                                result.outputs
-                                            }
-                                            is ActionResult.Verified -> {
-                                                check(contract.role == ActionRole.VERIFICATION && result.evidence.isNotBlank())
-                                                verification = result.evidence; result.outputs
-                                            }
-                                        }
-                                        check(contract.outputIssue(value) == null)
-                                        outputs[action.id] = value
-                                        requiresVerification = requiresVerification || contract.role == ActionRole.OBSERVATION || contract.sendsDeviceInput
                                     }
                                 }
                             }
