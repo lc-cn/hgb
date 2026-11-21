@@ -223,9 +223,17 @@ internal class DevRunner(
             github.downloadResource(RemoteTaskVersion(bundle.version, 0, 0, "", emptyList()), resource, output)
             return
         }
-        val bytes = cloud().requestBytes("GET", "/api/dev/games/${path(command.target)}/assets/${resource.sha256}")
-            ?: throw java.io.IOException("工作台没有素材 ${resource.id}")
-        withContext(Dispatchers.IO) { output.write(bytes) }
+        // A weak link stalls a request now and then; a small file is simply asked for again.
+        var bytes: ByteArray? = null
+        for (attempt in 1..FETCH_ATTEMPTS) {
+            bytes = try { cloud().requestBytes("GET", "/api/dev/games/${path(command.target)}/assets/${resource.sha256}") ?: throw java.io.IOException("工作台没有素材 ${resource.id}") }
+            catch (slow: java.io.InterruptedIOException) {
+                if (attempt == FETCH_ATTEMPTS) throw java.io.IOException("下载素材 ${resource.id} 超时 $FETCH_ATTEMPTS 次，网络不稳，请重试")
+                null
+            }
+            if (bytes != null) break
+        }
+        withContext(Dispatchers.IO) { output.write(bytes!!) }
     }
 
     /** Keeps numbers, booleans and identifiers; drops any text a recognizer read. */
@@ -238,6 +246,7 @@ internal class DevRunner(
     }
     private companion object {
         const val PROGRESS_MILLIS = 3_000L
+        const val FETCH_ATTEMPTS = 3
         /** String fields that name things the author wrote (states, templates, expected text), never what was read. */
         val IDENTIFIERS = setOf("kind", "state", "template", "sha256", "templateSha256", "id", "capability", "found", "expect")
     }
