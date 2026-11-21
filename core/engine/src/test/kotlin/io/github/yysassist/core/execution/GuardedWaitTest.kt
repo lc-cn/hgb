@@ -110,6 +110,15 @@ class GuardedWaitTest {
         assertTrue(outcome.toString(), outcome is StepOutcome.Completed && !outcome.evidence.startsWith("已跳过"))
     }
 
+    @Test fun aLoopMayEndOnAGuardedWait() = runTest {
+        val loop = ProgramNode.Until(ActionInputBinding.Output("place", "state"), JsonPrimitive("courtyard"), JsonPrimitive(3), listOf(await("place", "courtyard", "shop")))
+        val read = read(bundle(listOf(StepDefinition("go", "Go", program = listOf(loop)))))
+        val screen = Screen(listOf("shop", "interruption:lost", "cleared", "courtyard"))
+        val outcome = BuiltInStepWorkFactory(provider(screen)).create(attempt(read, "go"), read).execute()
+        assertTrue(outcome.toString(), outcome is StepOutcome.Completed)
+        assertEquals(listOf("place~lost.press"), screen.taps)
+    }
+
     @Test fun aLibraryStateByReferenceTakesThePageId() {
         val written = bundle(listOf(StepDefinition("go", "Go", program = listOf(await("home", "courtyard")))))
         val withLibrary = written.copy(targets = written.targets.map { it.copy(library = it.library!!.copy(

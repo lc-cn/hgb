@@ -275,7 +275,9 @@ function Source({ name, type, value, program, fields, catalog, self, fixed, onCh
       <div className={p.src} role="radiogroup" aria-label={`${name} 来源`}>
         {sources.map(([k, label]) => <button key={k} type="button" role="radio" aria-checked={kind === k} onClick={() => {
           if (k === kind) return;
-          if (k === "output") onChange({ type: "output", actionId: outputs[0]?.split(".")[0] ?? "", field: outputs[0]?.split(".")[1] ?? "" });
+          // The nearest output of the same name (observation, target, …), else the nearest output at all.
+          if (k === "output") { const pick = [...outputs].reverse().find((o) => o.endsWith(`.${name}`)) ?? outputs.at(-1);
+            onChange({ type: "output", actionId: pick?.split(".")[0] ?? "", field: pick?.split(".")[1] ?? "" }); }
           else if (k === "configuration") onChange({ type: "configuration", fieldId: String(fields[0]?.id ?? "") });
           else onChange(undefined);
         }}>{label}</button>)}

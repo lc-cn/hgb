@@ -277,7 +277,7 @@ internal fun programIssues(bundle: TaskBundle, task: TaskDefinition, step: StepD
                     if (node.program.isEmpty()) issue(location, "循环体不能为空")
                     node.conditions.forEach { condition ->
                         val source = condition.value as? ActionInputBinding.Output
-                        val producer = source?.let { s -> node.program.filterIsInstance<ProgramNode.Action>().map { it.action }.singleOrNull { it.id == s.actionId } }
+                        val producer = source?.let { s -> node.program.mapNotNull { (it as? ProgramNode.Action)?.action ?: (it as? ProgramNode.Guarded)?.wait }.singleOrNull { it.id == s.actionId } }
                         val type = producer?.let(::contract)?.outputTypes?.get(source.field)
                         if (producer == null || type !in setOf(ActionValueType.STRING, ActionValueType.NUMBER, ActionValueType.BOOLEAN))
                             issue(location, "循环条件必须引用循环体顶层动作的字符串、布尔或数值输出")
