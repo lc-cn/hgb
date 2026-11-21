@@ -82,7 +82,7 @@ export function RunPage({ id }: { id: string }) {
               <span><span className={w.bold}>{name(e.step)} · {e.action}</span><span className={`${w.muted} ${w.block}`}>{e.capability.replace(/^\w+\./, "")} · {e.reason ?? e.result}</span></span>
               <span className={w.muted}>{(e.elapsedMs / 1000).toFixed(1)}s</span>
             </button>
-          )) : <div className={w.empty}>{busy ? "等手机开始…" : "开始试跑后，这里按时间列出每个动作"}</div>}
+          )) : <div className={w.empty}>{run?.state === "RUNNING" ? "手机正在跑，动作会陆续出现…" : busy ? "等手机开始…" : "开始试跑后，这里按时间列出每个动作"}</div>}
         </section>
         <aside aria-label="选中的一步" className={r.aside}>
           {sel ? (

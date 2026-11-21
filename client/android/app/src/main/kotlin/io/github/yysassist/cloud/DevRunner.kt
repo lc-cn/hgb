@@ -91,6 +91,9 @@ internal class DevRunner(
         runCatching { cloud().request("POST", "/api/dev/runs/${command.id}/report", json.encodeToString(DevReport.serializer(), report)) }
     }
 
+    private suspend fun traces(database: AssistDatabase): List<DevTrace> = database.actionTraces().recent(500).reversed().map { t ->
+        DevTrace(t.stepId, t.actionId, t.capability, t.result, t.reason?.take(600), t.elapsedMillis, t.traceJson?.let(::sanitize)) }
+
     private fun path(value: String) = URLEncoder.encode(value, Charsets.UTF_8).replace("+", "%20")
 
     /** Captures the game, reads the whole frame with the active version's recognizer and stores both as a sample. */
@@ -159,11 +162,20 @@ internal class DevRunner(
             if (accepted?.result !is io.github.yysassist.core.execution.EnqueueResult.Accepted)
                 return DevReport(DevState.FAILED, "没能开始：" + ((accepted?.result as? io.github.yysassist.core.execution.EnqueueResult.Rejected)?.reason
                     ?: (enqueued as? io.github.yysassist.RuntimeCommandResult.Rejected)?.message ?: enqueued.toString()).take(300))
+            // What has run so far goes to the workbench every few seconds, so the author follows the trial as it goes.
+            val progress = runScope.launch {
+                var sent = 0
+                while (true) {
+                    delay(PROGRESS_MILLIS)
+                    val sofar = traces(database)
+                    if (sofar.size != sent) { sent = sofar.size; report(command, DevReport(DevState.RUNNING, traces = sofar)) }
+                }
+            }
             val state = withTimeoutOrNull(command.timeoutMs) { runtime.state.first { value ->
                 value.facts.any { it.type == "task-completed" || it.type == "task-failed" } || value.unresolved.isNotEmpty() } }
+            progress.cancel()
             delay(500) // let the trace writer drain before reading back
-            val traces = database.actionTraces().recent(500).reversed().map { t ->
-                DevTrace(t.stepId, t.actionId, t.capability, t.result, t.reason?.take(600), t.elapsedMillis, t.traceJson?.let(::sanitize)) }
+            val traces = traces(database)
             val facts = state?.facts.orEmpty().map { DevFact(it.type, it.detail) } + state?.unresolved.orEmpty().map { DevFact("unresolved", it.reason) } +
                 still?.inputs.orEmpty().map { DevFact("still-input", it) }
             val done = state?.facts?.any { it.type == "task-completed" } == true
@@ -205,6 +217,7 @@ internal class DevRunner(
         else -> null
     }
     private companion object {
+        const val PROGRESS_MILLIS = 3_000L
         /** String fields that name things the author wrote (states, templates, expected text), never what was read. */
         val IDENTIFIERS = setOf("kind", "state", "template", "sha256", "templateSha256", "id", "capability", "found", "expect")
     }
