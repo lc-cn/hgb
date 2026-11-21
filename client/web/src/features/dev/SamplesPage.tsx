@@ -57,7 +57,7 @@ export function SamplesPage({ id }: { id?: string }) {
           const file = e.target.files?.[0]; e.target.value = "";
           if (!file) return;
           setText(null);
-          try { const made = await dev.uploadSample(game, file); await load(); navigate(devPaths.sample(made.id)); setText(["已上传；识别文字要等手机读一遍，先可以框选和裁模板", true]); }
+          try { const made = await dev.uploadSample(game, file); await load(); navigate(devPaths.sample(made.id)); setText(["已上传；点“让手机识别”读出文字后才能裁模板", true]); }
           catch (error) { setText([failure(error), false]); }
         }} /></label>
       <button type="button" className={w.btn} disabled={sampling} onClick={takeOne}>{sampling ? "等手机采样…" : "让手机现在采一张"}</button>

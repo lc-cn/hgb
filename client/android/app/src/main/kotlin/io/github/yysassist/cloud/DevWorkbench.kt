@@ -103,7 +103,7 @@ internal class DevWorkbench(private val cloud: () -> CloudAgent, private val run
         run(buildJsonObject { put("kind", "trial"); put("target", target); put("task", task); step?.let { put("step", it) } }, 11 * 60_000 + 15_000)
 
     companion object {
-        private const val START_WITHIN = 75_000L
+        private const val START_WITHIN = 195_000L
         /** Reads a probe run's single awaitScreen trace. */
         fun probeResult(report: DevReport): ProbeResult {
             val trace = report.traces.lastOrNull { it.capability == "screen.awaitScreen" }

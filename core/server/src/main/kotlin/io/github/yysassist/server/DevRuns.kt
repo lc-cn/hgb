@@ -120,8 +120,15 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
             .map { it.sentAt = now; ServerMessage.Dev(it.command) }
     }
 
-    fun get(userId: String, id: String): DevRunView = runs[id]?.takeIf { it.userId == userId }?.view ?: throw ApiException(404, "no_run", "没有这个调试命令")
-    fun list(userId: String): List<DevRunView> = runs.values.filter { it.userId == userId }.map { it.view }.sortedByDescending { it.createdAt }
+    fun get(userId: String, id: String): DevRunView = runs[id]?.takeIf { it.userId == userId }?.let(::settled) ?: throw ApiException(404, "no_run", "没有这个调试命令")
+    fun list(userId: String): List<DevRunView> = runs.values.filter { it.userId == userId }.map(::settled).sortedByDescending { it.createdAt }
+
+    /** A command the phone never started, even after resending, is over: the author is told rather than left waiting. */
+    private fun settled(run: Run): DevRunView = synchronized(run) {
+        val view = run.view
+        if (view.state != "SENT" || active(view, clock())) return view
+        view.copy(state = "FAILED", detail = "手机没收到命令（连接可能刚断过），请重试", updatedAt = clock()).also { run.view = it }
+    }
 
     /** From the phone the command was sent to; a finished run is not changed again. */
     fun report(caller: Caller, id: String, report: DevReport): DevRunView {
@@ -261,7 +268,8 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
         private val ACTIVE = setOf("SENT", "RUNNING")
         private const val GRACE = 60_000L
         /** How long a sent command may wait for its phone to start it (resent meanwhile) before the phone counts as free. */
-        private const val START_WITHIN = 60_000L
+        /** How long an unstarted command holds its phone and is resent: on a weak link reconnecting alone can take a minute. */
+        private const val START_WITHIN = 180_000L
         private const val RESEND_AFTER = 5_000L
         private const val KEEP = 6 * 60 * 60 * 1000L
         private const val MAX_PER_USER = 10
