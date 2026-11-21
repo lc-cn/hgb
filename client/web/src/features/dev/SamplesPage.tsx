@@ -169,6 +169,7 @@ export function SamplesPage({ id }: { id?: string }) {
           </div>
         </section>
         <aside aria-label="选中的区域" className={m.aside}>
+          {rect && drawing && <RectEditor rect={rect} sample={sample} onChange={(r) => { setRect(r); setMade(null); }} />}
           {panel}
           <div className={`${w.card} ${m.panel} ${m.texts}`}>
             <h2 className={m.h2}>这张图上读到的文字</h2>
@@ -178,6 +179,29 @@ export function SamplesPage({ id }: { id?: string }) {
         </aside>
       </div>
     </>
+  );
+}
+
+/** The drawn box in sample pixels, adjustable by number, with what is inside it enlarged. */
+function RectEditor({ rect, sample, onChange }: { rect: number[]; sample: Sample; onChange: (rect: number[]) => void }) {
+  const zoom = Math.min(4, 280 / Math.max(rect[2], 1), 160 / Math.max(rect[3], 1));
+  const set = (i: number, v: string) => {
+    const n = Math.round(Number(v));
+    if (!Number.isFinite(n)) return;
+    const next = [...rect]; next[i] = n;
+    next[0] = Math.max(0, Math.min(next[0], sample.width - 1)); next[1] = Math.max(0, Math.min(next[1], sample.height - 1));
+    next[2] = Math.max(1, Math.min(next[2], sample.width - next[0])); next[3] = Math.max(1, Math.min(next[3], sample.height - next[1]));
+    onChange(next);
+  };
+  return (
+    <div className={`${w.card} ${m.panel}`}>
+      <div className={m.rect}>{(["x", "y", "宽", "高"] as const).map((label, i) => (
+        <label key={label} className={m.f}><span>{label}</span><input type="number" value={rect[i]} onChange={(e) => set(i, e.target.value)} /></label>
+      ))}</div>
+      <div className={m.zoom} role="img" aria-label="框里的内容（放大）" style={{ width: rect[2] * zoom, height: rect[3] * zoom,
+        backgroundImage: `url(${dev.sampleImage(sample.id)})`, backgroundSize: `${sample.width * zoom}px ${sample.height * zoom}px`,
+        backgroundPosition: `${-rect[0] * zoom}px ${-rect[1] * zoom}px` }} />
+    </div>
   );
 }
 

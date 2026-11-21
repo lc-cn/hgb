@@ -137,7 +137,12 @@ class Drafts(private val db: Database, private val clock: () -> Long) {
     fun get(userId: String, target: String): DraftView = db.tx {
         find(userId, target)?.let { view ->
             val bases = single("SELECT digests FROM dev_draft_bases WHERE user_id = ? AND target_id = ?", userId, target) { it.getString(1) }
-            if (bases == null) view else view.copy(bases = json.decodeFromString<Map<String, String>>(bases))
+            when {
+                bases != null -> view.copy(bases = json.decodeFromString<Map<String, String>>(bases))
+                // Imported before bases were kept and not edited since: what it holds is still the base.
+                view.revision == 1L -> view.copy(bases = keepBases(userId, target, view.body))
+                else -> view
+            }
         }
     } ?: throw ApiException(404, "no_draft", "还没有这个游戏的草稿")
     private fun find(userId: String, target: String): DraftView? = db.single("SELECT base_version, revision, body FROM dev_drafts WHERE user_id = ? AND target_id = ?", userId, target) {
@@ -165,12 +170,18 @@ class Drafts(private val db: Database, private val clock: () -> Long) {
                 ON CONFLICT (user_id, target_id) DO UPDATE SET base_version = excluded.base_version, revision = excluded.revision, body = excluded.body, updated_at = excluded.updated_at""",
                 userId, target, draft.baseVersion, revision, json.encodeToString(JsonObject.serializer(), draft.body), clock())
             record(userId, target, revision, "import", emptyList())
-            val bases = listOf("tasks", "snippets").flatMap { field -> (draft.body[field] as? JsonArray).orEmpty().mapNotNull { node ->
-                (node as? JsonObject)?.let(::idOf)?.let { id -> "$field/$id" to nodeDigest(node) } } }.toMap()
-            db.update("""INSERT INTO dev_draft_bases (user_id, target_id, digests) VALUES (?, ?, ?)
-                ON CONFLICT (user_id, target_id) DO UPDATE SET digests = excluded.digests""", userId, target, json.encodeToString(bases))
+            keepBases(userId, target, draft.body)
             PatchResult(revision)
         }
+    }
+
+    /** Records what each task and snippet of [body] is, as the draft's base. */
+    private fun keepBases(userId: String, target: String, body: JsonObject): Map<String, String> {
+        val bases = listOf("tasks", "snippets").flatMap { field -> (body[field] as? JsonArray).orEmpty().mapNotNull { node ->
+            (node as? JsonObject)?.let(::idOf)?.let { id -> "$field/$id" to nodeDigest(node) } } }.toMap()
+        db.update("""INSERT INTO dev_draft_bases (user_id, target_id, digests) VALUES (?, ?, ?)
+            ON CONFLICT (user_id, target_id) DO UPDATE SET digests = excluded.digests""", userId, target, json.encodeToString(bases))
+        return bases
     }
 
     /** Applies the whole batch or nothing; a stale [DraftPatch.expect] on any node it touches is a conflict. */
