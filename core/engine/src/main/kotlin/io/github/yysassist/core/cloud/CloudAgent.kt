@@ -157,16 +157,22 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
      * Requests fail once they stall: a stuck request on a lossy link is given up after 10 s connecting or 20 s without
      * data and tried again, with 90 s as the outer bound, inside the two minutes a handed job waits for its report.
      */
+    // An HTTP/2 connection can die silently on such a link while staying in the pool; pings find it out, and a timed-out
+    // request also clears the pool (see [dropStalled]), so the next request opens a fresh connection instead of waiting
+    // on the dead one again.
     private val requests = http.newBuilder().callTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
         .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS).readTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
-        .writeTimeout(20, java.util.concurrent.TimeUnit.SECONDS).build()
+        .writeTimeout(20, java.util.concurrent.TimeUnit.SECONDS).pingInterval(15, java.util.concurrent.TimeUnit.SECONDS).build()
     /**
      * Images (a sample is several megabytes): on a lossy mobile link one may take minutes, so only a long stall fails it,
      * not the slow pace.
      */
     private val transfers = http.newBuilder().callTimeout(5, java.util.concurrent.TimeUnit.MINUTES)
         .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS).readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-        .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS).build()
+        .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS).pingInterval(15, java.util.concurrent.TimeUnit.SECONDS).build()
+    /** Runs [call]; when it stalls, the pooled connections go, so a retry does not reuse one that died on the way. */
+    private inline fun <T> dropStalled(call: () -> T): T = try { call() }
+        catch (stalled: java.io.InterruptedIOException) { http.connectionPool.evictAll(); throw stalled }
     /** The console stream sends a keep-alive every 15 s, so a minute of silence means the link is gone. */
     private val streams = http.newBuilder().readTimeout(60, java.util.concurrent.TimeUnit.SECONDS).callTimeout(0, java.util.concurrent.TimeUnit.MILLISECONDS).build()
     private val mutex = Mutex()
@@ -198,8 +204,8 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
     private suspend fun sendText(server: String, path: String, body: String?, token: String?, method: String): String? = withContext(Dispatchers.IO) {
         val request = Request.Builder().url(url(server, path)).header("X-YYS-Client", "device").apply { token?.let { header("Authorization", "Bearer $it") } }
             .method(method, body?.toRequestBody(JSON_TYPE) ?: if (method == "POST") ByteArray(0).toRequestBody(JSON_TYPE) else null).build()
-        requests.newCall(request).execute().use { reply ->
-            val text = reply.body.string()
+        dropStalled { requests.newCall(request).execute() }.use { reply ->
+            val text = dropStalled { reply.body.string() }
             if (!reply.isSuccessful) throw failure(reply.code, text)
             if (reply.code == 204 || text.isBlank()) null else text
         }
@@ -219,8 +225,8 @@ class CloudAgent(private val http: OkHttpClient, private val store: CloudCredent
         withContext(Dispatchers.IO) {
             val request = Request.Builder().url(url(saved.serverUrl, path)).header("X-YYS-Client", "device").header("Authorization", "Bearer ${saved.accessToken}")
                 .method(method, body?.toRequestBody(type.toMediaType())).build()
-            transfers.newCall(request).execute().use { reply ->
-                val bytes = reply.body.bytes()
+            dropStalled { transfers.newCall(request).execute() }.use { reply ->
+                val bytes = dropStalled { reply.body.bytes() }
                 if (!reply.isSuccessful) throw failure(reply.code, bytes.decodeToString())
                 bytes.takeIf { it.isNotEmpty() }
             }
