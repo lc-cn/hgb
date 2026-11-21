@@ -139,6 +139,12 @@ export function SamplesPage({ id }: { id?: string }) {
           ))}
         </nav>
         <section aria-label="标注" className={m.main}>
+          <div className={m.nameRow}>
+            <input key={sample.id} aria-label="样本名" className={m.nameInput} defaultValue={sample.name} maxLength={64}
+              onBlur={async (e) => { const name = e.target.value.trim(); if (!name || name === sample.name) return;
+                try { await dev.changeSample(sample.id, { name }); await load(); } catch (error) { setText([failure(error), false]); } }} />
+            <span className={w.muted}>{sample.width}×{sample.height} · {sample.device || "手机"} · {clock(sample.createdAt)}</span>
+          </div>
           <div role="toolbar" aria-label="工具" className={`${w.card} ${m.toolbar}`}>
             {TOOLS.map(([t, label]) => <button key={t} type="button" aria-pressed={tool === t} className={m.tool} onClick={() => setTool(t)}>{label}</button>)}
             <span className={m.grow} />

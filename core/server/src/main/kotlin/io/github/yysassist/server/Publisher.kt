@@ -190,6 +190,7 @@ class Publisher(private val workbench: Workbench, private val drafts: Drafts, pr
         val claimed = mutableSetOf<String>()
         val resources = (body["resources"] as? JsonArray)?.let { json.decodeFromJsonElement(ListSerializer(TaskResource.serializer()), it) }.orEmpty()
         val uploads = mutableListOf<Pair<TaskResource, java.io.File>>()
+        val missing = mutableListOf<String>()
         val placed = resources.map { resource ->
             // Same content under the same name first; two resources never share one attachment name.
             published[resource.sha256 to resource.bytes].orEmpty().filter { (_, a) -> a.name !in claimed }
@@ -199,10 +200,12 @@ class Publisher(private val workbench: Workbench, private val drafts: Drafts, pr
                 }
             claimed += resource.assetName
             val file = assets.publishable(userId, target, resource.sha256)?.takeIf { it.length() == resource.bytes }
-                ?: throw ApiException(400, "missing_asset", "素材 ${resource.id} 既没有已发布的附件，也没有裁好的模板文件")
-            uploads += resource.copy(release = null) to file
+            if (file == null) missing += resource.id else uploads += resource.copy(release = null) to file
             resource.copy(release = null)
         }
+        // All of them at once, so the author can cut every one before trying again.
+        if (missing.isNotEmpty()) throw ApiException(400, "missing_asset",
+            "${missing.size} 个素材既没有已发布的附件，也没有裁好的模板：${missing.joinToString("、")}（在样本库裁好后加入草稿素材）")
         return placed to uploads
     }
 }
