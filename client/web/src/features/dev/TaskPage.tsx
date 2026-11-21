@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, navigate } from "../../router";
+import { NameButton } from "./NameButton";
 import type { Obj } from "./api";
 import { devPaths, useDev, type Edit } from "./context";
 import { clock, uniqueId, uses } from "./HomePage";
@@ -120,13 +121,11 @@ export function TaskPage({ id }: { id: string }) {
           {insertAt !== null && (
             <div className={`${w.card} ${t.panel} ${t.inserting}`}>
               <div className={t.panelHead}><b>插入到第 {insertAt + 1} 步</b><button type="button" className={w.btn} style={{ minHeight: 32 }} onClick={() => setInsertAt(null)}>取消</button></div>
-              <button type="button" className={`${w.btn} ${w.primary} ${t.center}`} onClick={async () => {
-                const name = prompt("步骤名")?.trim();
-                if (!name) return;
+              <NameButton label="新建步骤" placeholder="步骤名" className={`${w.btn} ${w.primary} ${t.center}`} onName={async (name) => {
                 const sid = uniqueId(name, stepIds, "step");
                 const at = await insert({ id: sid, name, program: [] });
                 if (at !== null) navigate(devPaths.step(id, sid));
-              }}>新建步骤</button>
+              }} />
               <label className={w.muted} htmlFor="q">或从片段库选</label>
               <input id="q" className={t.search} placeholder="搜片段名" value={query} onChange={(e) => setQuery(e.target.value)} />
               {shownLib.map((sn) => {

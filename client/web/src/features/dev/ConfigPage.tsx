@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "../../router";
+import { NameButton } from "./NameButton";
 import type { Json, Obj } from "./api";
 import { devPaths, useDev } from "./context";
 import { uniqueId } from "./HomePage";
@@ -42,9 +43,7 @@ export function ConfigPage({ id }: { id: string }) {
     if (!f) return;
     change(String(f.id), (now) => { const next = { ...now }; if (value === undefined || value === "") delete next[key]; else next[key] = value; return next; });
   };
-  const add = async () => {
-    const label = prompt("配置项名称")?.trim();
-    if (!label) return;
+  const add = async (label: string) => {
     const fid = uniqueId(label, childIds(task.raw), "field");
     const problem = await apply([{ op: "insert", path: `tasks:${id}`, field: "fields", after: fields.length ? String(fields.at(-1)!.id) : null, value: { id: fid, label, widget: "SWITCH" } }]);
     if (problem) setText(problem); else setPick(fields.length);
@@ -80,7 +79,7 @@ export function ConfigPage({ id }: { id: string }) {
               ))}
             </div>
           ))}
-          <button type="button" className={`${w.btn} ${c.add}`} onClick={add}>加配置项</button>
+          <NameButton label="加配置项" placeholder="配置项名称" className={`${w.btn} ${c.add}`} onName={add} />
         </nav>
 
         {f ? (

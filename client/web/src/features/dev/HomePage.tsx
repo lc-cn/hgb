@@ -3,6 +3,7 @@ import { useConsole } from "../../state/context";
 import { Link, navigate } from "../../router";
 import { dev, type Sample, type TrialRecord } from "./api";
 import { devPaths, failure, useDev } from "./context";
+import { NameButton } from "./NameButton";
 import { arr, childIds, childrenOf, isObj, objs, programOf, snippets, str, tasks, usedSnippets, type TaskDef } from "./model";
 import type { Obj } from "./api";
 import w from "./Wb.module.css";
@@ -23,9 +24,7 @@ export function HomePage() {
   const shown = rows.filter((r) => filter === "all" || (filter === "changed" ? r.changed : r.tone === "fail"));
   const phone = data.devices.find((d) => d.platform === "android" && d.online) ?? data.devices.find((d) => d.platform === "android");
   const used = features(draft.body);
-  const create = async () => {
-    const name = prompt("任务名")?.trim();
-    if (!name) return;
+  const create = async (name: string) => {
     const id = uniqueId(name, childIds(draft.body), "task");
     const problem = await apply([{ op: "insert", path: "", field: "tasks", after: list.at(-1)?.id ?? null,
       value: { id, targetId: game, name, category: "daily", priority: 50, fields: [], steps: [] } }]);
@@ -38,7 +37,7 @@ export function HomePage() {
           <h1 className={w.h1}>开发工作台 · {gameName}</h1>
           <div className={w.muted}>草稿基于 {draft.baseVersion} · 修订 {draft.revision}{me?.maintainer ? " · 维护者" : ""}</div>
         </div>
-        <button type="button" className={w.btn} onClick={create}><Plus />新建任务</button>
+        <NameButton label={<><Plus />新建任务</>} placeholder="任务名" onName={create} />
         <Link className={`${w.btn} ${w.primary}`} to={devPaths.publish}>校验并发布</Link>
       </header>
       {text && <div className={w.message}>{text}</div>}
@@ -89,13 +88,11 @@ export function HomePage() {
         <div className={w.sectionHead}>
           <h2 id="steplib-title" className={w.h2}>片段库</h2>
           <Link className={w.btn} to={devPaths.game}>游戏设置</Link>
-          <button type="button" className={w.btn} onClick={async () => {
-            const name = prompt("片段编号（字母、数字、-）")?.trim();
-            if (!name) return;
+          <NameButton label="新建片段" placeholder="片段编号（字母、数字、-）" onName={async (name) => {
             const id = uniqueId(name, childIds(draft.body), "snippet");
             const problem = await apply([{ op: "insert", path: "", field: "snippets", after: str(lib.at(-1)?.id) ?? null, value: { id, program: [] } }]);
             if (problem) setText(problem); else navigate(devPaths.snippet(id));
-          }}>新建片段</button>
+          }} />
         </div>
         <div className={w.muted}>带参数，可整步引用，也可插在步骤里</div>
         <div className={`${w.card} ${w.clip}`}>
@@ -103,11 +100,12 @@ export function HomePage() {
             const id = String(sn.id ?? "");
             const params = objs(sn.params).map((p) => str(p.name) ?? "");
             const users = list.filter((t) => uses(t, id));
+            const guards = objs(draft.body.targets).some((g) => isObj(g.library) && usedSnippets(draft.body, arr(g.library.interruptions)).includes(id));
             return (
               <Link key={id} to={devPaths.snippet(id)} className={`${w.libGrid} ${w.trow}`}>
                 <span className={w.bold}>{str(sn.name) ?? id}</span>
                 <span className={w.muted}>{params.length ? params.join(" · ") : "无参数"}</span>
-                <span className={w.muted}>{users.length === 1 ? users[0].name : users.length ? `${users.length} 个任务` : "没有任务用"}</span>
+                <span className={w.muted}>{users.length === 1 ? users[0].name : users.length ? `${users.length} 个任务` : guards ? "干扰页用" : "没有任务用"}</span>
               </Link>
             );
           }) : <div className={w.empty}>还没有片段</div>}
