@@ -51,8 +51,13 @@ internal fun TaskBundle.expandSnippets(): Pair<TaskBundle, List<ContentIssue>> {
             else plain.copy(program = guard(plain.nodes(), guards, Expander(snippets.associateBy { it.id }, used, issues, location)), actions = emptyList())
         })
     }
+    // A game's interruption handlers are checked, and count as used, even before a task waits on a page.
+    targets.forEach { target -> target.library?.interruptions.orEmpty().forEach { page ->
+        Expander(snippets.associateBy { it.id }, used, issues, "target/${target.id}/interruption/${page.id}")
+            .expand(listOf(ProgramNode.UseSnippet("check~${page.id}", page.use, page.with)), Scope.ROOT)
+    } }
     snippets.filter { it.id !in used }.forEach { issues += ContentIssue("snippet/${it.id}", "片段未被任何任务使用") }
-    return copy(tasks = expanded, snippets = emptyList()) to issues
+    return copy(tasks = expanded, snippets = emptyList()) to issues.distinct()
 }
 
 /** Every page wait in [nodes] wrapped with the game's interruptions, each with its own copy of the handler. */
@@ -61,10 +66,11 @@ private fun guard(nodes: List<ProgramNode>, interruptions: List<Interruption>, e
         val call = "${node.action.id}~${page.id}"
         val state = when (val written = page.state) {
             is JsonPrimitive -> buildJsonObject { put("state", written); put("as", page.stateId) }
-            is JsonObject -> JsonObject(written + ("id" to JsonPrimitive(page.stateId)))
+            // A library state by reference keeps its own id unless renamed with "as"; a written-out state takes the page's id.
+            is JsonObject -> JsonObject(written + ((if ("state" in written) "as" else "id") to JsonPrimitive(page.stateId)))
             else -> written
         }
-        Guard(state, expander.expand(listOf(ProgramNode.UseSnippet(call, page.use, page.with)), Scope.ROOT), page.maximum)
+        Guard(state, expander.expand(listOf(ProgramNode.UseSnippet(call, page.use, page.with)), Scope.ROOT), page.maximum, page.name)
     })
     is ProgramNode.Branch -> node.copy(cases = node.cases.map { it.copy(program = guard(it.program, interruptions, expander)) })
     is ProgramNode.Until -> node.copy(program = guard(node.program, interruptions, expander))

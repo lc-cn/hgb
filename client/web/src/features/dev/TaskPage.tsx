@@ -179,7 +179,7 @@ export function reads(program: Obj[], fields: Obj[]): string[] {
 }
 
 /** The settings a run condition can test: single and multiple choices, and switches. */
-const testable = (fields: Obj[]) => fields.filter((f) => f.widget === "SINGLE_CHOICE" || f.widget === "MULTI_CHOICE" || f.widget === "SWITCH");
+const testable = (fields: Obj[]) => fields.filter((f) => f.widget === "SWITCH" || ((f.widget === "SINGLE_CHOICE" || f.widget === "MULTI_CHOICE") && objs(f.options).length > 0));
 /** A condition on [field] that holds for its first value: the editor's starting point. */
 function firstCondition(field: Obj): Obj {
   if (field.widget === "SWITCH") return { field: String(field.id), equals: true };
@@ -205,7 +205,7 @@ function RunCondition({ step, fields, onChange }: { step: Obj; fields: Obj[]; on
     <div className={t.cond}>
       <span className={w.muted} style={{ fontWeight: 600 }}>运行条件</span>
       <select aria-label="按哪个配置项" className={t.select} value={String(when.field)} onChange={(e) => { const f = choices.find((x) => x.id === e.target.value); if (f) onChange(firstCondition(f)); }}>
-        {!field && <option value={String(when.field)}>{String(when.field)}（找不到）</option>}
+        {!choices.some((f) => f.id === when.field) && <option value={String(when.field)}>{str(field?.label) ?? String(when.field)}（{field ? "不能用作条件" : "找不到"}）</option>}
         {choices.map((f) => <option key={String(f.id)} value={String(f.id)}>{str(f.label) ?? String(f.id)}</option>)}
       </select>
       <select aria-label="判断" className={t.select} value={when.not === true ? "not" : "is"} onChange={(e) => set(value ?? "", e.target.value === "not")}>

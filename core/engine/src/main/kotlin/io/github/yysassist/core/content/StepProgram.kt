@@ -58,7 +58,7 @@ sealed interface ProgramNode {
 }
 /** One interruption inside a [ProgramNode.Guarded]: the page [state] (its id is the guard's), the [program] that clears it, how often. */
 @Serializable
-data class Guard(val state: JsonElement, val program: List<ProgramNode>, val maximum: Int = 3)
+data class Guard(val state: JsonElement, val program: List<ProgramNode>, val maximum: Int = 3, val name: String? = null)
 @Serializable
 data class ProgramCase(val equals: JsonPrimitive, val program: List<ProgramNode>, val id: String? = null)
 
@@ -234,8 +234,16 @@ internal fun programIssues(bundle: TaskBundle, task: TaskDefinition, step: StepD
                         if (end.dead) issue("$location/guard/$g", "干扰页的处理不能退出循环")
                         input = input || guard.program.allActions().any { contract(it)?.sendsDeviceInput == true }
                     }
+                    node.guards.forEachIndexed { g, guard ->
+                        val id = ((guard.state as? JsonObject)?.get("id") as? JsonPrimitive)?.contentOrNull
+                        if (id?.startsWith(INTERRUPTION_STATE) != true) issue("$location/guard/$g", "干扰页的页面需写成单个状态")
+                    }
                     // Seen from outside it is the wait itself, which may have sent input (a handler ran) before its outputs.
-                    act(node.wait, location, input)
+                    // It runs looking for the interruptions too, so their pages are checked as part of its inputs.
+                    val states = node.wait.inputs["states"] as? JsonArray
+                    val merged = if (states == null) node.wait
+                        else node.wait.copy(inputs = JsonObject(node.wait.inputs + ("states" to JsonArray(states + node.guards.map { it.state }))))
+                    act(merged, location, input)
                 }
                 is ProgramNode.Branch -> {
                     val source = node.value as? ActionInputBinding.Output

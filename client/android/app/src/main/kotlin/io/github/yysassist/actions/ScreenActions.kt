@@ -33,6 +33,7 @@ internal class ScreenActions(
         const val DERIVE = io.github.yysassist.core.actions.DERIVE; const val READ_REGION = io.github.yysassist.core.actions.READ_REGION
         const val MATCH = io.github.yysassist.core.actions.MATCH; const val CLASSIFY_REGION = io.github.yysassist.core.actions.CLASSIFY_REGION
         const val CLASSIFY_SCREEN = io.github.yysassist.core.actions.CLASSIFY_SCREEN; const val EXPECT_SCREEN = io.github.yysassist.core.actions.EXPECT_SCREEN
+        private const val INTERRUPTION = io.github.yysassist.core.content.INTERRUPTION_STATE
         const val AWAIT_SCREEN = io.github.yysassist.core.actions.AWAIT_SCREEN; const val LOCATE_IMAGE_IN = io.github.yysassist.core.actions.LOCATE_IMAGE_IN; const val LOCATE_TEXT_IN = io.github.yysassist.core.actions.LOCATE_TEXT_IN
         const val MATCH_COLOR_IN = io.github.yysassist.core.actions.MATCH_COLOR_IN
         const val LONG_PRESS = io.github.yysassist.core.actions.LONG_PRESS; const val SWIPE = io.github.yysassist.core.actions.SWIPE; const val BACK = io.github.yysassist.core.actions.BACK
@@ -643,12 +644,13 @@ internal class ScreenActions(
                 }
                 why = explain(false).take(600); whyLocal = explain(true).take(1200)
                 val now = android.os.SystemClock.elapsedRealtime()
-                val current = matched.singleOrNull()
+                // An interruption page (a popup over the page) wins over whatever it covers: it is cleared first.
+                val current = matched.singleOrNull() ?: matched.filter { it.startsWith(INTERRUPTION) }.singleOrNull()
                 if (current != held) { held = current; heldSince = now }
                 if (current != null && now - heldSince >= stable) {
                     val token = token(); observations[token] = store(observation)
                     val evidence = "已在本次画面中核对页面状态"
-                    if (terminalAction == action.id) businessEvidence = StepOutcome.Completed(evidence)
+                    if (terminalAction == action.id && !current.startsWith(INTERRUPTION)) businessEvidence = StepOutcome.Completed(evidence)
                     return ActionResult.Verified(buildJsonObject { put("state", current); put("observation", token) }, evidence, trace(current))
                 }
                 if (now - started >= timeout) return ActionResult.Unavailable("等待 ${timeout}ms 后仍未确认任何声明的页面状态" + why.takeIf { it.isNotEmpty() }?.let { "（$it）" }.orEmpty(), trace(null))
@@ -697,13 +699,14 @@ internal class ScreenActions(
                 put("matchedStates", buildJsonArray { matched.forEach { add(it) } })
             }
             val scoreText = scores.values.joinToString("，", "（图像得分 ", "）") { "%.3f".format(it) }.takeIf { scores.isNotEmpty() }.orEmpty()
-            if (matched.size > 1) return ActionResult.Unavailable("本次画面同时满足多个页面状态$scoreText", trace)
-            val state = matched.singleOrNull() ?: inputs.text("otherwise").takeIf { action.capability == CLASSIFY_SCREEN }
+            val interruption = matched.filter { it.startsWith(INTERRUPTION) }.singleOrNull()
+            if (matched.size > 1 && interruption == null) return ActionResult.Unavailable("本次画面同时满足多个页面状态$scoreText", trace)
+            val state = interruption ?: matched.singleOrNull() ?: inputs.text("otherwise").takeIf { action.capability == CLASSIFY_SCREEN }
                 ?: return ActionResult.Unavailable("本次画面未能确认任何声明的页面状态$scoreText", trace)
             val outputs = buildJsonObject { put("state", state) }
             if (action.capability == CLASSIFY_SCREEN) return ActionResult.Produced(outputs, trace)
             val evidence = "已在本次画面中核对页面状态"
-            if (terminalAction == action.id) businessEvidence = StepOutcome.Completed(evidence)
+            if (terminalAction == action.id && interruption == null) businessEvidence = StepOutcome.Completed(evidence)
             return ActionResult.Verified(outputs, evidence, trace)
         }
         override fun verifiedStepCompleted(evidence: String) {

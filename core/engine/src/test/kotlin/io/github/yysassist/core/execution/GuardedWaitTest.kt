@@ -85,7 +85,7 @@ class GuardedWaitTest {
             }
         }
         val outcome = BuiltInStepWorkFactory(stubborn).create(attempt(read, "go"), read).execute()
-        assertTrue(outcome.toString(), outcome is StepOutcome.Unknown && outcome.reason.contains("干扰页 lost"))
+        assertTrue(outcome.toString(), outcome is StepOutcome.Unknown && outcome.reason.contains("干扰页 断线"))
         assertEquals(2, screen.taps.size)
     }
 
@@ -99,6 +99,24 @@ class GuardedWaitTest {
         assertTrue(screen.asked.isEmpty())
         val on = BuiltInStepWorkFactory(provider(screen)).create(attempt(read, "claim", """{"collect":true}"""), read).execute()
         assertTrue(on is StepOutcome.Completed && !on.evidence.startsWith("已跳过"))
+    }
+
+    @Test fun anUnsetSwitchCountsAsOff() = runTest {
+        val collect = ConfigurationField("collect", "收取结界奖励", FieldWidget.SWITCH)
+        val steps = listOf(StepDefinition("claim", "收取", program = listOf(press("p"), await("w", "x")), runWhen = StepCondition("collect", JsonPrimitive(true), not = true)))
+        val read = read(bundle(steps, listOf(collect)))
+        val screen = Screen(listOf("x"))
+        val outcome = BuiltInStepWorkFactory(provider(screen)).create(attempt(read, "claim", "{}"), read).execute()
+        assertTrue(outcome.toString(), outcome is StepOutcome.Completed && !outcome.evidence.startsWith("已跳过"))
+    }
+
+    @Test fun aLibraryStateByReferenceTakesThePageId() {
+        val written = bundle(listOf(StepDefinition("go", "Go", program = listOf(await("home", "courtyard")))))
+        val withLibrary = written.copy(targets = written.targets.map { it.copy(library = it.library!!.copy(
+            states = listOf(StateDefinition("dialog-ref", text = listOf(buildJsonObject { put("text", "确定") }))),
+            interruptions = listOf(Interruption("lost", "断线", buildJsonObject { put("state", "dialog-ref") }, use = "ok")))) })
+        val guarded = read(withLibrary).tasks.single().steps.single().program!!.single() as ProgramNode.Guarded
+        assertEquals("interruption:lost", guarded.guards.single().state.jsonObject.getValue("id").jsonPrimitive.content)
     }
 
     @Test fun runConditionsAreChecked() {

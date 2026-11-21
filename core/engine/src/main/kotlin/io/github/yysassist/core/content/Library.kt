@@ -22,6 +22,9 @@ data class TargetLibrary(
     val interruptions: List<Interruption> = emptyList(),
 )
 
+/** How the state of an interruption page is named; a page wait matching it and another state reports the interruption. */
+const val INTERRUPTION_STATE = "interruption:"
+
 /**
  * An interruption page: its [state] (a library state's id, or one written in full) and the snippet [use] (with [with])
  * that clears it. A page wait meeting it runs that, then waits again; more than [maximum] times leaves the step unknown.
@@ -30,7 +33,7 @@ data class TargetLibrary(
 data class Interruption(val id: String, val name: String? = null, val state: JsonElement, val use: String,
     val with: JsonObject = JsonObject(emptyMap()), val maximum: Int = 3) {
     /** The state id a guarded wait reports for this page; never one of a task's own states. */
-    val stateId: String get() = "interruption:$id"
+    val stateId: String get() = "$INTERRUPTION_STATE$id"
 }
 
 /**
@@ -63,6 +66,8 @@ internal fun TaskBundle.resolveLibrary(capabilities: List<CapabilityContract>): 
         if (ids.distinct().size != ids.size) issues += ContentIssue("target/${target.id}/library", "状态身份重复")
         val interruptions = library.interruptions.map { it.id }
         if (interruptions.any { it.isBlank() } || interruptions.distinct().size != interruptions.size) issues += ContentIssue("target/${target.id}/library", "干扰页身份为空或重复")
+        library.interruptions.filter { it.state !is JsonPrimitive && it.state !is JsonObject }
+            .forEach { issues += ContentIssue("target/${target.id}/library", "干扰页 ${it.id} 的页面需写成单个状态") }
         library.interruptions.filter { it.maximum !in 1..10 }.forEach { issues += ContentIssue("target/${target.id}/library", "干扰页 ${it.id} 的处理次数需为 1–10") }
         library.regions.forEach { (name, rect) ->
             if (rect.size != 4 || rect[2] <= 0 || rect[3] <= 0 || rect[0] < 0 || rect[1] < 0) issues += ContentIssue("target/${target.id}/library", "区域 $name 需为 x,y,宽,高")

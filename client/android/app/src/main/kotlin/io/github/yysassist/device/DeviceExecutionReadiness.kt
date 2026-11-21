@@ -26,6 +26,9 @@ internal class DeviceExecutionReadiness(
     override suspend fun check(attempt: StepAttempt, bundle: TaskBundle): StepStartCondition {
         val task = bundle.tasks.single { it.id == attempt.run.task.id && it.targetId == attempt.run.request.context.targetId }
         val step = task.steps.single { it.id == attempt.run.stepId }
+        // A step its settings skip ends without the screen: it neither waits for it nor opens the game.
+        val configuration = runCatching { kotlinx.serialization.json.Json.parseToJsonElement(attempt.run.task.configurationJson) as? kotlinx.serialization.json.JsonObject }.getOrNull()
+        if (configuration != null && step.runWhen?.holds(configuration, task.fields) == false) return StepStartCondition.Ready
         val needsScreen = step.actionDefinitions().any { action ->
             // Waiting for a page is a verification, but it looks at the screen all the same.
             contracts.single { it.id == action.capability && it.version == action.contractVersion }.let {

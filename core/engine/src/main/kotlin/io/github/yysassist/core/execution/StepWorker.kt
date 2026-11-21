@@ -85,6 +85,8 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
             val wanted = condition.contains ?: condition.equals?.contentOrNull
             val label = field?.options?.singleOrNull { it.value == wanted }?.label
                 ?: when (condition.equals?.booleanOrNull) { true -> "开"; false -> "关"; null -> wanted }
+            if (field != null && (configuration[field.id] == null || configuration[field.id] == JsonNull) && field.widget != FieldWidget.SWITCH && field.widget != FieldWidget.MULTI_CHOICE)
+                return "${field.label} 未设置"
             return "${field?.label ?: condition.field} ${if (condition.contains != null) (if (condition.not) "含" else "不含") else (if (condition.not) "=" else "≠")} $label"
         }
         val usesInput = step.actionDefinitions().any { action -> contracts.single { it.id == action.capability && it.version == action.contractVersion }.sendsDeviceInput }
@@ -105,7 +107,7 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                         }
                         currentCoroutineContext().ensureActive()
                         // A step whose run condition does not hold is skipped before it touches the screen.
-                        step.runWhen?.takeIf { !it.holds(configuration) }?.let { condition ->
+                        step.runWhen?.takeIf { !it.holds(configuration, fields) }?.let { condition ->
                             return@coroutineScope StepOutcome.Completed("已跳过（${skipReason(condition)}）")
                         }
                         val activeSession = actions?.open(attempt, bundle).also { session = it }
@@ -243,7 +245,7 @@ class BuiltInStepWorkFactory(private val actions: ActionProvider? = null, privat
                                             if (index < 0) break
                                             val times = (cleared[index] ?: 0) + 1
                                             if (times > node.guards[index].maximum)
-                                                return Halt(StepOutcome.Unknown("干扰页 ${state?.removePrefix("interruption:")} 处理了 ${times - 1} 次仍在"))
+                                                return Halt(StepOutcome.Unknown("干扰页 ${node.guards[index].name ?: state?.removePrefix(INTERRUPTION_STATE)} 处理了 ${times - 1} 次仍在"))
                                             cleared[index] = times
                                             outputs.remove(node.wait.id)
                                             executeBlock(node.guards[index].program, mutableMapOf(), false)?.let { return it }

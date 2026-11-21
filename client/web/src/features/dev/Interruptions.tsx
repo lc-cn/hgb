@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Json, Obj } from "./api";
 import { useDev } from "./context";
 import { uniqueId } from "./HomePage";
-import { arr, isObj, nodeDigest, objs, snippets, states, str, target } from "./model";
+import { arr, childIds, isObj, nodeDigest, objs, snippets, states, str, target } from "./model";
 import w from "./Wb.module.css";
 import g from "./Game.module.css";
 
@@ -54,7 +54,7 @@ export function Interruptions() {
           </button>
         ))}
       {pages.length === 0 && editing !== "new" && <div className={w.muted}>还没有干扰页</div>}
-      {editing === "new" && <PageForm lib={lib} known={known} taken={pages.map((p) => String(p.id))} onSave={(next) => save(null, next)} onCancel={() => setEditing(null)} />}
+      {editing === "new" && <PageForm lib={lib} known={known} taken={app ? childIds(app) : []} onSave={(next) => save(null, next)} onCancel={() => setEditing(null)} />}
       {text && <div className={w.message}>{text}</div>}
     </section>
   );
@@ -80,7 +80,10 @@ function PageForm({ page, lib, known, taken = [], onSave, onDelete, onCancel }: 
     const id = str(page?.id) ?? uniqueId(name, taken, "page");
     // Written in full: a page wait looks for every word within a region, with a confidence to clear.
     const state: Json = byState ? stateId : { id, text: list.map((t) => ({ text: t, minimumConfidence: 0.8, within: region })) };
-    onSave({ id, name: name.trim(), state, use, ...(Number(maximum) !== 3 ? { maximum: Number(maximum) } : {}) });
+    // What the form does not edit (a snippet's arguments in "with") stays as written; the same snippet keeps them.
+    const { maximum: _, with: given, ...kept } = page ?? {};
+    onSave({ ...kept, id, name: name.trim(), state, use, ...(isObj(given) && use === page?.use ? { with: given } : {}),
+      ...(Number(maximum) !== 3 ? { maximum: Number(maximum) } : {}) });
   };
   return (
     <div className={g.form}>

@@ -121,11 +121,13 @@ export function usedSnippets(body: Obj, root: Json): string[] {
   return [...seen];
 }
 
-/** What a trial of [task] ran: the task and the snippets it calls, by id (DevRuns.trialDigest). */
+/** What a trial of [task] ran: the task, its game's interruption pages, and the snippets they call, by id (DevRuns.trialDigest). */
 export function trialDigest(body: Obj, task: Obj): Promise<string> {
   const all = new Map(snippets(body).map((sn) => [String(sn.id), sn]));
-  const used = Object.fromEntries(usedSnippets(body, task).filter((id) => all.has(id)).map((id) => [id, all.get(id)!]));
-  return nodeDigest({ task, snippets: used });
+  const game = target(body, String(task.targetId ?? ""));
+  const pages = arr(isObj(game?.library) ? game!.library.interruptions : undefined);
+  const used = Object.fromEntries(usedSnippets(body, [task, pages]).filter((id) => all.has(id)).map((id) => [id, all.get(id)!]));
+  return nodeDigest(pages.length ? { task, snippets: used, interruptions: pages } : { task, snippets: used });
 }
 
 /** Ids of the nodes directly under [node], through id-less objects (Drafts.kt Nodes.children): what an insert must not repeat. */

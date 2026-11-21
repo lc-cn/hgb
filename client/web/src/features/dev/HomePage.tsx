@@ -164,7 +164,9 @@ function features(body: Parameters<typeof tasks>[0]): string[] {
   for (const t of tasks(body)) for (const st of t.steps) { if (typeof st.use === "string") kinds.add("snippet"); walk(programOf(st)); }
   for (const sn of snippets(body)) walk(programOf(sn));
   if (arr(body.snippets).length) kinds.add("snippet");
-  return ([["snippet", "片段"], ["forEach", "逐项"], ["until", "重复直到"], ["branch", "分支"]] as const).filter(([k]) => kinds.has(k)).map(([, label]) => label);
+  for (const t of tasks(body)) if (t.steps.some((st) => isObj(st.when as never))) kinds.add("when");
+  if (objs(body.targets).some((g) => isObj(g.library) && arr(g.library.interruptions).length)) kinds.add("interruptions");
+  return ([["snippet", "片段"], ["forEach", "逐项"], ["until", "重复直到"], ["branch", "分支"], ["when", "运行条件"], ["interruptions", "干扰页"]] as const).filter(([k]) => kinds.has(k)).map(([, label]) => label);
 }
 
 /** An id from [name] (letters and digits kept, [fallback] for a name without any) that none of [taken] has. */

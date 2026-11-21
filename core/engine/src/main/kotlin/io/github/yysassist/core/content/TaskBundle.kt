@@ -108,8 +108,18 @@ data class StepDefinition(
  */
 @Serializable
 data class StepCondition(val field: String, val equals: JsonPrimitive? = null, val contains: String? = null, val not: Boolean = false) {
-    fun holds(configuration: JsonObject): Boolean {
-        val value = configuration[field]?.takeIf { it != JsonNull } ?: return false
+    /**
+     * Whether the step runs under [configuration], given the task's [fields]. A setting left unset or hidden counts as
+     * the App shows it: a switch off, a multiple choice empty; any other unset setting meets no condition.
+     */
+    fun holds(configuration: JsonObject, fields: List<ConfigurationField>): Boolean {
+        val definition = fields.singleOrNull { it.id == field }
+        val given = configuration[field]?.takeIf { it != JsonNull && definition?.isVisible(configuration) != false }
+        val value = given ?: when (definition?.widget) {
+            FieldWidget.SWITCH -> JsonPrimitive(false)
+            FieldWidget.MULTI_CHOICE -> JsonArray(emptyList())
+            else -> return false
+        }
         val matched = when {
             equals != null -> sameProgramValue(value, equals)
             contains != null -> (value as? JsonArray)?.any { (it as? JsonPrimitive)?.contentOrNull == contains } == true

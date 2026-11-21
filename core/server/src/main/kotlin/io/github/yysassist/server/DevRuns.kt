@@ -206,8 +206,14 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
                 ?: throw ApiException(404, "no_step", "任务里没有步骤 $stepId")
             JsonObject(task + ("steps" to JsonArray(listOf(step))))
         }
-        return finish(userId, target, body, JsonArray(listOf(trimmed)), used(body, trimmed))
+        // The game's interruption pages guard every page wait, so their handlers travel with the task.
+        return finish(userId, target, body, JsonArray(listOf(trimmed)), used(body, JsonArray(listOf(trimmed, interruptions(body, target)))))
     }
+
+    /** The interruption pages [target] declares in [body]. */
+    private fun interruptions(body: JsonObject, target: String): JsonArray =
+        (((body["targets"] as? JsonArray).orEmpty().map { it.jsonObject }.firstOrNull { it["id"]?.jsonPrimitive?.contentOrNull == target }
+            ?.get("library") as? JsonObject)?.get("interruptions") as? JsonArray) ?: JsonArray(emptyList())
 
     /**
      * What a trial of [taskId] ran: the task and every snippet it calls, by id (so their order does not matter). A
@@ -215,8 +221,9 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
      */
     fun trialDigest(body: JsonObject, taskId: String): String? {
         val task = (body["tasks"] as? JsonArray).orEmpty().firstOrNull { it.jsonObject["id"]?.jsonPrimitive?.contentOrNull == taskId } ?: return null
-        val snippets = used(body, task).associateBy { it.jsonObject["id"]?.jsonPrimitive?.contentOrNull.orEmpty() }
-        return nodeDigest(buildJsonObject { put("task", task); put("snippets", JsonObject(snippets)) })
+        val pages = interruptions(body, task.jsonObject["targetId"]?.jsonPrimitive?.contentOrNull.orEmpty())
+        val snippets = used(body, JsonArray(listOf(task, pages))).associateBy { it.jsonObject["id"]?.jsonPrimitive?.contentOrNull.orEmpty() }
+        return nodeDigest(buildJsonObject { put("task", task); put("snippets", JsonObject(snippets)); if (pages.isNotEmpty()) put("interruptions", pages) })
     }
 
     /** The snippets [root] calls, directly or through other snippets. */
@@ -260,7 +267,12 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
                 put("type", "action"); putJsonObject("action") { put("id", "look"); put("capability", "screen.awaitScreen"); put("contractVersion", 1); put("inputs", inputs) }
             } } } }
         }
-        return finish(userId, target, body, JsonArray(listOf(task)), JsonArray(emptyList()))
+        // A probe judges only the states it was given: without the game's interruption pages, whose handlers it does not carry.
+        val plain = JsonObject(body + ("targets" to JsonArray((body["targets"] as? JsonArray).orEmpty().map { t ->
+            val library = t.jsonObject["library"] as? JsonObject
+            if (library == null) t else JsonObject(t.jsonObject + ("library" to JsonObject(library - "interruptions")))
+        })))
+        return finish(userId, target, plain, JsonArray(listOf(task)), JsonArray(emptyList()))
     }
 
     companion object {
