@@ -139,8 +139,8 @@ class Drafts(private val db: Database, private val clock: () -> Long) {
             val bases = single("SELECT digests FROM dev_draft_bases WHERE user_id = ? AND target_id = ?", userId, target) { it.getString(1) }
             when {
                 bases != null -> view.copy(bases = json.decodeFromString<Map<String, String>>(bases))
-                // Imported before bases were kept and not edited since: what it holds is still the base.
-                view.revision == 1L -> view.copy(bases = keepBases(userId, target, view.body))
+                // Imported before bases were kept, and no task or snippet edited since: what it holds is still the base.
+                untouchedSinceImport(userId, target, view) -> view.copy(bases = keepBases(userId, target, view.body))
                 else -> view
             }
         }
@@ -173,6 +173,27 @@ class Drafts(private val db: Database, private val clock: () -> Long) {
             keepBases(userId, target, draft.body)
             PatchResult(revision)
         }
+    }
+
+    /**
+     * Whether no patch since the draft's last import touched a task or a snippet, read from the patch history; false
+     * when the history no longer reaches back to that import.
+     */
+    private fun untouchedSinceImport(userId: String, target: String, view: DraftView): Boolean {
+        val ids = listOf("tasks", "snippets").flatMap { field -> (view.body[field] as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.let(::idOf) } }.toSet()
+        fun touches(p: DraftPatch): Boolean {
+            val first = p.path.split('/').firstOrNull { it.isNotEmpty() }
+            if (first == null) return p.field?.substringBefore('.') in setOf("tasks", "snippets")
+            val list = first.substringBefore(':', "")
+            return list in setOf("tasks", "snippets") || (list.isEmpty() && first in ids)
+        }
+        val records = db.query("SELECT source, patches FROM dev_patches WHERE user_id = ? AND target_id = ? AND revision <= ? ORDER BY revision DESC",
+            userId, target, view.revision) { it.getString(1) to it.getString(2) }
+        for ((source, patches) in records) {
+            if (source == "import") return true
+            if (json.decodeFromString<List<DraftPatch>>(patches).any(::touches)) return false
+        }
+        return false
     }
 
     /** Records what each task and snippet of [body] is, as the draft's base. */
