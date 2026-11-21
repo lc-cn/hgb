@@ -1,0 +1,29 @@
+client/web/src/features/dev/NameButton.tsx
+  s_fae32e7f0efe76::t_f8044e22d43334 1,8
+  s_fae32e7f0efe76::t_f15289d5a311ba 2-7,9-18,20-24
+  s_fae32e7f0efe76::t_5552526ef0a6c1 19
+client/web/src/features/dev/HomePage.tsx
+  s_fae32e7f0efe76::t_f8044e22d43334 40
+  s_fae32e7f0efe76::t_5552526ef0a6c1 6,27,91,95
+  s_fae32e7f0efe76::t_b933971162ad16 103,108
+client/web/src/features/dev/TaskPage.tsx
+  s_fae32e7f0efe76::t_5552526ef0a6c1 3,124,128
+client/web/src/features/dev/ConfigPage.tsx
+  s_fae32e7f0efe76::t_5552526ef0a6c1 3,46,82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1637dc511c1979abfd4b8663f5b5281e0ae4fc90",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
