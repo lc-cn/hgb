@@ -135,13 +135,16 @@ class DevRuns(private val workbench: Workbench, private val service: CloudServic
         return next
     }
 
+    /** A trial passed when the task reports itself completed; one that ran to its end without that did not. */
+    private fun outcome(view: DevRunView) = if (view.state == "FINISHED" && view.facts.any { it.type == "task-completed" }) "FINISHED" else "FAILED"
+
     /** Keeps the finished trial as its task's newest one. */
     private fun remember(userId: String, view: DevRunView, digest: String) = db.tx {
         update("""INSERT INTO dev_trials (user_id, target_id, task_id, step_id, device_id, state, detail, started_at, ended_at, digest) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (user_id, target_id, task_id) DO UPDATE SET step_id = excluded.step_id, device_id = excluded.device_id, state = excluded.state,
             detail = excluded.detail, started_at = excluded.started_at, ended_at = excluded.ended_at, digest = excluded.digest
             WHERE excluded.started_at >= dev_trials.started_at""",
-            userId, view.target, view.task, view.step, view.device, view.state, view.detail.take(300), view.createdAt, view.updatedAt, digest)
+            userId, view.target, view.task, view.step, view.device, outcome(view), view.detail.take(300), view.createdAt, view.updatedAt, digest)
     }
 
     /** Each task's newest finished trial in [target]. */

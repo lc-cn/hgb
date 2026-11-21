@@ -9,6 +9,8 @@ import { Back } from "./TaskPage";
 import w from "./Wb.module.css";
 import r from "./Run.module.css";
 
+/** The task reported itself completed; a run that merely ended did not pass. */
+const completed = (run: DevRun) => run.state === "FINISHED" && run.facts.some((f) => f.type === "task-completed");
 const ok = (result: string) => ["PRODUCED", "VERIFIED", "COMPLETED"].includes(result);
 
 /** ⑧ 试跑: runs the task (or one step) of the draft on a phone and shows what every action did. */
@@ -40,8 +42,8 @@ export function RunPage({ id }: { id: string }) {
     } catch (error) { setText(failure(error)); }
   };
   const [statusText, tone] = busy ? [`正在 ${phoneName(device)} 上跑`, r.running]
-    : run ? (run.state === "FINISHED" ? [`跑完了：${run.detail || "完成"}`, r.done] : [`停在：${run.detail || "失败"}`, r.failed])
-    : last ? (last.state === "FINISHED" ? [`上次跑完（${clock(last.endedAt)}）：${last.detail || "完成"}`, r.done] : [`上次停在（${clock(last.endedAt)}）：${last.detail}`, r.failed])
+    : run ? (completed(run) ? [`通过：${run.detail || "完成"}`, r.done] : [`没通过：${run.detail || "失败"}`, r.failed])
+    : last ? (last.state === "FINISHED" ? [`上次通过（${clock(last.endedAt)}）：${last.detail || "完成"}`, r.done] : [`上次没通过（${clock(last.endedAt)}）：${last.detail}`, r.failed])
     : ["还没试跑", r.idle];
   const traces = run?.traces ?? [];
   let at = run?.createdAt ?? 0;

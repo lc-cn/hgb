@@ -312,6 +312,7 @@ class WorkbenchApiTest {
             // The task keeps it as its newest trial, with what ran: the task and the snippets it calls (none here).
             val trial = Json.parseToJsonElement(get("/api/dev/games/game/trials", writer).bodyAsText()).jsonArray.single().jsonObject
             assertEquals(JsonPrimitive("t"), trial["task"])
+            assertEquals(JsonPrimitive("FINISHED"), trial["state"]) // it reported the task completed
             val draft = Json.parseToJsonElement(get("/api/dev/drafts/game", writer).bodyAsText()).jsonObject
             val task = draft.getValue("body").jsonObject.getValue("tasks").jsonArray[0]
             assertEquals(JsonPrimitive(nodeDigest(buildJsonObject { put("task", task); put("snippets", JsonObject(emptyMap())) })), trial["digest"])
