@@ -1,0 +1,31 @@
+client/web/src/features/dev/SamplesPage.tsx
+  s_fae32e7f0efe76::t_76fba133aa3423 55-62
+  s_fae32e7f0efe76::t_6de9d073116289 155-164
+client/web/src/features/dev/api.ts
+  s_fae32e7f0efe76::t_76fba133aa3423 40-48
+client/web/src/api/client.ts
+  s_fae32e7f0efe76::t_76fba133aa3423 22-24,27
+core/protocol/src/main/kotlin/io/github/yysassist/protocol/CloudProtocol.kt
+  s_fae32e7f0efe76::t_6de9d073116289 89-90
+client/android/app/src/main/kotlin/io/github/yysassist/cloud/DevRunner.kt
+  s_fae32e7f0efe76::t_6de9d073116289 71,122-139
+  s_fae32e7f0efe76::t_535b9fb8ca031e 140-141
+core/server/src/main/kotlin/io/github/yysassist/server/DevRuns.kt
+  s_fae32e7f0efe76::t_6de9d073116289 44,50-53,69-70,73,90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0a601774fe5e412f665982d37973210de2e11898",
+  "prompts": {},
+  "sessions": {
+    "s_fae32e7f0efe76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e4ff622-41d3-4c0b-919b-3730481be66a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Class Liu <1659488338@qq.com>"
+    }
+  }
+}
